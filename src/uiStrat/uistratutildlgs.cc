@@ -264,12 +264,14 @@ uiStratLithoDlg::uiStratLithoDlg( uiParent* p )
     uiGroup* toprightgrp = new uiGroup( rightgrp, "top right group" );
     nmfld_ = new uiGenInput( toprightgrp, "Name", StringInpSpec() );
     isporbox_ = new uiCheckBox( toprightgrp, "Porous" );
+    isporbox_->activated.notify( selchgcb );
     isporbox_->attach( rightOf, nmfld_ );
 
     uiColorInput::Setup csu( Color::White() );
     csu.dlgtitle( "Default color for this lithology" );
     colfld_ = new uiColorInput( toprightgrp, csu );
     colfld_->attach( alignedBelow, nmfld_ );
+    colfld_->colorChanged.notify( selchgcb );
 
     const int butsz = 20;
     uiPushButton* newlithbut = new uiPushButton( rightgrp, "&Add as new",
@@ -337,6 +339,7 @@ void uiStratLithoDlg::selChg( CallBacker* )
 	    prevlith_->porous() = newpor;
 	    prevlith_->color() = newcol;
 	    lithos.reportAnyChange();
+	    anychg_ = true;
 	}
     }
 
@@ -346,9 +349,11 @@ void uiStratLithoDlg::selChg( CallBacker* )
 	return; // can only happen when no lithologies defined at all
 
     nmfld_->setText( lith->name() );
+
+    NotifyStopper nspor( isporbox_->activated );
     isporbox_->setChecked( lith->porous() );
+    NotifyStopper nscol( colfld_->colorChanged );
     colfld_->setColor( lith->color() );
-    anychg_ = true;
     prevlith_ = const_cast<Strat::Lithology*>( lith );
 }
 
@@ -406,10 +411,11 @@ class uiStratSingleContentDlg : public uiDialog
 {
 public:
 
-uiStratSingleContentDlg( uiParent* p, Strat::Content& c, bool isadd )
+uiStratSingleContentDlg( uiParent* p, Strat::Content& c, bool isadd, bool& chg)
     : uiDialog(p,uiDialog::Setup(isadd?"Add content":"Edit Content",
 		isadd?"Add content":"Edit content properties","110.0.5"))
     , cont_(c)
+    , anychg_(chg)
 {
     nmfld_ = new uiGenInput( this, "Name", StringInpSpec(c.name()) );
 
@@ -437,6 +443,7 @@ bool acceptOK( CallBacker* )
     cont_.setName( nm );
     cont_.pattern_ = fillfld_->get();
     cont_.color_ = colfld_->color();
+    anychg_ = true;
     return true;
 }
 
@@ -444,6 +451,7 @@ bool acceptOK( CallBacker* )
     uiGenInput*		nmfld_;
     uiFillPattern*	fillfld_;
     uiColorInput*	colfld_;
+    bool& 		anychg_;
 
 };
 
@@ -481,7 +489,7 @@ void editReq( bool isadd )
 	if ( selidx < 0 ) return;
 	cont = conts[selidx];
     }
-    uiStratSingleContentDlg dlg( this, *cont, isadd );
+    uiStratSingleContentDlg dlg( this, *cont, isadd, anychg_ );
     if ( !dlg.go() )
 	delete newcont;
     else

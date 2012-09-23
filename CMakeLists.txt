@@ -2,7 +2,7 @@
 #
 #       CopyRight:      dGB Beheer B.V.
 #       Jan 2012        K. Tingdahl
-#       RCS :           $Id: RootMakefile,v 1.4 2010-09-28 07:21:07 cvsbert
+#       SVN:		$Id$
 #_______________________________________________________________________________
 
 cmake_minimum_required (VERSION 2.6)
@@ -62,6 +62,7 @@ SET( OD_PLUGINS
 	Madagascar
 	MadagascarAttribs
 	VoxelConnectivityFilter
+	TextureAttrib
 	uiBouncy
 	uiDPSDemo
 	uiExpAttribs
@@ -74,7 +75,7 @@ SET( OD_PLUGINS
 	uiImpGPR
 	uiMadagascar
 	uiMadagascarAttribs
-	#uiQtApp
+	uiTextureAttrib
 	uiTutMadagascar
 	uiVoxelConnectivityFilter
 	uiPreStackViewer
@@ -86,7 +87,7 @@ SET( OD_SPECPROGS ODSeis )
 OD_ADD_MODULES( src ${OD_MODULES} )
 OD_ADD_MODULES( plugins ${OD_PLUGINS} )
 OD_ADD_MODULES( spec ${OD_SPECPROGS} )
-OD_ADD_MODULES( test testGeneral )
+OD_ADD_MODULES( test testBasic testGeneral )
 
 OD_WRITE_MODDEPS( ${OD_BINARY_BASEDIR}/data )
 OD_WRITE_FINDFILE()

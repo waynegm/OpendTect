@@ -5,7 +5,7 @@
  * FUNCTION : general utilities
 -*/
 
-static const char* rcsID mUnusedVar = "$Id: genc.c,v 1.126 2012-08-30 09:49:44 cvskris Exp $";
+static const char* rcsID mUnusedVar = "$Id$";
 
 #include "genc.h"
 #include "string2_c.h"
@@ -13,6 +13,7 @@ static const char* rcsID mUnusedVar = "$Id: genc.c,v 1.126 2012-08-30 09:49:44 c
 #include "mallocdefs.h"
 #include "debugmasks.h"
 #include "oddirs.h"
+#include "svnversion.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -361,6 +362,14 @@ int WriteEnvVar( const char* env, const char* val )
 
     return 1;
 }
+
+
+int GetSubversionRevision(void)
+{ return mSVN_VERSION; }
+
+
+const char* GetSubversionUrl(void)
+{ return mSVN_URL; }
 
 
 char GetEnvSeparChar()

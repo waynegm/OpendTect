@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Jaap Glas
  Date:          January 2009
- RCS:           $Id: objectfinder.h,v 1.1 2012-09-17 12:38:33 cvsjaap Exp $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/
@@ -25,7 +25,7 @@ namespace CmdDrive
 
 class WildcardManager;
 
-mClass(CmdDriver) ObjectFinder
+mClass(uiCmdDriver) ObjectFinder
 {
 public:
     			ObjectFinder(const uiMainWin&,bool casesensitive=true,

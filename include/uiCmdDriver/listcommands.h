@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Jaap Glas
  Date:          February 2009
- RCS:           $Id: listcommands.h,v 1.1 2012-09-17 12:38:33 cvsjaap Exp $
+ RCS:           $Id$
  ________________________________________________________________________
 
 -*/
@@ -16,20 +16,16 @@ ________________________________________________________________________
 #include "command.h"
 #include "cmdcomposer.h"
 
-
-class uiComboBox;
-class uiListBox;
+#include "uicombobox.h"
+#include "uilistbox.h"
 
 
 namespace CmdDrive
 {
 
-class CmdDriver;
-
-
 mStartDeclCmdClass( Combo, UiObjectCmd )		mEndDeclCmdClass
 
-mClass(CmdDriver) ComboActivator: public Activator
+mClass(uiCmdDriver) ComboActivator: public Activator
 {
 public:
     			ComboActivator(const uiComboBox&,int itmidx);
@@ -44,7 +40,7 @@ mStartDeclCmdClass( ListButton, UiObjectCmd )		mEndDeclCmdClass
 mStartDeclCmdClass( ListClick, UiObjectCmd )		mEndDeclCmdClass
 mStartDeclCmdClass( ListMenu, UiObjectCmd )		mEndDeclCmdClass
 
-mClass(CmdDriver) ListActivator: public Activator
+mClass(uiCmdDriver) ListActivator: public Activator
 {
 public:
     			ListActivator(const uiListBox&,int itmidx,
@@ -59,7 +55,7 @@ protected:
 
 mStartDeclCmdClass( ListSelect, UiObjectCmd )		mEndDeclCmdClass
 
-mClass(CmdDriver) ListSelectActivator: public Activator
+mClass(uiCmdDriver) ListSelectActivator: public Activator
 {
 public:
     			ListSelectActivator(const uiListBox&,
@@ -86,13 +82,13 @@ mStartDeclCmdClass( IsListMenuItemOn, UiObjQuestionCmd )	mEndDeclCmdClass
 mStartDeclCmdClass( GetListMenuItem, UiObjQuestionCmd )		mEndDeclCmdClass
 
 
-mStartDeclComposerClassWithInit( Combo, CmdComposer )
+mStartDeclComposerClassWithInit( Combo, CmdComposer, uiComboBox )
 protected:
     bool		itemedited_;
     BufferString	edittext_;
 mEndDeclComposerClass
 
-mStartDeclComposerClassWithInit( List, CmdComposer )
+mStartDeclComposerClassWithInit( List, CmdComposer, uiListBox )
 public:
     virtual void	updateInternalState();
 

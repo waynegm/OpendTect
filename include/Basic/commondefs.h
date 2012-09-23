@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:	A.H.Bril
  Date:		Mar 2006
- RCS:		$Id: commondefs.h,v 1.56 2012-09-06 19:08:16 cvsnanne Exp $
+ RCS:		$Id$
 ________________________________________________________________________
 
  Some very commonly used macros.
@@ -125,7 +125,7 @@ template mExp(mod) class clss<inst>
 # define mQtclass(cls) cls
 # define mUseQtnamespace
 #else
-# define mFDQtclass(cls) namepace QT_NAMESPACE { class cls; }
+# define mFDQtclass(cls) namespace QT_NAMESPACE { class cls; }
 # define mQtclass(cls) ::QT_NAMESPACE::cls
 # define mUseQtnamespace using namespace ::QT_NAMESPACE;
 #endif

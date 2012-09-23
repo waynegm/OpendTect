@@ -8,7 +8,7 @@ ________________________________________________________________________
  Author:	A.H.Bril
  Date:		3-5-1994
  Contents:	Time functions
- RCS:		$Id: timefun.h,v 1.16 2012-08-03 13:00:15 cvskris Exp $
+ RCS:		$Id$
 ________________________________________________________________________
 
 -*/
@@ -16,7 +16,7 @@ ________________________________________________________________________
 #include "basicmod.h"
 #include "gendefs.h"
 
-class QTime;
+mFDQtclass(QTime)
 
 namespace Time
 {
@@ -31,7 +31,7 @@ public:
     int		elapsed() const;	//!< Returns elapsed time in ms
 
 protected:
-    QTime&	qtime_;
+    mQtclass(QTime&)	qtime_;
 };
 
 

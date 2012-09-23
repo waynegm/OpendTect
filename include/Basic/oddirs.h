@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:	A.H. Bril
  Date:		Aug 2005
- RCS:		$Id: oddirs.h,v 1.23 2012-08-03 13:00:13 cvskris Exp $
+ RCS:		$Id$
 ________________________________________________________________________
 
 OpendTect directories.
@@ -98,7 +98,8 @@ mGlobal(Basic) const char* GetPlfSubDir(void);
 
 mGlobal(Basic) const char* GetBinPlfDir(void);
 /*!< Platform dependent bin directory
-  Returns full path to bin dir: GetSoftwareDir()/bin/GetPlfSubDir
+  Returns full path to bin dir:
+  GetSoftwareDir()/bin/GetPlfSubDir()/GetBinSubDir()
 */
 
 mGlobal(Basic) const char* GetDocFileDir(const char* filedir);

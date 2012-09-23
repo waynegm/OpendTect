@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id: plugins.cc,v 1.79 2012-07-10 15:01:29 cvskris Exp $";
+static const char* rcsID mUnusedVar = "$Id$";
 
 
 #include "plugins.h"
@@ -225,11 +225,8 @@ void PluginManager::getDefDirs()
     if ( !fromenv )
 	fp.add( sPluginBinDir );
     fp.add( GetPlfSubDir() );
-#ifdef __win__
-#ifdef __debug__
-    fp.add( "debug" );
-#endif
-#endif
+    fp.add( GetBinSubDir() );
+
     applibdir_ = fp.fullPath();
 
     fromenv = false;
@@ -244,11 +241,7 @@ void PluginManager::getDefDirs()
     if ( !fromenv )
 	fp.add( sPluginBinDir );
     fp.add( GetPlfSubDir() );
-#ifdef __win__
-#ifdef __debug__
-    fp.add( "debug" );
-#endif
-#endif
+    fp.add( GetBinSubDir() );
     userlibdir_ = fp.fullPath();
 
     if( DBG::isOn(DBG_PROGSTART) )

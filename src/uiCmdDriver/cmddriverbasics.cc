@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id: cmddriverbasics.cc,v 1.1 2012-09-17 12:37:40 cvsjaap Exp $";
+static const char* rcsID mUnusedVar = "$Id$";
 
 #include "cmddriverbasics.h"
 
@@ -527,6 +527,20 @@ void StringProcessor::removeExtraSpace()
 	*writeptr++ = *readptr++;
     }
     *writeptr = '\0';
+}
+
+
+void StringProcessor::capitalize( bool yn )
+{
+    mReturnIfReadOnly();
+
+    char* ptr = bufstr_->buf();
+
+    while ( *ptr )
+    {
+	*ptr = char( yn ? toupper(*ptr) : tolower(*ptr) );
+	ptr++;
+    }
 }
 
 

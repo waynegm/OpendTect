@@ -6,7 +6,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        A.H. Bril
  Date:          Dec 2005
- RCS:           $Id: flatview.h,v 1.71 2012-08-03 13:00:23 cvskris Exp $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/
@@ -73,6 +73,7 @@ public:
 
     LineStyle			linestyle_;
     Color			fillcolor_;
+    FillPattern			fillpattern_;
     int				zvalue_; 	//overlay zvalue ( max=on top )
 
     //TypeSet<int>		dispids_;	//!<ids of corresponding displed

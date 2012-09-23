@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Jaap Glas
  Date:          January 2009
- RCS:           $Id: cmddriverbasics.h,v 1.1 2012-09-17 12:38:32 cvsjaap Exp $
+ RCS:           $Id$
  ________________________________________________________________________
 
 -*/
@@ -81,7 +81,7 @@ namespace CmdDrive
     const char* unscopedstr = *identstr=='@' ? identstr+1 : identstr;
 
 
-mClass(CmdDriver) StringProcessor	// Parsing toolkit 
+mClass(uiCmdDriver) StringProcessor	// Parsing toolkit 
 {
 public:
 			StringProcessor(BufferString& bs)
@@ -128,6 +128,7 @@ public:
     void		appendCharElements(const char* tail);
 
     void		filterAmpersands();
+    void		capitalize(bool yn=true);
 
     void		removeExtraSpace();
     void		removeTrailingDots();
@@ -161,14 +162,14 @@ protected:
 };
 
 
-mGlobal(CmdDriver) const char* windowTitle(const uiMainWin* applwin,
-					   const uiMainWin* uimw,
-					   int aliasnr=0);
-mGlobal(CmdDriver) bool isCmdDriverWindow(const uiMainWin*);
-mGlobal(CmdDriver) const char* controllerTitle();
+mGlobal(uiCmdDriver) const char* windowTitle(const uiMainWin* applwin,
+					     const uiMainWin* uimw,
+					     int aliasnr=0);
+mGlobal(uiCmdDriver) bool isCmdDriverWindow(const uiMainWin*);
+mGlobal(uiCmdDriver) const char* controllerTitle();
 
 
-mClass(CmdDriver) WindowStack
+mClass(uiCmdDriver) WindowStack
 {
 public:
 			WindowStack()			{}
@@ -187,7 +188,7 @@ protected:
 };
 
 
-mClass(CmdDriver) InteractSpec
+mClass(uiCmdDriver) InteractSpec
 {
 public:
 			InteractSpec(bool wait=true)

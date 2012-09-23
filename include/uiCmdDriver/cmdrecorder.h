@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Jaap Glas
  Date:          March 2009
- RCS:           $Id: cmdrecorder.h,v 1.1 2012-09-17 12:38:32 cvsjaap Exp $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/
@@ -33,7 +33,7 @@ namespace CmdDrive
     if ( !rec_.mustSkip() ) rec_.outputStrm()
 
 
-mClass(CmdDriver) CmdRecEvent
+mClass(uiCmdDriver) CmdRecEvent
 {
 public:
 			CmdRecEvent()
@@ -69,7 +69,7 @@ public:
 
 class CmdComposer;
 
-mClass(CmdDriver) CmdRecorder : public CallBacker
+mClass(uiCmdDriver) CmdRecorder : public CallBacker
 {
 public:
     friend class	CmdComposer;

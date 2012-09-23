@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        A.H. Lammertink
  Date:          16/10/2000
- RCS:           $Id: timer.h,v 1.5 2012-08-03 13:00:16 cvskris Exp $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/
@@ -15,8 +15,8 @@ ________________________________________________________________________
 #include "basicmod.h"
 #include "namedobj.h"
 
-class QTimer;
-class QTimerComm;
+mFDQtclass(QTimer)
+mFDQtclass(QTimerComm)
 
 mClass(Basic) Timer : public NamedObject
 {
@@ -38,8 +38,8 @@ public :
     void		setScriptPolicy(ScriptPolicy);
 
 protected:
-    QTimer*		timer_;
-    QTimerComm*		comm_;
+    mQtclass(QTimer*)		timer_;
+    mQtclass(QTimerComm*)		comm_;
     ScriptPolicy	scriptpolicy_;		
 
 public:	

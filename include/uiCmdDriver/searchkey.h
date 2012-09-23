@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Jaap Glas
  Date:          May 2011
- RCS:           $Id: searchkey.h,v 1.1 2012-09-17 12:38:33 cvsjaap Exp $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/
@@ -27,7 +27,7 @@ namespace CmdDrive {
 
 class WildcardManager;
 
-mClass(CmdDriver) SearchKey
+mClass(uiCmdDriver) SearchKey
 {
 public:
     			SearchKey(const char* expr,bool casesensitive=true);
@@ -54,7 +54,7 @@ protected:
 };
 
 
-mClass(CmdDriver) WildcardManager
+mClass(uiCmdDriver) WildcardManager
 {
 public:
     			WildcardManager();

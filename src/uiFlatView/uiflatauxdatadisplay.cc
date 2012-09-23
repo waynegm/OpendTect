@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id: uiflatauxdatadisplay.cc,v 1.11 2012-08-23 08:44:51 cvsbruno Exp $";
+static const char* rcsID mUnusedVar = "$Id$";
 
 #include "uiflatauxdatadisplay.h"
 
@@ -118,6 +118,7 @@ void uiAuxDataDisplay::updateCB( CallBacker* cb )
 	    }
 
 	    polygonitem_->setFillColor( fillcolor_, true );
+	    polygonitem_->setFillPattern( fillpattern_ );
 	    item = polygonitem_;
 
 	    if ( polylineitem_ )

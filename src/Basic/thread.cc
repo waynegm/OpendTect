@@ -4,7 +4,7 @@
  * DATE     : Mar 2000
 -*/
 
-static const char* rcsID mUnusedVar = "$Id: thread.cc,v 1.62 2012-07-10 08:05:30 cvskris Exp $";
+static const char* rcsID mUnusedVar = "$Id$";
 
 #include "thread.h"
 #include "callback.h"
@@ -23,6 +23,7 @@ static const char* rcsID mUnusedVar = "$Id: thread.cc,v 1.62 2012-07-10 08:05:30
 # include "windows.h"
 #endif
 
+mUseQtnamespace
 
 Threads::Mutex::Mutex( bool recursive )
 #ifndef OD_NO_QT

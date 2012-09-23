@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id: tablecommands.cc,v 1.1 2012-09-17 12:37:42 cvsjaap Exp $";
+static const char* rcsID mUnusedVar = "$Id$";
 
 #include "tablecommands.h"
 #include "cmdrecorder.h"
@@ -15,7 +15,7 @@ static const char* rcsID mUnusedVar = "$Id: tablecommands.cc,v 1.1 2012-09-17 12
 #include "cmddriverbasics.h"
 
 #include "uimenu.h"
-#include "uitable.h"
+
 
 namespace CmdDrive
 {

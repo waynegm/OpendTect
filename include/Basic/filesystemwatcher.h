@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Nanne Hemstra
  Date:          March 2009
- RCS:           $Id: filesystemwatcher.h,v 1.3 2012-08-03 13:00:12 cvskris Exp $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/
@@ -21,12 +21,10 @@ class BufferStringSet;
 mFDQtclass(QFileSystemWatcher)
 mFDQtclass(QFileSystemWComm)
 
-mUseQtnamespace
-
 mClass(Basic) FileSystemWatcher : public CallBacker 
 {
 public:
-    friend class QFileSystemWComm;
+    friend class mQtclass(QFileSystemWComm);
 
 				FileSystemWatcher();
 				~FileSystemWatcher();
@@ -47,8 +45,8 @@ protected:
     BufferString		chgddir_;
     BufferString		chgdfile_;
 
-    QFileSystemWatcher*		qfswatcher_;
-    QFileSystemWComm*		qfswatchercomm_;
+    mQtclass(QFileSystemWatcher*)	qfswatcher_;
+    mQtclass(QFileSystemWComm*)		qfswatchercomm_;
 
 };
 

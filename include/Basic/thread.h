@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:	K. Tingdahl
  Date:		9-3-1999
- RCS:		$Id: thread.h,v 1.64 2012-08-29 07:11:05 cvskris Exp $
+ RCS:		$Id$
 ________________________________________________________________________
 
 */
@@ -17,9 +17,9 @@ ________________________________________________________________________
 #include "plftypes.h"
 
 #ifndef OD_NO_QT
-class QThread;
-class QMutex;
-class QWaitCondition;
+mFDQtclass(QThread)
+mFDQtclass(QMutex)
+mFDQtclass(QWaitCondition)
 #endif
 
 class CallBack;
@@ -150,7 +150,7 @@ public:
 protected:
 
 #ifndef OD_NO_QT
-    QMutex*		qmutex_;
+    mQtclass(QMutex*)		qmutex_;
 #endif
 };
 
@@ -223,7 +223,7 @@ public:
 protected:
 
 #ifndef OD_NO_QT
-    QWaitCondition*		cond_;
+    mQtclass(QWaitCondition*)		cond_;
 #endif
 };
 
@@ -391,7 +391,7 @@ public:
 protected:
 
 #ifndef OD_NO_QT
-    QThread*			thread_;
+    mQtclass(QThread*)			thread_;
 #endif
 };
 

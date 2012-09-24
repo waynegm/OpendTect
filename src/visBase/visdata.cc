@@ -44,20 +44,25 @@ bool DataObject::isTraversalEnabled( TraversalType tt ) const
 
 const char* DataObject::name() const
 {
+    osg::ref_ptr<const osg::Node> osgnode = osgNode();
+    if ( osgnode ) return osgnode->getName().c_str();
+    
     return !name_ || name_->isEmpty() ? 0 : name_->buf();
 }
 
 
 void DataObject::setName( const char* nm )
 {
-    SoNode* node = getInventorNode();
-    if ( node )
-	node->setName( nm );
-
-    if ( !name_ ) name_ = new BufferString;
-    (*name_) = nm;
-
-    updateOsgNodeData();
+    osg::ref_ptr<osg::Node> osgnode = osgNode();
+    
+    if ( osgnode )
+	osgnode->setName( nm );
+    else if ( nm )
+    {
+	if ( !name_ ) name_ = new BufferString;
+    }
+    
+    if ( name_ ) (*name_) = nm;
 }
 
 
@@ -88,7 +93,7 @@ void DataObject::updateOsgNodeData()
     if ( !osgnode )
 	return;
 
-    osgnode->setName( name_ ? name_->buf() : "" );
+    osgnode->setName( name_ ? name_->buf() : sKey::EmptyString().str() );
 
     static std::string idstr( sKey::ID() );
     osgnode->setUserValue( idstr, id() );

@@ -81,6 +81,7 @@ Scene::Scene()
     polygonoffset_->setFactor( factor );
     polygonoffset_->setUnits( units );
 
+    events_.ref();
     events_.nothandled.notify( mCB(this,Scene,mousePickCB) );
 
 

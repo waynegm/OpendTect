@@ -17,6 +17,7 @@ ________________________________________________________________________
 #include "positionlist.h"
 #include "thread.h"
 #include "visdata.h"
+#include "visosg.h"
 
 
 class SoCoordinate3;
@@ -27,10 +28,6 @@ class Executor;
 namespace Geometry { class PosIdHolder; }
 
 namespace osg { class Array; }
-
-#define mGetOsgVec3Arr(ptr) ((osg::Vec3Array*) ptr )
-
-#define mGetOsgVec2Arr(ptr) ((osg::Vec2Array*) ptr )
 
 
 namespace visBase
@@ -67,9 +64,6 @@ public:
 
     void		copyFrom(const Coordinates&);
 
-    void		setLocalTranslation(const Coord&);
-    Coord		getLocalTranslation() const;
-
     int			nextID(int previd) const;
 			//!<If previd == -1, first id is returned.
 			//!<If -1 is returned, no more id's are available.
@@ -85,10 +79,6 @@ public:
 
     void		setAllZ(const float*,int sz,float zscale=1);
 
-    void		setAutoUpdate(bool);
-    bool		autoUpdate();
-    void		update();
-
     osg::Array*		osgArray() { return osgcoords_; }
     const osg::Array*	osgArray() const { return osgcoords_; }
 
@@ -99,25 +89,17 @@ protected:
 
     void		setPosWithoutLock(int, const Coord3&);
     			/*!< Object should be locked when calling */
-    void		setLocalTranslationWithoutLock(const Coord&);
-    			/*!< Object should be locked when calling */
-
+    
     int			getFreeIdx();
     			/*!< Object should be locked when calling */
 
     			~Coordinates();
 
-    SoCoordinate3*		coords_;
-    SoGroup*			root_;
-    UTMPosition*		utmposition_;
     TypeSet<int>		unusedcoords_;
     mutable Threads::Mutex	mutex_;
     const mVisTrans*		transformation_;
     
     osg::Array*			osgcoords_;
-
-    virtual SoNode*		gtInvntrNode();
-
 };
 
     

@@ -385,7 +385,7 @@ bool ChannelInfo::mapData( int version, TaskRunner* tr )
     }
 
     const od_int64 nrelements = nrElements( false );
-    const unsigned char spacing = texturechannels_.doOsg() ? 2 : 1;
+    const unsigned char spacing = 2;
 
     if ( !mappeddata_[version] )
     {
@@ -400,7 +400,7 @@ bool ChannelInfo::mapData( int version, TaskRunner* tr )
     ColTab::MapperTask< unsigned char> 	maptask( *mappers_[version], nrelements,
 	    mNrColors, *unmappeddata_[version],
 	    mappeddata_[version], spacing,
-	    texturechannels_.doOsg() ? mappeddata_[version]+1 : 0, spacing  );
+	    mappeddata_[version]+1, spacing  );
 
     if ( ( tr && tr->execute(maptask) ) || maptask.execute() )
     {
@@ -531,12 +531,9 @@ TextureChannels::TextureChannels()
     onoff_->ref();
     turnOn( true );
 
-    if ( doOsg() )
-    {
-	osgtexture_ = new osgGeo::LayeredTexture;
-	osgtexture_->invertUndefLayers();
-	osgtexture_->ref();
-    }
+    osgtexture_ = new osgGeo::LayeredTexture;
+    osgtexture_->invertUndefLayers();
+    osgtexture_->ref();
 
     addChannel();
 }

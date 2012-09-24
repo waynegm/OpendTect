@@ -1294,21 +1294,14 @@ ui3DViewer::~ui3DViewer()
 
 uiObjectBody& ui3DViewer::mkBody( uiParent* parnt, bool direct, const char* nm )
 {
-    if ( visBase::DataObject::doOsg() )
-    {
-	osgQt::initQtWindowingSystem();
+    osgQt::initQtWindowingSystem();
 
-	osgbody_ = direct 
-	    ? (ui3DViewerBody*) new uiDirectViewBody( *this, parnt )
-	    : (ui3DViewerBody*) new ui3DIndirectViewBody( *this, parnt );
-	sobody_ = 0;
+    osgbody_ = direct 
+	? (ui3DViewerBody*) new uiDirectViewBody( *this, parnt )
+	: (ui3DViewerBody*) new ui3DIndirectViewBody( *this, parnt );
+    sobody_ = 0;
 
-	return *osgbody_; 
-    }
-
-    osgbody_ = 0;
-    sobody_ = new uiSoViewerBody( *this, parnt, nm );
-    return *sobody_; 
+    return *osgbody_; 
 }
 
 void ui3DViewer::viewAll()

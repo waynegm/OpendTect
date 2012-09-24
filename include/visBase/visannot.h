@@ -31,7 +31,8 @@ class AxisInfo;
 class Color;
 class SoOneSideRender;
 
-namespace osg { class Geode; }
+namespace osg { class Geode; class Array; class Group; }
+namespace osgGeo { class OneSideSwitch; }
 
 namespace visBase
 {
@@ -76,7 +77,6 @@ protected:
     				~Annotation();
     void			initGridLines();
     void			updateGridLines();
-    void			updateGridLines( int dim );
     void			updateTextPos(int dim);
     void			updateTextPos();
     Text2*			getText(int dim, int textnr);
@@ -91,14 +91,9 @@ protected:
     PickStyle*			pickstyle_;
     DataObjectGroup*		texts_;
 
-    SoOneSideRender*		onesiderender_;
-    SoSwitch*			gridlineswitch_; 
-    SoCoordinate3*		gridlinecoords_;
-    ObjectSet<SoIndexedLineSet>	gridlines_;
-
-    SoSwitch*			textswitch_;
-    SoSwitch*			scaleswitch_;
-    osg::Geode*			geode_;
+    osg::Geode*			gridlines_;
+    osg::Geode*			box_;
+    osg::Group*			scalegroup_;
     Color			annotcolor_;
 
     static const char*		textprefixstr();

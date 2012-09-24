@@ -33,10 +33,10 @@ const char* Camera::sKeyFocalDistance()	{ return "Focal Distance"; }
 
 
 Camera::Camera()
-    : group( new SoGroup )
+    : camera_( new osg::Camera )
+    , group( new SoGroup )
 {
-    camera_ = doOsg() ? new osg::Camera : 0;
-    if ( camera_ ) camera_->ref();
+    camera_->ref();
 
     group->ref();
     group->addChild( new UTMCamera );

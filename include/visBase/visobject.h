@@ -118,7 +118,8 @@ protected:
     int			childIndex(const SoNode*) const;
     SoNode*		getChild(int);
 
-    void		addChild(osg::Node*);
+    int			addChild(osg::Node*);
+			//!<\returns new child index
     void		insertChild(int pos,osg::Node*);
     void		removeChild(osg::Node*);
     int			childIndex(const osg::Node*) const;

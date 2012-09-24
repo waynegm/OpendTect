@@ -79,21 +79,16 @@ protected:
 
     static const char*		nokidsstr();
     static const char*		kidprefix();
-    virtual SoGroup*		createGroup();
-    virtual void		ensureGroup();
-    SoGroup*			group_;
+    
     osg::Group*			osggroup_;
 
     bool			righthandsystem_;
 
-    virtual SoNode*		gtInvntrNode();
     virtual osg::Node*		gtOsgNode();
 
 protected:
 
     ObjectSet<DataObject>	objects_;
-    ObjectSet<SoNode>		nodes_;
-
     bool			separate_;
 
 };

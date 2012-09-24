@@ -1706,11 +1706,8 @@ bool uiVisPartServer::setMaterial( int id )
 
 bool uiVisPartServer::writeSceneToFile( int id, const char* dlgtitle ) const
 {
-    const char* extension = visBase::DataObject::doOsg()
-	? "*.osg"
-	: "*.iv";
     uiFileDialog filedlg( appserv().parent(), false, GetPersonalDir(),
-	    		extension, dlgtitle );
+	    		"*.osg", dlgtitle );
     if ( filedlg.go() )
     {
 	visBase::DataObject* obj = visBase::DM().getObject( id );

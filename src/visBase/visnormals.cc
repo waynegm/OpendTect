@@ -26,10 +26,10 @@ namespace visBase
 {
 
 Normals::Normals()
-    : normals_( doOsg() ? 0 : new SoNormal )
+    : normals_( 0 )
     , mutex_( *new Threads::Mutex )
     , transformation_( 0 )
-    , osgnormals_( doOsg() ? new osg::Vec3Array : 0 )
+    , osgnormals_( new osg::Vec3Array )
 {
     if ( !osgnormals_ )
     {

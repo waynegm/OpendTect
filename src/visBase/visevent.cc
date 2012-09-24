@@ -462,13 +462,10 @@ EventCatcher::EventCatcher()
     node_->ref();
     setCBs();
 
-    if ( doOsg() )
-    {
-	osgnode_ = new osg::Node;
-	osgnode_->ref();
-	eventcatchhandler_ = new EventCatchHandler( *this );
-	osgnode_->setEventCallback( eventcatchhandler_ );
-    }
+    osgnode_ = new osg::Node;
+    osgnode_->ref();
+    eventcatchhandler_ = new EventCatchHandler( *this );
+    osgnode_->setEventCallback( eventcatchhandler_ );
 }
 
 
@@ -550,11 +547,8 @@ EventCatcher::~EventCatcher()
     node_->unref();
     deepUnRef( utm2display_ );
 
-    if ( doOsg() )
-    {
-	osgnode_->removeEventCallback( eventcatchhandler_ );
-	osgnode_->unref();
-    }
+    osgnode_->removeEventCallback( eventcatchhandler_ );
+    osgnode_->unref();
 }
 
 

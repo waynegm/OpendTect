@@ -26,15 +26,6 @@ namespace visBase
 {
 
 
-bool DataObject::doosg_ = false;
-
-void DataObject::setOsg()
-{ doosg_ = true; }
-
-bool DataObject::doOsg()
-{ return doosg_; }
-
-
 void DataObject::enableTraversal( TraversalType tt, bool yn )
 {
     if ( osgNode() )
@@ -93,9 +84,6 @@ void DataObject::setID( int nid )
 
 void DataObject::updateOsgNodeData()
 {
-    if ( !doOsg() )
-	return;
-
     osg::Node* osgnode = gtOsgNode();
     if ( !osgnode )
 	return;
@@ -138,22 +126,10 @@ void DataObject::fillPar( IOPar& par, TypeSet<int>& ) const
 
 bool DataObject::serialize( const char* filename, bool binary )
 {
-    if ( doOsg() && osgNode() )
-    {
-	return osgDB::writeNodeFile( *osgNode(), std::string( filename ) );
-    }
-
-    SoNode* node = getInventorNode();
-    if ( !node ) return false;
-
-    SoWriteAction writeaction;
-    if ( !writeaction.getOutput()->openFile(filename) )
-	return false;
-
-    writeaction.getOutput()->setBinary(binary);
-    writeaction.apply( node );
-    writeaction.getOutput()->closeFile();
-    return true;
+    if ( !osgNode() )
+	return true;
+    
+    return osgDB::writeNodeFile( *osgNode(), std::string( filename ) );
 }
 
 

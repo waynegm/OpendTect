@@ -45,11 +45,9 @@ TopBotImage::TopBotImage()
     imgshape_->removeSwitch();
     imgshape_->setVertexOrdering(
 		visBase::VertexShape::cCounterClockWiseVertexOrdering() );
-    if ( doOsg() )
-	addChild( imgshape_->osgNode() );
-    else
-	addChild( imgshape_->getInventorNode() );
-   
+
+    addChild( imgshape_->osgNode() );
+    
     visBase::TextureCoords* texturecoords = visBase::TextureCoords::create();
     imgshape_->setTextureCoords( texturecoords );
     texturecoords->setCoord( 0, Coord3(0,1,0) );

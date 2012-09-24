@@ -132,46 +132,43 @@ uiODSceneMgr::uiODSceneMgr( uiODMain* a )
     mdiarea_->setPrefWidth( cWSWidth );
     mdiarea_->setPrefHeight( cWSHeight );
 
-    if ( !visBase::DataObject::doOsg() )
-    {
-	uiGroup* leftgrp = new uiGroup( &appl_, "Left group" );
+    uiGroup* leftgrp = new uiGroup( &appl_, "Left group" );
 
-	dollywheel = new uiThumbWheel( leftgrp, "Dolly", false );
-	dollywheel->wheelMoved.notify( mWSMCB(dWheelMoved) );
-	dollywheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
-	dollywheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
-	dollylbl = new uiLabel( leftgrp, "Mov" );
-	dollylbl->attach( centeredBelow, dollywheel );
+    dollywheel = new uiThumbWheel( leftgrp, "Dolly", false );
+    dollywheel->wheelMoved.notify( mWSMCB(dWheelMoved) );
+    dollywheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
+    dollywheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
+    dollylbl = new uiLabel( leftgrp, "Mov" );
+    dollylbl->attach( centeredBelow, dollywheel );
 
-	dummylbl = new uiLabel( leftgrp, "" );
-	dummylbl->attach( centeredBelow, dollylbl );
-	dummylbl->setStretch( 0, 2 );
-	vwheel = new uiThumbWheel( leftgrp, "vRotate", false );
-	vwheel->wheelMoved.notify( mWSMCB(vWheelMoved) );
-	vwheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
-	vwheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
-	vwheel->attach( centeredBelow, dummylbl );
+    dummylbl = new uiLabel( leftgrp, "" );
+    dummylbl->attach( centeredBelow, dollylbl );
+    dummylbl->setStretch( 0, 2 );
+    vwheel = new uiThumbWheel( leftgrp, "vRotate", false );
+    vwheel->wheelMoved.notify( mWSMCB(vWheelMoved) );
+    vwheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
+    vwheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
+    vwheel->attach( centeredBelow, dummylbl );
 
-	rotlbl = new uiLabel( &appl_, "Rot" );
-	rotlbl->attach( centeredBelow, leftgrp );
+    rotlbl = new uiLabel( &appl_, "Rot" );
+    rotlbl->attach( centeredBelow, leftgrp );
 
-	hwheel = new uiThumbWheel( &appl_, "hRotate", true );
-	hwheel->wheelMoved.notify( mWSMCB(hWheelMoved) );
-	hwheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
-	hwheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
-	hwheel->attach( leftAlignedBelow, mdiarea_ );
+    hwheel = new uiThumbWheel( &appl_, "hRotate", true );
+    hwheel->wheelMoved.notify( mWSMCB(hWheelMoved) );
+    hwheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
+    hwheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
+    hwheel->attach( leftAlignedBelow, mdiarea_ );
 
-	zoomslider_ = new uiSliderExtra( &appl_, "Zoom", "Zoom Slider" );
-	zoomslider_->sldr()->valueChanged.notify( mWSMCB(zoomChanged) );
-	zoomslider_->sldr()->setMinValue( cMinZoom );
-	zoomslider_->sldr()->setMaxValue( cMaxZoom );
-	zoomslider_->setStretch( 0, 0 );
-	zoomslider_->attach( rightAlignedBelow, mdiarea_ );
+    zoomslider_ = new uiSliderExtra( &appl_, "Zoom", "Zoom Slider" );
+    zoomslider_->sldr()->valueChanged.notify( mWSMCB(zoomChanged) );
+    zoomslider_->sldr()->setMinValue( cMinZoom );
+    zoomslider_->sldr()->setMaxValue( cMaxZoom );
+    zoomslider_->setStretch( 0, 0 );
+    zoomslider_->attach( rightAlignedBelow, mdiarea_ );
 
-	leftgrp->attach( leftOf, mdiarea_ );
-	appl_.postFinalise().notify( mCB(this,uiODSceneMgr,afterFinalise) );
-    }
-
+    leftgrp->attach( leftOf, mdiarea_ );
+    appl_.postFinalise().notify( mCB(this,uiODSceneMgr,afterFinalise) );
+    
     scenetimer_->tick.notify( mCB(this,uiODSceneMgr,sceneTimerCB) );
 }
 

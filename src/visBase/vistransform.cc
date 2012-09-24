@@ -33,14 +33,10 @@ Transformation::Transformation()
     , transformgroup_( new SoGroup )
     , node_( 0 )
 {
-    if ( doOsg() )
-    {
-	osggroup_ = node_ = new osg::MatrixTransform;
-	osggroup_->ref();
-    }
-    separate_ = false;
-    transformgroup_->ref();
-    transformgroup_->addChild( transform_ );
+    if ( osggroup_ ) osggroup_->unref();
+    
+    osggroup_ = node_ = new osg::MatrixTransform;
+    osggroup_->ref();
 }
 
 
@@ -48,15 +44,6 @@ Transformation::~Transformation()
 {
     //node is unreffed in visBase::DataObjectGroup
     transformgroup_->unref();
-}
-
-
-void Transformation::ensureGroup()
-{
-    const bool setgrp = !group_;
-    DataObjectGroup::ensureGroup();
-    if ( group_ && setgrp )
-	transformgroup_->addChild( group_ );
 }
 
 

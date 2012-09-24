@@ -178,8 +178,7 @@ BoxDragger::BoxDragger()
     , osgdraggerroot_( 0 )
     , osgcallbackhandler_( 0 )
 {
-    if ( doOsg() )
-	initOsgDragger();
+    initOsgDragger();
 
     boxmaterial_->ref();
     onoff_->addChild( boxdragger_ );
@@ -274,7 +273,7 @@ BoxDragger::~BoxDragger()
 
 void BoxDragger::initOsgDragger()
 {
-    if ( !doOsg() || osgboxdragger_ )
+    if ( osgboxdragger_ )
 	return;
 
     osgdraggerroot_ = new osg::Switch();
@@ -388,10 +387,8 @@ void BoxDragger::setSpaceLimits( const Interval<float>& x,
     *yinterval_ = y;
     *zinterval_ = z;
 
-    if ( doOsg() )
-    {
-	spaceranges_[0] = x; spaceranges_[1] = y; spaceranges_[2] = z;
-    }
+    spaceranges_[0] = x; spaceranges_[1] = y; spaceranges_[2] = z;
+
 }
 
 

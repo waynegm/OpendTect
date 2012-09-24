@@ -44,7 +44,7 @@ VisualObject::~VisualObject()
 
 VisualObjectImpl::VisualObjectImpl( bool issel )
     : VisualObject( issel )
-    , osgroot_( doOsg() ? new osg::Switch : 0 )
+    , osgroot_( new osg::Switch )
     , root_( new SoSeparator )
     , lockableroot_( 0 )
     , onoff_( new SoSwitch )
@@ -209,7 +209,7 @@ osg::Node* VisualObjectImpl::gtOsgNode()
 
 
 void VisualObjectImpl::addChild( SoNode* nn )
-{ root_->addChild( nn ); }
+{ if ( nn ) root_->addChild( nn ); }
 
 
 void VisualObjectImpl::insertChild( int pos, SoNode* nn )
@@ -224,9 +224,12 @@ int VisualObjectImpl::childIndex( const SoNode* nn ) const
 { return root_->findChild(nn); }
 
 
-void VisualObjectImpl::addChild( osg::Node* nn )
+int VisualObjectImpl::addChild( osg::Node* nn )
 {
-    osgroot_->addChild( nn );
+    if ( !nn )
+	return -1;
+    
+    return osgroot_->addChild( nn );
 }
 
 

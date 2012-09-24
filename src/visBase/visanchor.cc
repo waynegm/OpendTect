@@ -45,7 +45,7 @@ void Anchor::enable( bool yn )
 
 
 SoWWWAnchor* Anchor::getAnchor()
-{ return (SoWWWAnchor*) group_; }
+{ return (SoWWWAnchor*) 0; }
 
 
 

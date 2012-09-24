@@ -61,9 +61,6 @@ public:
 
     virtual const char*		getClassName() const	{ return "Not impl"; }
 
-    static void			setOsg();
-    static bool			doOsg();
-    
     virtual bool		isOK() const		{ return true; }
 
     int				id() const		{ return id_; }
@@ -170,7 +167,6 @@ private:
     int				id_;
     BufferString*		name_;
 
-    static bool			doosg_;
 };
 
 };

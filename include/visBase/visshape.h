@@ -139,6 +139,8 @@ public:
     			/*!< If yn==false, normals are set per vertex */
     bool		getNormalPerFaceBinding() const;
     			/*!< If yn==false, normals are set per vertex */
+    
+    void		setMaterial(Material*);
 
     void		setVertexOrdering(int vo);
     int			getVertexOrdering() const;
@@ -237,8 +239,6 @@ protected:
     		IndexedShape( SoIndexedShape* );
 		IndexedShape( Geometry::PrimitiveSet::PrimitiveType );
     
-    void	updateFromPrimitives();
-
     
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
     Geometry::PrimitiveSet::PrimitiveType	primitivetype_;

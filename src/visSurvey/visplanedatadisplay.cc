@@ -142,18 +142,15 @@ PlaneDataDisplay::PlaneDataDisplay()
     , inl2displaytrans_( 0 )
     , texturerect_( 0 )
 {
-    if ( doOsg() )
-    {
-	inl2displaytrans_ = mVisTrans::create();
-	inl2displaytrans_->ref();
-	addChild( inl2displaytrans_->osgNode() );
+    inl2displaytrans_ = mVisTrans::create();
+    inl2displaytrans_->ref();
+    addChild( inl2displaytrans_->osgNode() );
 
-	texturerect_ = visBase::TextureRectangle::create();
-	inl2displaytrans_->addObject( texturerect_ );
-	texturerect_->setTextureChannels( channels_ );
+    texturerect_ = visBase::TextureRectangle::create();
+    inl2displaytrans_->addObject( texturerect_ );
+    texturerect_->setTextureChannels( channels_ );
 
-	inl2displaytrans_->addObject( dragger_ );
-    }
+    inl2displaytrans_->addObject( dragger_ );
 
     volumecache_.allowNull( true );
     rposcache_.allowNull( true );
@@ -490,11 +487,9 @@ void PlaneDataDisplay::draggerMotion( CallBacker* )
 	    : visBase::DrawStyle::Lines );
     draggermaterial_->setTransparency( showplane ? 0.5f : 0 );
 
-    if ( doOsg() )
-    {
-	dragger_->showPlane( showplane );
-	dragger_->showDraggerBorder( !showplane );
-    }
+ 
+    dragger_->showPlane( showplane );
+    dragger_->showDraggerBorder( !showplane );
 }
 
 
@@ -549,8 +544,8 @@ void PlaneDataDisplay::showManipulator( bool yn )
     dragger_->turnOn( yn );
     rectanglepickstyle_->setStyle( yn ? visBase::PickStyle::Unpickable
 				      : visBase::PickStyle::Shape );
-    if ( doOsg() )
-	texturerect_->enableTraversal( visBase::IntersectionTraversal, !yn );
+
+    texturerect_->enableTraversal( visBase::IntersectionTraversal, !yn );
 }
 
 
@@ -571,11 +566,8 @@ void PlaneDataDisplay::resetManipulation()
     draggerdrawstyle_->setDrawStyle( visBase::DrawStyle::Lines );
     draggermaterial_->setTransparency( 0 );
 
-    if ( doOsg() )
-    {
-	dragger_->showPlane( false );
-	dragger_->showDraggerBorder( true );
-    }
+    dragger_->showPlane( false );
+    dragger_->showDraggerBorder( true );
 }
 
 
@@ -586,11 +578,8 @@ void PlaneDataDisplay::acceptManipulation()
     draggerdrawstyle_->setDrawStyle( visBase::DrawStyle::Lines );
     draggermaterial_->setTransparency( 0 );
 
-    if ( doOsg() )
-    {
-	dragger_->showPlane( false );
-	dragger_->showDraggerBorder( true );
-    }
+    dragger_->showPlane( false );
+    dragger_->showDraggerBorder( true );
 }
 
 

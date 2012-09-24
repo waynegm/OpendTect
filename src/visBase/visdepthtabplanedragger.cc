@@ -205,8 +205,8 @@ DepthTabPlaneDragger::DepthTabPlaneDragger()
     , osgdraggerplane_( 0 )
     , osgcallbackhandler_( 0 )
 {
-    if ( doOsg() )
-	initOsgDragger();
+
+    initOsgDragger();
 
     centers_ += center(); centers_ += center(); centers_ += center();
     sizes_ += size(); sizes_ += size(); sizes_ += size();
@@ -242,7 +242,7 @@ DepthTabPlaneDragger::~DepthTabPlaneDragger()
 
 void DepthTabPlaneDragger::initOsgDragger()
 {
-    if ( !doOsg() || osgdragger_ )
+    if ( osgdragger_ )
 	return;
 
 #if OSG_MIN_VERSION_REQUIRED(3,1,3)

@@ -12,6 +12,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "vispickstyle.h"
 #include "vismaterial.h"
 #include "ranges.h"
+#include "visosg.h"
 #include "samplingdata.h"
 #include "axislayout.h"
 #include "iopar.h"
@@ -25,10 +26,12 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "Inventor/nodes/SoSwitch.h"
 
 #include "SoOD.h"
-#include "SoOneSideRender.h"
 
 #include <osg/Geode>
 #include <osg/Geometry>
+#include <osg/Switch>
+
+#include <osgGeo/OneSideSwitch>
 
 mCreateFactoryEntry( visBase::Annotation );
 
@@ -43,12 +46,9 @@ const char* Annotation::showscalestr()	    { return "Show Scale"; }
 Annotation::Annotation()
     : VisualObjectImpl( false )
     , coords_(new SoCoordinate3)
-    , textswitch_(new SoSwitch)
-    , scaleswitch_(new SoSwitch)
-    , gridlineswitch_(new SoSwitch)
     , pickstyle_(PickStyle::create())
     , texts_(0)
-    , geode_( doOsg() ? new osg::Geode : 0 )
+    , box_( new osg::Geode )
 {
     annotscale_[0] = annotscale_[1] = annotscale_[2] = 1;
 
@@ -59,198 +59,79 @@ Annotation::Annotation()
 
     addChild( coords_ );
 
-    if ( doOsg() )
-    {
-	float pos[8][3] =
-	{
-	     { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, { 0, 1, 0 },
-	     { 1, 0, 0 }, { 1, 0, 1 }, { 1, 1, 1 }, { 1, 1, 0 }
-	};
-
-	const osg::Vec3* ptr = (osg::Vec3*) pos;
-	osg::ref_ptr<osg::Vec3Array> coords = new osg::Vec3Array( 8, ptr );
-	osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
-
-	geometry->setVertexArray( coords );
-
-	GLubyte indices[] = { 0, 1, 1, 2, 2, 3, 3, 0,
-	     		       4, 5, 5, 6, 6, 7, 7, 4,
-			       0, 4, 1, 5, 2, 6, 3, 7 };
-	geometry->addPrimitiveSet(
-		new osg::DrawElementsUByte( GL_LINES, 24, indices  ) );
-	
-	geometry->setColorBinding( osg::Geometry::BIND_OVERALL );
-
-	geode_->addDrawable( geometry );
-	addChild( geode_ );
-    }
     float pos[8][3] =
     {
-	{ 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 0 }, { 0, 1, 1 },
-	{ 1, 0, 0 }, { 1, 0, 1 }, { 1, 1, 0 }, { 1, 1, 1 }
+	 { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, { 0, 1, 0 },
+	 { 1, 0, 0 }, { 1, 0, 1 }, { 1, 1, 1 }, { 1, 1, 0 }
     };
 
-    coords_->point.setValues( 0, 8, pos );
+    const osg::Vec3* ptr = (osg::Vec3*) pos;
+    osg::ref_ptr<osg::Vec3Array> coords = new osg::Vec3Array( 8, ptr );
+    osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
 
-    SoIndexedLineSet* line = new SoIndexedLineSet;
-    addChild( line );
-    line->setName( "Survey box" );
+    geometry->setVertexArray( coords );
 
-    int coordidx = 0;
-    int indexes[] = { 0, 1, 2, 3, 0, -1 };
-    line->coordIndex.setValues( coordidx, 6, indexes );
-    coordidx += 6;
-
-    indexes[0] = 4; indexes[1] = 5; indexes[2] = 6; indexes[3] = 7;
-    indexes[4] = 4;
-    line->coordIndex.setValues( coordidx, 6, indexes );
-    coordidx += 6;
-
-    indexes[0] = 0; indexes[1] = 4; indexes[2] = -1;
-    line->coordIndex.setValues( coordidx, 3, indexes );
-    coordidx += 3;
+    GLubyte indices[] = { 0, 1, 1, 2, 2, 3, 3, 0,
+			   4, 5, 5, 6, 6, 7, 7, 4,
+			   0, 4, 1, 5, 2, 6, 3, 7 };
+    geometry->addPrimitiveSet(
+	    new osg::DrawElementsUByte( GL_LINES, 24, indices  ) );
     
-    indexes[0] = 1; indexes[1] = 5;
-    line->coordIndex.setValues( coordidx, 3, indexes );
-    coordidx += 3;
-    
-    indexes[0] = 2; indexes[1] = 6;
-    line->coordIndex.setValues( coordidx, 3, indexes );
-    coordidx += 3;
-    
-    indexes[0] = 3; indexes[1] = 7;
-    line->coordIndex.setValues( coordidx, 2, indexes );
+    geometry->setColorBinding( osg::Geometry::BIND_OVERALL );
 
-    addChild( textswitch_ );
+    box_->addDrawable( geometry );
+    addChild( box_ );
+    
     texts_ = DataObjectGroup::create();
-    texts_->setSeparate( false );
     texts_->ref();
-    textswitch_->addChild( texts_->getInventorNode() );
-    textswitch_->whichChild = 0;
-
+    addChild( texts_->osgNode() );
+    
 #define mAddText \
     text = Text2::create(); text->setJustification( Text2::Right ); \
     texts_->addObject( text );
 
     Text2* text = 0; mAddText mAddText mAddText
 
-    addChild( scaleswitch_ );
-    scaleswitch_->whichChild = SO_SWITCH_ALL;
-
+    scalegroup_ = new osg::Group;
+    scalegroup_->ref();
+    addChild( scalegroup_ );
+    
     DataObjectGroup* scale = DataObjectGroup::create();
     scale->ref();
-    scale->setSeparate( false );
-    scaleswitch_->addChild( scale->getInventorNode() );
+    scalegroup_->addChild( scale->osgNode() );
     scales_ += scale;
     
     scale = DataObjectGroup::create();
-    scale->setSeparate( false );
     scale->ref();
-    scaleswitch_->addChild( scale->getInventorNode() );
+    scalegroup_->addChild( scale->osgNode() );
     scales_ += scale;
     
     scale = DataObjectGroup::create();
-    scale->setSeparate( false );
     scale->ref();
-    scaleswitch_->addChild( scale->getInventorNode() );
+    scalegroup_->addChild( scale->osgNode() );
     scales_ += scale;
+    
+    gridlines_ = new osg::Geode;
+    gridlines_->ref();
+    
+    osg::ref_ptr<osg::Geometry> gridgeom = new osg::Geometry;
+    gridlines_->addDrawable( gridgeom );
+    
+    osg::ref_ptr<osg::Vec3Array> gridlinecoords = new osg::Vec3Array;
+    osg::ref_ptr<osg::Vec3Array> gridlinenormals = new osg::Vec3Array;
 
-    addChild( gridlineswitch_ );
-    gridlineswitch_->whichChild = SO_SWITCH_ALL;
-
-    gridlinecoords_ = new SoCoordinate3;
-    gridlineswitch_->addChild( gridlinecoords_ );
-
-    onesiderender_ = new SoOneSideRender;
-    gridlineswitch_->addChild( onesiderender_ );
-    onesiderender_->nodes.removeNode( 0 );
-
-    for ( int idx=0; idx<6; idx++ )
-    {
-	SoIndexedLineSet* gridline = new SoIndexedLineSet;
-	gridlines_ += gridline;
-	onesiderender_->nodes.addNode( gridline );
-    }
-
-    onesiderender_->normals.set1Value( 0, SbVec3f( 0,  0,  1 ) );
-    onesiderender_->normals.set1Value( 1, SbVec3f( 0,  0, -1 ) );
-    onesiderender_->normals.set1Value( 2, SbVec3f( 0,  1,  0 ) );
-    onesiderender_->normals.set1Value( 3, SbVec3f( 0, -1,  0 ) );
-    onesiderender_->normals.set1Value( 4, SbVec3f( 1,  0,  0 ) );
-    onesiderender_->normals.set1Value( 5, SbVec3f( -1, 0,  0 ) );
+    gridgeom->setVertexArray( gridlinecoords );
+    gridgeom->setNormalArray( gridlinenormals );
 
     updateTextPos();
 }
 
 
-void Annotation::updateGridLines(int dim)
-{
-    SbVec3f p0;
-    SbVec3f p1;
-    getAxisCoords( dim, p0, p1 );
-    Interval<float> range( p0[dim], p1[dim] );
-    const SamplingData<float> sd = AxisLayout<float>( range ).sd_;
-
-    SbVec3f corners[4];
-    int gridlineidxs[4];
-    if ( dim==0 )
-    {
-	corners[0] = coords_->point[ 0 ];
-	corners[1] = coords_->point[ 3 ];
-	corners[2] = coords_->point[ 7 ];
-	corners[3] = coords_->point[ 4 ];
-	gridlineidxs[0] = 0; gridlineidxs[1] = 3;
-	gridlineidxs[2] = 1; gridlineidxs[3] = 2; 
-    }
-    else if ( dim==1 )
-    {
-	corners[0] = coords_->point[ 0 ];
-	corners[1] = coords_->point[ 1 ];
-	corners[2] = coords_->point[ 5 ];
-	corners[3] = coords_->point[ 4 ];
-	gridlineidxs[0] = 0; gridlineidxs[1] = 5;
-	gridlineidxs[2] = 1; gridlineidxs[3] = 4; 
-    }
-    else
-    {
-	corners[0] = coords_->point[ 0 ];
-	corners[1] = coords_->point[ 1 ];
-	corners[2] = coords_->point[ 2 ];
-	corners[3] = coords_->point[ 3 ];
-	gridlineidxs[0] = 2; gridlineidxs[1] = 5;
-	gridlineidxs[2] = 3; gridlineidxs[3] = 4; 
-    }
-
-    int ci = gridlinecoords_->point.getNum();
-
-    for ( int idx=0; ; idx++ )
-    {
-	const float val = sd.atIndex(idx);
-	if ( val <= range.start )	continue;
-	else if ( val > range.stop )	break;
-
-	corners[0][dim]=corners[1][dim]=corners[2][dim]=corners[3][dim] = val;
-	gridlinecoords_->point.setValues( ci, 4, corners );
-	SoIndexedLineSet* lineset;
-
-#define mAddOneLine( c1, c2 ) \
-	lineset = gridlines_[gridlineidxs[c1]]; \
-	lineset->coordIndex.set1Value( lineset->coordIndex.getNum(), ci+c1 ); \
-	lineset->coordIndex.set1Value( lineset->coordIndex.getNum(), ci+c2 ); \
-	lineset->coordIndex.set1Value( lineset->coordIndex.getNum(), -1 )
-
-	mAddOneLine( 0, 1 );
-	mAddOneLine( 1, 2 );
-	mAddOneLine( 2, 3 );
-	mAddOneLine( 3, 0 );
-
-	ci += 4;
-    }
-}
-
-
 Annotation::~Annotation()
 {
+    scalegroup_->unref();
+    gridlines_->unref();
+    
     scales_[0]->unRef();
     scales_[1]->unRef();
     scales_[2]->unRef();
@@ -259,40 +140,27 @@ Annotation::~Annotation()
 }
 
 
-void Annotation::showText( bool yn )
-{
-    textswitch_->whichChild = yn ? 0 : SO_SWITCH_NONE;
+#define mImplSwitches( str, node ) \
+void Annotation::show##str( bool yn ) \
+{ \
+    if ( yn==is##str##Shown() ) \
+	return; \
+    if ( yn ) \
+	addChild( node ); \
+    else \
+	removeChild( node ); \
+} \
+ \
+ \
+bool Annotation::is##str##Shown() const \
+{ \
+    return childIndex( node ) !=-1; \
 }
-
-
-bool Annotation::isTextShown() const
-{
-    return textswitch_->whichChild.getValue() == 0;
-}
-
-
-void Annotation::showScale( bool yn )
-{
-    scaleswitch_->whichChild = yn ? SO_SWITCH_ALL : SO_SWITCH_NONE;
-}
-
-
-bool Annotation::isScaleShown() const
-{
-    return scaleswitch_->whichChild.getValue() != SO_SWITCH_NONE;
-}
-
-
-void Annotation::showGridLines( bool yn )
-{
-    gridlineswitch_->whichChild = yn ? SO_SWITCH_ALL : SO_SWITCH_NONE;
-}
-
-
-bool Annotation::isGridLinesShown() const
-{
-    return gridlineswitch_->whichChild.getValue() != SO_SWITCH_NONE;
-}
+    
+    
+mImplSwitches( Text, texts_->osgNode() );
+mImplSwitches( Scale, scalegroup_ );
+mImplSwitches( GridLines, gridlines_ );
 
 
 void Annotation::setCubeSampling( const CubeSampling& cs )
@@ -310,13 +178,6 @@ void Annotation::setCubeSampling( const CubeSampling& cs )
     setCorner( 6, inlrg.stop, crlrg.stop, zrg.stop );
     setCorner( 7, inlrg.start, crlrg.stop, zrg.stop );
 
-    onesiderender_->positions.set1Value( 0, SbVec3f( inlrg.center(),  crlrg.center(), zrg.start ) );
-    onesiderender_->positions.set1Value( 1, SbVec3f( inlrg.center(),  crlrg.center(), zrg.stop ) );
-    onesiderender_->positions.set1Value( 2, SbVec3f( inlrg.center(),  crlrg.start,  zrg.center() ) );
-    onesiderender_->positions.set1Value( 3, SbVec3f( inlrg.center(), crlrg.stop,  zrg.center() ) );
-    onesiderender_->positions.set1Value( 4, SbVec3f( inlrg.start,  crlrg.center(),  zrg.center() ) );
-    onesiderender_->positions.set1Value( 5, SbVec3f( inlrg.stop, crlrg.center(),  zrg.center() ) );
-
     updateTextPos();
     updateGridLines();
 }
@@ -325,10 +186,10 @@ void Annotation::setCubeSampling( const CubeSampling& cs )
 
 void Annotation::setCorner( int idx, float x, float y, float z )
 {
-    if ( geode_ && geode_->getNumDrawables() )
+    if ( box_ && box_->getNumDrawables() )
     {
 	 osg::ref_ptr<osg::Geometry> geometry =
-	     (osg::Geometry*) geode_->getDrawable( 0 );
+	     (osg::Geometry*) box_->getDrawable( 0 );
 
 	 osg::Vec3& coord =
 	     ((osg::Vec3*) geometry->getVertexArray()->getDataPointer())[idx];
@@ -387,6 +248,14 @@ void Annotation::updateTextPos()
 
 void Annotation::updateGridLines()
 {
+    /*
+    osg::ref_ptr<osg::Geometry> geometry =
+	(osg::Geometry*) gridlines_->getDrawable( 0 );
+    
+    osg::Vec3Array* normals = mGetOsgVec3Arr( geometry->getNormalArray() );
+    osg::Vec3Array* coords = mGetOsgVec3Arr( geometry->getVertexArray() );
+
+    
     if ( !gridlines_.size() )
 	return;
 
@@ -398,6 +267,74 @@ void Annotation::updateGridLines()
     updateGridLines( 0 );
     updateGridLines( 1 );
     updateGridLines( 2 );
+    
+    void Annotation::updateGridLines(int dim)
+    {
+	SbVec3f p0;
+	SbVec3f p1;
+	getAxisCoords( dim, p0, p1 );
+	Interval<float> range( p0[dim], p1[dim] );
+	const SamplingData<float> sd = AxisLayout<float>( range ).sd_;
+	
+	SbVec3f corners[4];
+	int gridlineidxs[4];
+	if ( dim==0 )
+	{
+	    corners[0] = coords_->point[ 0 ];
+	    corners[1] = coords_->point[ 3 ];
+	    corners[2] = coords_->point[ 7 ];
+	    corners[3] = coords_->point[ 4 ];
+	    gridlineidxs[0] = 0; gridlineidxs[1] = 3;
+	    gridlineidxs[2] = 1; gridlineidxs[3] = 2;
+	}
+	else if ( dim==1 )
+	{
+	    corners[0] = coords_->point[ 0 ];
+	    corners[1] = coords_->point[ 1 ];
+	    corners[2] = coords_->point[ 5 ];
+	    corners[3] = coords_->point[ 4 ];
+	    gridlineidxs[0] = 0; gridlineidxs[1] = 5;
+	    gridlineidxs[2] = 1; gridlineidxs[3] = 4;
+	}
+	else
+	{
+	    corners[0] = coords_->point[ 0 ];
+	    corners[1] = coords_->point[ 1 ];
+	    corners[2] = coords_->point[ 2 ];
+	    corners[3] = coords_->point[ 3 ];
+	    gridlineidxs[0] = 2; gridlineidxs[1] = 5;
+	    gridlineidxs[2] = 3; gridlineidxs[3] = 4;
+	}
+	
+	int ci = gridlinecoords_->point.getNum();
+	
+	for ( int idx=0; ; idx++ )
+	{
+	    const float val = sd.atIndex(idx);
+	    if ( val <= range.start )	continue;
+	    else if ( val > range.stop )	break;
+	    
+	    corners[0][dim]=corners[1][dim]=corners[2][dim]=corners[3][dim] = val;
+	    gridlinecoords_->point.setValues( ci, 4, corners );
+	    SoIndexedLineSet* lineset;
+	    
+#define mAddOneLine( c1, c2 ) \
+lineset = gridlines_[gridlineidxs[c1]]; \
+lineset->coordIndex.set1Value( lineset->coordIndex.getNum(), ci+c1 ); \
+lineset->coordIndex.set1Value( lineset->coordIndex.getNum(), ci+c2 ); \
+lineset->coordIndex.set1Value( lineset->coordIndex.getNum(), -1 )
+	    
+	    mAddOneLine( 0, 1 );
+	    mAddOneLine( 1, 2 );
+	    mAddOneLine( 2, 3 );
+	    mAddOneLine( 3, 0 );
+	    
+	    ci += 4;
+	}
+    }
+    
+    */
+
 
 }
 

@@ -27,7 +27,7 @@ namespace visBase
 TextureCoords::TextureCoords()
     : coords_( new SoTextureCoordinate3 )
     , mutex_( *new Threads::Mutex )
-    , osgcoords_( doOsg() ? new osg::Vec2Array : 0 )
+    , osgcoords_( new osg::Vec2Array )
 {
     if ( coords_ )
     {

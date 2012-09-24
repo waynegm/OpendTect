@@ -83,17 +83,6 @@ int ODMain( int argc, char** argv )
 {
     OD::ModDeps().ensureLoaded( "AllNonUi" );
 
-    char** myargv = argv;
-    int myargc = argc;
-    for ( int iarg=1; iarg<myargc; iarg++ )
-    {
-	if ( !strcmp(myargv[iarg],"--osg") )
-	{
-	    visBase::DataObject::setOsg();
-	    break;
-	}
-    }
-
     PIM().setArgs( argc, argv );
     PIM().loadAuto( false );
 

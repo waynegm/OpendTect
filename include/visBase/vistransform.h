@@ -79,7 +79,6 @@ public:
 private:
 
     virtual		~Transformation();
-    void		ensureGroup();
 
     SoGroup*		transformgroup_;
     SoMatrixTransform*	transform_;

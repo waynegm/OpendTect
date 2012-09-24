@@ -104,14 +104,12 @@ VolumeDisplay::VolumeDisplay()
     , onoffstatus_( true )
     , inl2displaytrans_( 0 )
 {
-    if ( doOsg() )
-    {
-	inl2displaytrans_ = mVisTrans::create();
-	inl2displaytrans_->ref();
-	addChild( inl2displaytrans_->osgNode() );
 
-	inl2displaytrans_->addObject( boxdragger_ );
-    }
+    inl2displaytrans_ = mVisTrans::create();
+    inl2displaytrans_->ref();
+    addChild( inl2displaytrans_->osgNode() );
+
+    inl2displaytrans_->addObject( boxdragger_ );
 
     boxdragger_->ref();
     boxdragger_->setBoxTransparency( 0.7 );
@@ -320,13 +318,6 @@ bool VolumeDisplay::canResetManipulation() const
 
 void VolumeDisplay::resetManipulation()
 {
-    if ( doOsg() )
-	return;
-
-    const Coord3 center = voltrans_->getTranslation();
-    const Coord3 width = voltrans_->getScale();
-    boxdragger_->setCenter( center );
-    boxdragger_->setWidth( Coord3(width.z, width.y, -width.x) );
 }
 
 
@@ -484,13 +475,11 @@ void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
 
     resetManipulation();
 
-    if ( doOsg() )
-    {
-	 boxdragger_->setCenter(
-		 	Coord3(xintv.center(),yintv.center(),zintv.center()) );
-	 boxdragger_->setWidth(
-		 	Coord3(xintv.width(),yintv.width(),zintv.width()) );
-    }
+
+     boxdragger_->setCenter(
+		    Coord3(xintv.center(),yintv.center(),zintv.center()) );
+     boxdragger_->setWidth(
+		    Coord3(xintv.width(),yintv.width(),zintv.width()) );
 }
 
 

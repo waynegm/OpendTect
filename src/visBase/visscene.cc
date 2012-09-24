@@ -81,25 +81,13 @@ Scene::Scene()
     polygonoffset_->setFactor( factor );
     polygonoffset_->setUnits( units );
 
-    selroot_->addChild( polygonoffset_->getInventorNode() );
-
-    //Needed as some ATI-cards dont' have it set.
-    SoTextureMatrixTransform* texturetrans = new SoTextureMatrixTransform;
-    selroot_->addChild( texturetrans );
-
-    selroot_->addChild( environment_ );
-    events_.ref();
-    selroot_->addChild( events_.getInventorNode() );
-    selroot_->addChild( DataObjectGroup::gtInvntrNode() );
     events_.nothandled.notify( mCB(this,Scene,mousePickCB) );
 
-    if ( doOsg() )
-    {
-	osgsceneroot_ = new osg::Group;
-	osgsceneroot_->addChild( DataObjectGroup::gtOsgNode() );
-	osgsceneroot_->addChild( events_.osgNode() );
-	osgsceneroot_->ref();
-    }
+
+    osgsceneroot_ = new osg::Group;
+    osgsceneroot_->addChild( DataObjectGroup::gtOsgNode() );
+    osgsceneroot_->addChild( events_.osgNode() );
+    osgsceneroot_->ref();
 }
 
 
@@ -213,7 +201,7 @@ void Scene::mousePickCB( CallBacker* cb )
 	return;
     }
 
-    if ( doOsg() && eventinfo.dragging )
+    if ( eventinfo.dragging )
     {
 	const TabletInfo* ti = TabletInfo::currentState();
 	if ( ti && ti->maxPostPressDist()<5 )
@@ -256,7 +244,7 @@ void Scene::mousePickCB( CallBacker* cb )
 		 !OD::altKeyboardButton(eventinfo.buttonstate_) )
 	    {
 		DM().selMan().deSelectAll();
-		if ( doOsg() ) events_.setHandled();
+		events_.setHandled();
 	    }
 	}
 
@@ -280,7 +268,7 @@ void Scene::mousePickCB( CallBacker* cb )
 			continue;
 		    }
 		    dataobj->triggerRightClick(&eventinfo);
-		    if ( doOsg() ) events_.setHandled();
+		    events_.setHandled();
 		}
 		else if ( dataobj->selectable() )
 		{
@@ -289,14 +277,14 @@ void Scene::mousePickCB( CallBacker* cb )
 			  !OD::altKeyboardButton(eventinfo.buttonstate_) )
 		    {
 			DM().selMan().select( mousedownid_, true );
-			if ( doOsg() ) events_.setHandled();
+			events_.setHandled();
 		    }
 		    else if ( !OD::shiftKeyboardButton(eventinfo.buttonstate_)&&
 			  !OD::ctrlKeyboardButton(eventinfo.buttonstate_) &&
 			  !OD::altKeyboardButton(eventinfo.buttonstate_) )
 		    {
 			DM().selMan().select( mousedownid_, false );
-			if ( doOsg() ) events_.setHandled();
+			events_.setHandled();
 		    }
 		}
 

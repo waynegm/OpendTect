@@ -460,11 +460,9 @@ HorizonSection::HorizonSection()
 
     wireframematerial_->ref();
 
-    if ( doOsg() )
-    {
-	osghorizon_ = new osgGeo::Horizon3DNode;
-	addChild( osghorizon_ );
-    }
+
+    osghorizon_ = new osgGeo::Horizon3DNode;
+    addChild( osghorizon_ );
 }
 
 

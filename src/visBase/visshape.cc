@@ -38,6 +38,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <osg/Switch>
 #include <osg/Geometry>
 #include <osg/Geode>
+#include <osg/Material>
 
 
 namespace visBase
@@ -49,34 +50,18 @@ const char* Shape::sKeyMaterial() 		{ return  "Material";	}
 
 Shape::Shape( SoNode* shape )
     : shape_( shape )
-    , onoff_( doOsg() ? 0 : new SoSwitch )
+    , onoff_( 0 )
     , texture2_( 0 )
     , texture3_( 0 )
     , material_( 0 )
-    , root_( doOsg() ? 0 : new SoSeparator )
+    , root_( 0 )
     , materialbinding_( 0 )
-    , lifter_( doOsg() ? 0 : ForegroundLifter::create() )
-    , lifterswitch_( doOsg() ? 0 : new SoSwitch )
-    , osgswitch_( doOsg() ? new osg::Switch : 0 )
+    , lifter_( 0 )
+    , lifterswitch_( 0 )
+    , osgswitch_( new osg::Switch )
 {
-    if ( doOsg() )
-    {
-	osgswitch_->ref();
-    }
-    else
-    {
-	onoff_->ref();
-	onoff_->addChild( root_ );
-	onoff_->whichChild = 0;
-	insertNode( shape_ );
-
-	lifterswitch_->ref();
-	lifterswitch_->whichChild = SO_SWITCH_NONE;
-	lifter_->ref();
-	lifter_->setLift(0.8);
-	lifterswitch_->addChild( lifter_->getInventorNode() );
-	insertNode( lifterswitch_ );
-    }
+    
+    osgswitch_->ref();
 }
 
 
@@ -98,17 +83,6 @@ void Shape::turnOnForegroundLifter( bool yn )
 
 void Shape::turnOn(bool n)
 {
-    if ( !doOsg() )
-    {
-	if ( onoff_ ) onoff_->whichChild = n ? 0 : SO_SWITCH_NONE;
-	else if ( !n )
-	{
-	    pErrMsg( "Turning off object without switch");
-	}
-	
-	return;
-    }
-	
     if ( osgswitch_ )
     {
 	if ( n ) osgswitch_->setAllChildrenOn();
@@ -123,11 +97,8 @@ void Shape::turnOn(bool n)
 
 bool Shape::isOn() const
 {
-    if ( doOsg() )
-	return !osgswitch_ ||
+    return !osgswitch_ ||
 	   (osgswitch_->getNumChildren() && osgswitch_->getValue(0) );
-    
-    return !onoff_ || !onoff_->whichChild.getValue();
 }
     
     
@@ -342,8 +313,8 @@ VertexShape::VertexShape( SoVertexShape* shape )
     , texturecoords_( 0 )
     , normalbinding_( 0 )
     , shapehints_( 0 )
-    , geode_( doOsg() ? new osg::Geode : 0 )
-    , osggeom_( doOsg() ? new osg::Geometry : 0 )
+    , geode_( new osg::Geode )
+    , osggeom_( new osg::Geometry )
 {
     if ( geode_ )
     {
@@ -440,7 +411,22 @@ void VertexShape::setNormalPerFaceBinding( bool nv )
 	    : SoNormalBinding::PER_VERTEX;
     }
 }
-
+    
+    
+void VertexShape::setMaterial( Material* mat )
+{
+    Shape::setMaterial( mat );
+    if ( geode_ )
+    {
+	if ( mat )
+	    geode_->getOrCreateStateSet()->setAttribute( mat->getMaterial() );
+	else if ( geode_->getStateSet() )
+	{
+	    geode_->getStateSet()->removeAttribute(
+						osg::StateAttribute::MATERIAL);
+	}
+    }
+}
 
 bool VertexShape::getNormalPerFaceBinding() const
 {
@@ -451,71 +437,38 @@ bool VertexShape::getNormalPerFaceBinding() const
 
 
 #define mCheckCreateShapeHints() \
-    if ( doOsg() ) \
-	return; \
-    if ( !shapehints_ ) \
-    { \
-	shapehints_ = new SoShapeHints; \
-	insertNode( shapehints_ ); \
-    }
+    return;
 
 void VertexShape::setVertexOrdering( int nv )
 {
-    mCheckCreateShapeHints()
-    if ( nv==cClockWiseVertexOrdering() )
-	shapehints_->vertexOrdering = SoShapeHints::CLOCKWISE;
-    else if ( nv==cCounterClockWiseVertexOrdering() )
-	shapehints_->vertexOrdering = SoShapeHints::COUNTERCLOCKWISE;
-    else if ( nv==cUnknownVertexOrdering() )
-	shapehints_->vertexOrdering = SoShapeHints::UNKNOWN_ORDERING;
 }
 
 
 int VertexShape::getVertexOrdering() const
 {
-    if ( !shapehints_ ) return cUnknownVertexOrdering();
-
-    if ( shapehints_->vertexOrdering.getValue()==SoShapeHints::CLOCKWISE )
-	return cClockWiseVertexOrdering();
-    if ( shapehints_->vertexOrdering.getValue()==SoShapeHints::COUNTERCLOCKWISE )
-	return cCounterClockWiseVertexOrdering();
-
     return cUnknownVertexOrdering();
 }
 
 
 void VertexShape::setFaceType( int ft )
 {
-    mCheckCreateShapeHints()
-    shapehints_->faceType = ft==cUnknownFaceType()
-	? SoShapeHints::UNKNOWN_FACE_TYPE
-	: SoShapeHints::CONVEX;
 }
 
 
 int VertexShape::getFaceType() const
 {
-    return shapehints_ && 
-	    shapehints_->faceType.getValue()==SoShapeHints::CONVEX
-	? cConvexFaceType() : cUnknownFaceType();
+    return cUnknownFaceType();
 }
 
 
 void VertexShape::setShapeType( int st )
 {
-    mCheckCreateShapeHints()
-    shapehints_->shapeType = st==cUnknownShapeType()
-	? SoShapeHints::UNKNOWN_SHAPE_TYPE
-	: SoShapeHints::SOLID;
 }
 
 
 int VertexShape::getShapeType() const
 {
-    return shapehints_ && 
-	   shapehints_->shapeType.getValue()==SoShapeHints::SOLID
-	? cSolidShapeType()
-	: cUnknownShapeType();
+    return cUnknownShapeType();
 }
 
 
@@ -542,7 +495,7 @@ SoIndexedShape* createSoClass( Geometry::PrimitiveSet::PrimitiveType tp )
     
     
 IndexedShape::IndexedShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp )
-    : VertexShape( doOsg() ? 0 : createSoClass( tp ) )
+    : VertexShape( 0 )
     , primitivetype_( tp )
 {
     indexedshape_ = (SoIndexedShape*) shape_;
@@ -640,14 +593,11 @@ public:
 void visBase::IndexedShape::addPrimitiveSet( Geometry::IndexedPrimitiveSet* p )
 {
     p->setPrimitiveType( primitivetype_ );
-    if ( doOsg() )
-    {
-	mDynamicCastGet(OSGPrimitiveSet*, osgps, p );
-	osggeom_->addPrimitiveSet( osgps->getPrimitiveSet() );
-    }
+    
+    mDynamicCastGet(OSGPrimitiveSet*, osgps, p );
+    osggeom_->addPrimitiveSet( osgps->getPrimitiveSet() );
     
     primitivesets_ += p;
-    updateFromPrimitives();
 }
     
 
@@ -774,55 +724,16 @@ Geometry::PrimitiveSet*
     PrimitiveSetCreator::doCreate( bool indexed, bool large )
 {
     if ( indexed )
-	return visBase::DataObject::doOsg()
-	    ? (large
+	return large
 	       ? (Geometry::IndexedPrimitiveSet*)
 		new OSGIndexedPrimitiveSet<osg::DrawElementsUInt>
 	       : (Geometry::IndexedPrimitiveSet*)
-		new OSGIndexedPrimitiveSet<osg::DrawElementsUShort> )
-	    : (Geometry::IndexedPrimitiveSet*) new CoinIndexedPrimitiveSet;
+		new OSGIndexedPrimitiveSet<osg::DrawElementsUShort>;
     
-    return visBase::DataObject::doOsg()
-	? (Geometry::IndexedPrimitiveSet*) new OSGRangePrimitiveSet
-	: (Geometry::IndexedPrimitiveSet*) new CoinRangePrimitiveSet;
+    return new OSGRangePrimitiveSet;
+}
+    
 
-}
-    
-    
-void visBase::IndexedShape::updateFromPrimitives()
-{
-    if ( doOsg() )
-    {
-	
-    }
-    else
-    {
-	TypeSet<int> idxs;
-	for ( int idx=0; idx<primitivesets_.size(); idx++ )
-	{
-	    mDynamicCastGet(CoinIndexedPrimitiveSet*, indexed,
-			    primitivesets_[idx])
-	    if ( indexed )
-	    {
-		if ( indexed->size() )
-		{
-		    idxs.append( indexed->indices_ );
-		    
-		}
-	    }
-	    else
-	    {
-		for ( int idy=0; idy<primitivesets_[idx]->size(); idy++ )
-		    idxs += primitivesets_[idx]->get( idy );
-	    }
-	    
-	    idxs += -1;
-	}
-	
-	indexedshape_->coordIndex.setValues( 0, idxs.size(), idxs.arr() );
-    }
-}
-    
 
     
 } // namespace visBase

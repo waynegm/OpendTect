@@ -1506,20 +1506,18 @@ void ui3DViewer::setViewing( bool yn )
 
 bool ui3DViewer::isViewing() const
 {
-    if ( sobody_ )
-	return sobody_->isViewing();
-
     return osgbody_->isViewing();
 }
 
 void ui3DViewer::rotateH( float angle )
-    { sobody_->uiRotateHor(angle); }
+{ if( sobody_ ) sobody_->uiRotateHor(angle); }
 
 void ui3DViewer::rotateV( float angle )
-    { sobody_->uiRotateVer(angle); }
+{ if ( sobody_ ) sobody_->uiRotateVer(angle); }
 
 void ui3DViewer::dolly( float rel )
-    { sobody_->uiZoom(rel, 0); }
+{ if ( sobody_ ) sobody_->uiZoom(rel, 0); }
+
 
 float ui3DViewer::getCameraZoom()
 {
@@ -1557,10 +1555,16 @@ void ui3DViewer::setCameraZoom( float val )
 }
 
 void ui3DViewer::anyWheelStart()
-    { sobody_->anyWheelStart(); }
+{
+    if ( sobody_ ) sobody_->anyWheelStart();
+}
 
 void ui3DViewer::anyWheelStop()
-    { sobody_->anyWheelStop(); }
+{
+    if ( sobody_ )
+	sobody_->anyWheelStop();
+}
+
 
 void ui3DViewer::align()
 {

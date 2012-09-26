@@ -175,21 +175,58 @@ void uiStratLayerModel::doBasicLayerModel()
 
 void uiStratLayerModel::doLayerModel( const char* modnm )
 {
-    uiStratLayerModelLauncher launcher;
-    launcher.doLayerModel( &StratTreeWin(), modnm );
+    if ( Strat::RT().isEmpty() )
+    {
+	if ( uiMSG().askContinue( 
+		"No stratigraphic model found, please create one first" ) )
+	    StratTreeWin().popUp();
+    }
+    else
+    {
+	uiStratLayerModelLauncher launcher;
+	launcher.doLayerModel( &StratTreeWin(), modnm );
+    }
 }
 
+
+class uiStratLayerModelLMProvider : public Strat::LayerModelProvider
+{
+public:
+
+Strat::LayerModel& get()
+{
+    return useed_ ? modled_ : modl_;
+}
+
+void setEmpty()
+{
+    modl_.setEmpty();
+    modled_.setEmpty();
+    useed_ = false;
+}
+
+void copyToEdited()
+{
+    modled_ = modl_;
+    useed_ = true;
+}
+
+    Strat::LayerModel		modl_;
+    Strat::LayerModel		modled_;
+    bool			useed_;
+
+};
 
 uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
     : uiMainWin(p,"",0,false)
     , desc_(*new Strat::LayerSequenceGenDesc(Strat::RT()))
-    , modl_(*new Strat::LayerModel)
     , elpropsel_(0)				   
     , descctio_(*mMkCtxtIOObj(StratLayerSequenceGenDesc))
-    , analtb_(0)				   
+    , analtb_(0)
+    , lmp_(*new uiStratLayerModelLMProvider)
     , newModels(this)				   
     , levelChanged(this)				   
-    , waveletChanged(this)				   
+    , waveletChanged(this)  
 {
     setDeleteOnClose( true );
 
@@ -217,11 +254,11 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
 
     modtools_ = new uiStratLayModEditTools( botgrp );
     gentools_ = new uiStratGenDescTools( gengrp );
-    moddisp_ = seqdisp_->getLayModDisp( *modtools_, modl_ );
+    moddisp_ = seqdisp_->getLayModDisp( *modtools_, lmp_ );
     if ( !moddisp_ )
 	return;
 
-    synthdisp_ = new uiStratSynthDisp( topgrp, modl_ );
+    synthdisp_ = new uiStratSynthDisp( topgrp, lmp_.modl_ );
     analtb_ = new uiToolBar( this, "Analysis toolbar", uiToolBar::Right );
     uiToolButtonSetup tbsu( "xplot", "Attributes vs model properties",
 	   		    mCB(this,uiStratLayerModel,xPlotReq) );
@@ -274,7 +311,7 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
 uiStratLayerModel::~uiStratLayerModel()
 {
     delete &desc_;
-    delete &modl_;
+    delete &lmp_;
     delete descctio_.ioobj; delete &descctio_;
     StratTreeWin().changeLayerModelNumber( false );
 }
@@ -407,7 +444,7 @@ void uiStratLayerModel::xPlotReq( CallBacker* )
     if ( !checkUnscaledWavelet() )
 	return;
 
-    uiStratSynthCrossplot dlg( this, modl_, synthdisp_->getSynthetics() );
+    uiStratSynthCrossplot dlg( this, layerModel(), synthdisp_->getSynthetics());
     if ( dlg.errMsg() )
 	{ uiMSG().error( dlg.errMsg() ); return; } 
     const char* lvlnm = modtools_->selLevel();
@@ -528,7 +565,7 @@ bool uiStratLayerModel::openGenDesc()
 
     seqdisp_->setNeedSave( false );
     seqdisp_->descHasChanged();
-    modl_.setEmpty();
+    lmp_.setEmpty();
     moddisp_->modelChanged();
     synthdisp_->modelChanged();
     delete elpropsel_; elpropsel_ = 0;
@@ -564,10 +601,11 @@ void uiStratLayerModel::genModels( CallBacker* )
     if ( nrmods < 1 )
 	{ uiMSG().error("Please enter a valid number of models"); return; }
 
-    modl_.setEmpty();
-    modl_.propertyRefs() = seqdisp_->desc().propSelection();
+    lmp_.setEmpty();
+    lmp_.modl_.propertyRefs() = seqdisp_->desc().propSelection();
+
     uiTaskRunner tr( this );
-    Strat::LayerModelGenerator ex( desc_, modl_, nrmods );
+    Strat::LayerModelGenerator ex( desc_, lmp_.get(), nrmods );
     tr.execute( ex );
 
     setModelProps();
@@ -583,14 +621,15 @@ void uiStratLayerModel::genModels( CallBacker* )
 void uiStratLayerModel::setModelProps()
 {
     BufferStringSet nms;
-    for ( int idx=1; idx<modl_.propertyRefs().size(); idx++ )
-	nms.add( modl_.propertyRefs()[idx]->name() );
+    for ( int idx=1; idx<lmp_.modl_.propertyRefs().size(); idx++ )
+	nms.add( lmp_.modl_.propertyRefs()[idx]->name() );
     modtools_->setProps( nms );
     nms.erase(); const Strat::LevelSet& lvls = Strat::LVLS();
     for ( int idx=0; idx<lvls.size(); idx++ )
 	nms.add( lvls.levels()[idx]->name() );
     modtools_->setLevelNames( nms );
-    nms.erase(); const Strat::ContentSet& conts = modl_.refTree().contents();
+    nms.erase();
+    const Strat::ContentSet& conts = lmp_.modl_.refTree().contents();
     for ( int idx=0; idx<conts.size(); idx++ )
 	nms.add( conts[idx]->name() );
     modtools_->setContentNames( nms );
@@ -620,7 +659,8 @@ void uiStratLayerModel::setElasticProps()
 	    return;
     }
 
-    modl_.addElasticPropSel( *elpropsel_ );
+    lmp_.modl_.addElasticPropSel( *elpropsel_ );
+    lmp_.modled_.addElasticPropSel( *elpropsel_ );
 }
 
 
@@ -632,6 +672,7 @@ bool uiStratLayerModel::closeOK()
 
 void uiStratLayerModel::displayFRResult( SyntheticData* synthdata )
 {
+    lmp_.useed_ = (bool)synthdata;
     synthdisp_->displaySynthetic( synthdata ? synthdata
 	    				: synthdisp_->getCurrentSyntheticData() );
     moddisp_->modelChanged();
@@ -641,4 +682,48 @@ void uiStratLayerModel::displayFRResult( SyntheticData* synthdata )
 SyntheticData* uiStratLayerModel::getCurrentSyntheticData() const
 {                                                                                 
     return synthdisp_->getCurrentSyntheticData();
+}
+
+
+void uiStratLayerModel::prepareFluidRepl()
+{
+    lmp_.copyToEdited();
+    if ( lmp_.get().propertyRefs().find("SVel") == -1 )
+	lmp_.get().propertyRefs() += new PropertyRef( "SVel", PropertyRef::Vel );
+}
+
+
+const Strat::LayerModel& uiStratLayerModel::layerModelOriginal() const
+{
+    return lmp_.modl_;
+}
+
+
+Strat::LayerModel& uiStratLayerModel::layerModelOriginal()
+{
+    return lmp_.modl_;
+}
+
+
+const Strat::LayerModel& uiStratLayerModel::layerModelEdited() const
+{
+    return lmp_.modled_;
+}
+
+
+Strat::LayerModel& uiStratLayerModel::layerModelEdited()
+{
+    return lmp_.modled_;
+}
+
+
+const Strat::LayerModel& uiStratLayerModel::layerModel() const
+{
+    return lmp_.get();
+}
+
+
+Strat::LayerModel& uiStratLayerModel::layerModel()
+{
+    return lmp_.get();
 }

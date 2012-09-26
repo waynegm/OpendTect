@@ -30,7 +30,15 @@ static const char* rcsID mUnusedVar = "$Id$";
 
 static std::ostream* dbglogstrm = 0;
 
-static bool doisudfmsgs = GetEnvVarYN( "OD_SHOW_NOT_NORMAL_NUMBER_MSGS" );
+static bool doisudfmsgs = false;
+
+
+mExternC(Basic) void od_debug_init(void)
+{
+    doisudfmsgs  = GetEnvVarYN( "OD_SHOW_NOT_NORMAL_NUMBER_MSGS" );
+}
+
+
 bool dbgIsUdf( float val )
 {
     if ( !Math::IsNormalNumber(val) )
@@ -76,7 +84,8 @@ static int getMask()
 	    {
 		delete dbglogstrm; dbglogstrm = 0;
 		msg = "Cannot open debug log file '";
-		msg += dbglogfnm; msg == "': reverting to stdout";
+		msg += dbglogfnm;
+		msg += "': reverting to stdout";
 		message( msg );
 	    }
 	}
@@ -103,7 +112,7 @@ bool isOn( int flag )
 void forceCrash( bool withdump )
 {
     if ( withdump )
-	SignalHandling::theinst_.doStop( 6, false ); // 6 = SIGABRT
+	SignalHandling::theinst_->doStop( 6, false ); // 6 = SIGABRT
     else
 	{ char* ptr = 0; *ptr = 0; }
 }
@@ -189,5 +198,6 @@ extern "C" void od_debug_messagef( int flag, const char* msg )
     { DBG::message(flag,msg); }
 extern "C" void od_debug_putProgInfo( int argc, char** argv )
     { DBG::putProgInfo(argc,argv); }
+
 extern "C" void od_putProgInfo( int argc, char** argv )
-    { od_debug_putProgInfo(argc,argv); }
+{ od_debug_putProgInfo(argc,argv); }

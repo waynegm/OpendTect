@@ -23,18 +23,24 @@ static const char* rcsID mUnusedVar = "$Id$";
 
 #ifdef __debug__
 # define MAX_ITER	2000
-static bool lyoutdbg = GetEnvVarYN("DTECT_DEBUG_LAYOUT");
+static bool lyoutdbg = false;
 #else
 # define MAX_ITER	10000
 #endif
 
+mUseQtnamespace
+
 //------------------------------------------------------------------------------
 
-i_LayoutItem::i_LayoutItem( i_LayoutMngr& m, mQtclass(QLayoutItem&) itm ) 
+i_LayoutItem::i_LayoutItem( i_LayoutMngr& m, QLayoutItem& itm ) 
     : mngr_( m ), qlayoutitm( &itm ) 
     , preferred_pos_inited( false ), minimum_pos_inited( false )
     , prefSzDone( false ), hsameas( false ), vsameas( false )
 {
+#ifdef __debug__
+    static bool lyoutdbg_loc = GetEnvVarYN("DTECT_DEBUG_LAYOUT");
+    lyoutdbg = lyoutdbg_loc;
+#endif
 }
 
 i_LayoutItem::~i_LayoutItem()
@@ -93,8 +99,8 @@ void i_LayoutItem::commitGeometrySet( bool store2prefpos )
     }
 #endif
 
-    qlayoutitm->setGeometry ( mQtclass(QRect) ( mPos.left(), mPos.top(), 
-                                        mPos.hNrPics(), mPos.vNrPics() )); 
+    qlayoutitm->setGeometry ( QRect ( mPos.left(), mPos.top(), 
+                                      mPos.hNrPics(), mPos.vNrPics() )); 
 }
 
 

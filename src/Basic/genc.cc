@@ -8,12 +8,14 @@
 static const char* rcsID mUnusedVar = "$Id$";
 
 #include "genc.h"
-#include "string2_c.h"
 #include "envvars.h"
 #include "mallocdefs.h"
 #include "debugmasks.h"
 #include "oddirs.h"
 #include "svnversion.h"
+#include "bufstring.h"
+#include "ptrman.h"
+#include "filepath.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -32,10 +34,10 @@ static const char* rcsID mUnusedVar = "$Id$";
 #endif
 
 static int insysadmmode_ = 0;
-mGlobal( Basic ) int InSysAdmMode(void);
-mGlobal( Basic ) int InSysAdmMode(void) { return insysadmmode_; }
-mGlobal( Basic ) void SetInSysAdmMode(void);
-mGlobal( Basic ) void SetInSysAdmMode(void) { insysadmmode_ = 1; }
+
+mExternC( Basic ) int InSysAdmMode(void) { return insysadmmode_; }
+
+mExternC( Basic ) void SetInSysAdmMode(void) { insysadmmode_ = 1; }
 
 #ifdef __win__
 const char* GetLocalIP(void)
@@ -96,7 +98,9 @@ void PutIsLittleEndian( unsigned char* ptr )
 
 #ifdef __msvc__
 #include <process.h>
+#include <direct.h>
 #define getpid	_getpid
+#define getcwd  _getcwd
 #endif
 
 int GetPID()
@@ -130,8 +134,7 @@ void NotifyExitProgram( PtrAllVoidFn fn )
 }
 
 
-mGlobal( Basic ) void forkProcess(void);
-void forkProcess(void)
+mExternC(Basic) void forkProcess(void)
 {
 #ifndef __win__
     switch ( fork() )
@@ -189,7 +192,7 @@ void ExitProgram( int ret )
 
 /*-> envvar.h */
 
-char* GetOSEnvVar( const char* env )
+mExternC(Basic) char* GetOSEnvVar( const char* env )
 {
     return getenv( env );
 }
@@ -236,7 +239,7 @@ static void loadEntries( const char* fnm, int* pnrentries,
 }
 
 
-const char* GetEnvVar( const char* env )
+mExternC(Basic) const char* GetEnvVar( const char* env )
 {
     static int filesread = 0;
     static int nrentries = 0;
@@ -248,6 +251,14 @@ const char* GetEnvVar( const char* env )
 
     if ( !filesread )
     {
+	/* TODO: Enable this and nail out all static initializations.
+	if ( GetArgC()==-1 )
+	{
+	    //We should not be here before SetProgramInfo() is called.
+	    ExitProgram( 1 );
+	}
+	 */
+	    
 	filesread = 1;
 	loadEntries( GetSettingsFileName("envvars"), &nrentries, entries );
 	loadEntries( GetSetupDataFileName(ODSetupLoc_ApplSetupOnly,"EnvVars",1),
@@ -266,28 +277,28 @@ const char* GetEnvVar( const char* env )
 }
 
 
-int GetEnvVarYN( const char* env )
+mExternC(Basic) int GetEnvVarYN( const char* env )
 {
     const char* s = GetEnvVar( env );
     return !s || *s == '0' || *s == 'n' || *s == 'N' ? 0 : 1;
 }
 
 
-int GetEnvVarIVal( const char* env, int defltval )
+mExternC(Basic) int GetEnvVarIVal( const char* env, int defltval )
 {
     const char* s = GetEnvVar( env );
     return s ? atoi(s) : defltval;
 }
 
 
-double GetEnvVarDVal( const char* env, double defltval )
+mExternC(Basic) double GetEnvVarDVal( const char* env, double defltval )
 {
     const char* s = GetEnvVar( env );
     return s ? atof(s) : defltval;
 }
 
 
-int SetEnvVar( const char* env, const char* val )
+mExternC(Basic) int SetEnvVar( const char* env, const char* val )
 {
     char* buf;
     if ( !env || !*env ) return mC_False;
@@ -324,7 +335,7 @@ static void writeEntries( const char* fnm, int nrentries,
 }
 
 
-int WriteEnvVar( const char* env, const char* val )
+mExternC(Basic) int WriteEnvVar( const char* env, const char* val )
 {
     int nrentries = 0;
     GetEnvVarEntry* entries[mMaxNrEnvEntries];
@@ -364,19 +375,66 @@ int WriteEnvVar( const char* env, const char* val )
 }
 
 
-int GetSubversionRevision(void)
+mExternC(Basic) int GetSubversionRevision(void)
 { return mSVN_VERSION; }
 
 
-const char* GetSubversionUrl(void)
+mExternC(Basic) const char* GetSubversionUrl(void)
 { return mSVN_URL; }
 
 
-char GetEnvSeparChar()
+mExternC(Basic) char GetEnvSeparChar()
 {
 #ifdef __win__
     return ';';
 #else
     return ':';
 #endif
+}
+
+
+int argc = -1;
+BufferString initialdir;
+char** argv = 0;
+
+
+mExternC(Basic) char** GetArgV(void)
+{ return argv; }
+
+
+mExternC(Basic) int GetArgC(void)
+{ return argc; }
+
+
+mExternC(Basic) void SetProgramArgs( int newargc, char** newargv )
+{
+    getcwd( initialdir.buf(), initialdir.minBufSize() );
+
+    argc = newargc;
+    argv = newargv;
+    
+    od_putProgInfo( argc, argv );
+}
+
+
+mExternC(Basic) const char* GetFullExecutablePath( void )
+{
+    static char* res = 0;
+    if ( !res )
+    {
+	FilePath executable = GetArgV()[0];
+	if ( !executable.isAbsolute() )
+	{
+	    FilePath filepath = initialdir.buf();
+	    filepath.add( GetArgV()[0] );
+	    executable = filepath;
+	}
+	
+	BufferString fullpath = executable.fullPath();
+	res = new char[fullpath.size()+1];
+	fullpath.fill( res );
+	
+    }
+    
+    return res;
 }

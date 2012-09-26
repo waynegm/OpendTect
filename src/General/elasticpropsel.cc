@@ -163,7 +163,7 @@ void ElasticFormulaRepository::addRockPhysicsFormulas()
 		else
 		{
 		    if ( rpf->vardefs_.validIdx( varidx ) )
-			fm.variables().add( rpf->vardefs_[varidx]->name() );
+			fm.variables().add( rpf->vardefs_[varidx]->desc_ );
 		    varidx++;
 		}
 	    }
@@ -426,7 +426,9 @@ float ElasticPropGen::getVal(const ElasticFormula& ef,
 	}
 	expr->setVariableValue( idx, val );
     }
-    return val = expr ? expr->getValue() : val;
+    val = expr ? expr->getValue() : val;
+    delete expr;
+    return val;
 }
 
 

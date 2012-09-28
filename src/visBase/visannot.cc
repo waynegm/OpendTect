@@ -31,8 +31,6 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <osg/Geometry>
 #include <osg/Switch>
 
-#include <osgGeo/OneSideSwitch>
-
 mCreateFactoryEntry( visBase::Annotation );
 
 namespace visBase

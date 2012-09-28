@@ -321,7 +321,7 @@ void ui3DViewerBody::setSceneID( int sceneid )
 
 	mDynamicCastGet(osg::Camera*, osgcamera, camera_->osgNode() );
 	osgcamera->setGraphicsContext( getGraphicsContext() );
-	osgcamera->setClearColor( osg::Vec4(0, 0, 0, 1.0) );
+	osgcamera->setClearColor( osg::Vec4(0.8f, 0.8f, 0.8f, 1.0f) );
 	if ( viewport_ ) viewport_->unref();
 	viewport_ = new osg::Viewport(0, 0, 600, 400 );
 	viewport_->ref();

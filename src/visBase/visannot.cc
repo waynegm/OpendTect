@@ -216,7 +216,8 @@ void Annotation::setText( int dim, const char* string )
 	text->setText( string );
 }
 
-
+    
+/*
 void Annotation::setTextColor( int dim, const Color& col )
 {
     Text2* text = (Text2*)texts_->getObject( dim );
@@ -235,7 +236,7 @@ void Annotation::updateTextColor( const Color& col )
     updateTextPos();
 }
 
-
+*/
 void Annotation::updateTextPos()
 {
     updateTextPos( 0 );

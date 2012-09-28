@@ -66,10 +66,6 @@ public:
     void			setAnnotScale(int dim,int scale);
 
     void			setText( int dim, const char * );
-    void			setTextColor(int dim,const Color&);
-    const Color&		getColor()		{return annotcolor_;}
-    void			updateTextColor(const Color&);
-
     void			fillPar( IOPar&, TypeSet<int>& ) const;
     int				usePar( const IOPar& );
 

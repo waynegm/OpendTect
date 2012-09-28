@@ -598,14 +598,6 @@ const mVisTrans* DepthTabPlaneDragger::getDisplayTransformation() const
 
 void DepthTabPlaneDragger::setOwnShape( SoNode* newnode )
 {
-    SoSeparator* newsep = dynamic_cast<SoSeparator*>(newnode);
-    if ( !newsep )
-    {
-	newsep = new SoSeparator;
-	newsep->addChild( newnode );
-    }
-
-    dragger_->setPart("translator", newsep );
 }
 
 

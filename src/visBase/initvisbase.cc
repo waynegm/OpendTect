@@ -129,7 +129,6 @@ mDefModInitFn(visBase)
     visBase::RandomTrackDragger::initClass();
     visBase::RectangleDragger::initClass();
     visBase::Rectangle::initClass();
-    visBase::RotationDragger::initClass();
     visBase::Scene::initClass();
     visBase::SceneColTab::initClass();
     visBase::ShapeHints::initClass();
@@ -152,7 +151,6 @@ mDefModInitFn(visBase)
     visBase::TextureChannel2VolData::initClass();
     visBase::TextureRectangle::initClass();
     visBase::Transformation::initClass();
-    visBase::Rotation::initClass();
     visBase::TriangleStripSet::initClass();
     visBase::ObliqueSlice::initClass();
     visBase::OrthogonalSlice::initClass();

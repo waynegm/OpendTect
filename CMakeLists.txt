@@ -51,7 +51,6 @@ SET(OD_MODULES
 )
 
 SET( OD_PLUGINS
-        Annotations
 	Bouncy
 	ExpAttribs
 	GapDecon

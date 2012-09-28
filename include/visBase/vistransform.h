@@ -80,40 +80,9 @@ private:
 
     virtual		~Transformation();
 
-    SoGroup*		transformgroup_;
-    SoMatrixTransform*	transform_;
-
     osg::MatrixTransform* node_;
 
     static const char*	matrixstr();
-
-    virtual SoNode*	gtInvntrNode();
-};
-
-
-/*!Rotation of following objects in 3d.*/
-
-
-
-mClass(visBase) Rotation : public DataObject
-{
-public:
-    static Rotation*	create()
-			mCreateDataObj(Rotation);
-
-    void		set(const Coord3& vec,double angle);
-    void		set(const Quaternion&);
-    void		get(Quaternion&) const;
-
-    Coord3		transform(const Coord3&) const;
-    Coord3		transformBack(const Coord3&) const;
-
-private:
-    virtual		~Rotation();
-
-    SoRotation*		rotation_;
-
-    virtual SoNode*	gtInvntrNode();
 
 };
 

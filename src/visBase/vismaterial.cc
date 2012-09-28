@@ -13,8 +13,6 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "visosg.h"
 #include "iopar.h"
 
-#include <Inventor/nodes/SoMaterial.h>
-
 #include <osg/Material>
 #include <osg/Array>
 
@@ -32,8 +30,7 @@ const char* Material::sKeyShininess()		{ return "Shininess"; }
 const char* Material::sKeyTransparency()	{ return "Transparency"; }
 
 Material::Material()
-    : coinmaterial_( new SoMaterial )
-    , material_( new osg::Material )
+    : material_( new osg::Material )
     , colorarray_( 0 )
     , ambience_( 0.8 )
     , specularintensity_( 0 )
@@ -42,7 +39,7 @@ Material::Material()
     , change( this )
 {
     material_->ref();
-    coinmaterial_->ref();
+    material_->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE  );
     setMinNrOfMaterials(0);
     updateMaterial(0);
 }
@@ -52,7 +49,6 @@ Material::~Material()
 {
     material_->unref();
     if ( colorarray_ ) colorarray_->unref();
-    coinmaterial_->unref();
 }
     
 
@@ -143,29 +139,59 @@ mSetGetProperty( float, Shininess, shininess_ );
 
 void Material::updateMaterial(int idx)
 {
+    const osg::Vec4 diffuse(color_[0].r() * diffuseintencity_[idx]/255,
+			    color_[0].g() * diffuseintencity_[idx]/255,
+			    color_[0].b() * diffuseintencity_[idx]/255,
+			    transparency_[idx]);
+    
     if ( !idx )
     {
-	coinmaterial_->ambientColor.set1Value( 0, color_[0].r() * ambience_/255,
-					     color_[0].g() * ambience_/255,
-					     color_[0].b() * ambience_/255 );
-	coinmaterial_->specularColor.set1Value( 0,
-		    color_[0].r() * specularintensity_/255,
-		    color_[0].g() * specularintensity_/255,
-		    color_[0].b() * specularintensity_/255 );
-
-	coinmaterial_->emissiveColor.set1Value( idx,
-		    color_[0].r() * emmissiveintensity_/255,
-		    color_[0].g() * emmissiveintensity_/255,
-		    color_[0].b() * emmissiveintensity_/255);
-
-	coinmaterial_->shininess.set1Value(0, shininess_ );
+	
+	material_->setAmbient( osg::Material::FRONT_AND_BACK,
+			      osg::Vec4(color_[0].r() * ambience_/255,
+				   color_[0].g() * ambience_/255,
+				   color_[0].b() * ambience_/255,
+				   transparency_[idx]) );
+	material_->setSpecular( osg::Material::FRONT_AND_BACK,
+			      osg::Vec4(color_[0].r() * specularintensity_/255,
+					color_[0].g() * specularintensity_/255,
+					color_[0].b() * specularintensity_/255,
+					transparency_[idx]) );
+	material_->setEmission( osg::Material::FRONT_AND_BACK,
+			      osg::Vec4(color_[0].r() * emmissiveintensity_/255,
+					color_[0].g() * emmissiveintensity_/255,
+					color_[0].b() * emmissiveintensity_/255,
+					transparency_[idx]) );
+	material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
+	
+	material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
+	if ( colorarray_ )
+	{
+	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(colorarray_);
+	    if ( colarr.size() )
+		colarr[0] = diffuse;
+	    else
+		colarr.push_back( diffuse );
+	}
     }
+    else
+    {
+	if ( !colorarray_ )
+	{
+	    colorarray_ = new osg::Vec4Array;
+	    colorarray_->ref();
+	    mGetOsgVec4Arr(colorarray_)->push_back( diffuse );
+	}
+	else
+	{
+	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(colorarray_);
 
-    coinmaterial_->transparency.set1Value( idx, transparency_[idx] );
-    coinmaterial_->diffuseColor.set1Value( idx,
-		color_[idx].r() * diffuseintencity_[idx]/255,
-		color_[idx].g() * diffuseintencity_[idx]/255,
-		color_[idx].b() * diffuseintencity_[idx]/255 );
+	    if ( colarr.size()<=idx )
+		colarr.resize( idx+1 );
+	    
+	    colarr[idx] = diffuse;
+	}
+    }
 
     change.trigger();
 }
@@ -184,9 +210,6 @@ void Material::setMinNrOfMaterials(int minnr)
 	transparency_ += 0.0;
     }
 }
-
-
-SoNode* Material::gtInvntrNode() { return coinmaterial_; }
 
 
 int Material::usePar( const IOPar& iopar )

@@ -17,7 +17,6 @@ ________________________________________________________________________
 #include "visdata.h"
 #include "color.h"
 
-class SoMaterial;
 namespace osg {
     class Material;
     class Array;
@@ -92,8 +91,6 @@ protected:
     float		emmissiveintensity_;
     float		shininess_;
 
-    SoMaterial*		coinmaterial_;
-    
     osg::Material*	material_;
     osg::Array*		colorarray_;
 
@@ -104,9 +101,6 @@ protected:
     static const char*	sKeyEmmissiveIntensity();
     static const char*	sKeyShininess();
     static const char*	sKeyTransparency();
-
-    virtual SoNode*	gtInvntrNode();
-
 };
 
 } // namespace visBase

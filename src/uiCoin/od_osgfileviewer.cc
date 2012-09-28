@@ -1,85 +1,135 @@
 /*+
  * (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
- * AUTHOR   : Jaap Glas
- * DATE     : Sep 2012
+ * AUTHOR   : Kristofer Tingdahl
+ * DATE     : May 2000
 -*/
-static const char* __rcsID mUnusedVar = "$Id$";
 
-#include <VolumeViz/nodes/SoVolumeRendering.h>
+static const char* rcsID mUnusedVar = "$Id$";
 
-#include <Inventor/Qt/SoQt.h>
-#include <Inventor/Qt/viewers/SoQtExaminerViewer.h>
-#include <Inventor/SoInput.h>
-#include <Inventor/lists/SbStringList.h>
-#include <Inventor/nodes/SoSeparator.h>
+#include "genc.h"
+#include "bufstring.h"
+#include "file.h"
 
-#ifdef USESOODCLASSES
-# include "moddepmgr.h"
-# include "file.h"
-# include "uifiledlg.h"
-# ifdef __msvc__
-#  include "winmain.h"
-# endif
-#endif
+#include <QtGui/QApplication>
+#include <QtGui/QGridLayout>
 
-int main( int narg, char** argv )
+#include <osgViewer/Viewer>
+
+#include <osgViewer/ViewerEventHandlers>
+
+#include <osgGA/TrackballManipulator>
+
+#include <osgDB/ReadFile>
+
+#include <osgQt/GraphicsWindowQt>
+
+#include <iostream>
+
+
+#include <QtCore/QTimer>
+#include <QtGui/QApplication>
+#include <QtGui/QGridLayout>
+
+#include <osgViewer/CompositeViewer>
+#include <osgViewer/ViewerEventHandlers>
+
+#include <osgGA/TrackballManipulator>
+
+#include <osgDB/ReadFile>
+
+#include <osgQt/GraphicsWindowQt>
+
+#include <iostream>
+
+class ViewerWidget : public QWidget, public osgViewer::CompositeViewer
 {
-    QWidget* myWindow = SoQt::init( narg, argv, argv[0] );
-
-#ifdef USESOODCLASSES
-    OD::ModDeps().ensureLoaded( "SoOD" );
-#endif
-
-    if ( myWindow==NULL ) return 1;
-
-    const char* filename = 0;
-    if ( narg==2 )
-	filename = argv[1];
-#ifdef USESOODCLASSES
-    BufferString filebuf = filename;
-
-    while ( filebuf.isEmpty() || !File::exists( filebuf.buf() ) )
+public:
+    ViewerWidget(const char* filename) : QWidget()
     {
-	uiFileDialog dlg( 0, uiFileDialog::ExistingFile, 0,
-			  "IV files (*.iv)", "Select file to view" );
-	dlg.setAllowAllExts( true );
-	if ( !dlg.go() )
-	    return 1;
+        setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
 
-	filename = filebuf = dlg.fileName();
+        QWidget* widget1 = addViewWidget( createCamera(0,0,100,100), osgDB::readNodeFile(filename) );
+        
+        QGridLayout* grid = new QGridLayout;
+        grid->addWidget( widget1, 0, 0 );
+        setLayout( grid );
+
+        connect( &_timer, SIGNAL(timeout()), this, SLOT(update()) );
+        _timer.start( 10 );
     }
-#endif
-
-    if ( !filename || !*filename )
+    
+    QWidget* addViewWidget( osg::Camera* camera, osg::Node* scene )
     {
-	printf( "No filename given" );
-	exit( 1 );
+        osgViewer::View* view = new osgViewer::View;
+        view->setCamera( camera );
+        addView( view );
+        
+        view->setSceneData( scene );
+        view->addEventHandler( new osgViewer::StatsHandler );
+        view->setCameraManipulator( new osgGA::TrackballManipulator );
+        
+        osgQt::GraphicsWindowQt* gw = dynamic_cast<osgQt::GraphicsWindowQt*>( camera->getGraphicsContext() );
+        return gw ? gw->getGLWidget() : NULL;
     }
+    
+    osg::Camera* createCamera( int x, int y, int w, int h, const std::string& name="", bool windowDecoration=false )
+    {
+        osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
+        osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+        traits->windowName = name;
+        traits->windowDecoration = windowDecoration;
+        traits->x = x;
+        traits->y = y;
+        traits->width = w;
+        traits->height = h;
+        traits->doubleBuffer = true;
+        traits->alpha = ds->getMinimumNumAlphaBits();
+        traits->stencil = ds->getMinimumNumStencilBits();
+        traits->sampleBuffers = ds->getMultiSamples();
+        traits->samples = ds->getNumMultiSamples();
+        
+        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+        camera->setGraphicsContext( new osgQt::GraphicsWindowQt(traits.get()) );
+        
+        camera->setClearColor( osg::Vec4(0.2, 0.2, 0.6, 1.0) );
+        camera->setViewport( new osg::Viewport(0, 0, traits->width, traits->height) );
+        camera->setProjectionMatrixAsPerspective(
+            30.0f, static_cast<double>(traits->width)/static_cast<double>(traits->height), 1.0f, 10000.0f );
+        return camera.release();
+    }
+    
+    virtual void paintEvent( QPaintEvent* event )
+    { frame(); }
 
-    SoInput mySceneInput;
-    //SoInput::addDirectoryFirst( "." ); // Add additional directories.
-    SbStringList dirlist = SoInput::getDirectories();
-    for ( int idx=0; idx<dirlist.getLength(); idx++ )
-	printf( "Looking for \"%s\" in %s\n", filename,
-		dirlist[idx]->getString() );
+protected:
+    
+    QTimer _timer;
+};
 
-    if ( !mySceneInput.openFile(filename) )
+
+int main( int argc, char** argv )
+{
+
+    SetProgramArgs( argc, argv );
+    if ( argc!=2 )
+    {
+	std::cout << "Syntax: " << argv[0] << " <filename>\n";
 	return 1;
+    }
 
-    SoSeparator* myGraph = SoDB::readAll( &mySceneInput );
-    if ( !myGraph ) return 1;
-    mySceneInput.closeFile();
+    
+    QApplication app(argc, argv);
 
-    SoQtExaminerViewer* myViewer = new SoQtExaminerViewer( myWindow );
-    myViewer->setTitle( filename );
-    myViewer->setTransparencyType( SoGLRenderAction::SORTED_OBJECT_BLEND );
-    myViewer->setBackgroundColor( SbColor( 0.5, 0.5, 0.5) );
+    BufferString file = argv[1];
 
-    myViewer->setSceneGraph( myGraph );
-    myViewer->show();
+    if ( !File::exists(file) )
+    {
+	std::cout << "File " << file.buf() << " could not be found.\n";
+    }
 
-    SoQt::show( myWindow );
-    SoQt::mainLoop();
+    ViewerWidget* viewWidget = new ViewerWidget( file.buf() );
+    viewWidget->setGeometry( 100, 100, 800, 600 );
+    viewWidget->show();
 
-    return 0;
+    return app.exec();
 }

@@ -22,5 +22,5 @@ SET(OD_MODULE_SOURCES
 		uithumbwheel.cc
 )
 
-SET(OD_MODULE_PROGS od_ivfileviewer od_ivfileviewer_clean )
+SET(OD_MODULE_PROGS od_osgfileviewer.cc )
 OD_INIT_MODULE()

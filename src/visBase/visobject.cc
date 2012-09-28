@@ -21,6 +21,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "SoLockableSeparator.h"
 
 #include <osg/Switch>
+#include <osg/Material>
 
 namespace visBase
 {
@@ -176,7 +177,8 @@ void VisualObjectImpl::setMaterial( Material* nm )
 {
     if ( material_ )
     {
-	root_->removeChild( material_->getInventorNode() );
+	osgroot_->getOrCreateStateSet()->removeAttribute(
+						material_->getMaterial() );
 	material_->unRef();
     }
 
@@ -185,7 +187,8 @@ void VisualObjectImpl::setMaterial( Material* nm )
     if ( material_ )
     {
 	material_->ref();
-	root_->insertChild( material_->getInventorNode(), 0 );
+	osgroot_->getOrCreateStateSet()->setAttribute(material_->getMaterial());
+	osgroot_->getStateSet()->setDataVariance( osg::Object::DYNAMIC );
     }
 }
 

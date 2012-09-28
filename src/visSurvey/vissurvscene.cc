@@ -458,8 +458,7 @@ void Scene::setAnnotText( int dim, const char* txt )
 void Scene::setAnnotColor( const Color& col )
 {
     annot_->getMaterial()->setColor( col );
-    annot_->updateTextColor( col );
-
+    
     for ( int idx=0; idx<size(); idx++ )
     {
 	mDynamicCastGet(SurveyObject*,so,getObject(idx));
@@ -471,7 +470,7 @@ void Scene::setAnnotColor( const Color& col )
 
 const Color& Scene::getAnnotColor() const
 {
-    return annot_->getColor();
+    return annot_->getMaterial()->getColor();
 }
 
 

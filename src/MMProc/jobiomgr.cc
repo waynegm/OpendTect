@@ -29,6 +29,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "string2.h"
 #include "strmprov.h"
 #include "systeminfo.h"
+#include "survinfo.h"
 #include "tcpserver.h"
 #include "thread.h"
 #include "timefun.h"

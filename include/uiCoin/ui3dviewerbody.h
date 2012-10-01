@@ -64,14 +64,14 @@ public:
     void			viewPlaneN();
 
     				//Not sure were to put these
-    bool			isViewing() const;
-    virtual void		setViewing(bool);
-    void			uisetViewing(bool);
+    bool			isViewMode() const;
+    virtual void		setViewMode(bool viewmode,bool trigger);
 
     Coord3			getCameraPosition() const;
     visBase::Camera*		getVisCamera() { return camera_; }
 
     virtual void		reSizeEvent(CallBacker*);
+    void			toggleViewMode(CallBacker*);
 
 protected:
     virtual osgGA::GUIActionAdapter&	getActionAdapter()	= 0;

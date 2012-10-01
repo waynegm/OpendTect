@@ -39,14 +39,14 @@ public:
 				const char* nm="ui3DViewer");
 			~ui3DViewer();
 
-    SoNode*		getSceneGraph() const;
+    SoNode*		getSceneGraph() const { return 0; }
     void		setSceneID(int);
     visBase::Scene*	getScene();
     const visBase::Scene* getScene() const;
     int			sceneID() const;
 
-    void		setViewing(bool);
-    bool		isViewing() const;
+    void		setViewMode(bool);
+    bool		isViewMode() const;
 
     void		anyWheelStart();
     void		anyWheelStop();
@@ -107,7 +107,6 @@ private:
     static const char* sKeyPrintDlg()   { return "Print dlg"; }
     static const char* sKeyPersCamera() { return "Perspective camera"; }
 
-    uiSoViewerBody*	sobody_;
     ui3DViewerBody*	osgbody_;
 
     uiObjectBody&	mkBody(uiParent*,bool direct,const char*);

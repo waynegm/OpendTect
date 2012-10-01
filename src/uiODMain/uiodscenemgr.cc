@@ -414,13 +414,13 @@ void uiODSceneMgr::viewModeChg( CallBacker* cb )
     if ( scenes_.isEmpty() ) return;
 
     mDynamicCastGet(ui3DViewer*,sovwr_,cb)
-    if ( sovwr_ ) setToViewMode( sovwr_->isViewing() );
+    if ( sovwr_ ) setToViewMode( sovwr_->isViewMode() );
 }
 
 
 void uiODSceneMgr::setToViewMode( bool yn )
 {
-    mDoAllScenes(sovwr_,setViewing,yn);
+    mDoAllScenes(sovwr_,setViewMode,yn);
     visServ().setViewMode( yn , false );
     menuMgr().updateViewMode( yn );
     updateStatusBar();
@@ -432,7 +432,7 @@ void uiODSceneMgr::setToWorkMode(uiVisPartServer::WorkMode wm)
 {
     bool yn = ( wm == uiVisPartServer::View ) ? true : false;
 
-    mDoAllScenes(sovwr_,setViewing,yn);
+    mDoAllScenes(sovwr_,setViewMode,yn);
     visServ().setWorkMode( wm , false );
     menuMgr().updateViewMode( yn );
     updateStatusBar();

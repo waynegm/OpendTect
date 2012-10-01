@@ -50,7 +50,7 @@ public:
 
     void			setHomePos();
     void			resetToHomePosition();
-
+    
     void			toggleCameraType();
     bool			isCameraPerspective() const;
     bool			isCameraOrthographic() const;
@@ -83,6 +83,8 @@ protected:
     const osg::Camera*			getOsgCamera() const;
     void				setCameraPos(const osg::Vec3f&,
 						     const osg::Vec3f&, bool);
+    void				computeViewAllPosition();
+
 
     uiOsgViewHandle			view_;
     ui3DViewer&				handle_;

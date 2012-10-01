@@ -21,6 +21,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osgViewer/CompositeViewer>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
+#include <osg/ComputeBoundsVisitor>
 
 #include "envvars.h"
 #include "iopar.h"
@@ -429,8 +430,65 @@ void ui3DViewerBody::viewAll()
     if ( !ea )
 	return;
 
-    manip->computeHomePosition( getOsgCamera(), true );
+    computeViewAllPosition();
     manip->home( *ea, getActionAdapter() );
+}
+
+
+
+void ui3DViewerBody::computeViewAllPosition()
+{
+    if ( !view_.getOsgView() )
+	return;
+    
+    osg::ref_ptr<osgGA::CameraManipulator> manip =
+    static_cast<osgGA::CameraManipulator*>(
+				view_.getOsgView()->getCameraManipulator() );
+    
+    osg::ref_ptr<osg::Node> node = manip ? manip->getNode() : 0;
+    if ( !node )
+	return;
+
+    osg::ComputeBoundsVisitor visitor(
+			    osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN);
+    node->accept(visitor);
+    osg::BoundingBox &bb = visitor.getBoundingBox();
+    
+    osg::BoundingSphere boundingsphere;
+    
+    
+    if ( bb.valid() ) boundingsphere.expandBy(bb);
+    else boundingsphere = node->getBound();
+    
+    // set dist to default
+    double dist = 3.5f * boundingsphere.radius();
+    
+    // try to compute dist from frustrum
+    double left,right,bottom,top,znear,zfar;
+    if ( getOsgCamera()->getProjectionMatrixAsFrustum(
+					    left,right,bottom,top,znear,zfar) )
+    {
+	double vertical2 = fabs(right - left) / znear / 2.;
+	double horizontal2 = fabs(top - bottom) / znear / 2.;
+	double dim = horizontal2 < vertical2 ? horizontal2 : vertical2;
+	double viewangle = atan2(dim,1.);
+	dist = boundingsphere.radius() / sin(viewangle);
+    }
+    else
+    {
+	// try to compute dist from ortho
+	if ( getOsgCamera()->getProjectionMatrixAsOrtho(
+					    left,right,bottom,top,znear,zfar) )
+	{
+	    dist = fabs(zfar - znear) / 2.;
+	}
+    }
+    
+    // set home position
+    manip->setHomePosition(boundingsphere.center() + osg::Vec3d(0.0,-dist,0.0f),
+		    boundingsphere.center(),
+		    osg::Vec3d(0.0f,0.0f,1.0f),
+		    false );
 }
 
 
@@ -442,7 +500,8 @@ void ui3DViewerBody::viewPlaneY()
 
 void ui3DViewerBody::setBackgroundColor( const Color& col )
 {
-    getOsgCamera()->setClearColor( osg::Vec4(col2f(r),col2f(g),col2f(b), 1.0) ); }
+    getOsgCamera()->setClearColor( osg::Vec4(col2f(r),col2f(g),col2f(b), 1.0) );
+}
 
 
 Color ui3DViewerBody::getBackgroundColor() const

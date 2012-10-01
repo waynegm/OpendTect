@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uipsviewersettingdlg.h"
 
@@ -25,7 +25,7 @@ namespace PreStackView
 
 
 uiViewer3DSettingDlg::uiViewer3DSettingDlg( uiParent* p, 
-	PreStackView::Viewer3D& viewer, uiViewer3DMgr& mgr, 
+	visSurvey::PreStackDisplay& viewer, uiViewer3DMgr& mgr, 
 	PreStack::ProcessManager& prepromgr )
     : uiTabStackDlg( p, uiDialog::Setup( viewer.getObjectName(), 
 		"Prestack display properties", "50.0.8") ) 

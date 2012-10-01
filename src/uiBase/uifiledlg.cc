@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uifiledlg.h"
 
@@ -27,6 +27,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <QFileDialog>
 #include <QPushButton>
 
+mUseQtnamespace
 
 const char* uiFileDialog::filesep_ = ";";
 

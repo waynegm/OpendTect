@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uigraphicsitemimpl.h"
 
@@ -31,6 +31,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <QTextDocument>
 #include <QWidget>
 
+mUseQtnamespace
 
 uiObjectItem::uiObjectItem( uiObject* obj )
     : uiGraphicsItem(mkQtObj())

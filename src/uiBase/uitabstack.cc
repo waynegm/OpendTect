@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uitabstack.h"
 #include "uitabbar.h"
@@ -16,6 +16,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 
 #include <QFrame>
 
+mUseQtnamespace
 
 uiTabStack::uiTabStack( uiParent* parnt, const char* nm, bool mnge )
     : uiGroup( parnt, nm, mnge )
@@ -26,8 +27,7 @@ uiTabStack::uiTabStack( uiParent* parnt, const char* nm, bool mnge )
     tabgrp_ = new uiGroup( this, nm );
     tabbar_ = new uiTabBar( this, nm );
 
-    tabgrp_->setFrameStyle( mQtclass(QFrame)::StyledPanel |
-	    					    mQtclass(QFrame)::Raised );
+    tabgrp_->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
     tabgrp_->setBorder(10);
     tabgrp_->attach( stretchedBelow, tabbar_, 0 );
 

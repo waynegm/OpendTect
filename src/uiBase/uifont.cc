@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uifontsel.h"
 #include "uifont.h"
@@ -28,6 +28,8 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <qfont.h>
 #include <qfontdialog.h> 
 #include <qfontmetrics.h> 
+
+mUseQtnamespace
 
 static const char* fDefKey = "Font.def";
 

@@ -9,7 +9,7 @@ ________________________________________________________________________
 
 -*/
 
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "sighndl.h"
 #include "strmdata.h"
@@ -31,18 +31,25 @@ static const char* rcsID mUnusedVar = "$Id$";
 # define SIGCLD SIGCHLD
 #endif
 
-PtrMan<SignalHandling> SignalHandling::theinst_;
+
+
+SignalHandling& SignalHandling::SH()
+{
+    static SignalHandling theinst;
+    return theinst;
+}
 
 
 void SignalHandling::initClass()
 {
-    theinst_ = new SignalHandling;
+    SH();
 }
 
 
 void SignalHandling::startNotify( SignalHandling::EvType et, const CallBack& cb)
 {
-    CallBackSet& cbs = theinst_->getCBL( et );
+    
+    CallBackSet& cbs = SH().getCBL( et );
     if ( cbs.indexOf(cb) < 0 ) cbs += cb;
 #ifndef __win__
     if ( et == SignalHandling::Alarm )
@@ -63,7 +70,8 @@ void SignalHandling::startNotify( SignalHandling::EvType et, const CallBack& cb)
 
 void SignalHandling::stopNotify( SignalHandling::EvType et, const CallBack& cb )
 {
-    CallBackSet& cbs = theinst_->getCBL( et );
+    CallBackSet& cbs = SH().getCBL( et );
+
     cbs -= cb;
 }
 
@@ -165,16 +173,16 @@ void SignalHandling::handle( int signalnr )
 #ifdef sun5
     case SIGEMT: case SIGSYS:
 #endif
-					theinst_->doKill( signalnr );	break;
+					SH().doKill( signalnr );	break;
 
 #ifndef __win__
-    case SIGSTOP: case SIGTSTP:		theinst_->doStop( signalnr );	return;
-    case SIGCONT:			theinst_->doCont();		return;
+    case SIGSTOP: case SIGTSTP:		SH().doStop( signalnr );	return;
+    case SIGCONT:			SH().doCont();		return;
 
-    case SIGALRM:			theinst_->handleAlarm();	break;
-    case SIGPIPE:			theinst_->handleConn();		break;
-    case SIGCLD:			theinst_->handleChld();		break;
-    case SIGHUP:			theinst_->handleReInit();	break;
+    case SIGALRM:			SH().handleAlarm();	break;
+    case SIGPIPE:			SH().handleConn();		break;
+    case SIGCLD:			SH().handleChld();		break;
+    case SIGHUP:			SH().handleReInit();	break;
 #endif
     }
 

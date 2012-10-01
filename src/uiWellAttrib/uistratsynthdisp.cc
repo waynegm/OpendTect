@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uistratsynthdisp.h"
 #include "uiseiswvltsel.h"
@@ -459,7 +459,6 @@ void uiStratSynthDisp::displayPostStackDirSynthetic( const SyntheticData* sd )
     const bool hadpack = vwr_->pack( true ) || vwr_->pack( false ); 
 
     vwr_->clearAllPacks(); 
-    vwr_->control()->zoomMgr().toStart();
     vwr_->removeAllAuxData( true );
 
     if ( !sd ) return;
@@ -498,7 +497,8 @@ void uiStratSynthDisp::displayPostStackDirSynthetic( const SyntheticData* sd )
 
     vwr_->setPack( true, dp->id(), false, !hadpack );
     vwr_->setPack( false, dp->id(), false, !hadpack );
-    vwr_->setViewToBoundingBox();
+    if ( !hadpack )
+	vwr_->setViewToBoundingBox();
 }
 
 

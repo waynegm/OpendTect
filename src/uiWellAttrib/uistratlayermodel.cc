@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uistratlayermodel.h"
 
@@ -192,6 +192,9 @@ void uiStratLayerModel::doLayerModel( const char* modnm )
 class uiStratLayerModelLMProvider : public Strat::LayerModelProvider
 {
 public:
+
+uiStratLayerModelLMProvider()
+    : useed_(false)	{}
 
 Strat::LayerModel& get()
 {
@@ -523,6 +526,7 @@ bool uiStratLayerModel::saveGenDesc() const
     const BufferString fnm( descctio_.ioobj->fullUserExpr(false) );
     StreamData sd( StreamProvider(fnm).makeOStream() );
     bool rv = false;
+    MouseCursorChanger mcch( MouseCursor::Wait );
     if ( !sd.usable() )
 	uiMSG().error( "Cannot open output file" );
     else if ( !desc_.putTo(*sd.ostrm) )
@@ -556,6 +560,7 @@ bool uiStratLayerModel::openGenDesc()
 	{ uiMSG().error( "Cannot open input file" ); return false; }
 
     desc_.erase();
+    MouseCursorChanger mcch( MouseCursor::Wait );
     bool rv = desc_.getFrom( *sd.istrm );
     if ( !rv )
 	uiMSG().error(desc_.errMsg());
@@ -564,8 +569,8 @@ bool uiStratLayerModel::openGenDesc()
 	return false;
 
     seqdisp_->setNeedSave( false );
-    seqdisp_->descHasChanged();
     lmp_.setEmpty();
+    seqdisp_->descHasChanged();
     moddisp_->modelChanged();
     synthdisp_->modelChanged();
     delete elpropsel_; elpropsel_ = 0;

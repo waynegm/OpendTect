@@ -18,270 +18,134 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "separstr.h"
 #include "keystrs.h"
 
-#include <Inventor/nodes/SoFont.h>
-#include <Inventor/nodes/SoText2.h>
-#include <Inventor/nodes/SoAsciiText.h>
-#include <Inventor/nodes/SoTranslation.h>
+
+#include <osgText/Text>
 
 mCreateFactoryEntry( visBase::Text2 );
-mCreateFactoryEntry( visBase::TextBox );
+
 
 namespace visBase
 {
 
-const char* Text::sKeyString() 		{ return "Text"; }
-const char* Text::sKeyFontData() 	{ return "Font data"; }
-const char* Text::sKeyJustification() 	{ return "Justification"; }
-const char* Text::sKeyPosition() 	{ return sKey::Position(); }
-
-
 Text::Text()
-    : VisualObjectImpl( false )
-    , textpos_(new SoTranslation)
-    , font_(new SoFont)
-    , transformation_( 0 )
-    , pickstyle_(PickStyle::create())
+    : text_( new osgText::Text )
 {
-    pickstyle_->ref();
-    addChild( pickstyle_->getInventorNode() );
-    pickstyle_->setStyle( PickStyle::Unpickable );
-
-    addChild( textpos_ );
-    addChild( font_ );
+    text_->setAxisAlignment( osgText::TextBase::SCREEN );
+    text_->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS );
     setFontData( fontdata_ ); //trigger update of font_
 }
 
 
 Text::~Text()
 {
-    if ( transformation_ ) transformation_->unRef();
-    removeChild( textpos_ );
-    removeChild( font_ );
-    pickstyle_->unRef();
 }
+    
+    
+osg::Drawable& Text::getDrawable()
+{ return *text_; }
 
 
-void Text::setPosition( const Coord3& lpos )
+const osg::Drawable& Text::getDrawable() const
+{ return *text_; }
+    
+
+void Text::setPosition( const osg::Vec3f& pos )
 {
-    const Coord3 pos = transformation_
-	? transformation_->transform( lpos ) : lpos;
-    textpos_->translation.setValue( (float) pos.x, (float) pos.y, (float) pos.z );
+    text_->setPosition( pos );
 }
-
-
-Coord3 Text::position() const
+    
+    
+void Text::setPosition( const Coord3& pos )
 {
-    SbVec3f pos = textpos_->translation.getValue();
-    Coord3 res( pos[0], pos[1], pos[2] );
-    return transformation_ ? transformation_->transformBack( res ) : res;
+    setPosition( osg::Vec3((float) pos.x, (float) pos.y, (float) pos.y ) );
 }
+    
+    
+Coord3 Text::getPosition() const
+{
+    const osg::Vec3 pos = text_->getPosition();
+    return Coord3( pos[0], pos[1], pos[2] );
+}
+
 
 
 void Text::setFontData( const FontData& fd )
 {
     fontdata_ = fd;
-    BufferString fontname = fontdata_.family();
-    const bool isbold = ((int) fontdata_.weight())>=((int) FontData::Bold);
-    if ( isbold && fontdata_.isItalic() )
-	fontname += ":Bold Italic";
-    else if ( isbold )
-	fontname += ":Bold";
-    else if ( fontdata_.isItalic() )
-	fontname += ":Italic";
-
-    font_->name.setValue( fontname.buf() );
-    font_->size.setValue( fontdata_.pointSize() );
+    
+    pErrMsg( "TODO: Implment font" );
+    text_->setCharacterSize( fontdata_.pointSize() );
 }
 
 
-void Text::setDisplayTransformation( const mVisTrans* nt )
+
+void Text::setText( const char* newtext )
 {
-    const Coord3 pos = position();
-
-    if ( transformation_ ) transformation_->unRef();
-    transformation_ = nt;
-    if ( transformation_ ) transformation_->ref();
-    setPosition( pos );
+    text_->setText( newtext );
 }
-
-
-const mVisTrans* Text::getDisplayTransformation() const
+    
+    
+void Text::getText( BufferString& res ) const
 {
-    return transformation_;
+    std::string str = text_->getText().createUTF8EncodedString();
+    res = str.data();
 }
 
 
-void Text::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void Text::setJustification( Justification just )
 {
-    VisualObjectImpl::fillPar( par, saveids );
-
-    par.set( sKeyPosition(), position() );
-    par.set( sKeyJustification(), (int)justification() );
-
-    BufferString fontdatastr;
-    fontdata_.putTo( fontdatastr );
-    par.set( sKeyFontData(), fontdatastr );
-
-    par.set( sKeyString(), getText() );
+    if ( just==Center )
+	text_->setAlignment(osgText::TextBase::CENTER_CENTER );
+    else if ( just==Left )
+	text_->setAlignment( osgText::TextBase::LEFT_CENTER );
+    else
+	text_->setAlignment( osgText::TextBase::RIGHT_CENTER );
 }
 
-
-int Text::usePar( const IOPar& par )
-{
-    int res = VisualObjectImpl::usePar( par );
-    if ( res!=1 ) return res;
-
-    Coord3 pos;
-    if ( !par.get(sKeyPosition(),pos) )
-	return -1;
-
-    int just = 1;
-    par.get( sKeyJustification(), just );
-
-    FontData fontdata; //Has defaults
-    const FixedString fontdatastr = par.find( sKeyFontData() );
-    if ( !fontdatastr )
-	fontdata.getFrom( fontdatastr );
-    else //Old format
-    {
-	float fontsz;
-	if ( par.get( "Font size", fontsz ) ) //Old format
-	    fontdata.setPointSize( mNINT32(fontsz) );
-    }
-
-
-    BufferString str;
-    par.get( sKeyString(), str );
-
-    setText( str );
-    setPosition( pos );
-    setFontData( fontdata );
-    setJustification( (Justification)just );
-
-    return 1;
-}
-
-
-// Text2 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+    
 Text2::Text2()
-    : Text()
-    , text_(new SoText2)
+    : VisualObjectImpl( false )
+    , texts_( false )
+    , geode_( new osg::Geode )
 {
-    addChild( text_ );
-    text_->ref();
+    geode_->setNodeMask( ~visBase::BBoxTraversal );
+    addChild( geode_ );
+}
+    
+
+int Text2::addText()
+{
+    Text* text = new Text;
+    texts_ += text;
+    geode_->addDrawable( &text->getDrawable() );
+    return texts_.size()-1;
+}
+    
+    
+void Text2::removeText( const Text* txt )
+{
+    const int idx = texts_.indexOf( txt );
+    if ( idx<0 )
+	return;
+    
+    geode_->removeDrawable( &texts_[idx]->getDrawable() );
+    texts_.remove( idx );
 }
 
-
-Text2::~Text2()
+    
+const Text* Text2::text( int idx ) const
 {
-    removeChild( text_ );
-    text_->unref();
+    return texts_.validIdx( idx ) ? texts_[idx] : 0;
 }
-
-
-void Text2::setText( const char* newtext )
+ 
+    
+Text* Text2::text( int idx )
 {
-    text_->string.setValue( newtext );
+    if ( !idx && !texts_.size() )
+	addText();
+    
+    return texts_.validIdx( idx ) ? texts_[idx] : 0;
 }
-
-
-const char* Text2::getText() const
-{
-    static BufferString res;
-    res = "";
-    for ( int idx=0; idx<text_->string.getNum(); idx++ )
-    {
-	if ( idx>0 ) res += "\n";
-	res += text_->string[idx].getString();
-    }
-
-    return res;
-}
-
-
-void Text2::setJustification( Justification just )
-{
-    if ( just==Center )
-	text_->justification.setValue( SoText2::CENTER );
-    else if ( just==Left )
-	text_->justification.setValue( SoText2::LEFT );
-    else
-	text_->justification.setValue( SoText2::RIGHT );
-}
-
-
-Text::Justification Text2::justification() const
-{
-    if ( text_->justification.getValue() == SoText2::CENTER )
-	return Center;
-    if ( text_->justification.getValue() == SoText2::LEFT )
-	return Left;
-
-    return Right;
-}
-
-
-// TextBox +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-TextBox::TextBox()
-    : Text()
-    , text_(new SoAsciiText)
-{
-    addChild( text_ );
-    text_->ref();
-}
-
-
-TextBox::~TextBox()
-{
-    removeChild( text_ );
-    text_->unref();
-}
-
-
-void TextBox::setText( const char* newtext )
-{
-    SeparString sepstr( newtext, '\n' );
-    text_->string.deleteValues( sepstr.size() );
-    for ( int idx=0; idx<sepstr.size(); idx++ )
-	text_->string.set1Value( idx, sepstr[idx] );
-}
-
-
-const char* TextBox::getText() const
-{
-    static BufferString res;
-    res = "";
-    for ( int idx=0; idx<text_->string.getNum(); idx++ )
-    {
-	if ( idx>0 ) res += "\n";
-	res += text_->string[idx].getString();
-    }
-
-    return res;
-}
-
-
-void TextBox::setJustification( Justification just )
-{
-    if ( just==Center )
-	text_->justification.setValue( SoAsciiText::CENTER );
-    else if ( just==Left )
-	text_->justification.setValue( SoAsciiText::LEFT );
-    else
-	text_->justification.setValue( SoAsciiText::RIGHT );
-}
-
-
-Text::Justification TextBox::justification() const
-{
-    if ( text_->justification.getValue() == SoAsciiText::CENTER )
-	return Center;
-    if ( text_->justification.getValue() == SoAsciiText::LEFT )
-	return Left;
-
-    return Right;
-}
-
+    
+    
 }; // namespace visBase

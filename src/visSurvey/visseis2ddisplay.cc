@@ -78,6 +78,8 @@ Seis2DDisplay::Seis2DDisplay()
 
     linename_ = visBase::Text2::create();
     linename_->ref();
+    linename_->addText();
+    
     insertChild( childIndex(channels_->getInventorNode()),
 	linename_->getInventorNode() );
     
@@ -126,7 +128,7 @@ void Seis2DDisplay::setLineInfo( const MultiID& lid, const char* lnm )
     {
 	if ( scene_ )
 	    setAnnotColor( scene_->getAnnotColor() );
-	linename_->setText( lnm );
+	linename_->text()->setText( lnm );
     }
 }
 
@@ -576,7 +578,7 @@ void Seis2DDisplay::updateLineNamePos()
     if ( !coords ) return;
 
     Coord3 pos = coords->getPos( 0 );
-    linename_->setPosition( pos );
+    linename_->text()->setPosition( pos );
 }
 
 
@@ -1149,7 +1151,7 @@ int Seis2DDisplay::usePar( const IOPar& par )
     {
 	if ( scene_ )
 	    setAnnotColor( scene_->getAnnotColor() );
-	linename_->setText( linename.buf() );
+	linename_->text()->setText( linename.buf() );
     }
 
     return 1;

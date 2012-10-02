@@ -69,14 +69,14 @@ Well::Well()
     track_->ref();
     track_->setMaterial( Material::create() );
     sep->addChild( track_->getInventorNode() );
-    welltoptxt_= Text2::create();
-    wellbottxt_ = Text2::create();
-    welltoptxt_->ref();
-    wellbottxt_->ref();
-    welltoptxt_->setMaterial( track_->getMaterial() );
-    wellbottxt_->setMaterial( track_->getMaterial() );
-    sep->addChild( welltoptxt_->getInventorNode() );
-    sep->addChild( wellbottxt_->getInventorNode() );
+    //welltoptxt_= Text2::create();
+    //wellbottxt_ = Text2::create();
+    //welltoptxt_->ref();
+    //wellbottxt_->ref();
+    //welltoptxt_->setMaterial( track_->getMaterial() );
+    //wellbottxt_->setMaterial( track_->getMaterial() );
+    //sep->addChild( welltoptxt_->getInventorNode() );
+    //sep->addChild( wellbottxt_->getInventorNode() );
 
     markergroup_ = DataObjectGroup::create();
     markergroup_->ref();
@@ -91,10 +91,10 @@ Well::Well()
     markernmswitch_->whichChild = 0;
 
     lognmswitch_ = new SoSwitch;
-    lognmleft_ = Text2::create();
-    lognmswitch_->addChild( lognmleft_->getInventorNode() );
-    lognmright_ = Text2::create();
-    lognmswitch_->addChild( lognmright_->getInventorNode() );
+    //lognmleft_ = Text2::create();
+    //lognmswitch_->addChild( lognmleft_->getInventorNode() );
+    //lognmright_ = Text2::create();
+    //lognmswitch_->addChild( lognmright_->getInventorNode() );
     lognmswitch_->whichChild = 0;
 
     constantlogsizefac_ = constantLogSizeFactor();
@@ -107,10 +107,10 @@ Well::~Well()
 {
     if ( transformation_ ) transformation_->unRef();
 
-    removeChild( welltoptxt_->getInventorNode() );
-    welltoptxt_->unRef();
-    removeChild( wellbottxt_->getInventorNode() );
-    wellbottxt_->unRef();
+    //removeChild( welltoptxt_->getInventorNode() );
+    //welltoptxt_->unRef();
+    //removeChild( wellbottxt_->getInventorNode() );
+    //wellbottxt_->unRef();
 
     removeChild( track_->getInventorNode() );
     track_->unRef();
@@ -214,25 +214,35 @@ const LineStyle& Well::lineStyle() const
 
 void Well::setWellName( const TrackParams& tp )
 {
-    mSetWellName( tp.isdispabove_ ? tp.name_ : "", tp.toppos_, top, tp.font_);
-    mSetWellName( tp.isdispbelow_ ? tp.name_ : "", tp.botpos_, bot, tp.font_);
+    //mSetWellName( tp.isdispabove_ ? tp.name_ : "", tp.toppos_, top, tp.font_);
+    //mSetWellName( tp.isdispbelow_ ? tp.name_ : "", tp.botpos_, bot, tp.font_);
 }
 
 
 void Well::showWellTopName( bool yn )
-{ welltoptxt_->turnOn( yn ); }
+{
+    //welltoptxt_->turnOn( yn );
+}
 
 
 void Well::showWellBotName( bool yn )
-{ wellbottxt_->turnOn( yn ); }
+{
+    //wellbottxt_->turnOn( yn );
+}
 
 
 bool Well::wellTopNameShown() const
-{ return welltoptxt_->isOn(); }
+{
+    return false;
+    //return welltoptxt_->isOn();
+}
 
 
 bool Well::wellBotNameShown() const
-{ return wellbottxt_->isOn(); }
+{
+    return false;
+    //return wellbottxt_->isOn();
+}
 
 
 void Well::addMarker( const MarkerParams& mp )
@@ -290,7 +300,7 @@ void Well::addMarker( const MarkerParams& mp )
     marker->setScreenSize( mp.size_ );
     marker->turnOn( showmarkers_ );
 
-    Text2* markernm = Text2::create();
+ /*   Text2* markernm = Text2::create();
     markernm->setDisplayTransformation( transformation_ );
     markernm->setText( mp.name_ );
     markernm->setFontData( mp.font_ );
@@ -298,6 +308,7 @@ void Well::addMarker( const MarkerParams& mp )
     markernm->setJustification( Text::Left );
     markernm->getMaterial()->setColor( mp.namecol_ );
     markernames_->addObject( markernm );
+  */
 }
 
 
@@ -721,8 +732,8 @@ void Well::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     lineStyle().toString( linestyle );
     par.set( linestylestr(), linestyle );
 
-    par.setYN( showwelltopnmstr(), welltoptxt_->isOn() );
-    par.setYN( showwellbotnmstr(), wellbottxt_->isOn() );
+   // par.setYN( showwelltopnmstr(), welltoptxt_->isOn() );
+   // par.setYN( showwellbotnmstr(), wellbottxt_->isOn() );
     par.setYN( showmarkerstr(), markersShown() );
     par.setYN( showmarknmstr(), markerNameShown() );
     par.setYN( showlogsstr(), logsShown() );

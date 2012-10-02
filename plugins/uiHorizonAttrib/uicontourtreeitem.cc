@@ -159,39 +159,6 @@ void intvChanged( CallBacker* cb )
 };
 
 
-class visContourLabels : public visBase::VisualObjectImpl
-{
-public:
-
-visContourLabels()
-    : VisualObjectImpl(false)
-    , transformation_(0)
-{}
-
-~visContourLabels()
-{
-    if ( transformation_ )
-	transformation_->unRef();
-}
-
-void addLabel( visBase::Text2* label )
-{
-    label->setDisplayTransformation( transformation_ );
-    addChild( label->getInventorNode() );
-}
-
-void setDisplayTransformation( const mVisTrans* nt )
-{
-    if ( transformation_ ) transformation_->unRef();
-    transformation_ = nt;
-    if ( transformation_ ) transformation_->ref();
-}
-
-    const mVisTrans*	transformation_;
-};
-
-
-
 const char* uiContourTreeItem::sKeyContourDefString()
 { return "Countour Display"; }
 
@@ -204,7 +171,6 @@ uiContourTreeItem::uiContourTreeItem( const char* parenttype )
     , lines_( 0 )
     , drawstyle_( 0 )
     , material_(0)
-    , labelgrp_(0)
     , linewidth_(1)
     , arr_(0)
     , rg_(mUdf(float),-mUdf(float))
@@ -278,7 +244,7 @@ void uiContourTreeItem::checkCB(CallBacker*)
     const bool display = newstatus && hd && !hd->getOnlyAtSectionsDisplay();
     
     if ( lines_ ) lines_->turnOn( display );
-    if ( labelgrp_ ) labelgrp_->turnOn( display && showlabels_ );
+    if ( labels_ ) labels_->turnOn( display && showlabels_ );
 
     updateZShift();
 }
@@ -319,15 +285,13 @@ void uiContourTreeItem::removeAll()
 void uiContourTreeItem::removeLabels()
 {
     uiVisPartServer* visserv = applMgr()->visServer();
-    if ( labelgrp_ )
+    
+    if ( labels_ )
     {
-	visserv->removeObject( labelgrp_, sceneID() );
-	labelgrp_->unRef();
-	labelgrp_ = 0;
+	visserv->removeObject( labels_, sceneID() );
+	labels_->unRef();
+	labels_ = 0;
     }
-
-    deepUnRef( labels_ );
-    labels_.erase();
 }
 
 
@@ -357,8 +321,8 @@ void uiContourTreeItem::handleMenuCB( CallBacker* cb )
     oldintv += Interval<float>( zshift_, zshift_ );
     uiContourParsDlg dlg( ODMainWin(), attrnm_, range, oldintv,
 	    		  LineStyle(LineStyle::Solid,linewidth_,color_) );
-    if ( labelgrp_ )
-	dlg.setShowLabels( labelgrp_->isOn() );
+    if ( labels_ )
+	dlg.setShowLabels( labels_->isOn() );
     dlg.propertyChanged.notify( mCB(this,uiContourTreeItem,propChangeCB) );
     const bool res = dlg.go();
     dlg.propertyChanged.remove( mCB(this,uiContourTreeItem,propChangeCB) );
@@ -385,10 +349,10 @@ void uiContourTreeItem::propChangeCB( CallBacker* cb )
     color_ = ls.color_;
     linewidth_ = ls.width_;
 
-    if ( labelgrp_ && lines_ )
+    if ( labels_ && lines_ )
     {
 	showlabels_ = dlg->showLabels();
-	labelgrp_->turnOn( lines_->isOn() && showlabels_ );
+	labels_->turnOn( lines_->isOn() && showlabels_ );
     }
 }
 
@@ -588,8 +552,8 @@ void uiContourTreeItem::createContours()
     if ( hd->getZAxisTransform() )
 	delete field;
 
-    if ( labelgrp_ ) 
-	labelgrp_->turnOn( showlabels_ );
+    if ( labels_ )
+	labels_->turnOn( showlabels_ );
 }
 
 
@@ -620,21 +584,18 @@ void uiContourTreeItem::createLines()
 
 void uiContourTreeItem::addText( const Coord3& pos, const char* txt )
 {
-    visBase::Text2* label = visBase::Text2::create();
+    if ( !labels_ )
+    {
+	labels_ = visBase::Text2::create();
+	applMgr()->visServer()->addObject( labels_, sceneID(), false );
+	labels_->setMaterial( material_ );
+    }
+    
+    const int idx = labels_->addText();
+    visBase::Text* label = labels_->text( idx );
     label->setText( txt );
     label->setPosition( pos );
     label->setFontData( FontData(12) );
-    label->setMaterial( material_ );
-    label->ref();
-    if ( !labelgrp_ )
-    {
-	labelgrp_ = new visContourLabels;
-	labelgrp_->ref();
-	applMgr()->visServer()->addObject( labelgrp_, sceneID(), false );
-    }
-
-    labelgrp_->addLabel( label );
-    labels_ += label;
 }
 
 
@@ -647,13 +608,13 @@ void uiContourTreeItem::updateColumnText( int col )
     uiVisPartServer* visserv = applMgr()->visServer();
     mDynamicCastGet(const visSurvey::HorizonDisplay*,hd,
 		    visserv->getObject(displayID()))
-    if ( !hd || !lines_ || !labelgrp_ ) return;
+    if ( !hd || !lines_ || !labels_ ) return;
 
     const bool solomode = visserv->isSoloMode();
     const bool turnon = !hd->getOnlyAtSectionsDisplay() &&
        ( (solomode && hd->isOn()) || (!solomode && hd->isOn() && isChecked()) );
     lines_->turnOn( turnon );
-    labelgrp_->turnOn( turnon && showlabels_ );
+    labels_->turnOn( turnon && showlabels_ );
 }
 
 
@@ -688,14 +649,16 @@ void uiContourTreeItem::updateZShift()
     char buf[255];
     const char* fmt = SI().zIsTime() ? "%g" : "%f";
 
-    for ( int idx=0; idx<labels_.size(); idx++ )
+    for ( int idx=0; idx<labels_->nrTexts(); idx++ )
     {
-	Coord3 pos = labels_[idx]->position();
+	Coord3 pos = labels_->text(idx)->getPosition();
 	pos.z += deltaz;
-	labels_[idx]->setPosition( pos );
-	float labelval = toFloat( labels_[idx]->getText() );
+	labels_->text(idx)->setPosition( pos );
+	BufferString txt;
+	labels_->text(idx)->getText( txt );
+	float labelval = toFloat( txt.buf() );
 	labelval += deltaz * SI().zDomain().userFactor(); 
-	labels_[idx]->setText( getStringFromFloat(fmt, labelval, buf) );
+	labels_->text(idx)->setText( getStringFromFloat(fmt, labelval, buf) );
     }
 
     zshift_ = (float) trans.z;

@@ -15,24 +15,24 @@ ________________________________________________________________________
 
 
 #include "visbasemod.h"
+#include "visosg.h"
 #include "visobject.h"
 #include "color.h"
 #include "cubesampling.h"
 #include "position.h"
 #include "sets.h"
 
-class SoAction;
-class SbVec3f;
-class SoSwitch;
-class SoCallback;
-class SoCoordinate3;
-class SoIndexedLineSet;
 class AxisInfo;
 class Color;
-class SoOneSideRender;
 
-namespace osg { class Geode; class Array; class Group; }
-namespace osgGeo { class OneSideSwitch; }
+namespace osg
+{
+    class Geode;
+    class Array;
+    class Group;
+    class Geometry;
+    class Vec3f;
+}
 
 namespace visBase
 {
@@ -73,23 +73,20 @@ protected:
     				~Annotation();
     void			initGridLines();
     void			updateGridLines();
-    void			updateTextPos(int dim);
     void			updateTextPos();
-    Text2*			getText(int dim, int textnr);
-    void			getAxisCoords(int,SbVec3f&,SbVec3f&) const;
+    void			getAxisCoords(int,osg::Vec3f&,osg::Vec3f&) const;
     void			setCorner( int, float, float, float );
-    Coord3			getCorner(int) const;
-
-    SoCoordinate3*		coords_;
+    
     int				annotscale_[3];
 
-    ObjectSet<DataObjectGroup>	scales_;
     PickStyle*			pickstyle_;
-    DataObjectGroup*		texts_;
-
-    osg::Geode*			gridlines_;
-    osg::Geode*			box_;
-    osg::Group*			scalegroup_;
+    OsgRefMan<osg::Geometry>	box_;
+    OsgRefMan<osg::Geometry>	gridlines_;
+    
+    OsgRefMan<osg::Geode>	geode_;
+    RefMan<Text2>		axisnames_;
+    RefMan<Text2>		axisannot_;
+        
     Color			annotcolor_;
 
     static const char*		textprefixstr();

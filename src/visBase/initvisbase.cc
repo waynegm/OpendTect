@@ -140,7 +140,6 @@ mDefModInitFn(visBase)
     visBase::SplitTextureSeis2D::initClass();
     visBase::Switch::initClass();
     visBase::Text2::initClass();
-    visBase::TextBox::initClass();
     visBase::Texture2::initClass();
     visBase::Texture2Set::initClass();
     visBase::Texture3::initClass();

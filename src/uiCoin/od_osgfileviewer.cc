@@ -48,7 +48,8 @@ public:
     {
         setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
 
-        QWidget* widget1 = addViewWidget( createCamera(0,0,100,100), osgDB::readNodeFile(filename) );
+        QWidget* widget1 = addViewWidget( createCamera(0,0,100,100),
+					 osgDB::readNodeFile(filename) );
         
         QGridLayout* grid = new QGridLayout;
         grid->addWidget( widget1, 0, 0 );
@@ -68,18 +69,22 @@ public:
         view->addEventHandler( new osgViewer::StatsHandler );
         view->setCameraManipulator( new osgGA::TrackballManipulator );
         
-        osgQt::GraphicsWindowQt* gw = dynamic_cast<osgQt::GraphicsWindowQt*>( camera->getGraphicsContext() );
+	mDynamicCastGet(osgQt::GraphicsWindowQt*, gw,
+			camera->getGraphicsContext());
         return gw ? gw->getGLWidget() : NULL;
     }
     
-    osg::Camera* createCamera( int x, int y, int w, int h, const std::string& name="", bool windowDecoration=false )
+    osg::Camera* createCamera( int xpos, int ypos, int w, int h,
+			       const std::string& name="",
+			       bool windowDecoration=false )
     {
         osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
-        osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+        osg::ref_ptr<osg::GraphicsContext::Traits> traits =
+		new osg::GraphicsContext::Traits;
         traits->windowName = name;
         traits->windowDecoration = windowDecoration;
-        traits->x = x;
-        traits->y = y;
+        traits->x = xpos;
+        traits->y = ypos;
         traits->width = w;
         traits->height = h;
         traits->doubleBuffer = true;
@@ -92,13 +97,16 @@ public:
         camera->setGraphicsContext( new osgQt::GraphicsWindowQt(traits.get()) );
         
         camera->setClearColor( osg::Vec4(0.2, 0.2, 0.6, 1.0) );
-        camera->setViewport( new osg::Viewport(0, 0, traits->width, traits->height) );
+        camera->setViewport(
+		    new osg::Viewport(0, 0, traits->width, traits->height) );
+	const double aspectratio = static_cast<double>(traits->width) /
+				   static_cast<double>(traits->height);
         camera->setProjectionMatrixAsPerspective(
-            30.0f, static_cast<double>(traits->width)/static_cast<double>(traits->height), 1.0f, 10000.0f );
+            30.0f, aspectratio, 1.0f, 10000.0f );
         return camera.release();
     }
     
-    virtual void paintEvent( QPaintEvent* event )
+    virtual void paintEvent( QPaintEvent* )
     { frame(); }
 
 protected:

@@ -450,6 +450,7 @@ void ui3DViewerBody::computeViewAllPosition()
 
     osg::ComputeBoundsVisitor visitor(
 			    osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN);
+    visitor.setNodeMaskOverride( visBase::BBoxTraversal );
     node->accept(visitor);
     osg::BoundingBox &bb = visitor.getBoundingBox();
     

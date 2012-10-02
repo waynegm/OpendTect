@@ -44,7 +44,8 @@ class Scene;
 enum TraversalType
 {
     EventTraversal		=	0x00000001,
-    IntersectionTraversal	=	0x00000002
+    IntersectionTraversal	=	0x00000002,
+    BBoxTraversal		= 	0x00000004
 }; 
 
 

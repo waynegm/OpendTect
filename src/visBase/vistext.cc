@@ -115,9 +115,9 @@ Text2::Text2()
 
 int Text2::addText()
 {
-    Text* text = new Text;
-    texts_ += text;
-    geode_->addDrawable( &text->getDrawable() );
+    Text* newtext = new Text;
+    texts_ += newtext;
+    geode_->addDrawable( &newtext->getDrawable() );
     return texts_.size()-1;
 }
     

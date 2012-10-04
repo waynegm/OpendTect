@@ -63,6 +63,9 @@ public:
     void			viewPlaneCrl();
     void			viewPlaneN();
 
+    void			uiRotate(float angle,bool horizontal);
+    void			uiZoom(float rel,const osg::Vec3f* dir=0);
+
     				//Not sure were to put these
     bool			isViewMode() const;
     virtual void		setViewMode(bool viewmode,bool trigger);

@@ -596,6 +596,76 @@ void ui3DViewerBody::resetToHomePosition()
 }
 
 
+void ui3DViewerBody::uiRotate( float angle, bool horizontal )
+{
+    mDynamicCastGet( osgGA::StandardManipulator*, manip,
+		     view_.getOsgView()->getCameraManipulator() ); 
+    if ( !manip )
+	return;
+
+    osg::Vec3d eye, center, up;
+    manip->getTransformation( eye, center, up );
+    osg::Matrixd mat;
+    osg::Vec3d axis = horizontal ? up : (eye-center)^up;
+    mat.makeRotate( angle, axis );
+    mat.preMultTranslate( -center );
+    mat.postMultTranslate( center );
+    manip->setTransformation( eye*mat, center, up );
+}
+
+
+void ui3DViewerBody::uiZoom( float rel, const osg::Vec3f* dir )
+{
+    mDynamicCastGet( osgGA::StandardManipulator*, manip,
+		     view_.getOsgView()->getCameraManipulator() );
+
+    osg::ref_ptr<const osg::Camera> cam = getOsgCamera();
+
+    if ( !manip || !cam )
+	return;
+
+    osg::Vec3d eye, center, up;
+    manip->getTransformation( eye, center, up );
+
+    double multiplicator = exp( rel );
+    
+    double l, r, b, t, znear, zfar;
+    if ( cam->getProjectionMatrixAsFrustum(l,r,b,t,znear,zfar) )
+    {
+	osg::Vec3d olddir = center - eye; 
+	osg::Vec3d newdir = olddir; 
+	if ( dir )
+	    newdir = *dir;
+
+	double movement = (multiplicator-1.0) * olddir.length();
+	const double minmovement = fabs(znear-zfar) * 0.01;
+
+	if ( fabs(movement) < minmovement )
+	{
+	    if ( movement < 0.0 )	// zoom in
+		return;
+
+	    movement = minmovement;
+	}
+
+	olddir.normalize();
+	newdir.normalize();
+	if ( !newdir.valid() )
+	    return;
+
+	eye -= newdir * movement;
+	center -= (olddir*(newdir*olddir) - newdir) * movement;
+    }
+    else if ( cam->getProjectionMatrixAsOrtho(l,r,b,t,znear,zfar) )
+    {
+	// TODO
+    }
+
+    manip->setTransformation( eye, center, up );
+}
+
+
+
 
 //------------------------------------------------------------------------------
 
@@ -766,14 +836,17 @@ bool ui3DViewer::isViewMode() const
     return osgbody_->isViewMode();
 }
 
+
 void ui3DViewer::rotateH( float angle )
-{  }
+{ osgbody_->uiRotate( angle, true ); }
+
 
 void ui3DViewer::rotateV( float angle )
-{  }
+{ osgbody_->uiRotate( angle, false ); }
+
 
 void ui3DViewer::dolly( float rel )
-{  }
+{ osgbody_->uiZoom( rel ); }
 
 
 float ui3DViewer::getCameraZoom()

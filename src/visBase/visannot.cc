@@ -24,6 +24,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Geometry>
 #include <osg/Switch>
 
+#include <osgGeo/OneSideRender>
+
 mCreateFactoryEntry( visBase::Annotation );
 
 namespace visBase
@@ -40,6 +42,7 @@ Annotation::Annotation()
     , geode_( new osg::Geode )
     , axisnames_( Text2::create() )
     , axisannot_( Text2::create() )
+    , gridlines_( new osgGeo::OneSideRenderNode )
 {
     removeSwitch();
     addChild( geode_ );
@@ -88,13 +91,7 @@ Annotation::Annotation()
     
     Text* text = 0; mAddText mAddText mAddText
     
-    gridlines_ = new osg::Geometry;
-    
-    osg::ref_ptr<osg::Vec3Array> gridlinecoords = new osg::Vec3Array;
-    osg::ref_ptr<osg::Vec3Array> gridlinenormals = new osg::Vec3Array;
-
-    gridlines_->setVertexArray( gridlinecoords );
-    gridlines_->setNormalArray( gridlinenormals );
+    gridlinecoords_ = new osg::Vec3Array;
 
     updateTextPos();
 }
@@ -130,7 +127,7 @@ bool Annotation::is##str##Shown() const \
     
 mImplSwitches( Text, axisnames_->osgNode() );
 mImplSwitches( Scale, axisannot_->osgNode() );
-mImplSwitches( GridLines, geode_ );
+mImplSwitches( GridLines, gridlines_ );
 
 
 void Annotation::setCubeSampling( const CubeSampling& cs )
@@ -169,68 +166,68 @@ void Annotation::setText( int dim, const char* string )
 }
 
     
-/*
-void Annotation::setTextColor( int dim, const Color& col )
-{
-    Text2* text = (Text2*)texts_->getObject( dim );
-    if ( text )
-	text->getMaterial()->setColor( col );
-}
-
-
-void Annotation::updateTextColor( const Color& col )
-{
-    annotcolor_ = col;
-    for ( int idx=0; idx<3; idx++ )
-    {
-	setTextColor( idx, annotcolor_ );
-    }
-    updateTextPos();
-}
-
-*/
-
 void Annotation::updateGridLines()
 {
-    osg::Vec3Array* normals = mGetOsgVec3Arr( gridlines_->getNormalArray() );
-    osg::Vec3Array* coords = mGetOsgVec3Arr( gridlines_->getVertexArray() );
+    osg::Vec3Array* coords = mGetOsgVec3Arr( gridlinecoords_.ptr() );
     
-    normals->resize( 0 );
+    for ( int idx=gridlines_->getNumDrawables(); idx<6; idx++ )
+    {
+	osg::Geometry* geometry = new osg::Geometry;
+	gridlines_->addDrawable( geometry );
+	geometry->setVertexArray( mGetOsgVec3Arr(gridlinecoords_.ptr()) );
+	geometry->addPrimitiveSet(
+		    new osg::DrawElementsUByte( osg::PrimitiveSet::LINES) );
+    }
+    
+#define mGetDrawElements( i ) \
+    ((osg::DrawElementsUByte*) ((osg::Geometry*)gridlines_->getDrawable(i))->getPrimitiveSet(0))
+    
+    for ( int idx=0; idx<6; idx++ )
+    {
+	mGetDrawElements(idx)->resize( 0 );
+    }
+    
     coords->resize( 0 );
     
+    const int dim0psindexes[] = { 2, 5, 3, 4 };
+    const int dim0coordindexes[] = { 0, 4, 7, 3 };
+    
+    const int dim1psindexes[] = { 0, 5, 1, 4 };
+    const int dim1coordindexes[] = { 0, 4, 5, 1 };
+    
+    const int dim2psindexes[] = { 0, 3, 1, 2 };
+    const int dim2coordindexes[] = { 0, 3, 2, 1 };
+    
+    const int* psindexarr[] = {dim0psindexes,dim1psindexes,dim2psindexes};
+    const int* coordindexarr[] =
+    	{ dim0coordindexes, dim1coordindexes, dim2coordindexes };
+    
+    const osg::Vec3f* cornercoords = (const osg::Vec3f*)
+    	box_->getVertexArray()->getDataPointer();
+
     for ( int dim=0; dim<3; dim++ )
     {
 	osg::Vec3 p0;
 	osg::Vec3 p1;
 	getAxisCoords( dim, p0, p1 );
+	osg::Vec3 dir(0,0,0);
+	dir[dim] = 1;
+	
+	gridlines_->setLine( dim*2, p0, dir );
+	gridlines_->setLine( dim*2+1, p1, -dir );
+	
 	Interval<float> range( p0[dim], p1[dim] );
 	const SamplingData<float> sd = AxisLayout<float>( range ).sd_;
 	
-	osg::Vec3f corners[4];
-	const osg::Vec3f* cornercoords = (const osg::Vec3f*)
-		box_->getVertexArray()->getDataPointer();
+	const int* psindexes = psindexarr[dim];
+	const int* cornerarr = coordindexarr[dim];
+
 	
-	if ( dim==0 )
-	{
-	    corners[0] = cornercoords[ 0 ];
-	    corners[1] = cornercoords[ 3 ];
-	    corners[2] = cornercoords[ 7 ];
-	    corners[3] = cornercoords[ 4 ];
-	}
-	else if ( dim==1 )
-	{
-	    corners[0] = cornercoords[ 0 ];
-	    corners[1] = cornercoords[ 1 ];
-	    corners[2] = cornercoords[ 5 ];
-	    corners[3] = cornercoords[ 4 ];
-	}
-	else
-	{
-	    corners[0] = cornercoords[ 0 ];
-	    corners[1] = cornercoords[ 1 ];
-	    corners[2] = cornercoords[ 2 ];
-	    corners[3] = cornercoords[ 3 ];
-	}
+	osg::Vec3f corners[] =
+		{ cornercoords[cornerarr[0]],
+		    cornercoords[cornerarr[1]],
+		    cornercoords[cornerarr[2]],
+		    cornercoords[cornerarr[3]] };
 	
 	for ( int idx=0; ; idx++ )
 	{
@@ -240,31 +237,18 @@ void Annotation::updateGridLines()
 	    
 	    corners[0][dim] = corners[1][dim] = corners[2][dim] =
 			      corners[3][dim] = val;
-	    	    
-#define mAddOneLine( c1, c2, norm ) \
-coords->push_back( corners[c1] ); \
-normals->push_back( norm ); \
-coords->push_back( corners[c2] ); \
-normals->push_back( norm );
 	    
-	    mAddOneLine( 0, 1, osg::Vec3(0,0,1) );
-	    mAddOneLine( 1, 2, osg::Vec3(0,0,1) );
-	    mAddOneLine( 2, 3, osg::Vec3(0,0,1) );
-	    mAddOneLine( 3, 0, osg::Vec3(0,0,1) );
+	    const unsigned short firstcoordindex = coords->size();
+	    for ( int idy=0; idy<4; idy++ )
+	    {
+		coords->push_back( corners[idy] );
+		
+		mGetDrawElements(psindexes[idy])->push_back(
+			firstcoordindex+idy);
+		mGetDrawElements(psindexes[idy])->push_back(
+			idy!=3 ? firstcoordindex+idy+1 : firstcoordindex );
+	    }
 	}
-    }
-    
-    
-    if ( !gridlines_->getNumPrimitiveSets() )
-    {
-	gridlines_->addPrimitiveSet(
-	    new osg::DrawArrays( osg::PrimitiveSet::LINES, 0, coords->size() ));
-    }
-    else
-    {
-	osg::DrawArrays* primitiveset =
-	    (osg::DrawArrays*) gridlines_->getPrimitiveSet( 0 );
-	primitiveset->setCount( coords->size() );
     }
 }
 

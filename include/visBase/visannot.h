@@ -34,6 +34,11 @@ namespace osg
     class Vec3f;
 }
 
+namespace osgGeo
+{
+    class OneSideRenderNode;
+}
+
 namespace visBase
 {
 class Text2;
@@ -81,9 +86,11 @@ protected:
 
     PickStyle*			pickstyle_;
     OsgRefMan<osg::Geometry>	box_;
-    OsgRefMan<osg::Geometry>	gridlines_;
     
+    OsgRefMan<osg::Array>	gridlinecoords_;
+            
     OsgRefMan<osg::Geode>	geode_;
+    OsgRefMan<osgGeo::OneSideRenderNode>	gridlines_;
     RefMan<Text2>		axisnames_;
     RefMan<Text2>		axisannot_;
         

@@ -213,8 +213,8 @@ void Annotation::updateGridLines()
 	osg::Vec3 dir(0,0,0);
 	dir[dim] = 1;
 	
-	gridlines_->setLine( dim*2, p0, dir );
-	gridlines_->setLine( dim*2+1, p1, -dir );
+	gridlines_->setLine( dim*2, osgGeo::Line3(p0, dir) );
+	gridlines_->setLine( dim*2+1, osgGeo::Line3(p1, -dir) );
 	
 	Interval<float> range( p0[dim], p1[dim] );
 	const SamplingData<float> sd = AxisLayout<float>( range ).sd_;

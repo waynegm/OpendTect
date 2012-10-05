@@ -149,7 +149,7 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
     const double aspectratio = static_cast<double>(widget->width())/
 	static_cast<double>(widget->height());
 
-    osgcamera->setProjectionMatrixAsPerspective( 30.0f, aspectratio,
+    osgcamera->setProjectionMatrixAsPerspective( 45.0f, aspectratio,
 						  1.0f, 10000.0f );
 }
 
@@ -665,6 +665,28 @@ void ui3DViewerBody::uiZoom( float rel, const osg::Vec3f* dir )
 }
 
 
+void ui3DViewerBody::setCameraZoom( float val )
+{
+    //  Only implemented for SoPerspectiveCamera
+    osg::ref_ptr<osg::Camera> cam = getOsgCamera();
+
+    double fovy, aspr, znear, zfar;
+    if ( cam && cam->getProjectionMatrixAsPerspective(fovy,aspr,znear,zfar) )
+	cam->setProjectionMatrixAsPerspective( val, aspr, znear, zfar );
+}
+
+
+float ui3DViewerBody::getCameraZoom() const
+{
+    //  Only implemented for SoPerspectiveCamera
+    osg::ref_ptr<const osg::Camera> cam = getOsgCamera();
+
+    double fovy, aspr, znear, zfar;
+    if ( !cam || !cam->getProjectionMatrixAsPerspective(fovy,aspr,znear,zfar) )
+	return 0.0;
+
+    return fovy;
+}
 
 
 //------------------------------------------------------------------------------
@@ -849,21 +871,19 @@ void ui3DViewer::dolly( float rel )
 { osgbody_->uiZoom( rel ); }
 
 
+void ui3DViewer::setCameraZoom( float val )
+{ osgbody_->setCameraZoom( val ); }
+
+
 float ui3DViewer::getCameraZoom()
-{
-    return 1;
-}
+{ return osgbody_->getCameraZoom(); }
+
 
 const Coord3 ui3DViewer::getCameraPosition() const
 {
     return osgbody_->getCameraPosition();
 }
 
-
-void ui3DViewer::setCameraZoom( float val )
-{
-	//TODO
-}
 
 void ui3DViewer::anyWheelStart()
 {

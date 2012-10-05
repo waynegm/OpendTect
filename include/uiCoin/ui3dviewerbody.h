@@ -65,6 +65,8 @@ public:
 
     void			uiRotate(float angle,bool horizontal);
     void			uiZoom(float rel,const osg::Vec3f* dir=0);
+    void			setCameraZoom(float val); 
+    float			getCameraZoom() const; 
 
     				//Not sure were to put these
     bool			isViewMode() const;

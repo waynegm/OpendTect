@@ -592,6 +592,7 @@ static Qt::ItemFlags flags_ro = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
 void uiTable::setColumnReadOnly( int col, bool yn )
 {
+    mBlockCmdRec;
     for ( int row=0; row<nrRows(); row++ )
     {
 	QTableWidgetItem* itm = body_->getItem( RowCol(row,col),
@@ -603,6 +604,7 @@ void uiTable::setColumnReadOnly( int col, bool yn )
 
 void uiTable::setCellReadOnly( const RowCol& rc, bool yn )
 {
+    mBlockCmdRec;
     QTableWidgetItem* itm = body_->item( rc.row, rc.col );
     if ( itm ) itm->setFlags( yn ? flags_ro : flags );
 }
@@ -617,6 +619,7 @@ bool uiTable::isCellReadOnly( const RowCol& rc ) const
 
 void uiTable::setRowReadOnly( int row, bool yn )
 {
+    mBlockCmdRec;
     for ( int col=0; col<nrCols(); col++ )
     {
 	QTableWidgetItem* itm = body_->getItem( RowCol(row,col),
@@ -770,7 +773,7 @@ void uiTable::setPixmap( const RowCol& rc, const ioPixmap& pm )
 void uiTable::setColor( const RowCol& rc, const Color& col )
 {
     mBlockCmdRec;
-    QColor qcol( col.r(), col.g(), col.b() );
+    QColor qcol( col.r(), col.g(), col.b(), 255-col.t() );
     QTableWidgetItem* itm = body_->getItem( rc );
     if ( itm ) itm->setBackground( qcol );
     body_->setFocus();
@@ -783,7 +786,7 @@ Color uiTable::getColor( const RowCol& rc ) const
     if ( !itm ) return Color(255,255,255);
 
     const QColor qcol = itm->background().color();
-    return Color( qcol.red(), qcol.green(), qcol.blue() );
+    return Color( qcol.red(), qcol.green(), qcol.blue(), 255-qcol.alpha() );
 }
 
 

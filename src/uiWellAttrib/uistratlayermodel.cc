@@ -40,6 +40,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uisplitter.h"
 #include "uiflatviewer.h"
 #include "uiflatviewstdcontrol.h"
+#include "uimultiflatviewcontrol.h"
 #include "uistratbasiclayseqgendesc.h"
 #include "uistratsimplelaymoddisp.h"
 #include "uistratsynthdisp.h"
@@ -620,6 +621,9 @@ void uiStratLayerModel::genModels( CallBacker* )
     synthdisp_->modelChanged();
     levelChg( 0 );
     newModels.trigger();
+
+    mDynamicCastGet(uiMultiFlatViewControl*,mfvc,synthdisp_->control());
+    if ( mfvc ) mfvc->reInitZooms();
 }
 
 
@@ -679,13 +683,13 @@ void uiStratLayerModel::displayFRResult( SyntheticData* synthdata )
 {
     lmp_.useed_ = (bool)synthdata;
     synthdisp_->displaySynthetic( synthdata ? synthdata
-	    				: synthdisp_->getCurrentSyntheticData() );
+				    : synthdisp_->getCurrentSyntheticData() );
     moddisp_->modelChanged();
 }
 
 
 SyntheticData* uiStratLayerModel::getCurrentSyntheticData() const
-{                                                                                 
+{
     return synthdisp_->getCurrentSyntheticData();
 }
 
@@ -732,3 +736,6 @@ Strat::LayerModel& uiStratLayerModel::layerModel()
 {
     return lmp_.get();
 }
+
+
+

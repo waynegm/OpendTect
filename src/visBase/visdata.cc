@@ -25,7 +25,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 mExternC(visBase) void refOsgObj( void* obj )
 {
-    ((osg::Referenced*) obj)->ref;
+    ((osg::Referenced*) obj)->ref();
 }
 
 

@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uidockwin.h"
 #include "uigroup.h"
@@ -16,6 +16,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 
 #include <QDockWidget>
 
+mUseQtnamespace
 
 class uiDockWinBody : public uiParentBody, public QDockWidget
 {

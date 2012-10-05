@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uimultiflatviewcontrol.h"
 
@@ -126,9 +126,7 @@ void uiMultiFlatViewControl::rubBandCB( CallBacker* cb )
 
 
 void uiMultiFlatViewControl::dataChangeCB( CallBacker* cb )
-{
-    reInitZooms();
-}
+{}
 
 
 void uiMultiFlatViewControl::reInitZooms()
@@ -136,7 +134,7 @@ void uiMultiFlatViewControl::reInitZooms()
     for ( int idx=0; idx<vwrs_.size(); idx++ )
     {
 	vwrs_[idx]->setView( vwrs_[idx]->boundingBox() );
-	zoommgrs_[idx]->init( vwrs_[idx]->boundingBox() );
+	zoommgrs_[idx]->reInit( vwrs_[idx]->boundingBox() );
     }
 }
 

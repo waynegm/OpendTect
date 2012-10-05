@@ -4,7 +4,7 @@
  * DATE     : April 2007
 -*/
 
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uivolprocvolreader.h"
 #include "uimsg.h"
@@ -50,13 +50,10 @@ uiVolumeReader::~uiVolumeReader()
 
 void uiVolumeReader::volSel( CallBacker* )
 {
-    if ( !*namefld_->text() )
-    {
-	seissel_->processInput();
-	const IOObj* ioobj = seissel_->ctxtIOObj(true).ioobj;
-	if ( ioobj )
-	    namefld_->setText( ioobj->name() );
-    }
+    seissel_->processInput();
+    const IOObj* ioobj = seissel_->ctxtIOObj(true).ioobj;
+    if ( ioobj )
+	namefld_->setText( ioobj->name() );
 }
 
 

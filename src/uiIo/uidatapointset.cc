@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uidatapointset.h"
 #include "uidatapointsetman.h"
@@ -249,7 +249,7 @@ uiDataPointSet::~uiDataPointSet()
     deepErase( variodlgs_ );
     removeSelPts( 0 );
     if ( dpsdisppropdlg_ )
-	dpsdisppropdlg_->windowClosed.notify(
+	dpsdisppropdlg_->windowClosed.remove(
 		mCB(this,uiDataPointSet,showPtsInWorkSpace) );
 }
 

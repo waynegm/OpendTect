@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uinlapartserv.h"
 
@@ -71,6 +71,7 @@ uiNLAPartServer::uiNLAPartServer( uiApplService& a )
 uiNLAPartServer::~uiNLAPartServer()
 {
     deepErase( inpnms_ );
+    delete uidps_;
     if ( dps_ )
 	mDPM.release( dps_->id() );
     delete &storepars_;

@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uiodviewer2d.h"
 
@@ -84,7 +84,8 @@ uiODViewer2D::~uiODViewer2D()
 
     deepErase( auxdataeditors_ );
     setMouseCursorExchange( 0 );
-    viewwin()->viewer(0).removeAuxData( marker_ );
+    if ( viewwin() )
+	viewwin()->viewer(0).removeAuxData( marker_ );
     delete marker_;
     delete viewwin();
 }

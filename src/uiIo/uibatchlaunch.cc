@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uibatchlaunch.h"
 
@@ -31,6 +31,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "ptrman.h"
 #include "strmdata.h"
 #include "strmprov.h"
+#include "survinfo.h"
 #include "ascstream.h"
 
 static const char* sSingBaseNm = "batch_processing";

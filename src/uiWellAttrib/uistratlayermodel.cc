@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uistratlayermodel.h"
 
@@ -40,6 +40,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "uisplitter.h"
 #include "uiflatviewer.h"
 #include "uiflatviewstdcontrol.h"
+#include "uimultiflatviewcontrol.h"
 #include "uistratbasiclayseqgendesc.h"
 #include "uistratsimplelaymoddisp.h"
 #include "uistratsynthdisp.h"
@@ -192,6 +193,9 @@ void uiStratLayerModel::doLayerModel( const char* modnm )
 class uiStratLayerModelLMProvider : public Strat::LayerModelProvider
 {
 public:
+
+uiStratLayerModelLMProvider()
+    : useed_(false)	{}
 
 Strat::LayerModel& get()
 {
@@ -523,6 +527,7 @@ bool uiStratLayerModel::saveGenDesc() const
     const BufferString fnm( descctio_.ioobj->fullUserExpr(false) );
     StreamData sd( StreamProvider(fnm).makeOStream() );
     bool rv = false;
+    MouseCursorChanger mcch( MouseCursor::Wait );
     if ( !sd.usable() )
 	uiMSG().error( "Cannot open output file" );
     else if ( !desc_.putTo(*sd.ostrm) )
@@ -556,6 +561,7 @@ bool uiStratLayerModel::openGenDesc()
 	{ uiMSG().error( "Cannot open input file" ); return false; }
 
     desc_.erase();
+    MouseCursorChanger mcch( MouseCursor::Wait );
     bool rv = desc_.getFrom( *sd.istrm );
     if ( !rv )
 	uiMSG().error(desc_.errMsg());
@@ -564,8 +570,8 @@ bool uiStratLayerModel::openGenDesc()
 	return false;
 
     seqdisp_->setNeedSave( false );
-    seqdisp_->descHasChanged();
     lmp_.setEmpty();
+    seqdisp_->descHasChanged();
     moddisp_->modelChanged();
     synthdisp_->modelChanged();
     delete elpropsel_; elpropsel_ = 0;
@@ -615,6 +621,9 @@ void uiStratLayerModel::genModels( CallBacker* )
     synthdisp_->modelChanged();
     levelChg( 0 );
     newModels.trigger();
+
+    mDynamicCastGet(uiMultiFlatViewControl*,mfvc,synthdisp_->control());
+    if ( mfvc ) mfvc->reInitZooms();
 }
 
 
@@ -674,13 +683,13 @@ void uiStratLayerModel::displayFRResult( SyntheticData* synthdata )
 {
     lmp_.useed_ = (bool)synthdata;
     synthdisp_->displaySynthetic( synthdata ? synthdata
-	    				: synthdisp_->getCurrentSyntheticData() );
+				    : synthdisp_->getCurrentSyntheticData() );
     moddisp_->modelChanged();
 }
 
 
 SyntheticData* uiStratLayerModel::getCurrentSyntheticData() const
-{                                                                                 
+{
     return synthdisp_->getCurrentSyntheticData();
 }
 
@@ -727,3 +736,6 @@ Strat::LayerModel& uiStratLayerModel::layerModel()
 {
     return lmp_.get();
 }
+
+
+

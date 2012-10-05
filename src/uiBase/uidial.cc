@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uidial.h"
 #include "i_qdial.h"
@@ -17,6 +17,8 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "ranges.h"
 #include "uilabel.h"
 #include "uilineedit.h"
+
+mUseQtnamespace
 
 // TODO: Combine with uiSlider
 

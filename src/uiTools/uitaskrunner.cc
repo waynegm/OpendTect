@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uitaskrunner.h"
 
@@ -274,6 +274,7 @@ bool uiTaskRunner::rejectOK( CallBacker* )
     finalizeTask();
     uitaskrunnerthreadmutex_.unLock();
 
+    state_ = (int) Task::Stop;
     execres_ = false;
     return true;
 }

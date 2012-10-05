@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "pixmap.h"
 #include "coltabsequence.h"
@@ -73,7 +73,8 @@ bool selectColor( Color& col, uiParent* parnt, const char* nm, bool withtransp )
     qdlg.setWindowTitle( QString(wintitle) );
     if ( withtransp )
     {
-	qdlg.setOption( QColorDialog::ShowAlphaChannel );
+        qdlg.setOption( QColorDialog::ShowAlphaChannel );
+        qdlg.setOption( QColorDialog::DontUseNativeDialog );
 	QList<QLabel*> lbllst = qdlg.findChildren<QLabel*>("");
 	bool found = false;
 	foreach(QLabel* qlbl,lbllst)

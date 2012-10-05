@@ -5,7 +5,7 @@
  * FUNCTION : general utilities
 -*/
 
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "genc.h"
 #include "envvars.h"
@@ -251,13 +251,11 @@ mExternC(Basic) const char* GetEnvVar( const char* env )
 
     if ( !filesread )
     {
-	/* TODO: Enable this and nail out all static initializations.
 	if ( GetArgC()==-1 )
 	{
 	    //We should not be here before SetProgramInfo() is called.
 	    ExitProgram( 1 );
 	}
-	 */
 	    
 	filesread = 1;
 	loadEntries( GetSettingsFileName("envvars"), &nrentries, entries );

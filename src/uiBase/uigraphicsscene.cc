@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 
 #include "uigraphicsscene.h"
@@ -40,7 +40,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 # include <QX11Info>
 #endif
 
-
+mUseQtnamespace
 
 class ODGraphicsScene : public QGraphicsScene
 {

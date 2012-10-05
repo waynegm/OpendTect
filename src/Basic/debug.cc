@@ -9,7 +9,7 @@ ________________________________________________________________________
 
 -*/
 
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "debug.h"
 #include "debugmasks.h"
@@ -112,7 +112,7 @@ bool isOn( int flag )
 void forceCrash( bool withdump )
 {
     if ( withdump )
-	SignalHandling::theinst_->doStop( 6, false ); // 6 = SIGABRT
+	SignalHandling::SH().doStop( 6, false ); // 6 = SIGABRT
     else
 	{ char* ptr = 0; *ptr = 0; }
 }

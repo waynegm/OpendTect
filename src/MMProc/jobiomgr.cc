@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "jobiomgr.h"
 
@@ -28,6 +28,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "separstr.h"
 #include "string2.h"
 #include "strmprov.h"
+#include "survinfo.h"
 #include "systeminfo.h"
 #include "tcpserver.h"
 #include "thread.h"
@@ -400,8 +401,8 @@ FilePath getConvFilePath( const HostData& hd, const FilePath& fp )
     BufferString proc( getTempBaseNm() );
     proc += "_";
     proc += MMJob_getTempFileNr()-1;
-    newfp.add(  GetSurveyName() ).add( "Proc" )
-	 .add( proc ).add( fp.fileName() );
+    /*newfp.add(  GetSurveyName() ).add( "Proc" )
+	 .add( proc ).add( fp.fileName() );*/
     return newfp;
 }
 

@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "cmddriverbasics.h"
 
@@ -723,7 +723,9 @@ void WindowStack::synchronize()
 			stackidx--;
 
 		    winstack_.insertAt( curwin, stackidx );
-		    moveToTopWithoutSync( curwin );
+		    if ( !curwin->isHidden() )
+			moveToTopWithoutSync( curwin );
+
 		    continue;
 		}
 	    }

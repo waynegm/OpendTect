@@ -4,7 +4,7 @@
  * DATE     : Sep 2010
 -*/
 
-static const char* rcsID mUnusedVar = "$Id$";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "stratlayer.h"
 #include "stratlayermodel.h"
@@ -225,6 +225,7 @@ Strat::LayerModel::~LayerModel()
 
 Strat::LayerModel& Strat::LayerModel::operator =( const Strat::LayerModel& oth )
 {
+    setEmpty();
     if ( this != &oth )
     {
 	props_ = oth.props_;

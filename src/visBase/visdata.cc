@@ -22,9 +22,21 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/ValueObject>
 #include <osgDB/WriteFile>
 
+
+mExternC(visBase) void refOsgObj( void* obj )
+{
+    ((osg::Referenced*) obj)->ref;
+}
+
+
+mExternC(visBase) void unrefOsgObj( void* obj )
+{
+    ((osg::Referenced*) obj)->unref();
+}
+
+
 namespace visBase
 {
-
 
 void DataObject::enableTraversal( TraversalType tt, bool yn )
 {

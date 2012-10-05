@@ -22,7 +22,14 @@ ________________________________________________________________________
 #define mGetOsgVec3Arr(ptr) ((osg::Vec3Array*) ptr )
 #define mGetOsgVec4Arr(ptr) ((osg::Vec4Array*) ptr )
 
-mDefRefMan( OsgRefMan, ref, unref )
+
+//!Calls obj->ref(). obj must inherit osg::Referenced
+mExternC(visBase) void refOsgObj(void* obj);
+
+//!Calls obj->unref(). obj must inherit osg::Referenced
+mExternC(visBase) void unrefOsgObj(void*);
+
+mDefRefMan( OsgRefMan, refOsgObj(ptr_), unrefOsgObj(ptr_) )
 
 #endif
 

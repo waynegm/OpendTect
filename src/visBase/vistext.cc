@@ -23,8 +23,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 
 #include <osgText/Text>
-#include <osgText/Font>
-#include <osgQt/QFontImplementation>
 
 mCreateFactoryEntry( visBase::Text2 );
 

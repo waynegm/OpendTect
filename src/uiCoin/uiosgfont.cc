@@ -24,7 +24,7 @@ void uiOsgFontCreator::initClass()
 
 osgText::Font* uiOsgFontCreator::createFont( const FontData& fd )
 {
-    mQtclass(QFont)* qfont = uiFont::createQFont( fd );
+    PtrMan<mQtclass(QFont)> qfont = uiFont::createQFont( fd );
     return qfont
         ? new osgText::Font( new osgQt::QFontImplementation(*qfont) )
 	: 0;

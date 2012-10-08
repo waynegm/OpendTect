@@ -19,7 +19,7 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "position.h"
 
-namespace osgText { class Text; }
+namespace osgText { class Text; class Font; }
 
 namespace osg { class Drawable; class Vec3f; class Geode; }
 
@@ -47,13 +47,26 @@ public:
 
     osg::Drawable&		getDrawable();
     const osg::Drawable&	getDrawable() const;
+    
+    static void			getFonts(BufferStringSet&);
 
 protected:
 
-
+    static const char*		getFontDir();
     OsgRefMan<osgText::Text>	text_;
     
     FontData			fontdata_;
+};
+    
+    
+mClass(visBase) OsgFontCreator
+{
+public:
+    virtual			~OsgFontCreator() 				{}
+    static osgText::Font*	create(const FontData&);
+protected:
+    static void			setCreator(OsgFontCreator*);
+    virtual osgText::Font*	createFont(const FontData&)		= 0;
 };
     
     

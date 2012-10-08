@@ -17,9 +17,14 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vispickstyle.h"
 #include "separstr.h"
 #include "keystrs.h"
+#include "dirlist.h"
+#include "oddirs.h"
+#include "filepath.h"
 
 
 #include <osgText/Text>
+#include <osgText/Font>
+#include <osgQt/QFontImplementation>
 
 mCreateFactoryEntry( visBase::Text2 );
 
@@ -66,15 +71,23 @@ Coord3 Text::getPosition() const
     const osg::Vec3 pos = text_->getPosition();
     return Coord3( pos[0], pos[1], pos[2] );
 }
-
+    
+    
+const char* Text::getFontDir()
+{
+    static BufferString fontdir = GetSetupDataFileName(ODSetupLoc_ApplSetupPref,
+						       "fonts", 0 );
+    return fontdir.buf();
+}
 
 
 void Text::setFontData( const FontData& fd )
 {
     fontdata_ = fd;
     
-    pErrMsg( "TODO: Implment font" );
-    text_->setCharacterSize( fontdata_.pointSize() );
+    osg::ref_ptr<osgText::Font> osgfont = OsgFontCreator::create( fontdata_ );
+    if ( osgfont )
+	text_->setFont( osgfont );
 }
 
 
@@ -147,5 +160,20 @@ Text* Text2::text( int idx )
     return texts_.validIdx( idx ) ? texts_[idx] : 0;
 }
     
+    
+PtrMan<OsgFontCreator> creator = 0;
+    
+    
+osgText::Font* OsgFontCreator::create(const FontData& fd)
+{
+    return creator ? creator->createFont(fd) : 0;
+}
+    
+
+void OsgFontCreator::setCreator( OsgFontCreator* cr)
+{
+    creator = cr;
+}
+
     
 }; // namespace visBase

@@ -454,6 +454,18 @@ void Scene::setAnnotText( int dim, const char* txt )
     	annot_->setText( dim, txt );
 }
 
+    
+const FontData& Scene::getAnnotFont() const
+{
+    return annot_->getFont();
+}
+
+
+void Scene::setAnnotFont( const FontData& nf )
+{
+    return annot_->setFont( nf );
+}
+    
 
 void Scene::setAnnotColor( const Color& col )
 {

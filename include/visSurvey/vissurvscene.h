@@ -24,6 +24,7 @@ class BaseMapMarkers;
 class Color;
 class MouseCursor;
 class TaskRunner;
+class FontData;
 class ZAxisTransform;
 template <class T> class Selector;
 
@@ -110,6 +111,8 @@ public:
     void			showAnnot(bool);
     bool			isAnnotShown() const;
     void			setAnnotText(int dim,const char*);
+    const FontData&		getAnnotFont() const;
+    void			setAnnotFont(const FontData&);
     void			savePropertySettings();
 
     visBase::PolygonSelection*	getPolySelection() { return polyselector_; }

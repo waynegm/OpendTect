@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "basemapimpl.h"
 #include "cubesampling.h"
 #include "envvars.h"
+#include "fontdata.h"
 #include "iopar.h"
 #include "keystrs.h"
 #include "separstr.h"
@@ -42,6 +43,7 @@ namespace visSurvey {
 const char* Scene::sKeyShowAnnot()	{ return "Show text"; }
 const char* Scene::sKeyShowScale()	{ return "Show scale"; }
 const char* Scene::sKeyShowGrid()	{ return "Show grid"; }
+const char* Scene::sKeyAnnotFont()	{ return "Annotation font"; }
 const char* Scene::sKeyShowCube()	{ return "Show cube"; }
 const char* Scene::sKeyZStretch()	{ return "ZStretch"; }
 const char* Scene::sKeyZAxisTransform()	{ return "ZTransform"; }
@@ -151,10 +153,22 @@ void Scene::init()
     doshow = true; \
     Settings::common().getYN( BufferString(sKeydTectScene(),str), doshow ); \
     func( doshow );
+    
+#define mGetFontFromPar( par ) \
+BufferString font; \
+if ( par.get( sKeyAnnotFont(), font ) ) \
+{ \
+    FontData fd; \
+    if ( fd.getFrom( font.buf() ) ) \
+	setAnnotFont( fd ); \
+}
+
 
     mShowAnnot( sKeyShowAnnot(), showAnnotText );
     mShowAnnot( sKeyShowScale(), showAnnotScale );
     mShowAnnot( sKeyShowGrid(), showAnnotGrid );
+    
+    mGetFontFromPar( Settings::common() )
 }
 
 
@@ -836,6 +850,10 @@ void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     par.set( sKeyZStretch(), curzstretch_ );
     par.setYN( sKeyAppAllowShading(), appallowshad_ );
     par.setYN( sKeyShowColTab(), scenecoltab_->isOn() );
+    
+    BufferString font;
+    getAnnotFont().putTo( font );
+    par.set( sKeyAnnotFont(), font );
 
     if ( datatransform_ )
     {
@@ -891,7 +909,9 @@ int Scene::usePar( const IOPar& par )
     bool txtshown = true;
     par.getYN( sKeyShowAnnot(), txtshown );
     showAnnotText( txtshown );
-
+    
+    mGetFontFromPar( par );
+    
     bool scaleshown = true;
     par.getYN( sKeyShowScale(), scaleshown );
     showAnnotScale( scaleshown );
@@ -972,6 +992,10 @@ void Scene::savePropertySettings()
     mSaveProp( sKeyShowAnnot(), isAnnotTextShown );
     mSaveProp( sKeyShowScale(), isAnnotScaleShown );
     mSaveProp( sKeyShowGrid(), isAnnotGridShown );
+    
+    BufferString font;
+    getAnnotFont().putTo( font );
+    Settings::common().set( sKeyAnnotFont(), font );
     Settings::common().write();
 }
 

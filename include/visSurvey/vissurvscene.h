@@ -236,6 +236,7 @@ protected:
     static const char*		sKeyShowAnnot();
     static const char*		sKeyShowScale();
     static const char*		sKeyShowGrid();
+    static const char*		sKeyAnnotFont();
     static const char*		sKeyShowCube();
     static const char*		sKeyZStretch();
     static const char*		sKeyZAxisTransform();

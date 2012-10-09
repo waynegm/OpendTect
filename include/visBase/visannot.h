@@ -23,6 +23,7 @@ ________________________________________________________________________
 #include "sets.h"
 
 class AxisInfo;
+class FontData;
 class Color;
 
 namespace osg
@@ -65,6 +66,9 @@ public:
     bool			canShowGridLines() const;
     void			showGridLines(bool yn);
     bool			isGridLinesShown() const;
+    
+    const FontData&		getFont() const;
+    void			setFont(const FontData&);
 
     void			setCubeSampling(const CubeSampling&);
 

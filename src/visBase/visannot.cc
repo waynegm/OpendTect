@@ -129,6 +129,17 @@ mImplSwitches( Text, axisnames_->osgNode() );
 mImplSwitches( Scale, axisannot_->osgNode() );
 mImplSwitches( GridLines, gridlines_ );
 
+    
+const FontData& Annotation::getFont() const
+{
+    return axisnames_->text()->getFontData();
+}
+
+void Annotation::setFont( const FontData& fd )
+{
+    axisnames_->setFontData( fd );
+    axisannot_->setFontData( fd );
+}
 
 void Annotation::setCubeSampling( const CubeSampling& cs )
 {

@@ -48,11 +48,8 @@ public:
     osg::Drawable&		getDrawable();
     const osg::Drawable&	getDrawable() const;
     
-    static void			getFonts(BufferStringSet&);
-
 protected:
 
-    static const char*		getFontDir();
     OsgRefMan<osgText::Text>	text_;
     
     FontData			fontdata_;
@@ -62,7 +59,7 @@ protected:
 mClass(visBase) OsgFontCreator
 {
 public:
-    virtual			~OsgFontCreator() 				{}
+    virtual			~OsgFontCreator() 			{}
     static osgText::Font*	create(const FontData&);
 protected:
     static void			setCreator(OsgFontCreator*);
@@ -79,6 +76,8 @@ public:
     int				nrTexts() const		{ return texts_.size();}
     int				addText();
     void			removeText(const Text*);
+    
+    void			setFontData(const FontData&);
     
     const Text*			text(int idx=0) const;
     Text*			text(int idx=0);

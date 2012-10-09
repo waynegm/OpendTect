@@ -71,14 +71,6 @@ Coord3 Text::getPosition() const
 }
     
     
-const char* Text::getFontDir()
-{
-    static BufferString fontdir = GetSetupDataFileName(ODSetupLoc_ApplSetupPref,
-						       "fonts", 0 );
-    return fontdir.buf();
-}
-
-
 void Text::setFontData( const FontData& fd )
 {
     fontdata_ = fd;
@@ -86,6 +78,7 @@ void Text::setFontData( const FontData& fd )
     osg::ref_ptr<osgText::Font> osgfont = OsgFontCreator::create( fontdata_ );
     if ( osgfont )
 	text_->setFont( osgfont );
+    text_->setCharacterSize( fontdata_.pointSize() );
 }
 
 
@@ -156,6 +149,13 @@ Text* Text2::text( int idx )
 	addText();
     
     return texts_.validIdx( idx ) ? texts_[idx] : 0;
+}
+    
+    
+void Text2::setFontData( const FontData& fd )
+{
+    for ( int idx=0; idx<texts_.size(); idx++ )
+	texts_[idx]->setFontData( fd );
 }
     
     

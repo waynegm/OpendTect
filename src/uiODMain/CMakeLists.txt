@@ -34,7 +34,6 @@ SET(OD_MODULE_SOURCES
 	uiodhortreeitem.cc
 	uiodpicksettreeitem.cc
 	uiodplanedatatreeitem.cc
-	uiodpseventstreeitem.cc
 	uiodrandlinetreeitem.cc
 	uiodbodydisplaytreeitem.cc
 	uiodseis2dtreeitem.cc

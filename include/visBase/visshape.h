@@ -161,6 +161,11 @@ public:
     
     void		dirtyCoordinates();
 
+    void	addPrimitiveSet(Geometry::PrimitiveSet*);
+    void	removePrimitiveSet(const Geometry::IndexedPrimitiveSet*);
+    
+    int		nrPrimitiveSets() const;
+    
 protected:
     			VertexShape( SoVertexShape* );
     			~VertexShape();
@@ -173,6 +178,10 @@ protected:
 
     osg::Geode*		geode_;
     osg::Geometry*	osggeom_;
+    
+    ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
+    Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
+
 
 private:
     SoNormalBinding*	normalbinding_;
@@ -185,11 +194,6 @@ private:
 mClass(visBase) IndexedShape : public VertexShape
 {
 public:
-    
-    void	addPrimitiveSet(Geometry::IndexedPrimitiveSet*);
-    void	removePrimitiveSet(const Geometry::IndexedPrimitiveSet*);
-    
-    int		nrPrimitiveSets() const;
     
     int		nrCoordIndex() const;
     void	setCoordIndex(int pos,int idx);
@@ -240,8 +244,6 @@ protected:
 		IndexedShape( Geometry::PrimitiveSet::PrimitiveType );
     
     
-    ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
-    Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
 private:
 
 

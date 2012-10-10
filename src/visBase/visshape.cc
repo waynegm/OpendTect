@@ -48,6 +48,8 @@ const char* Shape::sKeyOnOff() 			{ return  "Is on";	}
 const char* Shape::sKeyTexture() 		{ return  "Texture";	}
 const char* Shape::sKeyMaterial() 		{ return  "Material";	}
 
+
+    
 Shape::Shape( SoNode* shape )
     : shape_( shape )
     , onoff_( 0 )
@@ -496,8 +498,8 @@ SoIndexedShape* createSoClass( Geometry::PrimitiveSet::PrimitiveType tp )
     
 IndexedShape::IndexedShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp )
     : VertexShape( 0 )
-    , primitivetype_( tp )
 {
+    primitivetype_ = tp;
     indexedshape_ = (SoIndexedShape*) shape_;
 }
 
@@ -590,7 +592,7 @@ public:
     }
 };
     
-void visBase::IndexedShape::addPrimitiveSet( Geometry::IndexedPrimitiveSet* p )
+void visBase::VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
 {
     p->setPrimitiveType( primitivetype_ );
     

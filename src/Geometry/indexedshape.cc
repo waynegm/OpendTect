@@ -18,7 +18,8 @@ PtrMan<PrimitiveSetCreator> PrimitiveSetCreator::creator_ = 0;
     
     
 DefineEnumNames(PrimitiveSet, PrimitiveType, 5, "PrimitiveType" )
-{ "Points", "Lines", "Triangles", "LineStrips", "TriangleStrips", "Fans", 0 };
+{ "Points", "Lines", "Triangles", "LineStrips", "TriangleStrips", "Fans",
+  "Other", 0 };
     
     
     

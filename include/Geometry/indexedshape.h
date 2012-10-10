@@ -30,7 +30,7 @@ mClass(Geometry) PrimitiveSet
 { mRefCountImplNoDestructor(PrimitiveSet);
 public:
     enum 	PrimitiveType{Points,Lines,Triangles,
-			      LineStrips,TriangleStrip,TriangleFan};
+			      LineStrips,TriangleStrip,TriangleFan,Other};
 		DeclareEnumUtils(PrimitiveType);
     
     

@@ -26,6 +26,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <osgGeo/OneSideRender>
 
+
 mCreateFactoryEntry( visBase::Annotation );
 
 namespace visBase
@@ -45,6 +46,9 @@ Annotation::Annotation()
     , gridlines_( new osgGeo::OneSideRenderNode )
 {
     removeSwitch();
+
+    osgNode()->getOrCreateStateSet()->setMode( GL_LIGHTING,
+					       osg::StateAttribute::OFF );
     addChild( geode_ );
     
     annotscale_[0] = annotscale_[1] = annotscale_[2] = 1;
@@ -54,6 +58,8 @@ Annotation::Annotation()
     pickstyle_->ref();
     addChild( pickstyle_->getInventorNode() );
     pickstyle_->setStyle( PickStyle::Unpickable );
+
+    enableTraversal( visBase::IntersectionTraversal, false );
 
     float pos[8][3] =
     {
@@ -71,10 +77,9 @@ Annotation::Annotation()
     GLubyte indices[] = { 0, 1, 1, 2, 2, 3, 3, 0,
 			   4, 5, 5, 6, 6, 7, 7, 4,
 			   0, 4, 1, 5, 2, 6, 3, 7 };
+ 
     box_->addPrimitiveSet(
 	    new osg::DrawElementsUByte( GL_LINES, 24, indices  ) );
-    
-    box_->setColorBinding( osg::Geometry::BIND_OVERALL );
 
     geode_->addDrawable( box_ );
 
@@ -94,6 +99,8 @@ Annotation::Annotation()
     gridlinecoords_ = new osg::Vec3Array;
 
     updateTextPos();
+
+    getMaterial()->setColor( annotcolor_, 0 );
 }
 
 

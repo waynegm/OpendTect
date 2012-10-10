@@ -489,6 +489,14 @@ IndexedShape::IndexedShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp )
     : VertexShape( 0 )
 {
     primitivetype_ = tp;
+    
+    if ( primitivetype_==Geometry::PrimitiveSet::Lines ||
+	primitivetype_==Geometry::PrimitiveSet::LineStrips )
+    {
+	osggeom_->getOrCreateStateSet()->setMode( GL_LIGHTING,
+						  osg::StateAttribute::OFF );
+    }
+    
     indexedshape_ = (SoIndexedShape*) shape_;
 }
 

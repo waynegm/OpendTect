@@ -25,6 +25,7 @@ SET(OD_MODULE_SOURCES
 		vispointsetdisplay.cc
 		vispolygonbodydisplay.cc
 		vispolylinedisplay.cc
+		visprestackdisplay.cc
 		vispseventdisplay.cc
 		visrandomposbodydisplay.cc
 		visrandomtrackdisplay.cc

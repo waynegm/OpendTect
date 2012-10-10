@@ -316,6 +316,7 @@ VertexShape::VertexShape( SoVertexShape* shape )
     , normalbinding_( 0 )
     , shapehints_( 0 )
     , geode_( new osg::Geode )
+    , node_( 0 )
     , osggeom_( new osg::Geometry )
 {
     if ( geode_ )
@@ -323,6 +324,7 @@ VertexShape::VertexShape( SoVertexShape* shape )
 	geode_->ref();
 	geode_->addDrawable( osggeom_ );
 	osgswitch_->addChild( geode_ );
+	node_ = geode_;
     }
     
     setCoordinates( Coordinates::create() );
@@ -331,7 +333,7 @@ VertexShape::VertexShape( SoVertexShape* shape )
 
 VertexShape::~VertexShape()
 {
-    if ( geode_ ) geode_->unref();
+    if ( node_ ) node_->unref();
     if ( normals_ ) normals_->unRef();
     if ( coords_ ) coords_->unRef();
     if ( texturecoords_ ) texturecoords_->unRef();
@@ -366,7 +368,7 @@ void VertexShape::dirtyCoordinates()
     
 osg::Node* VertexShape::gtOsgNode()
 {
-    return osgswitch_ ? (osg::Node*) osgswitch_ : (osg::Node*) geode_;
+    return osgswitch_ ? (osg::Node*) osgswitch_ : (osg::Node*) node_;
 }
     
 
@@ -417,21 +419,6 @@ void VertexShape::setNormalPerFaceBinding( bool nv )
 }
     
     
-void VertexShape::setMaterial( Material* mat )
-{
-    Shape::setMaterial( mat );
-    if ( geode_ )
-    {
-	if ( mat )
-	    geode_->getOrCreateStateSet()->setAttribute( mat->getMaterial() );
-	else if ( geode_->getStateSet() )
-	{
-	    geode_->getStateSet()->removeAttribute(
-						osg::StateAttribute::MATERIAL);
-	}
-    }
-}
-
 bool VertexShape::getNormalPerFaceBinding() const
 {
     if ( !normalbinding_ ) return true;
@@ -595,28 +582,49 @@ public:
 };
     
     
-void visBase::VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
+void VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
 {
     p->ref();
     p->setPrimitiveType( primitivetype_ );
     
     mDynamicCastGet(OSGPrimitiveSet*, osgps, p );
-    osggeom_->addPrimitiveSet( osgps->getPrimitiveSet() );
+    addPrimitiveSetToScene( osgps->getPrimitiveSet() );
     
     primitivesets_ += p;
 }
     
     
-void visBase::VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
+void VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
 {
     const int pidx = primitivesets_.indexOf( p );
     mDynamicCastGet( OSGPrimitiveSet*, osgps,primitivesets_[pidx]  );
-    const int idx = osggeom_->getPrimitiveSetIndex( osgps->getPrimitiveSet() );
-    osggeom_->removePrimitiveSet( idx );
+    removePrimitiveSetFromScene( osgps->getPrimitiveSet() );
     
     primitivesets_.remove( pidx )->unRef();
 }
     
+    
+void VertexShape::addPrimitiveSetToScene( osg::PrimitiveSet* ps )
+{
+    osggeom_->addPrimitiveSet( ps );
+}
+    
+    
+int VertexShape::nrPrimitiveSets() const
+{ return primitivesets_.size(); }
+
+
+Geometry::PrimitiveSet* VertexShape::getPrimitiveSet( int idx )
+{
+    return primitivesets_[idx];
+}
+    
+    
+void VertexShape::removePrimitiveSetFromScene( const osg::PrimitiveSet* ps )
+{
+    const int idx = osggeom_->getPrimitiveSetIndex( ps );
+    osggeom_->removePrimitiveSet( idx );
+}
 
 #define mImplOsgFuncs \
 osg::PrimitiveSet* getPrimitiveSet() { return element_.get(); } \

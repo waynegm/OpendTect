@@ -25,7 +25,7 @@ class SoShapeHints;
 class SoSwitch;
 class SoVertexShape;
 
-namespace osg { class Geometry; class Geode; class Switch; }
+namespace osg { class Geometry; class Geode; class Switch; class PrimitiveSet; }
 
 namespace visBase
 {
@@ -140,8 +140,6 @@ public:
     bool		getNormalPerFaceBinding() const;
     			/*!< If yn==false, normals are set per vertex */
     
-    void		setMaterial(Material*);
-
     void		setVertexOrdering(int vo);
     int			getVertexOrdering() const;
     static int		cClockWiseVertexOrdering()		{ return 0; }
@@ -161,14 +159,18 @@ public:
     
     void		dirtyCoordinates();
 
-    virtual void	addPrimitiveSet(Geometry::PrimitiveSet*);
-    virtual void	removePrimitiveSet(const Geometry::PrimitiveSet*);
-    
+    void		addPrimitiveSet(Geometry::PrimitiveSet*);
+    void		removePrimitiveSet(const Geometry::PrimitiveSet*);
     int			nrPrimitiveSets() const;
+    virtual void	touchPrimitiveSet(int)			{}
+    Geometry::PrimitiveSet*	getPrimitiveSet(int);
     
 protected:
     			VertexShape( SoVertexShape* );
     			~VertexShape();
+    
+    virtual void	addPrimitiveSetToScene(osg::PrimitiveSet*);
+    virtual void	removePrimitiveSetFromScene(const osg::PrimitiveSet*);
     
     osg::Node*		gtOsgNode();
 
@@ -176,6 +178,8 @@ protected:
     Coordinates*	coords_;
     TextureCoords*	texturecoords_;
 
+    osg::Node*		node_;
+    
     osg::Geode*		geode_;
     osg::Geometry*	osggeom_;
     

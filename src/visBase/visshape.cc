@@ -359,7 +359,7 @@ VertexShape::~VertexShape()
     if ( coords_ ) coords_->unRef();
     if ( texturecoords_ ) texturecoords_->unRef();
     
-    mObjectSetApplyToAll(primitivesets_, primitivesets_[idx]->unRef() );
+    deepUnRef( primitivesets_ );
 }
     
     

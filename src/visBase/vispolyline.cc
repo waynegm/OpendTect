@@ -107,19 +107,12 @@ const LineStyle& PolyLine::lineStyle() const
 
 
 PolyLine3D::PolyLine3D()
-    : VertexShape( 0 )
+    : VertexShape( Geometry::PrimitiveSet::Other, false )
 {
-    osgswitch_->removeChild( geode_ );
-
-    geode_->unref();
-    geode_ = 0;
-    osggeom_ = 0;
-        
     node_ = osgpoly_ = new osgGeo::PolyLineNode;
     osgpoly_->ref();
     
     osgswitch_->addChild( node_ );
-    
     osgpoly_->setVertexArray( coords_->osgArray() );
 }
 

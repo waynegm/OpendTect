@@ -38,6 +38,7 @@ class Transformation;
 class SelectionManager;
 class DataManager;
 class Scene;
+class DataObjectGroup;
 
 
 // OSG traversal bitmasks defined by OpendTect
@@ -143,6 +144,8 @@ public:
 			
     bool			serialize(const char* filename,
 	    				  bool binary=false);
+    
+    void			setParent(DataObjectGroup* g) { parent_ = g; }
 
 protected:
     friend class		SelectionManager;
@@ -163,11 +166,12 @@ protected:
     virtual osg::Node*		gtOsgNode()		{ return 0; }
 
     void			updateOsgNodeData();
+    
+    DataObjectGroup*		parent_;
 
 private:
     int				id_;
     BufferString*		name_;
-
 };
 
 };

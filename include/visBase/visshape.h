@@ -167,6 +167,8 @@ public:
     
 protected:
     			VertexShape( SoVertexShape* );
+    			VertexShape( Geometry::PrimitiveSet::PrimitiveType,
+				     bool creategeode );
     			~VertexShape();
     
     virtual void	addPrimitiveSetToScene(osg::PrimitiveSet*);
@@ -184,7 +186,7 @@ protected:
     osg::Geometry*	osggeom_;
     
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
-    Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
+    const Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
 
 
 private:

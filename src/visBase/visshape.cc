@@ -307,24 +307,45 @@ void Shape::removeNode( SoNode* node )
 	root_->removeChild( node );
 }
 
-
+#define mVertexShapeConstructor( shp, geode ) \
+    Shape( shp ) \
+    , normals_( 0 ) \
+    , coords_( 0 ) \
+    , texturecoords_( 0 ) \
+    , normalbinding_( 0 ) \
+    , shapehints_( 0 ) \
+    , geode_( geode ) \
+    , node_( 0 ) \
+    , osggeom_( 0 )
+    
 VertexShape::VertexShape( SoVertexShape* shape )
-    : Shape( shape )
-    , normals_( 0 )
-    , coords_( 0 )
-    , texturecoords_( 0 )
-    , normalbinding_( 0 )
-    , shapehints_( 0 )
-    , geode_( new osg::Geode )
-    , node_( 0 )
-    , osggeom_( new osg::Geometry )
+    : mVertexShapeConstructor( shape, 0 )
+    , primitivetype_( Geometry::PrimitiveSet::Other )
 {
+    setCoordinates( Coordinates::create() );
+}
+    
+    
+VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
+			  bool creategeode )
+    : mVertexShapeConstructor( 0, creategeode ? new osg::Geode : 0 )
+    , primitivetype_( tp )
+{
+    
     if ( geode_ )
     {
 	geode_->ref();
+	osggeom_ = new osg::Geometry;
 	geode_->addDrawable( osggeom_ );
 	osgswitch_->addChild( geode_ );
 	node_ = geode_;
+	
+	if ( primitivetype_==Geometry::PrimitiveSet::Lines ||
+	    primitivetype_==Geometry::PrimitiveSet::LineStrips )
+	{
+	    osggeom_->getOrCreateStateSet()->setMode( GL_LIGHTING,
+						     osg::StateAttribute::OFF );
+	}
     }
     
     setCoordinates( Coordinates::create() );
@@ -382,17 +403,17 @@ const mVisTrans* VertexShape::getDisplayTransformation() const
 
 
 mDefSetGetItem( VertexShape, Coordinates, coords_,
-	       	osggeom_->setVertexArray(0),
-	       osggeom_->setVertexArray( mGetOsgVec3Arr( coords_->osgArray())));
+if ( osggeom_ ) osggeom_->setVertexArray(0),
+if ( osggeom_ ) osggeom_->setVertexArray(mGetOsgVec3Arr( coords_->osgArray())));
     
 mDefSetGetItem( VertexShape, Normals, normals_,
-	       osggeom_->setNormalArray( 0 ),
-	       osggeom_->setNormalArray(mGetOsgVec3Arr(normals_->osgArray())));
+if ( osggeom_ ) osggeom_->setNormalArray( 0 ),
+if ( osggeom_ ) osggeom_->setNormalArray(mGetOsgVec3Arr(normals_->osgArray())));
     
 mDefSetGetItem( VertexShape, TextureCoords, texturecoords_,
-	       osggeom_->setTexCoordArray( 0, 0 ),
-	       osggeom_->setTexCoordArray( 0,
-		    mGetOsgVec2Arr(texturecoords_->osgArray())));
+if ( osggeom_ ) osggeom_->setTexCoordArray( 0, 0 ),
+if ( osggeom_ ) osggeom_->setTexCoordArray( 0,
+mGetOsgVec2Arr(texturecoords_->osgArray())));
 
 
 
@@ -486,17 +507,8 @@ SoIndexedShape* createSoClass( Geometry::PrimitiveSet::PrimitiveType tp )
     
     
 IndexedShape::IndexedShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp )
-    : VertexShape( 0 )
+    : VertexShape( tp, true )
 {
-    primitivetype_ = tp;
-    
-    if ( primitivetype_==Geometry::PrimitiveSet::Lines ||
-	primitivetype_==Geometry::PrimitiveSet::LineStrips )
-    {
-	osggeom_->getOrCreateStateSet()->setMode( GL_LIGHTING,
-						  osg::StateAttribute::OFF );
-    }
-    
     indexedshape_ = (SoIndexedShape*) shape_;
 }
 

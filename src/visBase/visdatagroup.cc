@@ -37,6 +37,8 @@ DataObjectGroup::DataObjectGroup()
 
 DataObjectGroup::~DataObjectGroup()
 {
+    mObjectSetApplyToAll( objects_, objects_[idx]->setParent( 0 ));
+    
     deepUnRef( objects_ );
 
     osggroup_->unref();
@@ -47,15 +49,19 @@ int DataObjectGroup::size() const
 { return objects_.size(); }
 
 
+#define mNewObjectOperations \
+no->ref(); \
+no->setRightHandSystem( isRightHandSystem() ); \
+no->setParent( this ); \
+change.trigger()
+
 void DataObjectGroup::addObject( DataObject* no )
 {
     objects_ += no;
     
     if ( osggroup_ && no->osgNode() ) osggroup_->addChild( no->osgNode() );
 
-    no->ref();
-    no->setRightHandSystem( isRightHandSystem() );
-    change.trigger();
+    mNewObjectOperations;
 }
 
 
@@ -108,9 +114,7 @@ void DataObjectGroup::insertObject( int insertpos, DataObject* no )
     objects_.insertAt( no, insertpos );
     
     if ( no->osgNode() ) osggroup_->insertChild( insertpos, no->osgNode() );
-    no->ref();
-    no->setRightHandSystem( isRightHandSystem() );
-    change.trigger();
+    mNewObjectOperations;
 }
 
 
@@ -136,6 +140,7 @@ void DataObjectGroup::removeObject( int idx )
 
     objects_.remove( idx );
 
+    sceneobject->setParent( 0 );
     sceneobject->unRef();
     change.trigger();
 }

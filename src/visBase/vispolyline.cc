@@ -20,6 +20,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <Inventor/nodes/SoLineSet.h>
 #include <Inventor/nodes/SoIndexedLineSet.h>
 
+#include <osgGeo/PolyLine>
+#include <osg/Switch>
+#include <osg/Geode>
+
 mCreateFactoryEntry( visBase::PolyLine );
 mCreateFactoryEntry( visBase::PolyLine3D );
 mCreateFactoryEntry( visBase::IndexedPolyLine );
@@ -103,30 +107,57 @@ const LineStyle& PolyLine::lineStyle() const
 
 
 PolyLine3D::PolyLine3D()
-    : PolyLineBase( new SoLineSet3D )
-    , lineset_( dynamic_cast<SoLineSet3D*>( shape_ ) )
+    : VertexShape( 0 )
 {
-    numvertices_ = &lineset_->numVertices;
+    osgswitch_->removeChild( geode_ );
+
+    geode_->unref();
+    geode_ = 0;
+    osggeom_ = 0;
+        
+    node_ = osgpoly_ = new osgGeo::PolyLineNode;
+    osgpoly_->ref();
+    
+    osgswitch_->addChild( node_ );
+    
+    osgpoly_->setVertexArray( coords_->osgArray() );
 }
 
 
 
 void PolyLine3D::setLineStyle( const LineStyle& lst )
 {
-    lineset_->radius = lst.width_*0.5f;
-	//divided by 2 just like evry other radius in visBase
+    lst_ = lst_;
+    osgpoly_->setRadius( lst.width_*0.5f );
+    //divided by 2 just like evry other radius in visBase
     getMaterial()->setColor( lst.color_ );
 }
 
 
 const LineStyle& PolyLine3D::lineStyle() const
 {
-    static LineStyle ls;
-    ls.width_ = (int)(2*lineset_->radius.getValue());
-    ls.color_ = getMaterial()->getColor();
-    return ls;
+    return lst_;
+}
+    
+    
+void PolyLine3D::addPrimitiveSetToScene( osg::PrimitiveSet* ps )
+{
+    osgpoly_->addPrimitiveSet( ps );
 }
 
+    
+void PolyLine3D::removePrimitiveSetFromScene( const osg::PrimitiveSet* ps )
+{
+    const int idx = osgpoly_->getPrimitiveSetIndex( ps );
+    osgpoly_->removePrimitiveSet( idx );
+}
+    
+    
+void PolyLine3D::touchPrimitiveSet( int idx )
+{
+    osgpoly_->touchPrimitiveSet( idx );
+}
+    
 
 IndexedPolyLine::IndexedPolyLine()
     : IndexedShape( new SoIndexedLineSet )

@@ -16,12 +16,17 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "visshape.h"
 #include "position.h"
+#include "draw.h"
 
 class SoLineSet;
 class SoLineSet3D;
 class SoIndexedLineSet;
 class LineStyle;
 class SoMFInt32;
+
+namespace osgGeo {
+    class PolyLineNode;
+}
 
 namespace visBase
 {
@@ -65,7 +70,7 @@ protected:
 };
 
 
-mClass(visBase) PolyLine3D : public PolyLineBase
+mClass(visBase) PolyLine3D : public VertexShape
 {
 public:
     static PolyLine3D*	create()
@@ -73,9 +78,14 @@ public:
 
     void		setLineStyle(const LineStyle&);
     const LineStyle&	lineStyle() const;
-
+    
+    void		addPrimitiveSetToScene(osg::PrimitiveSet*);
+    void		removePrimitiveSetFromScene(const osg::PrimitiveSet*);
+    void		touchPrimitiveSet(int);
+    
 protected:
-    SoLineSet3D*	lineset_;
+    osgGeo::PolyLineNode*	osgpoly_;
+    LineStyle			lst_;
 };
 
 

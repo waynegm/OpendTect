@@ -35,6 +35,8 @@ class SoSwitch;
 
 namespace visBase
 {
+    
+class PolyLine3D;
 class PolyLineBase;
 class DataObjectGroup;
 class Text2;
@@ -197,7 +199,7 @@ public:
 protected:
     				~Well();
 
-    PolyLineBase*		track_;
+    PolyLine3D*			track_;
     Text2*			welltoptxt_;
     Text2*			wellbottxt_;
     DataObjectGroup*		markergroup_;

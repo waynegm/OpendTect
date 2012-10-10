@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "visdatagroup.h"
 #include "visdrawstyle.h"
+#include "viscoord.h"
 #include "vismarker.h"
 #include "vismaterial.h"
 #include "vispolyline.h"
@@ -147,9 +148,6 @@ void Well::setZAxisTransform( ZAxisTransform* zat, TaskRunner* )
 
 void Well::setTrack( const TypeSet<Coord3>& pts )
 {
-    while ( track_->size()>pts.size() )
-	track_->removePoint( track_->size()-1 );
-
     track_->setDisplayTransformation( transformation_ );
 
     CubeSampling cs( false );
@@ -168,18 +166,27 @@ void Well::setTrack( const TypeSet<Coord3>& pts )
     int ptidx = 0;
     for ( int idx=0; idx<pts.size(); idx++ )
     {
-	Coord3 crd = pts[idx];
-	if ( zaxistransform_ )
-	    crd.z = zaxistransform_->transform( crd );
-	if ( mIsUdf(crd.z) )
+	if ( !pts[idx].isDefined() )
 	    continue;
 
-	if ( ptidx>=track_->size() )
-	    track_->addPoint( crd );
-	else
-	    track_->setPoint( ptidx, crd );
+	track_->getCoordinates()->setPos( ptidx, pts[idx] );
 	ptidx++;
     }
+    
+    RefMan<Geometry::RangePrimitiveSet> rps = 0;
+    if ( !track_->nrPrimitiveSets() )
+    {
+	rps = Geometry::RangePrimitiveSet::create();
+	track_->addPrimitiveSet( rps );
+	
+    }
+    else
+    {
+	rps = (Geometry::RangePrimitiveSet*) track_->getPrimitiveSet( 0 );
+    }
+    
+    rps->setRange( Interval<int>( 0, ptidx-1 ) );
+    track_->touchPrimitiveSet( 0 );
 }
 
 

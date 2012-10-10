@@ -11,7 +11,7 @@ SET (OpendTect_VERSION_MAJOR 4)
 SET (OpendTect_VERSION_MINOR 5)
 SET (OpendTect_VERSION_DETAIL 0)
 
-PROJECT( "OpendTect_${OpendTect_VERSION_MAJOR}_${OpendTect_VERSION_MINOR}" )
+PROJECT( "OpendTect_qt" )
 
 
 INCLUDE(CTest)
@@ -42,51 +42,10 @@ SET(OD_MODULES
 	NLA AttributeEngine Velocity
 	VolumeProcessing PreStackProcessing Attributes
 	EMAttrib MPEEngine Well WellAttrib
-	uiBase uiTools uiCmdDriver uiFlatView uiIo uiSysAdm
-	uiNLA uiSeis uiStrat uiEarthModel uiWell
-	uiVelocity uiVolumeProcessing uiPreStackProcessing
-	uiAttributes uiEMAttrib uiMPE uiViewer2D uiWellAttrib
-	SoOD visBase visSurvey uiCoin uiVis
-	uiODMain
+	uiBase 
 )
 
-SET( OD_PLUGINS
-        Annotations
-	Bouncy
-	ExpAttribs
-	GapDecon
-	GoogleTranslate
-	GMT
-	Hello
-	HorizonAttrib
-	Madagascar
-	MadagascarAttribs
-	VoxelConnectivityFilter
-	TextureAttrib
-	uiBouncy
-	uiDPSDemo
-	uiExpAttribs
-	uiGapDecon
-	uiGMT
-	uiGoogleIO
-	uiGrav
-	uiHello
-	uiHorizonAttrib
-	uiImpGPR
-	uiMadagascar
-	uiMadagascarAttribs
-	uiTextureAttrib
-	uiTutMadagascar
-	uiVoxelConnectivityFilter
-	uiPreStackViewer
-	CmdDriver )
-
-
-SET( OD_SPECPROGS ODSeis )
-
 OD_ADD_MODULES( src ${OD_MODULES} )
-OD_ADD_MODULES( plugins ${OD_PLUGINS} )
-OD_ADD_MODULES( spec ${OD_SPECPROGS} )
 OD_ADD_MODULES( test testBasic testGeneral )
 
 OD_WRITE_MODDEPS( ${OD_BINARY_BASEDIR}/data )

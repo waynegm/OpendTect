@@ -79,6 +79,7 @@ public:
 private:
 
     virtual		~Transformation();
+    void		updateNormalizationMode();
 
     osg::MatrixTransform* node_;
 

@@ -69,6 +69,7 @@ void Transformation::setScale( const Coord3& vec )
     osg::Matrix osgmatrix = node_->getMatrix();
     osgmatrix.makeScale( vec.x, vec.y, vec.z );
     node_->setMatrix( osgmatrix );
+    updateNormalizationMode();
 }
 
 
@@ -97,6 +98,36 @@ void Transformation::setA( double a11, double a12, double a13, double a14,
 			a12, a22, a32, a42,
 			a13, a23, a33, a43,
 			a14, a24, a34, a44 ) );
+
+    updateNormalizationMode();
+}
+
+
+void Transformation::updateNormalizationMode()
+{
+    const double eps = 1e-5;
+    const osg::Vec3d scale = node_->getMatrix().getScale();
+
+    if ( node_->getStateSet() )
+    {
+	node_->getStateSet()->removeMode( GL_NORMALIZE );
+	node_->getStateSet()->removeMode( GL_RESCALE_NORMAL );
+    }
+
+    if ( fabs(scale.x()-scale.y()) > eps ||
+	 fabs(scale.y()-scale.z()) > eps ||
+	 fabs(scale.z()-scale.x()) > eps )
+    {
+	node_->getOrCreateStateSet()->setMode( GL_NORMALIZE,
+					       osg::StateAttribute::ON );
+    }
+    else if ( fabs(scale.x()-1.0) > eps ||
+	      fabs(scale.y()-1.0) > eps ||
+	      fabs(scale.z()-1.0) > eps )
+    {
+	node_->getOrCreateStateSet()->setMode( GL_RESCALE_NORMAL,
+					       osg::StateAttribute::ON );
+    }
 }
 
 

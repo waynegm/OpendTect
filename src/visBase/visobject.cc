@@ -54,7 +54,6 @@ VisualObjectImpl::VisualObjectImpl( bool issel )
 {
     if ( osgroot_ ) osgroot_->ref();
 
-    setMaterial( Material::create() );
     onoff_->ref();
     onoff_->addChild( root_ );
     onoff_->whichChild = SO_SWITCH_ALL;
@@ -190,6 +189,15 @@ void VisualObjectImpl::setMaterial( Material* nm )
 	osgroot_->getOrCreateStateSet()->setAttribute(material_->getMaterial());
 	osgroot_->getStateSet()->setDataVariance( osg::Object::DYNAMIC );
     }
+}
+    
+    
+Material* VisualObjectImpl::getMaterial()
+{
+    if ( !material_ )
+	setMaterial( visBase::Material::create() );
+    
+    return material_;
 }
 
 

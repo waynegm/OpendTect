@@ -102,7 +102,7 @@ public:
 
     void		setMaterial(Material*);
     const Material*	getMaterial() const { return material_; }
-    Material*		getMaterial() { return material_; }
+    Material*		getMaterial();
 
     static const char*	sKeyMaterialID();
     static const char*	sKeyIsOn();

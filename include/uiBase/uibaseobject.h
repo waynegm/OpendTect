@@ -1,5 +1,5 @@
-#ifndef uibaseobject_h
-#define uibaseobject_h
+#ifndef uibaseobject2_h
+#define uibaseobject2_h
 
 /*+
 ________________________________________________________________________
@@ -12,87 +12,49 @@ ________________________________________________________________________
 
 -*/
 
-#include "uibasemod.h"
 #include "namedobj.h"
+#include "geometry.h"
 
-class uiBody;
-mFDQtclass(QWidget)
+class QWidget;
+class uiParent;
+class uiGroup;
+
+mStruct(uiBase) uiLayout
+{
+    enum Relationship	{ AlignedBelow, AligneAbove };
+};
+
 
 mClass(uiBase) uiBaseObject : public NamedObject
 {
 public:
-				uiBaseObject(const char* nm, uiBody* = 0);
-    virtual			~uiBaseObject();
-
-				// implementation: uiobj.cc
-    void			finalise();
-    bool			finalised() const;
-    void			clear();
-
-    inline const uiBody*	body() const		{ return body_; }
-    inline uiBody*		body()			{ return body_; }
-
-    static void			addCmdRecorder(const CallBack&);
-    static void			removeCmdRecorder(const CallBack&);
-
-    int	 /* refnr */		beginCmdRecEvent(const char* msg=0);
-    void			endCmdRecEvent(int refnr,const char* msg=0);
-
-    int	 /* refnr */		beginCmdRecEvent(od_uint64 id,
-	    					 const char* msg=0);
-    void			endCmdRecEvent(od_uint64 id,int refnr,
-					       const char* msg=0);
-
-    Notifier<uiBaseObject>	tobeDeleted;
-				//!< triggered in destructor
-
-    virtual Notifier<uiBaseObject>& preFinalise()
-				{ return finaliseStart; }
-    virtual Notifier<uiBaseObject>& postFinalise()
-				{ return finaliseDone; }
     
+    void			attach(uiLayout::Relationship,uiBaseObject*);
     
-    virtual mQtclass(QWidget*)	getWidget() { return 0; }
-    const mQtclass(QWidget*)	getWidget() const;
-
+    virtual int			getHAlignRow() const		{ return 0; }
+    virtual int			getVAlignCol() const		{ return 0; }
+    virtual int			getNrWidgetRows() const		{ return 1; }
+    virtual int			getNrWidgetCols() const		{ return 1; }
+    virtual int			getRowSpan(int r, int c) const	{ return 1; }
+    virtual int			getColSpan(int r, int c) const	{ return 1; }
+    virtual mQtclass(QWidget)*	getWidget(int r, int c)		{ return 0; }
+    const mQtclass(QWidget)*	getWidget(int r, int c) const;
+    
+    virtual uiGroup*		parent() { return 0; }
+    const uiGroup*		parent() const;
+    
+    virtual void		detachWidgets() {}
+    /*!< Widget is now dead. Don't touch it any more */
+    
 protected:
-
-    void			setBody( uiBody* b )	{ body_ = b; }
-
-    Notifier<uiBaseObject>	finaliseStart;
-				//!< triggered when about to start finalising
-    Notifier<uiBaseObject>	finaliseDone;
-    				//!< triggered when finalising finished
-
-private:
-    int				cmdrecrefnr_;
-    uiBody*			body_;
-};
-
-
-/*
-CmdRecorder annotation to distinguish real user actions from actions 
-performed by program code. Should be used at start of each (non-const)
-uiObject function that calls any uiBody/Qt function that may trigger a
-signal received by the corresponding Messenger class (see i_q****.h).
-Apart from a few notify handler functions, it will do no harm when 
-using this annotation unnecessarily.
-*/
-
-#define mBlockCmdRec		CmdRecStopper cmdrecstopper(this);
-
-mClass(uiBase) CmdRecStopper
-{
-public:
-    				CmdRecStopper(const uiBaseObject*);
-				~CmdRecStopper();
-
-    static void			clearStopperList(const CallBacker* cmdrec);
-    				//!< will clear after all cmdrecs have called
-
-    static bool			isInStopperList(const uiBaseObject* obj);
+				friend class uiGroup;
+    virtual void		setParent(uiGroup*)		{}
+    
+    virtual bool		updateLayout()			{ return true; }
+				uiBaseObject(const char* nm);
+    
+    ObjectSet<uiBaseObject>	attachedsiblings_;
 };
 
 
 #endif
-

@@ -161,10 +161,10 @@ public:
     
     void		dirtyCoordinates();
 
-    void	addPrimitiveSet(Geometry::PrimitiveSet*);
-    void	removePrimitiveSet(const Geometry::IndexedPrimitiveSet*);
+    virtual void	addPrimitiveSet(Geometry::PrimitiveSet*);
+    virtual void	removePrimitiveSet(const Geometry::PrimitiveSet*);
     
-    int		nrPrimitiveSets() const;
+    int			nrPrimitiveSets() const;
     
 protected:
     			VertexShape( SoVertexShape* );

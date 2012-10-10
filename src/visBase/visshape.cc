@@ -335,6 +335,8 @@ VertexShape::~VertexShape()
     if ( normals_ ) normals_->unRef();
     if ( coords_ ) coords_->unRef();
     if ( texturecoords_ ) texturecoords_->unRef();
+    
+    mObjectSetApplyToAll(primitivesets_, primitivesets_[idx]->unRef() );
 }
     
     
@@ -592,14 +594,27 @@ public:
     }
 };
     
+    
 void visBase::VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
 {
+    p->ref();
     p->setPrimitiveType( primitivetype_ );
     
     mDynamicCastGet(OSGPrimitiveSet*, osgps, p );
     osggeom_->addPrimitiveSet( osgps->getPrimitiveSet() );
     
     primitivesets_ += p;
+}
+    
+    
+void visBase::VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
+{
+    const int pidx = primitivesets_.indexOf( p );
+    mDynamicCastGet( OSGPrimitiveSet*, osgps,primitivesets_[pidx]  );
+    const int idx = osggeom_->getPrimitiveSetIndex( osgps->getPrimitiveSet() );
+    osggeom_->removePrimitiveSet( idx );
+    
+    primitivesets_.remove( pidx )->unRef();
 }
     
 

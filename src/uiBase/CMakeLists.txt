@@ -11,6 +11,7 @@ SET(QT_MOC_HEADERS  )
 SET(OD_MODULE_SOURCES  
 		uibaseobject.cc
 		uigroup.cc
+		uilabel.cc
 	)
 SET(OD_MODULE_GUI_PROGS )
 OD_INIT_MODULE()

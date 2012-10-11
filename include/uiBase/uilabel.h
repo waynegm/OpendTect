@@ -12,21 +12,20 @@ ________________________________________________________________________
 
 -*/
 
-#include "uibasemod.h"
-#include "uiobj.h"
+
+#include "uibaseobject.h"
 #include "draw.h"
 
 class uiGroup;
 class uiLabelBody;
 class ioPixmap;
 
-mClass(uiBase) uiLabel : public uiObject
+mFDQtclass(QLabel);
+
+mClass(uiBase) uiLabel : public uiBaseObject
 {
 public:
-
-                        uiLabel(uiParent*,const char*);
-                        uiLabel(uiParent*,const char*,uiObject*);
-                        uiLabel(uiParent*,const char*,uiGroup*);
+                        uiLabel(const char*,uiBaseObject* = 0);
 
 /*! \brief set text on label
 
@@ -48,12 +47,9 @@ public:
     Alignment::HPos	alignment() const;
 
 private:
+    virtual mQtclass(QWidget)*	getWidget(int,int);
 
-    void		init(const char* txt,uiObject* buddy);
-
-    uiLabelBody*	body_;
-    uiLabelBody&	mkbody(uiParent*,const char*);
-
+       mQtclass(QLabel)*	qlabel_;
 };
 
 #endif

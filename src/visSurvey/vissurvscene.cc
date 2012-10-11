@@ -321,8 +321,7 @@ const visBase::DataObject* Scene::getObject( int idx ) const
 void Scene::addUTMObject( visBase::VisualObject* obj )
 {
     obj->setDisplayTransformation( utm2disptransform_ );
-    const int idx = zscaletransform_->getFirstIdx( inlcrl2disptransform_ );
-    zscaletransform_->insertObject( idx, obj );
+    zscaletransform_->addObject( obj );
 }
 
 

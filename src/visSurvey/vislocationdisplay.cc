@@ -704,7 +704,7 @@ void LocationDisplay::addDisplayPick( const Pick::Location& loc, int idx )
     RefMan<visBase::VisualObject> visobj = createLocation();
     visobj->setDisplayTransformation( transformation_ );
 
-    group_->insertObject( idx, visobj );
+    group_->addObject( visobj );
     setPosition( idx, loc );
 }
 

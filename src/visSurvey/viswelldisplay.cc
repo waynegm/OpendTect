@@ -807,7 +807,7 @@ void WellDisplay::addPick( Coord3 pos )
     if ( insertidx > -1 )
     {
 	visBase::Marker* marker = visBase::Marker::create();
-	group_->insertObject( insertidx, marker );
+	group_->addObject( marker );
 
 	marker->setDisplayTransformation( transformation_ );
 	marker->setCenterPos( pos );

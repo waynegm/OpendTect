@@ -999,7 +999,7 @@ void HorizonDisplay::setOnlyAtSectionsDisplay( bool yn )
 		   pointgroup->getObject( 0 ) );
 	if ( material )
 	    pointgroup->removeObject( 0 );
-	pointgroup->insertObject( 0, intersectionlinematerial_ );
+	//pointgroup->inserObject( 0, intersectionlinematerial_ );
     }
 }
 

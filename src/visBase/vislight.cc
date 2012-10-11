@@ -38,7 +38,10 @@ Light::Light( SoLight* light )
     , ison_( true )
     , intensity_( 1 )
     , osglight_( new osg::Light )
-{ light_->ref(); }
+{
+    light_->ref();
+    osglight_->setLightNum( 1 );	// For now
+}
 
 
 Light::~Light()

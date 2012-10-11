@@ -15,8 +15,7 @@ ________________________________________________________________________
 #include "namedobj.h"
 #include "geometry.h"
 
-class QWidget;
-class uiParent;
+mFDQtclass(QWidget);
 class uiGroup;
 
 mStruct(uiBase) uiLayout
@@ -55,6 +54,9 @@ protected:
     
     ObjectSet<uiBaseObject>	attachedsiblings_;
 };
+
+
+#define mQStringToConstChar( str )		str.toAscii().constData()
 
 
 #endif

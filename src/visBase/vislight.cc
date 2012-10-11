@@ -19,6 +19,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <Inventor/nodes/SoLightModel.h>
 
 
+#include <osg/Light>
+
 mCreateFactoryEntry( visBase::PointLight );
 mCreateFactoryEntry( visBase::DirectionalLight );
 mCreateFactoryEntry( visBase::SpotLight );
@@ -35,6 +37,7 @@ Light::Light( SoLight* light )
     : light_( light )
     , ison_( true )
     , intensity_( 1 )
+    , osglight_( new osg::Light )
 { light_->ref(); }
 
 

@@ -15,10 +15,17 @@ ________________________________________________________________________
 
 #include "visbasemod.h"
 #include "visdata.h"
+#include "visosg.h"
 
 
 class SoLight;
 class SoLightModel;
+
+
+namespace osg
+{
+    class Light;
+}
 
 namespace visBase
 {
@@ -41,10 +48,15 @@ public:
 
     virtual void	fillPar( IOPar&, TypeSet<int>& ) const;
     virtual int		usePar( const IOPar& );
+    
+    osg::Light*		osgLight()	{ return osglight_; }
+    
 protected:
     			Light(SoLight* light_);
     virtual		~Light();
 
+    OsgRefMan<osg::Light>	osglight_;
+    
     SoLight*		light_;	
     bool		ison_;
     float		intensity_;

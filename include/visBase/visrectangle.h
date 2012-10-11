@@ -26,6 +26,7 @@ class SoRotation;
 class SoTranslate1Dragger;
 class SoFaceSet;
 class SoDragger;
+class SoSeparator;
 
 
 namespace visBase

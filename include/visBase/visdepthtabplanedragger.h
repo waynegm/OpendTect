@@ -22,8 +22,6 @@ namespace osgManipulator { class TabPlaneDragger; }
 namespace osg { class Switch; }
 
 
-class SoDepthTabPlaneDragger;
-class SoDragger;
 class Coord3;
 class IOPar;
 
@@ -122,10 +120,7 @@ protected:
 
     void			initOsgDragger();
 
-    SoDepthTabPlaneDragger*	dragger_;
-
     int				dim_;
-    Transformation*		rotation_;
     TypeSet<Coord3>		centers_;
     TypeSet<Coord3>		sizes_;
 
@@ -137,12 +132,6 @@ protected:
 
     Interval<float>		widthranges_[3];
     Interval<float>		spaceranges_[3];
-
-private:
-    static void			startCB( void*, SoDragger* );
-    static void			motionCB( void*, SoDragger* );
-    static void			valueChangedCB(void*, SoDragger* );
-    static void			finishCB( void*, SoDragger* );
 
     static const char*		dimstr();
     static const char*		sizestr();

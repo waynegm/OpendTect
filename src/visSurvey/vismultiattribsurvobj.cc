@@ -60,7 +60,7 @@ MultiTextureSurveyObject::MultiTextureSurveyObject( bool dochannels )
 	visBase::DM().getObject( channels_->getInventorNode() );
     }
 	
-    material_->setColor( Color::White() );
+    getMaterial()->setColor( Color::White() );
     material_->setAmbience( 0.8 );
     material_->setDiffIntensity( 0.8 );
 }

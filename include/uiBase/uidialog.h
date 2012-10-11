@@ -12,10 +12,7 @@ ________________________________________________________________________
 
 -*/
 
-#include "uibasemod.h"
-#include "uimainwin.h"
-#include "bufstring.h"
-#include "errh.h"
+#include "uigroup.h"
 
 class uiButton;
 class uiGroup;
@@ -32,13 +29,31 @@ If you don't want to use the help system, simply pass null ('0').
 */
 
 #define mNoDlgTitle	""
+mFDQtclass(QDialog)
+
+mClass(uiBase) uiWindowBase : public uiGroup
+{
+public:
+    void		showMinMaxButtons();
+    void		showAlwaysOnTop();
+    
+    void		setWindowTitle( const char* txt );
+        
+    static void		addWindow(uiWindowBase*);
+    static void		removeWindow(uiWindowBase*);
+    
+protected:
+    static Threads::Mutex		windowlistlock_;
+    static ObjectSet<uiWindowBase>	windowlist_;
+
+    mQtclass(QWidget)*		getWidget(int,int)	{ return getWindow(); }
+				uiWindowBase(const char*);
+    virtual mQtclass(QWidget)*	getWindow()		= 0;
+};
 
 
-mClass(uiBase) uiDialog : public uiMainWin
+mClass(uiBase) uiDialog : public uiWindowBase
 { 	
-    // impl: uimainwin.cc
-    friend class	uiDialogBody;
-
 public:
 
     /*!\brief description of properties of dialog.
@@ -93,10 +108,11 @@ public:
 
     enum		Button { OK, SAVE, CANCEL, HELP, CREDITS, TRANSLATE };
 
-			uiDialog(uiParent*,const Setup&);
-    const Setup&	setup() const;
+			uiDialog(const Setup&);
+    const Setup&	setup() const			{ return setup_; }
 
-    int			go(); 
+    int			go();
+    /*
     int			goMinimized();
 
     void		reject( CallBacker* cb =0);
@@ -114,12 +130,13 @@ public:
 
     uiButton*		button( Button but );
     void		setButtonText( Button but, const char* txt );
-    
+    */
     enum CtrlStyle	{ DoAndLeave, DoAndStay, LeaveOnly, DoAndProceed };
 			//! On construction, it's (of course) DoAndLeave
     void		setCtrlStyle(CtrlStyle);
 			//! OK button disabled when set to LeaveOnly
     CtrlStyle		getCtrlStyle() const		{ return ctrlstyle_; }
+    /*
     void		setOkText( const char* txt );
 			//! cancel button disabled when set to empty
     void		setCancelText( const char* txt );
@@ -147,17 +164,22 @@ public:
     static int		titlePos();			
     static void		setTitlePos( int p );
 			// -1 = left, 0 = center, 1 = right
-
+*/
 protected:
-
+    
+    mQtclass(QWidget)*	getWindow();
+/*
     virtual bool        rejectOK(CallBacker*){ return true;}//!< confirm reject 
     virtual bool        acceptOK(CallBacker*){ return true;}//!< confirm accept 
     virtual bool        doneOK(int)	     { return true; } //!< confirm exit 
-
+*/
     bool		cancelpushed_;
     CtrlStyle		ctrlstyle_;
     static int		titlepos_;
+    
+    mQtclass(QDialog)*	qdialog_;
 
+    Setup		setup_;
 };
 
 #endif

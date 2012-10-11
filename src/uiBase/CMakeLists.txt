@@ -10,6 +10,7 @@ SET(OD_USEQT Gui)
 SET(QT_MOC_HEADERS  )
 SET(OD_MODULE_SOURCES  
 		uibaseobject.cc
+		uidialog.cc
 		uigroup.cc
 		uilabel.cc
 	)

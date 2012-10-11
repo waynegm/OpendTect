@@ -16,11 +16,8 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "visdata.h"
 #include "thread.h"
+#include "visosg.h"
 
-class SoSeparator;
-class SoLockableSeparator;
-class SoNode;
-class SoSwitch;
 class Coord3;
 
 namespace osg { class Switch; }
@@ -83,9 +80,6 @@ public:
     void		turnOn(bool);
     bool		isOn() const;
     void		removeSwitch();
-    			/*!<Will turn the object permanently on.
-			   \note Must be done before giving away the SoNode with
-			   getInventorNode() to take effect */
     void		setRightHandSystem(bool yn) { righthandsystem_=yn; }
     bool		isRightHandSystem() const { return righthandsystem_; }
 
@@ -128,17 +122,14 @@ protected:
 			VisualObjectImpl(bool selectable);
     virtual		~VisualObjectImpl();
 
-    SoSwitch*		onoff_;
     Material*		material_;
     bool		righthandsystem_;
 
-    SoNode*		gtInvntrNode();
     osg::Node*		gtOsgNode();
 
 private:
-    SoSeparator*	root_;
-    SoLockableSeparator* lockableroot_;
-    osg::Switch*	osgroot_;
+    
+    OsgRefMan<osg::Switch>	osgroot_;
 };
 
 mLockerClassImpl( visBase, VisualReadLockLocker, VisualObjectImpl,

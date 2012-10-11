@@ -15,11 +15,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "vistransform.h"
 
-#include <Inventor/actions/SoGetBoundingBoxAction.h>
-#include <Inventor/nodes/SoSeparator.h>
-#include <Inventor/nodes/SoSwitch.h>
-#include "SoLockableSeparator.h"
-
 #include <osg/Switch>
 #include <osg/Material>
 
@@ -46,129 +41,73 @@ VisualObject::~VisualObject()
 VisualObjectImpl::VisualObjectImpl( bool issel )
     : VisualObject( issel )
     , osgroot_( new osg::Switch )
-    , root_( new SoSeparator )
-    , lockableroot_( 0 )
-    , onoff_( new SoSwitch )
     , material_( 0 )
     , righthandsystem_( true )
 {
-    if ( osgroot_ ) osgroot_->ref();
-
-    onoff_->ref();
-    onoff_->addChild( root_ );
-    onoff_->whichChild = SO_SWITCH_ALL;
 }
 
 
 VisualObjectImpl::~VisualObjectImpl()
 {
-    if ( osgroot_ ) osgroot_->unref();
-
-    getInventorNode()->unref();
     if ( material_ ) material_->unRef();
 }
 
 
 void VisualObjectImpl::setLockable()
 {
-    if ( lockableroot_ )
-	return;
-
-    lockableroot_ = new SoLockableSeparator;
-    lockableroot_->ref();
-
-    for ( int idx=0; idx<root_->getNumChildren(); idx++ )
-	lockableroot_->addChild( root_->getChild(idx) );
-
-    if ( onoff_ )
-    {
-	onoff_->removeChild( root_ );
-	onoff_->addChild( lockableroot_ );
-	root_ = lockableroot_;
-	lockableroot_->unref();
-    }
-    else
-    {
-	root_->unref();
-	root_ = lockableroot_;
-	root_->ref();
-    }
 }
 
 
 void VisualObjectImpl::readLock()
 {
-    if ( lockableroot_ ) lockableroot_->lock.readLock();
 }
 	
 
 void VisualObjectImpl::readUnLock()
 {
-    if ( lockableroot_ ) lockableroot_->lock.readUnlock();
 }
-
 
 bool VisualObjectImpl::tryReadLock()
 {
-    if ( !lockableroot_ )
-	return false;
-
-    return lockableroot_->lock.tryReadLock();
+    return false;
 }
 
 
 void VisualObjectImpl::writeLock()
 {
-    if ( lockableroot_ ) lockableroot_->lock.writeLock();
 }
 	
 
 void VisualObjectImpl::writeUnLock()
 {
-    if ( lockableroot_ ) lockableroot_->lock.writeUnlock();
 }
 
 
 bool VisualObjectImpl::tryWriteLock()
 {
-    if ( !lockableroot_ )
-	return false;
-
-    return lockableroot_->lock.tryWriteLock();
+    return false;
 }
 
 
 
 void VisualObjectImpl::turnOn( bool yn )
 {
-    if ( onoff_ ) 
-    {
-	const int newval = yn ? SO_SWITCH_ALL : SO_SWITCH_NONE;
- 	if ( newval!=onoff_->whichChild.getValue() )
- 	    onoff_->whichChild = newval;
-    }
-    else if ( !yn )
-    {
-	pErrMsg( "Turning off object without switch");
-    }
-    if ( osgroot_ )
-    {
-	if ( yn )
-	    osgroot_->setAllChildrenOn();
-	else
-	    osgroot_->setAllChildrenOff();
-    }
+
+    if ( yn )
+	osgroot_->setAllChildrenOn();
+    else
+	osgroot_->setAllChildrenOff();
 }
 
 
 bool VisualObjectImpl::isOn() const
 {
-    if ( osgroot_ && osgroot_->getNumChildren() )
+    if ( osgroot_->getNumChildren() )
     {
 	return osgroot_->getValue( 0 );
     }
-
-    return !onoff_ || onoff_->whichChild.getValue()==SO_SWITCH_ALL;
+    
+    return true;
 }
 
 
@@ -203,14 +142,8 @@ Material* VisualObjectImpl::getMaterial()
 
 void VisualObjectImpl::removeSwitch()
 {
-    root_->ref();
-    onoff_->unref();
-    onoff_ = 0;
+    pErrMsg( "Don't call");
 }
-
-
-SoNode* VisualObjectImpl::gtInvntrNode() 
-{ return onoff_ ? (SoNode*) onoff_ : (SoNode*) root_; }
 
 
 osg::Node* VisualObjectImpl::gtOsgNode()
@@ -220,19 +153,19 @@ osg::Node* VisualObjectImpl::gtOsgNode()
 
 
 void VisualObjectImpl::addChild( SoNode* nn )
-{ if ( nn ) root_->addChild( nn ); }
+{  }
 
 
 void VisualObjectImpl::insertChild( int pos, SoNode* nn )
-{ root_->insertChild( nn, pos ); }
+{  }
 
 
 void VisualObjectImpl::removeChild( SoNode* nn )
-{ root_->removeChild( nn ); }
+{  }
 
 
 int VisualObjectImpl::childIndex( const SoNode* nn ) const
-{ return root_->findChild(nn); }
+{ return -1;}
 
 
 int VisualObjectImpl::addChild( osg::Node* nn )
@@ -266,7 +199,7 @@ int VisualObjectImpl::childIndex( const osg::Node* nn ) const
 
 
 SoNode* VisualObjectImpl::getChild(int idx)
-{ return root_->getChild(idx); }
+{ return 0; }
 
 
 int VisualObjectImpl::usePar( const IOPar& iopar )
@@ -320,6 +253,9 @@ void VisualObject::triggerRightClick( const EventInfo* eventinfo )
 
 bool VisualObject::getBoundingBox( Coord3& minpos, Coord3& maxpos ) const
 {
+    pErrMsg( "Not impl. Not sure if needed." );
+    return false;
+    /*
     SbViewportRegion vp;
     SoGetBoundingBoxAction action( vp );
     action.apply( const_cast<SoNode*>(getInventorNode()) );
@@ -343,6 +279,7 @@ bool VisualObject::getBoundingBox( Coord3& minpos, Coord3& maxpos ) const
     }
 
     return true;
+     */
 }
 
 

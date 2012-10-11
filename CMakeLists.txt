@@ -13,6 +13,8 @@ SET (OpendTect_VERSION_DETAIL 0)
 
 PROJECT( "OpendTect_qt" )
 
+#Fix warning on cmake.
+set( DUMMY ${COINDIR} ${OSG_DIR} )
 
 INCLUDE(CTest)
 

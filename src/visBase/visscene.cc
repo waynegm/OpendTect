@@ -30,6 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <Inventor/nodes/SoCallback.h>
 
 #include <osg/Group>
+#include <osg/Light>
 
 #define mDefaultFactor	1
 #define mDefaultUnits	200
@@ -54,7 +55,8 @@ Scene::Scene()
 {
     directionallight_->ref();
     directionallight_->turnOn( false );
-    insertObject( 0, directionallight_ );
+    osg::ref_ptr<osg::StateSet> stateset = osggroup_->getOrCreateStateSet();
+    stateset->setAttributeAndModes(directionallight_->osgLight() );
     
     selroot_->ref();
 
@@ -120,15 +122,6 @@ void Scene::addObject( DataObject* dataobj )
     mDynamicCastGet( VisualObject*, vo, dataobj );
     if ( vo ) vo->setSceneEventCatcher( &events_ );
     DataObjectGroup::addObject( dataobj );
-}
-
-
-void Scene::insertObject( int idx, DataObject* dataobj )
-{
-    removeCallback();
-    mDynamicCastGet( VisualObject*, vo, dataobj );
-    if ( vo ) vo->setSceneEventCatcher( &events_ );
-    DataObjectGroup::insertObject( idx, dataobj );
 }
 
 

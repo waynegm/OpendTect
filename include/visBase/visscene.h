@@ -44,8 +44,7 @@ public:
 			mCreateDataObj(Scene);
 
     void		addObject(DataObject*);
-    void		insertObject(int idx,DataObject*);
-
+    
     void		setAmbientLight(float);
     float		ambientLight() const;
 

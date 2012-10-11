@@ -20,6 +20,7 @@ class Color;
 
 class SoDragger;
 class SoSeparator;
+class SoSwitch;
 
 
 namespace visBase

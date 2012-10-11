@@ -19,6 +19,7 @@ ________________________________________________________________________
 #include "ranges.h"
 
 class SoRandomTrackLineDragger;
+class SoSwitch;
 template <class T> class Array2D;
 class IOPar;
 

@@ -79,6 +79,12 @@ Coord3 Transformation::getScale() const
     const osg::Vec3d vec = matrix.getScale();
     return Coord3( vec.x(), vec.y(), vec.z() );
 }
+    
+    
+void Transformation::setAbsoluteReferenceFrame()
+{
+    node_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+}
 
 
 void Transformation::reset()

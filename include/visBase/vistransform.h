@@ -55,6 +55,8 @@ public:
 
     void		setScale( const Coord3& );
     Coord3		getScale() const;
+    
+    void		setAbsoluteReferenceFrame();
 
     void		reset();
 

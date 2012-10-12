@@ -43,6 +43,9 @@ public:
     void			setText(const char*);
     void			getText(BufferString&) const;
 
+    void			setColor(const Color&);
+    Color			getColor() const;
+
     void			setJustification(Justification);
 
     osg::Drawable&		getDrawable();

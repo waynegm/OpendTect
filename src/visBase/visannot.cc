@@ -100,6 +100,7 @@ Annotation::Annotation()
 
     updateTextPos();
 
+    getMaterial()->change.notify( mCB(this,Annotation,updateTextColor) );
     getMaterial()->setColor( annotcolor_, 0 );
 }
 
@@ -107,6 +108,7 @@ Annotation::Annotation()
 Annotation::~Annotation()
 {
     pickstyle_->unRef();
+    getMaterial()->change.remove( mCB(this,Annotation,updateTextColor) );
 }
 
 
@@ -351,10 +353,20 @@ void Annotation::updateTextPos()
 }
 
 
-void visBase::Annotation::setAnnotScale( int dim, int nv )
+void Annotation::setAnnotScale( int dim, int nv )
 {
     annotscale_[dim] = nv;
     updateTextPos();
+}
+
+
+void Annotation::updateTextColor( CallBacker* )
+{
+    for ( int idx=0; idx<axisannot_->nrTexts(); idx++ )
+	axisannot_->text(idx)->setColor( getMaterial()->getColor() );
+
+    for ( int idx=0; idx<axisnames_->nrTexts(); idx++ )
+	axisnames_->text(idx)->setColor( getMaterial()->getColor() );
 }
 
 

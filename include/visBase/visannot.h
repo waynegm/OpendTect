@@ -83,6 +83,7 @@ protected:
     void			initGridLines();
     void			updateGridLines();
     void			updateTextPos();
+    void			updateTextColor(CallBacker*);
     void			getAxisCoords(int,osg::Vec3f&,osg::Vec3f&) const;
     void			setCorner( int, float, float, float );
     

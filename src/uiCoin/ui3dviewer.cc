@@ -22,6 +22,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osgViewer/ViewerEventHandlers>
 #include <osgGA/TrackballManipulator>
 #include <osg/ComputeBoundsVisitor>
+#include <osg/MatrixTransform>
+
 
 #include "envvars.h"
 #include "iopar.h"
@@ -42,6 +44,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdataman.h"
 #include "visscene.h"
 #include "vissurvscene.h"
+#include "vistransform.h"
+#include "vistext.h"
 
 #include <iostream>
 #include <math.h>
@@ -101,7 +105,37 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     , handle_( h )
     , printpar_(*new IOPar)
     , viewport_( 0 )
-{}
+    , sceneroot_( new osg::Group )
+    , hudprojectionmatrix_( new osg::Projection )
+    , hudscene_( visBase::Transformation::create() )
+{
+    sceneroot_->addChild( hudprojectionmatrix_ );
+    hudprojectionmatrix_->setName( "HUD projection Matrix");
+    hudprojectionmatrix_->setMatrix( osg::Matrix::ortho2D(0,1024,0,768) );
+    
+    hudscene_->setName( "HUD Scene" );
+    hudscene_->setAbsoluteReferenceFrame();
+    hudprojectionmatrix_->addChild( hudscene_->osgNode() );
+    
+    osg::StateSet* hudstateset = new osg::StateSet();
+    hudscene_->osgNode()->setStateSet( hudstateset );
+        
+    //hudstateset->setMode( GL_BLEND, osg::StateAttribute::ON );
+    
+    hudstateset->setMode( GL_DEPTH_TEST, osg::StateAttribute::OFF );
+    //hudstateset->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+    hudstateset->setRenderBinDetails( 11, "RenderBin" );
+    
+    
+    /* Example on how to add something to the HUD. */
+    visBase::Text2* hudtext = visBase::Text2::create();
+    
+    hudscene_->addObject( hudtext );
+    hudtext->addText();
+    
+    hudtext->text()->setPosition( osg::Vec3( 100,100, -1) );
+    hudtext->text()->setText( "HUD-Text" );
+}
 
 
 ui3DViewerBody::~ui3DViewerBody()
@@ -151,6 +185,8 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
 
     osgcamera->setProjectionMatrixAsPerspective( 45.0f, aspectratio,
 						  1.0f, 10000.0f );
+    hudprojectionmatrix_->setMatrix( osg::Matrix::ortho2D(0,widget->width(),
+							  0,widget->height() ));
 }
 
 
@@ -314,7 +350,9 @@ void ui3DViewerBody::setSceneID( int sceneid )
     visBase::DataObject* obj = visBase::DM().getObject( sceneid );
     mDynamicCastGet(visBase::Scene*,newscene,obj)
     if ( !newscene ) return;
-
+    
+    sceneroot_->addChild( newscene->osgNode() );
+    
     if ( !view_.getOsgView() )
     {
 	camera_ = visBase::Camera::create();
@@ -322,14 +360,13 @@ void ui3DViewerBody::setSceneID( int sceneid )
 	mDynamicCastGet(osg::Camera*, osgcamera, camera_->osgNode() );
 	osgcamera->setGraphicsContext( getGraphicsContext() );
 	osgcamera->setClearColor( osg::Vec4(0.0f, 0.0f, 0.5f, 1.0f) );
-	if ( viewport_ ) viewport_->unref();
 	viewport_ = new osg::Viewport(0, 0, 600, 400 );
 	viewport_->ref();
 	osgcamera->setViewport( viewport_ );
 
 	osg::ref_ptr<osgViewer::View> view = new osgViewer::View;
 	view->setCamera( osgcamera );
-	view->setSceneData( newscene->osgNode() );
+	view->setSceneData( sceneroot_ );
 	view->addEventHandler( new osgViewer::StatsHandler );
 
 	osg::ref_ptr<osgGA::TrackballManipulator> manip =

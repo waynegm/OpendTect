@@ -15,14 +15,18 @@ ________________________________________________________________________
 #include "uiobjbody.h"
 #include "uiosgviewer.h"
 #include "refcount.h"
+#include "visosg.h"
 
-namespace visBase { class Camera; class Scene; }
+namespace visBase { class Camera; class Scene; class Transformation; }
 namespace osgGA { class GUIActionAdapter; }
 class ui3DViewer;
 namespace osg
 {
+    class Group;
     class GraphicsContext;
     class Camera;
+    class MatrixTransform;
+    class Projection;
     class Vec3f;
     class Viewport;
 }
@@ -97,7 +101,10 @@ protected:
 
     RefMan<visBase::Camera>		camera_;
     RefMan<visBase::Scene>		scene_;
-    osg::Viewport*			viewport_;
+    OsgRefMan<osg::Viewport>		viewport_;
+    OsgRefMan<osg::Group>		sceneroot_;
+    osg::Projection*			hudprojectionmatrix_;
+    RefMan<visBase::Transformation>	hudscene_;
 };
 
 #endif

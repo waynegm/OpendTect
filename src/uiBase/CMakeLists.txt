@@ -14,5 +14,5 @@ SET(OD_MODULE_SOURCES
 		uigroup.cc
 		uilabel.cc
 	)
-SET(OD_MODULE_GUI_PROGS )
+SET(OD_MODULE_GUI_PROGS od_test_uiBase.cc )
 OD_INIT_MODULE()

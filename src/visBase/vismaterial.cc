@@ -39,7 +39,7 @@ Material::Material()
     , change( this )
 {
     material_->ref();
-    material_->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE  );
+    material_->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
     setMinNrOfMaterials(0);
     updateMaterial(0);
 }
@@ -142,7 +142,7 @@ void Material::updateMaterial(int idx)
     const osg::Vec4 diffuse(color_[0].r() * diffuseintencity_[idx]/255,
 			    color_[0].g() * diffuseintencity_[idx]/255,
 			    color_[0].b() * diffuseintencity_[idx]/255,
-			    transparency_[idx]);
+			    1.0-transparency_[0]);
     
     if ( !idx )
     {
@@ -151,20 +151,21 @@ void Material::updateMaterial(int idx)
 			      osg::Vec4(color_[0].r() * ambience_/255,
 				   color_[0].g() * ambience_/255,
 				   color_[0].b() * ambience_/255,
-				   transparency_[idx]) );
+				   1.0-transparency_[idx]) );
 	material_->setSpecular( osg::Material::FRONT_AND_BACK,
 			      osg::Vec4(color_[0].r() * specularintensity_/255,
 					color_[0].g() * specularintensity_/255,
 					color_[0].b() * specularintensity_/255,
-					transparency_[idx]) );
+					1.0-transparency_[idx]) );
 	material_->setEmission( osg::Material::FRONT_AND_BACK,
 			      osg::Vec4(color_[0].r() * emmissiveintensity_/255,
 					color_[0].g() * emmissiveintensity_/255,
 					color_[0].b() * emmissiveintensity_/255,
-					transparency_[idx]) );
+					1.0-transparency_[idx]) );
 	material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
 	
 	material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
+
 	if ( colorarray_ )
 	{
 	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(colorarray_);

@@ -45,7 +45,7 @@ Scene::Scene()
     : selroot_( new SoGroup )
     , environment_( new SoEnvironment )
     , polygonoffset_( PolygonOffset::create() )
-    , directionallight_( DirectionalLight::create() )  
+    , light_( new Light )
     , events_( *EventCatcher::create() )
     , mousedownid_( -1 )
     , blockmousesel_( false )
@@ -53,10 +53,12 @@ Scene::Scene()
     , callback_( 0 )
     , osgsceneroot_( 0 )
 {
-    directionallight_->ref();
-    directionallight_->turnOn( false );
+    light_->ref();
+    light_->turnOn( false );
+    light_->setAmbient( 0 );
+    light_->setLightNum( 1 );
     osg::ref_ptr<osg::StateSet> stateset = osggroup_->getOrCreateStateSet();
-    stateset->setAttributeAndModes(directionallight_->osgLight() );
+    stateset->setAttributeAndModes(light_->osgLight() );
     
     selroot_->ref();
 
@@ -112,7 +114,7 @@ Scene::~Scene()
 
     polygonoffset_->unRef();
     selroot_->unref();
-    directionallight_->unRef();
+    light_->unRef();
 }
 
 
@@ -136,19 +138,10 @@ float Scene::ambientLight() const
     return environment_->ambientIntensity.getValue();
 }
 
- 
-void Scene::setDirectionalLight( const DirectionalLight& dl )
+    
+Light* Scene::getLight() const
 {
-    directionallight_->setIntensity( dl.intensity() );
-    directionallight_->setDirection( dl.direction( 0 ), dl.direction( 1 ),
-	    dl.direction( 2 ) );
-    directionallight_->turnOn( dl.isOn() );
-}
- 
-
-DirectionalLight* Scene::getDirectionalLight() const
-{
-    return directionallight_;
+    return light_;
 }
 
 
@@ -296,6 +289,10 @@ void Scene::mousePickCB( CallBacker* cb )
 void Scene::fillPar( IOPar& par, TypeSet<int>& additionalsaves ) const
 {
     DataObjectGroup::fillPar( par, additionalsaves );
+    IOPar lightpar;
+    light_->fillPar( lightpar );
+    
+    par.mergeComp( lightpar, sKeyLight() );
     fillOffsetPar( par );
 }
 
@@ -314,6 +311,10 @@ int Scene::usePar( const IOPar& par )
     int res = DataObjectGroup::usePar( par );
     if ( res!=1 )
 	return res;
+    
+    PtrMan<IOPar> lightpar = par.subselect( sKeyLight() );
+    if ( !lightpar || light_->usePar( *lightpar ) )
+	return -1;
 
     PtrMan<IOPar> settings = par.subselect( sKeyOffset() );
     if ( settings )

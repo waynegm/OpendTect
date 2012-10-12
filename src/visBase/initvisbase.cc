@@ -110,9 +110,6 @@ mDefModInitFn(visBase)
     visBase::Image::initClass();
     visBase::InvisibleLineDragger::initClass();
     visBase::LevelOfDetail::initClass();
-    visBase::PointLight::initClass();
-    visBase::DirectionalLight::initClass();
-    visBase::SpotLight::initClass();
     visBase::MarchingCubesSurface::initClass();
     visBase::Marker::initClass();
     visBase::Material::initClass();

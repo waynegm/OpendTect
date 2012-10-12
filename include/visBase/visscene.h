@@ -29,7 +29,7 @@ namespace visBase
     class SelectionManager;
     class EventCatcher;
     class PolygonOffset;
-    class DirectionalLight;
+    class Light;
 
 /*!\brief
     Scene manages all DataObjects and has some managing
@@ -48,8 +48,7 @@ public:
     void		setAmbientLight(float);
     float		ambientLight() const;
 
-    void		setDirectionalLight(const DirectionalLight&);
-    DirectionalLight*	getDirectionalLight() const;
+    Light*		getLight() const;
 
     PolygonOffset*	getPolygonOffset()	{ return polygonoffset_; }
     bool		saveCurrentOffsetAsDefault() const;
@@ -66,6 +65,7 @@ public:
     static const char*	sKeyOffset()	{ return "Polygon offset"; }
     static const char*	sKeyFactor()	{ return "Factor"; }
     static const char*	sKeyUnits()	{ return "Units"; }
+    static const char*	sKeyLight()	{ return "Light"; }
 
 
 protected:
@@ -90,7 +90,7 @@ private:
 
     SoEnvironment*	environment_;
     PolygonOffset*	polygonoffset_;
-    DirectionalLight*	directionallight_;
+    Light*		light_;
     SoGroup*		selroot_;
     SoCallback*		callback_;
     bool		blockmousesel_;

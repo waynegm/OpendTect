@@ -12,7 +12,7 @@ ________________________________________________________________________
 
 -*/
 
-#include "uigroup.h"
+#include "uiwindowbase.h"
 
 class uiButton;
 class uiGroup;
@@ -30,27 +30,6 @@ If you don't want to use the help system, simply pass null ('0').
 
 #define mNoDlgTitle	""
 mFDQtclass(QDialog)
-
-mClass(uiBase) uiWindowBase : public uiGroup
-{
-public:
-    void		showMinMaxButtons();
-    void		showAlwaysOnTop();
-    
-    void		setWindowTitle( const char* txt );
-        
-    static void		addWindow(uiWindowBase*);
-    static void		removeWindow(uiWindowBase*);
-    
-protected:
-    static Threads::Mutex		windowlistlock_;
-    static ObjectSet<uiWindowBase>	windowlist_;
-
-    mQtclass(QWidget)*		getWidget(int,int)	{ return getWindow(); }
-				uiWindowBase(const char*);
-    virtual mQtclass(QWidget)*	getWindow()		= 0;
-};
-
 
 mClass(uiBase) uiDialog : public uiWindowBase
 { 	

@@ -99,14 +99,15 @@ uiRect uiFlatViewer::getViewRect() const
 {
     const FlatView::Annotation& annot = appearance().annot_;
     int l = extraborders_.left();
-    int r = extraborders_.right() + 2;
+    int r = extraborders_.right();
     int t = extraborders_.top();
     int b = extraborders_.bottom();
     
     if ( annot.haveTitle() ) t += mAxisHeight;
-    if ( annot.haveAxisAnnot(false) ) l += mAxisWidth;
+    if ( annot.haveAxisAnnot(false) ) 
+	{ l += mAxisWidth; r += 2; }
     if ( annot.haveAxisAnnot(true) )
-    { b += mAxisHeight;  t += mAxisHeight; }
+	{ b += mAxisHeight;  t += mAxisHeight; }
     
     const uiBorder annotborder(l,t,r,b);
 
@@ -125,7 +126,7 @@ void uiFlatViewer::updateAuxDataCB( CallBacker* )
 
 void uiFlatViewer::updateAnnotCB( CallBacker* )
 {
-    //TODO
+    axesdrawer_.update();
 }
 
 
@@ -133,10 +134,16 @@ void uiFlatViewer::updateTransforms()
 {
     const uiRect viewrect = getViewRect();
 
-    const double xscale = viewrect.width()/wr_.width();
-    const double yscale = viewrect.height()/wr_.height();
-    const double xpos = viewrect.left()-xscale*wr_.left();
-    const double ypos = viewrect.top()-yscale*wr_.top();
+    uiWorldRect wr = wr_;
+    if ( wr.left() > wr.right() ) 
+	wr.swapHor();
+    if ( wr.bottom() < wr.top() ) 
+	wr.swapVer();
+
+    const double xscale = viewrect.width()/wr.width();
+    const double yscale = viewrect.height()/wr.height();
+    const double xpos = viewrect.left()-xscale*wr.left();
+    const double ypos = viewrect.top()-yscale*wr.top();
 
     worldgroup_->setPos( uiWorldPoint( xpos, ypos ) );
     worldgroup_->setScale( (float) xscale, (float) yscale );

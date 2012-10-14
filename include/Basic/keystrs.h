@@ -46,14 +46,17 @@ namespace sKey
     inline FixedString Desc()		{ return "Description"; }
     inline FixedString EmptyString()	{ return ""; }
     inline FixedString Factor()		{ return "Factor"; }
+    inline FixedString Fault()		{ return "Fault"; }
     inline FixedString FileName()	{ return "File name"; }
     inline FixedString Filter()		{ return "Filter"; }
     inline FixedString FloatUdf()	{ return "1e30"; }
     inline FixedString Geometry()	{ return "Geometry"; }
+    inline FixedString Horizon()	{ return "Horizon"; }
     inline FixedString ID()		{ return "ID"; }
     inline FixedString IOSelection()	{ return "I/O Selection"; }
     inline FixedString Inline()		{ return "In-line"; }
     inline FixedString Keys()		{ return "Keys"; }
+    inline FixedString Line()		{ return "Line"; }
     inline FixedString LineKey()	{ return "Line key"; }
     inline FixedString LineName()	{ return "Line name"; }
     inline FixedString Log()		{ return "Log"; }

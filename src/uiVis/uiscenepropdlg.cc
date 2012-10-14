@@ -25,7 +25,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "fontdata.h"
 #include "uifontsel.h"
 
-bool uiScenePropertyDlg::savestatus = true;
+bool uiScenePropertyDlg::savestatus_ = true;
 
 
 uiScenePropertyDlg::uiScenePropertyDlg( uiParent* p, 
@@ -50,7 +50,7 @@ uiScenePropertyDlg::uiScenePropertyDlg( uiParent* p,
     , separationdlg_( 0 )
 {
     enableSaveButton( "Apply to all scenes");
-    setSaveButtonChecked( savestatus );
+    setSaveButtonChecked( savestatus_ );
 
     if ( viewers_[curvwridx_] )
     {
@@ -255,8 +255,8 @@ bool uiScenePropertyDlg::acceptOK( CallBacker* )
     if ( scene_ )
 	scene_->savePropertySettings();
 
-    savestatus = saveButtonChecked();
-    if ( !savestatus )
+    savestatus_ = saveButtonChecked();
+    if ( !savestatus_ )
 	return true;
 
     for ( int idx=0; idx<viewers_.size() && viewers_[idx]; idx++ )

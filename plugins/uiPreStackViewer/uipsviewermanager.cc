@@ -37,7 +37,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uivispartserv.h"
 #include "visflatviewer.h"
 #include "visplanedatadisplay.h"
-#include "visprestackviewer.h"
+#include "visprestackdisplay.h"
 #include "visseis2ddisplay.h"
 #include "vistransform.h"
 #include "uiamplspectrum.h"
@@ -60,6 +60,7 @@ uiViewer3DMgr::uiViewer3DMgr()
 {
     posdialogs_.allowNull();
     visserv_->removeAllNotifier().notify( mCB(this,uiViewer3DMgr,removeAllCB) );
+    visserv_->objectaddedremoved.notify( mCB(this,uiViewer3DMgr,sceneChangeCB));
     RefMan<MenuHandler> menuhandler = visserv_->getMenuHandler();
 
     IOM().surveyToBeChanged.notify(mCB(this,uiViewer3DMgr,surveyToBeChangedCB));
@@ -75,6 +76,7 @@ uiViewer3DMgr::uiViewer3DMgr()
 uiViewer3DMgr::~uiViewer3DMgr()
 {
     visserv_->removeAllNotifier().remove( mCB(this,uiViewer3DMgr,removeAllCB) );
+    visserv_->objectaddedremoved.remove( mCB(this,uiViewer3DMgr,sceneChangeCB));
     RefMan<MenuHandler> menuhandler = visserv_->getMenuHandler(); 
 
     IOM().surveyToBeChanged.remove(mCB(this,uiViewer3DMgr,surveyToBeChangedCB));
@@ -217,8 +219,10 @@ void uiViewer3DMgr::handleMenuCB( CallBacker* cb )
     else if ( mnuid==proptymenuitem_.id )
     {
 	menu->setIsHandled( true );
-	uiViewer3DSettingDlg dlg(menu->getParent(), *psv, *this, *preprocmgr_);
-	dlg.go();
+	uiViewer3DSettingDlg* dlg = new uiViewer3DSettingDlg(
+		menu->getParent(), *psv, *this, *preprocmgr_);
+	dlg->setDeleteOnClose( true );
+	dlg->go();
     }
     else if ( mnuid==positionmenuitem_.id )
     {

@@ -56,7 +56,7 @@ protected:
     float			oldfactor_;
     float			oldunits_;
     FontData			oldfont_;
-    static bool			savestatus;
+    static bool			savestatus_;
 
     uiCheckBox*			annotfld_;
     uiCheckBox*			annotscalefld_;

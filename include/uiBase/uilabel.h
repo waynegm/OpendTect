@@ -47,9 +47,9 @@ public:
     Alignment::HPos	alignment() const;
 
 private:
-    virtual mQtclass(QWidget)*	getWidget(int,int);
+    virtual mQtclass(QWidget)*	getWidget(int);
 
-       mQtclass(QLabel)*	qlabel_;
+    mQtclass(QLabel)*		qlabel_;
 };
 
 #endif

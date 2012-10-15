@@ -24,13 +24,11 @@ public:
 			uiGroup( const char* nm="uiGroup" );
     virtual		~uiGroup();
 
-    uiGroup*		parent()	    { return parent_; }
-    mQtclass(QWidget)*	getWidget(int,int)  { return widget_; }
+    mQtclass(QWidget)*	getWidget(int)  { return widget_; }
 
     void		detachWidgets();
     
-    void		attach(uiBaseObject*,uiLayout::Relationship,
-			       uiBaseObject*);
+    void		attach(uiBaseObject*,Relationship,uiBaseObject*);
     
     void		addChild(uiBaseObject*);
     void		removeChild(uiBaseObject*);
@@ -38,28 +36,32 @@ public:
 protected:
 
 			uiGroup( const char* nm, mQtclass(QWidget)* );
-    void		setParent(uiGroup*);
-    
+
     bool		circularRelationships() const;
     bool		updateLayout();
     
+    bool		finalize();
     
     struct LayoutRelationship
     {
 	LayoutRelationship(uiBaseObject*,uiBaseObject*,
-			   uiLayout::Relationship);
+			   uiBaseObject::Relationship);
 	
-	uiBaseObject*		obj0_;
-	uiBaseObject*		obj1_;
-	uiLayout::Relationship	relationship_;
+	bool			relatesTo(const uiBaseObject* o) const;
+	const uiBaseObject*	getOther(const uiBaseObject*) const;
+	
+	uiBaseObject*			obj0_;
+	uiBaseObject*			obj1_;
+	uiBaseObject::Relationship	relationship_;
     };
+    
+    bool		getLayout(int chld,RowCol& origin,RowCol& span) const;
     
     
     ManagedObjectSet<LayoutRelationship>    relationships_;
     
     mQtclass(QGridLayout)*		    gridlayout_;
     
-    uiGroup*				    parent_;
     QWidget*				    widget_;
     ObjectSet<uiBaseObject>		    children_;
 };

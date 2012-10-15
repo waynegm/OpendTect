@@ -34,7 +34,7 @@ int main( int argc, char** argv )
     
     uiLabel* label2 = new uiLabel("Label text 2");
     dlg.addChild( label2 );
-    label2->attach(uiLayout::AlignedBelow, label1 );
+    label2->attach(uiBaseObject::AlignedBelow, label1 );
     
     dlg.go();
     

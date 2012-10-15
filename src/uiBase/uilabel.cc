@@ -24,13 +24,13 @@ uiLabel::uiLabel( const char* txt, uiBaseObject* buddy )
 {
     if ( buddy )
     {
-	if ( buddy->getNrWidgetRows()!=1 || buddy->getNrWidgetCols()!=1 )
+	if ( buddy->getNrWidgets()!=1 )
 	{
 	    pErrMsg("Labels can only be attached to buddys with single widgets");
 	    return;
 	}
     
-	qlabel_->setBuddy( buddy->getWidget(0,0) );
+	qlabel_->setBuddy( buddy->getWidget(0) );
     }
     
     setTextSelectable( true );
@@ -80,5 +80,5 @@ Alignment::HPos uiLabel::alignment() const
 }
 
 
-QWidget* uiLabel::getWidget(int, int)
+QWidget* uiLabel::getWidget(int)
 { return qlabel_; }

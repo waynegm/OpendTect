@@ -21,16 +21,18 @@ public:
     void		showAlwaysOnTop();
     
     void		setWindowTitle( const char* txt );
-        
-    static void		addWindow(uiWindowBase*);
-    static void		removeWindow(uiWindowBase*);
 
 protected:
+    
+    static void		addWindow(uiWindowBase*);
+    static void		removeWindow(uiWindowBase*);
+    
     static Threads::Mutex		windowlistlock_;
     static ObjectSet<uiWindowBase>	windowlist_;
 
-    mQtclass(QWidget)*		getWidget(int,int)	{ return getWindow(); }
+    mQtclass(QWidget)*		getWidget(int)	{ return getWindow(); }
 				uiWindowBase(const char*);
+    
     virtual mQtclass(QWidget)*	getWindow()		= 0;
 };
 

@@ -14,32 +14,38 @@ ________________________________________________________________________
 
 #include "namedobj.h"
 #include "geometry.h"
+#include "rowcol.h"
 
 mFDQtclass(QWidget);
 class uiGroup;
 
 mStruct(uiBase) uiLayout
 {
-    enum Relationship	{ AlignedBelow, AligneAbove };
+    
 };
 
 
 mClass(uiBase) uiBaseObject : public NamedObject
 {
 public:
+    enum Relationship	{ Below, Above, Left, Right, RowAligned, ColumnAligned,
+	AlignedBelow, AlignedAbove };
     
-    void			attach(uiLayout::Relationship,uiBaseObject*);
+    void			attach(Relationship,uiBaseObject*);
     
     virtual int			getHAlignRow() const		{ return 0; }
     virtual int			getVAlignCol() const		{ return 0; }
-    virtual int			getNrWidgetRows() const		{ return 1; }
-    virtual int			getNrWidgetCols() const		{ return 1; }
-    virtual int			getRowSpan(int r, int c) const	{ return 1; }
-    virtual int			getColSpan(int r, int c) const	{ return 1; }
-    virtual mQtclass(QWidget)*	getWidget(int r, int c)		{ return 0; }
-    const mQtclass(QWidget)*	getWidget(int r, int c) const;
     
-    virtual uiGroup*		parent() { return 0; }
+    virtual int			getNrWidgets() const	{ return 1; }
+    virtual mQtclass(QWidget)*	getWidget(int)		{ return 0; }
+    const mQtclass(QWidget)*	getWidget(int) const;
+    virtual RowCol		getWidgetOrigin(int) const {return RowCol(0,0);}
+    virtual RowCol		getWidgetSpan(int) const   {return RowCol(1,1);}
+
+    int				getNrRows() const;
+    int				getNrCols() const;
+    
+    virtual uiGroup*		parent() { return parent_; }
     const uiGroup*		parent() const;
     
     virtual void		detachWidgets() {}
@@ -47,12 +53,17 @@ public:
     
 protected:
 				friend class uiGroup;
-    virtual void		setParent(uiGroup*)		{}
+    virtual void		setParent(uiGroup*);
+    virtual bool		checkLayout() const;
+    int				getNrRowCols(bool row) const;
+    
+    virtual bool		finalize()			{ return true; }
     
     virtual bool		updateLayout()			{ return true; }
 				uiBaseObject(const char* nm);
     
     ObjectSet<uiBaseObject>	attachedsiblings_;
+    uiGroup*			parent_;
 };
 
 

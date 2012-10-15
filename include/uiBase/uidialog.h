@@ -145,7 +145,7 @@ public:
 			// -1 = left, 0 = center, 1 = right
 */
 protected:
-    
+        
     mQtclass(QWidget)*	getWindow();
 /*
     virtual bool        rejectOK(CallBacker*){ return true;}//!< confirm reject 

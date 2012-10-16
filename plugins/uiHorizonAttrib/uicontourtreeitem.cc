@@ -569,7 +569,7 @@ void uiContourTreeItem::createLines()
     {
 	drawstyle_ = visBase::DrawStyle::create();
 	drawstyle_->ref();
-	if ( lines_ ) lines_->insertNode( drawstyle_->getInventorNode() );
+	//if ( lines_ ) lines_->insertNode( drawstyle_->getInventorNode() );
     }
 
     if ( !material_ )
@@ -577,7 +577,7 @@ void uiContourTreeItem::createLines()
 	material_ = visBase::Material::create();
 	material_->setColor( color_ );
 	material_->ref();
-	if ( lines_ ) lines_->insertNode( material_->getInventorNode() );
+	if ( lines_ ) lines_->setMaterial( material_ );
     }
 }
 

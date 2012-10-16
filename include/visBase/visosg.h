@@ -20,7 +20,7 @@ ________________________________________________________________________
 
 class Coord3;
 
-namespace osg { class Vec3f; }
+namespace osg { class Vec3f; class Array; }
     
 
 #define mGetOsgArrPtr(tp,ptr) ((tp) ptr->getDataPointer() )
@@ -29,6 +29,9 @@ namespace osg { class Vec3f; }
 #define mGetOsgVec4Arr(ptr) ((osg::Vec4Array*) ptr )
 
 
+namespace  visBase
+{
+
 //!Calls obj->ref(). obj must inherit osg::Referenced
 mExternC(visBase) void refOsgObj(void* obj);
 
@@ -36,12 +39,26 @@ mExternC(visBase) void refOsgObj(void* obj);
 mExternC(visBase) void unrefOsgObj(void*);
 
 mDefRefMan( OsgRefMan, refOsgObj(ptr_), unrefOsgObj(ptr_) )
+} //Namespace
 
-namespace  visBase
+#if defined(visBase_EXPORTS) || defined(VISBASE_EXPORTS)
+//Only available in visBase
+#include <osg/Vec3>
+#include <position.h>
+#include <convert.h>
+    
+namespace Conv
 {
-    mGlobal(visBase) const Coord3& assign(Coord3&,const osg::Vec3f&);
-    mGlobal(visBase) const osg::Vec3f& assign(osg::Vec3f&,const Coord3&);
-}
+    template <>
+    inline void set( Coord3& _to, const osg::Vec3f& v )
+    { _to.x = v[0]; _to.y=v[1]; _to.z=v[2]; }
+    
+    template <>
+    inline void set( osg::Vec3f& _to, const Coord3& v )
+    { _to.set( (float) v.x, (float) v.y, (float) v.z ); }
+} //Namespace conv
+
+#endif
 
 #endif
 

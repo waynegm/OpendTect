@@ -22,22 +22,6 @@ mCreateFactoryEntry( visBase::Coordinates );
 namespace visBase
 {
     
-    
-const Coord3& assign( Coord3& crd, const osg::Vec3f& origin )
-{
-    crd.x = origin[0];
-    crd.y = origin[1];
-    crd.z = origin[2];
-    return crd;
-}
-    
-    
-const osg::Vec3f& assign( osg::Vec3f& vec,const Coord3& origin )
-{
-    vec.set( (float) origin.x, (float) origin.y, (float) origin.z );
-    return vec;
-}
-
 
 Coordinates::Coordinates()
     : transformation_( 0 )
@@ -144,10 +128,7 @@ int Coordinates::addPos( const Coord3& pos )
 
     }
 
-    mGetOsgVec3Arr(osgcoords_)->push_back(
-	    osg::Vec3f( (float) postoset.x,
-			(float) postoset.y,
-			(float) postoset.z));
+    mGetOsgVec3Arr(osgcoords_)->push_back( Conv::to<osg::Vec3>(postoset) );
     return res;
 }
 
@@ -219,8 +200,7 @@ void Coordinates::setPosWithoutLock( int idx, const Coord3& pos )
     if ( idx>=mGetOsgVec3Arr(osgcoords_)->size() )
 	mGetOsgVec3Arr(osgcoords_)->resize( idx+1 );
     
-    (*mGetOsgVec3Arr(osgcoords_))[idx] =
-	osg::Vec3f((float) postoset.x,(float) postoset.y,(float)postoset.z);
+    (*mGetOsgVec3Arr(osgcoords_))[idx] = Conv::to<osg::Vec3f>( postoset );
 
     const int unusedidx = unusedcoords_.indexOf(idx);
     if ( unusedidx!=-1 )

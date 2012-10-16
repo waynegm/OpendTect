@@ -45,11 +45,11 @@ MPEEditor::MPEEditor()
     , isdragging( false )
     , draggerinmotion( false )
 {
-    nodematerial = visBase::Material::create();
+    nodematerial = new visBase::Material;
     nodematerial->ref();
     nodematerial->setColor( Color(255,255,0) );
 
-    activenodematerial = visBase::Material::create();
+    activenodematerial = new visBase::Material;
     activenodematerial->ref();
     activenodematerial->setColor( Color(255,0,0) );
 

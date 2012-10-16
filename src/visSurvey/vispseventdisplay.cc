@@ -442,7 +442,7 @@ void PSEventDisplay::updateDisplay( ParentAttachedObject* pao )
 	    {
 		const Color col = ctabsequence_.color(
 		    ctabmapper_.position( vals[idx]) );
-		RefMan<visBase::Material> mat = visBase::Material::create();
+		RefMan<visBase::Material> mat = new visBase::Material;
 		mDynamicCastGet(
 		    visBase::Marker*,marker,eventseeds_->getObject(idx))
 		mat->setColor( col );
@@ -590,7 +590,7 @@ void PSEventDisplay::updateDisplay( ParentAttachedObject* pao )
 		{
 		    if ( !pao->markers_[lastmarker]->getMaterial() )
 			pao->markers_[lastmarker]->setMaterial( 
-			       visBase::Material::create() );
+			       new visBase::Material );
 
 		    values += value;
 		    markers += pao->markers_[lastmarker];

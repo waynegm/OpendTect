@@ -22,6 +22,7 @@ namespace visBase
 {
 
 const char* VisualObjectImpl::sKeyMaterialID()	{ return "Material ID"; }
+const char* VisualObjectImpl::sKeyMaterial()    { return "Material"; }
 const char* VisualObjectImpl::sKeyIsOn()	{ return "Is on"; }
 
 
@@ -115,8 +116,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
 {
     if ( material_ )
     {
-	osgroot_->getOrCreateStateSet()->removeAttribute(
-						material_->getMaterial() );
+	material_->setStateSet( 0 );
 	material_->unRef();
     }
 
@@ -125,8 +125,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
     if ( material_ )
     {
 	material_->ref();
-	osgroot_->getOrCreateStateSet()->setAttribute(material_->getMaterial());
-	osgroot_->getStateSet()->setDataVariance( osg::Object::DYNAMIC );
+	material_->setStateSet( osgroot_->getOrCreateStateSet() );
     }
 }
     
@@ -134,7 +133,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
 Material* VisualObjectImpl::getMaterial()
 {
     if ( !material_ )
-	setMaterial( visBase::Material::create() );
+	setMaterial( new visBase::Material );
     
     return material_;
 }
@@ -207,22 +206,13 @@ int VisualObjectImpl::usePar( const IOPar& iopar )
     int res = VisualObject::usePar( iopar );
     if ( res != 1 ) return res;
 
-    int matid;
-    if ( iopar.get(sKeyMaterialID(),matid) )
+    if ( material_ )
     {
-	if ( matid==-1 ) setMaterial( 0 );
-	else
-	{
-	    DataObject* mat = DM().getObject( matid );
-	    if ( !mat ) return 0;
-	    if ( typeid(*mat) != typeid(Material) ) return -1;
-
-	    setMaterial( (Material*)mat );
-	}
+	PtrMan<IOPar> matpar = iopar.subselect( sKeyMaterial() );
+	if ( matpar )
+	    material_->usePar( *matpar );
     }
-    else
-	setMaterial( 0 );
-
+    
     bool isonsw;
     if ( iopar.getYN(sKeyIsOn(),isonsw) )
 	turnOn( isonsw );
@@ -235,11 +225,14 @@ void VisualObjectImpl::fillPar( IOPar& iopar,
 					 TypeSet<int>& saveids ) const
 {
     VisualObject::fillPar( iopar, saveids );
-    iopar.set( sKeyMaterialID(), material_ ? material_->id() : -1 );
-
-    if ( material_ && saveids.indexOf(material_->id()) == -1 )
-	saveids += material_->id();
-
+    if ( material_ )
+    {
+	IOPar materialpar;
+	material_->fillPar( materialpar );
+	iopar.mergeComp( materialpar, sKeyMaterial() );
+	
+    }
+    
     iopar.setYN( sKeyIsOn(), isOn() );
 }
 

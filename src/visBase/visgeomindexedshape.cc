@@ -95,7 +95,7 @@ GeomIndexedShape::~GeomIndexedShape()
 
 
 GeomIndexedShape::ColTabMaterial::ColTabMaterial()
-    : coltab_( visBase::Material::create() )
+    : coltab_( new visBase::Material )
     , cache_( 0 )
     , materialbinding_( new SoMaterialBinding )
 {

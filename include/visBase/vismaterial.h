@@ -13,14 +13,15 @@ ________________________________________________________________________
 
 -*/
 
-#include "visbasemod.h"
-#include "visdata.h"
 #include "color.h"
+#include "visnodestate.h"
 
 namespace osg {
     class Material;
     class Array;
 };
+
+class IOPar;
 
 namespace visBase
 {
@@ -30,11 +31,10 @@ namespace visBase
 
 */
 
-mClass(visBase) Material : public DataObject
+mClass(visBase) Material : public NodeState
 {
 public:
-    static Material*	create()
-			mCreateDataObj(Material);
+    			Material();
 
     Notifier<Material>	change;
 
@@ -67,14 +67,12 @@ public:
 			/*!< Should be between 0 and 1 */
     float		getTransparency(int idx=0) const;
 
-    void		setDisplayTransformation(const mVisTrans*) {}
     int			usePar(const IOPar&);
-    void		fillPar(IOPar&,TypeSet<int>&) const;
+    void		fillPar(IOPar&) const;
 
     int			nrOfMaterial() const;
     
     const osg::Array*	getColorArray() const;
-    osg::Material*	getMaterial();
 
 protected:
 			~Material();

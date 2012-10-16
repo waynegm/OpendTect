@@ -98,7 +98,7 @@ HorizonDisplay::HorizonDisplay()
 
     material_->setAmbience( 0.3 );
 
-    RefMan<visBase::Material> linemat = visBase::Material::create();
+    RefMan<visBase::Material> linemat = new visBase::Material;
     linemat->setFrom( *material_ );
     linemat->setColor( nontexturecol_ );
     linemat->setDiffIntensity( 1 );

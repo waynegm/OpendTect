@@ -75,7 +75,7 @@ void PickSetDisplay::setColor( Color nc )
     if ( !bodydisplay_ ) return;
     
     if ( !bodydisplay_->getMaterial() )
-	bodydisplay_->setMaterial( visBase::Material::create() );
+	bodydisplay_->setMaterial( new visBase::Material );
 
     bodydisplay_->getMaterial()->setColor( nc );
 }
@@ -124,7 +124,7 @@ bool PickSetDisplay::setBodyDisplay()
     }
     
     if ( !bodydisplay_->getMaterial() )
-	bodydisplay_->setMaterial( visBase::Material::create() );
+	bodydisplay_->setMaterial( new visBase::Material );
     bodydisplay_->getMaterial()->setColor( set_->disp_.color_ );
     bodydisplay_->setDisplayTransformation( transformation_ );
     

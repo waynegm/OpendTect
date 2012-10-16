@@ -822,7 +822,7 @@ MarchingCubesDisplay::PlaneIntersectInfo::PlaneIntersectInfo()
     visshape_ = visBase::GeomIndexedShape::create();
     visshape_->turnOnForegroundLifter( true );
     if ( visshape_->getMaterial() )
-	visshape_->setMaterial( visBase::Material::create() );
+	visshape_->setMaterial( new visBase::Material );
     visshape_->ref();
     visshape_->setSelectable( false );
     visshape_->renderOneSide( 0 );

@@ -116,8 +116,8 @@ clssname* ownclass::gt##clssname() const \
 mDefSetGetItem( Shape, Texture2, texture2_, , );
 mDefSetGetItem( Shape, Texture3, texture3_, , );
 mDefSetGetItem( Shape, Material, material_,
-  osgswitch_->getOrCreateStateSet()->removeAttribute( material_->getMaterial()),
-  osgswitch_->getOrCreateStateSet()->setAttribute( material_->getMaterial()) );
+    material_->setStateSet( 0 ),
+    material_->setStateSet( osgswitch_->getOrCreateStateSet() ) )
 
 
 void Shape::setMaterialBinding( int nv )
@@ -139,21 +139,12 @@ void Shape::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
     VisualObject::fillPar( iopar, saveids );
 
     if ( material_ )
-	iopar.set( sKeyMaterial(), material_->id() );
-
-    int textureindex = -1;
-    if ( texture2_ )
-	textureindex = texture2_->id();
-    else if ( texture3_ )
-	textureindex = texture3_->id();
-
-    if ( textureindex != -1 )
     {
-	iopar.set( sKeyTexture(), textureindex );
-	if ( saveids.indexOf(textureindex) == -1 )
-	    saveids += textureindex;
+	IOPar matpar;
+	material_->fillPar( matpar );
+	iopar.mergeComp( matpar, sKeyMaterial() );
     }
-
+	
     iopar.setYN( sKeyOnOff(), isOn() );
 }
 
@@ -167,20 +158,12 @@ int Shape::usePar( const IOPar& par )
     if ( par.getYN( sKeyOnOff(), ison) )
 	turnOn( ison );
 
-    int textureindex;
-    if ( par.get(sKeyTexture(),textureindex) && textureindex!=-1 )
+    if ( material_ )
     {
-	if ( !DM().getObject(textureindex) )
-	    return 0;
-
-	Texture2* t2 = dynamic_cast<Texture2*>(DM().getObject(textureindex));
-	Texture3* t3 = dynamic_cast<Texture3*>(DM().getObject(textureindex));
-
-	if ( t2 ) setTexture2( t2 );
-	else if ( t3 ) setTexture3( t3 );
-	else return -1;
+	PtrMan<IOPar> matpar = par.subselect( sKeyMaterial() );
+	material_->usePar( *matpar );
     }
-
+    
     return 1;
 }
 

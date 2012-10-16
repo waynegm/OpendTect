@@ -1245,7 +1245,7 @@ int VolumeDisplay::usePar( const IOPar& par )
     if ( res!=1 ) return res;
 
     if ( !getMaterial() )
-	visBase::VisualObjectImpl::setMaterial( visBase::Material::create() );
+	visBase::VisualObjectImpl::setMaterial( new visBase::Material );
 
     PtrMan<IOPar> texturepar = par.subselect( sKeyTexture() );
     if ( texturepar ) //old format (up to 4.0)

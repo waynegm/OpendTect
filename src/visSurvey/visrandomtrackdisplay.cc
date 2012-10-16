@@ -112,7 +112,7 @@ RandomTrackDisplay::RandomTrackDisplay()
     
     polyline_->ref();
     addChild( polyline_->getInventorNode() );
-    polyline_->setMaterial( visBase::Material::create() );
+    polyline_->setMaterial( new visBase::Material );
    
     markergrp_->ref();
     addChild( markergrp_->getInventorNode() );
@@ -1096,7 +1096,7 @@ void RandomTrackDisplay::setPickPos( const Coord3& pos )
 {
     polyline_->addPoint( pos );
     visBase::Marker* marker = visBase::Marker::create();
-    marker->setMaterial( visBase::Material::create() );
+    marker->setMaterial( new visBase::Material );
     marker->getMaterial()->setColor( polyline_->getMaterial()->getColor() );
     marker->setCenterPos( pos );
     markergrp_->addObject( marker );

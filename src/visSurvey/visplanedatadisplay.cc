@@ -164,7 +164,7 @@ PlaneDataDisplay::PlaneDataDisplay()
     dragger_->rightClicked()->notify(
 	    		mCB(this,PlaneDataDisplay,draggerRightClick) );
 
-    draggermaterial_ = visBase::Material::create();
+    draggermaterial_ = new visBase::Material;
     draggermaterial_->ref();
 
     draggerdrawstyle_ = visBase::DrawStyle::create();

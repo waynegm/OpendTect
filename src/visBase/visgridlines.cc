@@ -190,7 +190,7 @@ void GridLines::addLine( IndexedPolyLine& lines, const Coord3& start,
 IndexedPolyLine* GridLines::addLineSet()
 {
     IndexedPolyLine* polyline = IndexedPolyLine::create();
-    polyline->setMaterial( Material::create() );
+    polyline->setMaterial( new Material );
     polyline->ref();
     polylineset_ += polyline;
     addChild( polyline->getInventorNode() );

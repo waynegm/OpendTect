@@ -68,7 +68,7 @@ Well::Well()
 
     track_ = PolyLine3D::create();
     track_->ref();
-    track_->setMaterial( Material::create() );
+    track_->setMaterial( new Material );
     sep->addChild( track_->getInventorNode() );
     //welltoptxt_= Text2::create();
     //wellbottxt_ = Text2::create();

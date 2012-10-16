@@ -91,7 +91,7 @@ FlatViewer::FlatViewer()
     addChild( rectangle_->getInventorNode() );
 
     x1gridlines_->ref();
-    x1gridlines_->setMaterial( visBase::Material::create() );
+    x1gridlines_->setMaterial( new visBase::Material );
     x1gridlines_->getMaterial()->setColor( Color(0,0,0,0) );
     addChild( x1gridlines_->getInventorNode() );
 

@@ -81,7 +81,7 @@ FaultStickSetDisplay::FaultStickSetDisplay()
 	group->ref();
 	addChild( group->getInventorNode() );
 	knotmarkers_ += group;
-	visBase::Material* knotmat = visBase::Material::create();
+	visBase::Material* knotmat = new visBase::Material;
 	//group->addObject( knotmat );
 	knotmat->setColor( idx ? Color(0,255,0) : Color(255,0,255) );
     }

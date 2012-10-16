@@ -37,7 +37,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismarchingcubessurface.h"
 #include "visinvisiblelinedragger.h"
 #include "vismarker.h"
-#include "vismaterial.h"
 #include "vismultitexture2.h"
 #include "visnormals.h"
 #include "vissplittexturerandomline.h"
@@ -110,7 +109,6 @@ mDefModInitFn(visBase)
     visBase::LevelOfDetail::initClass();
     visBase::MarchingCubesSurface::initClass();
     visBase::Marker::initClass();
-    visBase::Material::initClass();
     visBase::MultiTexture2::initClass();
     visBase::Normals::initClass();
     visBase::PickStyle::initClass();

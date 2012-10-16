@@ -65,7 +65,7 @@ PolygonBodyDisplay::PolygonBodyDisplay()
 
     nearestpolygonmarker_->ref();
     if ( !nearestpolygonmarker_->getMaterial() )
-	nearestpolygonmarker_->setMaterial( visBase::Material::create() );
+	nearestpolygonmarker_->setMaterial( new visBase::Material );
     //nearestpolygonmarker_->insertNode(
 	    //nearestpolygonmarkerpickstyle_->getInventorNode() );
     addChild( nearestpolygonmarker_->getInventorNode() );
@@ -272,7 +272,7 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
 	polygondisplay_->ref();
 	polygondisplay_->setDisplayTransformation( displaytransform_ );
 	if ( !polygondisplay_->getMaterial() )
-	    polygondisplay_->setMaterial( visBase::Material::create() );
+	    polygondisplay_->setMaterial( new visBase::Material );
 	polygondisplay_->setSelectable( false );
 	polygondisplay_->setRightHandSystem( righthandsystem_ );
 	addChild( polygondisplay_->getInventorNode() );

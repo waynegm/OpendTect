@@ -54,7 +54,7 @@ Sower::Sower( const visBase::VisualObjectImpl* editobj )
 
     sowingline_->ref();
     addChild( sowingline_->getInventorNode() );
-    sowingline_->setMaterial( visBase::Material::create() );
+    sowingline_->setMaterial( new visBase::Material );
     //sowingline_->insertNode( pickstyle_->getInventorNode() );
     reInitSettings();
 }

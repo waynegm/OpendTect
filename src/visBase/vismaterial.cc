@@ -16,8 +16,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Material>
 #include <osg/Array>
 
-mCreateFactoryEntry( visBase::Material );
-
 namespace visBase
 {
 
@@ -215,9 +213,6 @@ void Material::setMinNrOfMaterials(int minnr)
 
 int Material::usePar( const IOPar& iopar )
 {
-    int res = DataObject::usePar( iopar );
-    if ( res!=1 ) return res;
-
     int r,g,b;
 
     if ( iopar.get( sKeyColor(), r, g, b ) )
@@ -246,10 +241,8 @@ int Material::usePar( const IOPar& iopar )
 }
 
 
-void Material::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
+void Material::fillPar( IOPar& iopar ) const
 {
-    DataObject::fillPar( iopar, saveids );
-
     Color tmpcolor = getColor();
     iopar.set( sKeyColor(), tmpcolor.r(), tmpcolor.g(), tmpcolor.b() ) ;
     iopar.set( sKeyAmbience(), getAmbience() );
@@ -259,10 +252,6 @@ void Material::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
     iopar.set( sKeyShininess(), getShininess() );
     iopar.set( sKeyTransparency(), getTransparency() );
 }
-    
-    
-osg::Material* Material::getMaterial()
-{ return material_; }
     
     
 const osg::Array* Material::getColorArray() const

@@ -114,7 +114,7 @@ PreStackDisplay::PreStackDisplay()
     draggerrect_->setCoordIndex( 3, 3 );
     draggerrect_->setCoordIndex( 4, -1 );
 
-    draggermaterial_ = visBase::Material::create();
+    draggermaterial_ = new visBase::Material;
     draggermaterial_->ref();
     draggerrect_->setMaterial( draggermaterial_ );
     draggermaterial_->setTransparency( 0.5 ); 

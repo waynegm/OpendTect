@@ -98,7 +98,8 @@ public:
     const Material*	getMaterial() const { return material_; }
     Material*		getMaterial();
 
-    static const char*	sKeyMaterialID();
+    static const char*	sKeyMaterialID(); //Remove
+    static const char*	sKeyMaterial();
     static const char*	sKeyIsOn();
 
     virtual int		usePar(const IOPar&);

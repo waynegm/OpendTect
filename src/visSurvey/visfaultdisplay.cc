@@ -85,7 +85,7 @@ FaultDisplay::FaultDisplay()
 
     activestickmarker_->ref();
     if ( !activestickmarker_->getMaterial() )
-	activestickmarker_->setMaterial( visBase::Material::create() );
+	activestickmarker_->setMaterial( new visBase::Material );
     //activestickmarker_->insertNode(
 	    //activestickmarkerpickstyle_->getInventorNode() );
     addChild( activestickmarker_->getInventorNode() );
@@ -101,7 +101,7 @@ FaultDisplay::FaultDisplay()
 	group->ref();
 	addChild( group->getInventorNode() );
 	knotmarkers_ += group;
-	visBase::Material* knotmat = visBase::Material::create();
+	visBase::Material* knotmat = new visBase::Material;
 	//group->addObject( knotmat );
 	knotmat->setColor( idx ? Color(0,255,0) : Color(255,0,255) );
     }
@@ -277,7 +277,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	stickdisplay_->ref();
 	stickdisplay_->setDisplayTransformation( displaytransform_ );
 	if ( !stickdisplay_->getMaterial() )
-	    stickdisplay_->setMaterial( visBase::Material::create() );
+	    stickdisplay_->setMaterial( new visBase::Material );
 	stickdisplay_->setSelectable( false );
 	stickdisplay_->setRightHandSystem( righthandsystem_ );
 	insertChild( childIndex(texture_->getInventorNode() ),
@@ -1270,7 +1270,7 @@ void FaultDisplay::updateHorizonIntersections( int whichobj,
 	visBase::GeomIndexedShape* line = visBase::GeomIndexedShape::create();
 	line->ref();
 	if ( !line->getMaterial() )
-	    line->setMaterial(visBase::Material::create());
+	    line->setMaterial(new visBase::Material);
 
 	line->getMaterial()->setColor( nontexturecol_ );
 	line->setDisplayTransformation( displaytransform_ );

@@ -574,7 +574,7 @@ void uiContourTreeItem::createLines()
 
     if ( !material_ )
     {
-	material_ = visBase::Material::create();
+	material_ = new visBase::Material;
 	material_->setColor( color_ );
 	material_->ref();
 	if ( lines_ ) lines_->setMaterial( material_ );

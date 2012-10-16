@@ -30,7 +30,7 @@ Cube::Cube()
     , position( new SoTranslation )
     , transformation( 0 )
 {
-    insertNode( position );
+    //insertNode( position );
 }
 
 
@@ -81,34 +81,15 @@ Coord3 Cube::centerPos() const
 
 void Cube::setWidth( const Coord3& n )
 {
-    const Coord3 transscale = transformation ? transformation->getScale() :
-			      Coord3(1,1,1);
-
-    SoCube* cube = reinterpret_cast<SoCube*>( shape_ );
-    cube->width.setValue( (float) ( n.x*transscale.x ) );
-    cube->height.setValue( (float) ( n.y*transscale.y) );
-    cube->depth.setValue( (float) ( n.z*transscale.z) );
+    pErrMsg("Not impl." );
 }
 
 
 Coord3 Cube::width() const
 {
-    Coord3 res;
     
-    SoCube* cube = reinterpret_cast<SoCube*>( shape_ );
-    res.x = cube->width.getValue();
-    res.y = cube->height.getValue();
-    res.z = cube->depth.getValue();
-
-    if ( transformation )
-    {
-	 const Coord3 transscale = transformation->getScale();
-	 res.x /= transscale.x;
-	 res.y /= transscale.y;
-	 res.z /= transscale.z;
-    }
-
-    return res;
+    pErrMsg("Not impl." );
+    return Coord3::udf();
 }
 
 

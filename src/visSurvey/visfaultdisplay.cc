@@ -102,7 +102,7 @@ FaultDisplay::FaultDisplay()
 	addChild( group->getInventorNode() );
 	knotmarkers_ += group;
 	visBase::Material* knotmat = visBase::Material::create();
-	group->addObject( knotmat );
+	//group->addObject( knotmat );
 	knotmat->setColor( idx ? Color(0,255,0) : Color(255,0,255) );
     }
 

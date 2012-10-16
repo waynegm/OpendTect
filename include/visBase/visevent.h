@@ -16,10 +16,10 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "keyenum.h"
 #include "visdata.h"
+#include "visosg.h"
 #include "position.h"
 #include "trigonometry.h"
 
-class SoEventCallback;
 class TabletInfo;
 
 namespace osg { class Node; }
@@ -77,12 +77,6 @@ public:
 
     TabletInfo*			tabletinfo;
     void			setTabletInfo(const TabletInfo*);
-    
-
-    // No current need to support Detail class with OSG.
-    // Only used by obsolete EdgeLineSetDisplay class.
-    Detail*			detail;
-    void			setDetail(const Detail*);
 };
 
 
@@ -111,16 +105,9 @@ public:
     void			setUtm2Display(ObjectSet<Transformation>&);
 
 protected:
-
-    bool			_init();
-    void			removeCBs();
-    void			setCBs();
-
-				~EventCatcher();
-    static void			internalCB( void*, SoEventCallback* );
+    				~EventCatcher();
 
     int				type_;
-    SoEventCallback*		node_;
     ObjectSet<Transformation>	utm2display_;
 
     static const char*		eventtypestr();
@@ -128,10 +115,9 @@ protected:
     bool			rehandling_;
     bool			rehandled_;
 
-    virtual SoNode*		gtInvntrNode();
     virtual osg::Node*		gtOsgNode();
 
-    osg::Node*			osgnode_;
+    OsgRefMan<osg::Node>	osgnode_;
     EventCatchHandler*		eventcatchhandler_;
 };
 

@@ -43,8 +43,6 @@ Annotation::Annotation()
     , axisannot_( Text2::create() )
     , gridlines_( new osgGeo::OneSideRenderNode )
 {
-    removeSwitch();
-
     osgNode()->getOrCreateStateSet()->setMode( GL_LIGHTING,
 					       osg::StateAttribute::OFF );
     addChild( geode_ );

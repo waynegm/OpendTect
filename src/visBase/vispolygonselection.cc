@@ -43,8 +43,6 @@ PolygonSelection::PolygonSelection()
     , drawstyle_( DrawStyle::create() )
     , polygon_( 0 )
 {
-    removeSwitch();
-
     drawstyle_->ref();
     addChild( drawstyle_->getInventorNode() );
     addChild( selector_ );

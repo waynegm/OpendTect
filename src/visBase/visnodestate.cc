@@ -16,6 +16,9 @@ static const char* rcsID mUsedVar = "$Id$";
 using namespace visBase;
 
 
+NodeState::NodeState()
+{}
+
 NodeState::~NodeState()
 {
     setStateSet( 0 );

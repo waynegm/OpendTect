@@ -21,6 +21,7 @@ ________________________________________________________________________
 class SoLineSet;
 class SoLineSet3D;
 class SoIndexedLineSet;
+class SoVertexShape;
 class LineStyle;
 class SoMFInt32;
 

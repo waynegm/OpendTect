@@ -72,8 +72,8 @@ FaultStickSetDisplay::FaultStickSetDisplay()
     addChild( activestick_->getInventorNode() );
     getMaterial()->setAmbience( 0.2 );
 
-    sticks_->insertNode( stickspickstyle_->getInventorNode() );
-    activestick_->insertNode( activestickpickstyle_->getInventorNode() );
+    //sticks_->insertNode( stickspickstyle_->getInventorNode() );
+    //activestick_->insertNode( activestickpickstyle_->getInventorNode() );
 
     for ( int idx=0; idx<3; idx++ )
     {

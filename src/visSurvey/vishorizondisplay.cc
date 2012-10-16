@@ -1833,7 +1833,7 @@ void HorizonDisplay::setLineStyle( const LineStyle& lst )
 	    newline->ref();
 	    newline->setRightHandSystem( righthandsystem_ );
 	    newline->setDisplayTransformation(transformation_);
-	    newline->copyCoordIndicesFrom( *intersectionlines_[idx] );
+	    //newline->copyCoordIndicesFrom( *intersectionlines_[idx] );
 	    newline->getCoordinates()->copyFrom(
 		    *intersectionlines_[idx]->getCoordinates() );
 	    if ( intersectionlinematerial_ ) 

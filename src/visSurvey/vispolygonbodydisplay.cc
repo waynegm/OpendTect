@@ -66,8 +66,8 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     nearestpolygonmarker_->ref();
     if ( !nearestpolygonmarker_->getMaterial() )
 	nearestpolygonmarker_->setMaterial( visBase::Material::create() );
-    nearestpolygonmarker_->insertNode(
-	    nearestpolygonmarkerpickstyle_->getInventorNode() );
+    //nearestpolygonmarker_->insertNode(
+	    //nearestpolygonmarkerpickstyle_->getInventorNode() );
     addChild( nearestpolygonmarker_->getInventorNode() );
 
     getMaterial()->setAmbience( 0.2 );
@@ -81,7 +81,7 @@ PolygonBodyDisplay::PolygonBodyDisplay()
 
     intsurf_->ref();
     intsurf_->turnOn( false );
-    intsurf_->turnOnForegroundLifter( true );
+    //intsurf_->turnOnForegroundLifter( true );
     addChild( intsurf_->getInventorNode() );
 }
 

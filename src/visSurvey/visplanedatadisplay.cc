@@ -164,31 +164,13 @@ PlaneDataDisplay::PlaneDataDisplay()
     dragger_->rightClicked()->notify(
 	    		mCB(this,PlaneDataDisplay,draggerRightClick) );
 
-    draggerrect_ = visBase::FaceSet::create();
-    draggerrect_->ref();
-    draggerrect_->removeSwitch();
-    draggerrect_->setVertexOrdering(
-	    visBase::VertexShape::cCounterClockWiseVertexOrdering() );
-    draggerrect_->getCoordinates()->addPos( Coord3(-1,-1,0) );
-    draggerrect_->getCoordinates()->addPos( Coord3(1,-1,0) );
-    draggerrect_->getCoordinates()->addPos( Coord3(1,1,0) );
-    draggerrect_->getCoordinates()->addPos( Coord3(-1,1,0) );
-    draggerrect_->setCoordIndex( 0, 0 );
-    draggerrect_->setCoordIndex( 1, 1 );
-    draggerrect_->setCoordIndex( 2, 2 );
-    draggerrect_->setCoordIndex( 3, 3 );
-    draggerrect_->setCoordIndex( 4, -1 );
-
     draggermaterial_ = visBase::Material::create();
     draggermaterial_->ref();
-    draggerrect_->setMaterial( draggermaterial_ );
 
     draggerdrawstyle_ = visBase::DrawStyle::create();
     draggerdrawstyle_->ref();
     draggerdrawstyle_->setDrawStyle( visBase::DrawStyle::Lines );
-    draggerrect_->insertNode( draggerdrawstyle_->getInventorNode() );
 
-    dragger_->setOwnShape( draggerrect_->getInventorNode() );
     dragger_->setDim( (int) 0 );
 
     if ( (int) orientation_ )
@@ -246,7 +228,6 @@ PlaneDataDisplay::~PlaneDataDisplay()
     dragger_->unRef();
     rectanglepickstyle_->unRef();
     gridlines_->unRef();
-    draggerrect_->unRef();
     draggerdrawstyle_->unRef();
     draggermaterial_->unRef();
 

@@ -86,10 +86,9 @@ FaultDisplay::FaultDisplay()
     activestickmarker_->ref();
     if ( !activestickmarker_->getMaterial() )
 	activestickmarker_->setMaterial( visBase::Material::create() );
-    activestickmarker_->insertNode(
-	    activestickmarkerpickstyle_->getInventorNode() );
-    insertChild( childIndex(texture_->getInventorNode() ),
-		 activestickmarker_->getInventorNode() );
+    //activestickmarker_->insertNode(
+	    //activestickmarkerpickstyle_->getInventorNode() );
+    addChild( activestickmarker_->getInventorNode() );
 
     getMaterial()->setAmbience( 0.2 );
     shapehints_->ref();

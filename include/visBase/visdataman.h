@@ -43,11 +43,6 @@ public:
     			DataManager();
     virtual		~DataManager();
 
-    static void		readLockDB();
-    static void		readUnLockDB();
-    static void		writeLockDB();
-    static void		writeUnLockDB();
-
     bool		removeAll(int nriterations=1000);
     			/*!< Will remove everything.  */
 

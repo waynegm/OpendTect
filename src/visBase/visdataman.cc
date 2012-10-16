@@ -17,9 +17,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ptrman.h"
 #include <iostream>
 
-#include <Inventor/SoPath.h>
-#include <Inventor/SoDB.h>
-
 #include <osg/Node>
 
 namespace visBase
@@ -56,22 +53,6 @@ DataManager::~DataManager()
 
 const char* DataManager::errMsg() const
 { return errmsg_.str(); }
-
-
-void DataManager::readLockDB()
-{ SoDB::readlock(); }
-    
-
-void DataManager::readUnLockDB()
-{ SoDB::readunlock(); }
-
-
-void DataManager::writeLockDB()
-{ SoDB::writelock(); }
-
-    
-void DataManager::writeUnLockDB()
-{ SoDB::writeunlock(); }
 
 
 void DataManager::fillPar( IOPar& par, TypeSet<int>& storids ) const
@@ -313,21 +294,6 @@ void DataManager::addObject( DataObject* obj )
 void DataManager::getIds( const SoPath* path, TypeSet<int>& res ) const
 {
     res.erase();
-
-    const int nrobjs = objects_.size();
-
-    for ( int pathidx=path->getLength()-1; pathidx>=0; pathidx-- )
-    {
-	SoNode* node = path->getNode( pathidx );
-
-	for ( int idx=0; idx<nrobjs; idx++ )
-	{
-	    const SoNode* objnode = objects_[idx]->getInventorNode();
-	    if ( !objnode ) continue;
-
-	    if ( objnode==node ) res += objects_[idx]->id();
-	}
-    }
 }
 
 

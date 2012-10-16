@@ -343,7 +343,7 @@ void EMObjectDisplay::showPosAttrib( int attr, bool yn )
 	    addChild( group->getInventorNode() );
 	    posattribmarkers_ += group;
 
-	    group->addObject( visBase::Material::create() );
+	    //group->addObject( visBase::Material::create() );
 	    attribindex = posattribs_.size()-1;
 	}
 

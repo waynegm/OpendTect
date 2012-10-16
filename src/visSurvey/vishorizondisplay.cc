@@ -1745,8 +1745,8 @@ void HorizonDisplay::updateIntersectionLines(
 	    visBase::DataObjectGroup* pointgroup =
 				visBase::DataObjectGroup::create();
 	    pointgroup->setSeparate( false );
-	    if ( intersectionlinematerial_ )
-		pointgroup->addObject( intersectionlinematerial_ );
+	    //if ( intersectionlinematerial_ )
+	    //pointgroup->addObject( intersectionlinematerial_ );
 	    pointgroup->setRightHandSystem( righthandsystem_ );
 	    pointgroup->setDisplayTransformation(transformation_);
 
@@ -1989,12 +1989,6 @@ void HorizonDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     }
 
     par.set( sKeyNrAttribs(), as_.size() );
-
-    const int matid = 
-	intersectionlinematerial_ ? intersectionlinematerial_->id() : -1;
-    par.set( sKeyIntersectLineMaterialID(), matid );
-    if ( matid!=-1 && saveids.indexOf(matid)==-1 )
-	saveids += matid;
 }
 
 

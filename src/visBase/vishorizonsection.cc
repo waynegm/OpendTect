@@ -1434,8 +1434,8 @@ HorizonSectionTile* HorizonSection::createTile( int tilerowidx, int tilecolidx )
     const RowCol step( rrg.step, crg.step );
     const RowCol tileorigin( origin_.row+tilerowidx*mTileSideSize*step.row,
 			     origin_.col+tilecolidx*mTileSideSize*step.col );
-    HorizonSectionTile* tile = new HorizonSectionTile( *this, tileorigin,
-	    			wireframematerial_->getInventorNode() );
+    HorizonSectionTile* tile = new HorizonSectionTile( *this, tileorigin, 0 );
+    //	    			wireframematerial_->getInventorNode() );
 
     tile->setResolution( desiredresolution_ );
     tile->useWireframe( usewireframe_ );

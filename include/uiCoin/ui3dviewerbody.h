@@ -101,8 +101,8 @@ protected:
 
     RefMan<visBase::Camera>		camera_;
     RefMan<visBase::Scene>		scene_;
-    OsgRefMan<osg::Viewport>		viewport_;
-    OsgRefMan<osg::Group>		sceneroot_;
+    visBase::OsgRefMan<osg::Viewport>	viewport_;
+    visBase::OsgRefMan<osg::Group>	sceneroot_;
     osg::Projection*			hudprojectionmatrix_;
     RefMan<visBase::Transformation>	hudscene_;
 };

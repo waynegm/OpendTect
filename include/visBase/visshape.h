@@ -16,15 +16,6 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "indexedshape.h"
 
-class SoIndexedShape;
-class SoMaterialBinding;
-class SoNormalBinding;
-class SoSeparator;
-class SoShape;
-class SoShapeHints;
-class SoSwitch;
-class SoVertexShape;
-
 namespace osg { class Geometry; class Geode; class Switch; class PrimitiveSet; }
 
 namespace visBase
@@ -56,10 +47,6 @@ public:
     void			turnOn(bool);
     bool			isOn() const;
    
-    void			setRenderCache(int mode);
-				    //!<\param mode=0 off, 1=on, 2=auto (deflt)
-    int				getRenderCache() const;
-
     mDeclSetGetItem( Shape,	Texture2, texture2_ );
     mDeclSetGetItem( Shape,	Texture3, texture3_ );
     mDeclSetGetItem( Shape,	Material, material_ );
@@ -75,14 +62,6 @@ public:
     int				usePar(const IOPar&);
     void			fillPar(IOPar&,TypeSet<int>&) const;
 
-    void			insertNode( SoNode* );
-				    /*!< Inserts the node _before_ the shape */
-    void			removeNode(SoNode*);
-    virtual void		replaceShape(SoNode*);
-    SoNode*			getShape() { return shape_; }
-
-    void			turnOnForegroundLifter(bool);
-    
     void			removeSwitch();
 
 protected:
@@ -90,27 +69,16 @@ protected:
 				Shape( SoNode* );
     virtual			~Shape();
 
-    SoNode*			shape_;
-    SoSwitch*			onoff_;
-
     Texture2*			texture2_;
     Texture3*			texture3_;
     Material*			material_;
     
     osg::Switch*		osgswitch_;
-
-    virtual SoNode*		gtInvntrNode();
     osg::Node*			gtOsgNode();
 
     static const char*		sKeyOnOff();
     static const char*		sKeyTexture();
     static const char*		sKeyMaterial();
-
-    SoSeparator*		root_;
-    SoMaterialBinding*		materialbinding_;
-    
-    ForegroundLifter*		lifter_;
-    SoSwitch*			lifterswitch_;
 };
 
 
@@ -166,7 +134,6 @@ public:
     Geometry::PrimitiveSet*	getPrimitiveSet(int);
     
 protected:
-    			VertexShape( SoVertexShape* );
     			VertexShape( Geometry::PrimitiveSet::PrimitiveType,
 				     bool creategeode );
     			~VertexShape();
@@ -187,11 +154,6 @@ protected:
     
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
     const Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
-
-
-private:
-    SoNormalBinding*	normalbinding_;
-    SoShapeHints*	shapehints_;
 };
 
 #undef mDeclSetGetItem
@@ -208,7 +170,7 @@ public:
 			  they remain in memory. */
     void	setCoordIndices(const int* idxs, int sz, int start);
     		/*!<\note idxs are copied */
-    void	copyCoordIndicesFrom(const IndexedShape&);
+
     void	removeCoordIndexAfter(int);
     int		getCoordIndex(int) const;
 
@@ -246,14 +208,7 @@ public:
     void	replaceShape(SoNode*);
 
 protected:
-    		IndexedShape( SoIndexedShape* );
 		IndexedShape( Geometry::PrimitiveSet::PrimitiveType );
-    
-    
-private:
-
-
-    SoIndexedShape*	indexedshape_;
 };
     
     

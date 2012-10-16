@@ -25,15 +25,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistexture3.h"
 #include "vistexturecoords.h"
 
-#include "Inventor/nodes/SoIndexedTriangleStripSet.h"
-#include "Inventor/nodes/SoMaterialBinding.h"
-#include "Inventor/nodes/SoNormalBinding.h"
-#include "Inventor/nodes/SoSeparator.h"
-#include "Inventor/nodes/SoShapeHints.h"
-#include "Inventor/nodes/SoSwitch.h"
-
-#include "SoIndexedTriangleFanSet.h"
-
 #include <osg/PrimitiveSet>
 #include <osg/Switch>
 #include <osg/Geometry>
@@ -51,15 +42,9 @@ const char* Shape::sKeyMaterial() 		{ return  "Material";	}
 
     
 Shape::Shape( SoNode* shape )
-    : shape_( shape )
-    , onoff_( 0 )
-    , texture2_( 0 )
+    : texture2_( 0 )
     , texture3_( 0 )
     , material_( 0 )
-    , root_( 0 )
-    , materialbinding_( 0 )
-    , lifter_( 0 )
-    , lifterswitch_( 0 )
     , osgswitch_( new osg::Switch )
 {
     
@@ -73,14 +58,8 @@ Shape::~Shape()
     if ( texture3_ ) texture3_->unRef();
     if ( material_ ) material_->unRef();
 
-    if ( getInventorNode() ) getInventorNode()->unref();
-    if ( lifter_ ) lifter_->unRef();
     if ( osgswitch_ ) osgswitch_->unref();
 }
-
-
-void Shape::turnOnForegroundLifter( bool yn )
-{ lifterswitch_->whichChild = yn ? 0 : SO_SWITCH_NONE; }
 
 
 void Shape::turnOn(bool n)
@@ -106,47 +85,15 @@ bool Shape::isOn() const
     
 void Shape::removeSwitch()
 {
-    if ( root_ )
-    {
-	root_->ref();
-	onoff_->unref();
-	onoff_ = 0;
-    }
+    pErrMsg("Don't call." );
 }
-
-
-void Shape::setRenderCache(int mode)
-{
-    if ( !mode )
-	root_->renderCaching = SoSeparator::OFF;
-    else if ( mode==1 )
-	root_->renderCaching = SoSeparator::ON;
-    else
-	root_->renderCaching = SoSeparator::AUTO;
-}
-
-
-int Shape::getRenderCache() const
-{
-    if ( root_->renderCaching.getValue()==SoSeparator::OFF )
-	return 0;
-
-    if ( root_->renderCaching.getValue()==SoSeparator::ON )
-	return 1;
-    
-    return 2;
-}
-
 
 #define mDefSetGetItem(ownclass, clssname, variable, osgremove, osgset ) \
 void ownclass::set##clssname( clssname* newitem ) \
 { \
     if ( variable ) \
     { \
-	if ( variable->getInventorNode() ) \
-	    removeNode( variable->getInventorNode() ); \
-	else \
-	{ osgremove; } \
+	osgremove; \
 	variable->unRef(); \
 	variable = 0; \
     } \
@@ -155,10 +102,7 @@ void ownclass::set##clssname( clssname* newitem ) \
     { \
 	variable = newitem; \
 	variable->ref(); \
-	if ( variable->getInventorNode() ) \
-	    insertNode( variable->getInventorNode() ); \
-	else \
-	{ osgset; } \
+	osgset; \
     } \
 } \
  \
@@ -171,58 +115,20 @@ clssname* ownclass::gt##clssname() const \
 
 mDefSetGetItem( Shape, Texture2, texture2_, , );
 mDefSetGetItem( Shape, Texture3, texture3_, , );
-mDefSetGetItem( Shape, Material, material_, , );
+mDefSetGetItem( Shape, Material, material_,
+  osgswitch_->getOrCreateStateSet()->removeAttribute( material_->getMaterial()),
+  osgswitch_->getOrCreateStateSet()->setAttribute( material_->getMaterial()) );
 
 
 void Shape::setMaterialBinding( int nv )
 {
-    mDynamicCastGet( const IndexedShape*, isindexed, this );
-
-    if ( !materialbinding_ )
-    {
-	materialbinding_ = new SoMaterialBinding;
-	insertNode( materialbinding_ );
-    }
-    if ( nv==cOverallMaterialBinding() )
-    {
-	materialbinding_->value = SoMaterialBinding::OVERALL;
-    }
-    else if ( nv==cPerFaceMaterialBinding() )
-    {
-	materialbinding_->value = isindexed ?
-	    SoMaterialBinding::PER_FACE_INDEXED : SoMaterialBinding::PER_FACE;
-    }
-    else if ( nv==cPerVertexMaterialBinding() )
-    {
-	materialbinding_->value = isindexed
-	    ? SoMaterialBinding::PER_VERTEX_INDEXED
-	    : SoMaterialBinding::PER_VERTEX;
-    }
-    else if ( nv==cPerPartMaterialBinding() )
-    {
-	materialbinding_->value = isindexed
-	    ? SoMaterialBinding::PER_PART_INDEXED
-	    : SoMaterialBinding::PER_PART;
-    }
+    pErrMsg("Not Implemented" );
 }
 
 
 int Shape::getMaterialBinding() const
 {
-    if ( !materialbinding_ ) return cOverallMaterialBinding();
-
-    if (materialbinding_->value.getValue()==SoMaterialBinding::PER_FACE ||
-	materialbinding_->value.getValue()==SoMaterialBinding::PER_FACE_INDEXED)
-	return cPerFaceMaterialBinding();
-
-    if (materialbinding_->value.getValue()==SoMaterialBinding::PER_PART ||
-	materialbinding_->value.getValue()==SoMaterialBinding::PER_PART_INDEXED)
-	return cPerPartMaterialBinding();
-    
-    if (materialbinding_->value.getValue()==SoMaterialBinding::PER_VERTEX ||
-	materialbinding_->value.getValue()==
-	    SoMaterialBinding::PER_VERTEX_INDEXED)
-	return cPerVertexMaterialBinding();
+    pErrMsg("Not implemented");
 
     return cOverallMaterialBinding();
 }
@@ -279,52 +185,18 @@ int Shape::usePar( const IOPar& par )
 }
 
 	
-SoNode* Shape::gtInvntrNode()
-{ return onoff_ ? (SoNode*) onoff_ : (SoNode*) root_; }
-    
-    
 osg::Node* Shape::gtOsgNode()
 { return osgswitch_; }
 
-
-void Shape::insertNode( SoNode*  node )
-{
-    if ( root_ )
-	root_->insertChild( node, 0 );
-}
-
-
-void Shape::replaceShape( SoNode* node )
-{
-    removeNode( shape_ );
-    root_->addChild( node );
-}
-
-
-void Shape::removeNode( SoNode* node )
-{
-    while ( root_->findChild( node ) != -1 )
-	root_->removeChild( node );
-}
 
 #define mVertexShapeConstructor( shp, geode ) \
     Shape( shp ) \
     , normals_( 0 ) \
     , coords_( 0 ) \
     , texturecoords_( 0 ) \
-    , normalbinding_( 0 ) \
-    , shapehints_( 0 ) \
     , geode_( geode ) \
     , node_( 0 ) \
     , osggeom_( 0 )
-    
-VertexShape::VertexShape( SoVertexShape* shape )
-    : mVertexShapeConstructor( shape, 0 )
-    , primitivetype_( Geometry::PrimitiveSet::Other )
-{
-    setCoordinates( Coordinates::create() );
-}
-    
     
 VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 			  bool creategeode )
@@ -419,32 +291,14 @@ mGetOsgVec2Arr(texturecoords_->osgArray())));
 
 void VertexShape::setNormalPerFaceBinding( bool nv )
 {
-    mDynamicCastGet( const IndexedShape*, isindexed, this );
-
-    if ( !normalbinding_ )
-    {
-	normalbinding_ = new SoNormalBinding;
-	insertNode( normalbinding_ );
-    }
-    if ( nv )
-    {
-	normalbinding_->value = isindexed ?
-	    SoNormalBinding::PER_FACE_INDEXED : SoNormalBinding::PER_FACE;
-    }
-    else
-    {
-	normalbinding_->value = isindexed
-	    ? SoNormalBinding::PER_VERTEX_INDEXED
-	    : SoNormalBinding::PER_VERTEX;
-    }
+        pErrMsg("Not implemented");
 }
     
     
 bool VertexShape::getNormalPerFaceBinding() const
 {
-    if ( !normalbinding_ ) return true;
-    return normalbinding_->value.getValue()==SoNormalBinding::PER_FACE ||
-	   normalbinding_->value.getValue()==SoNormalBinding::PER_FACE_INDEXED;
+    pErrMsg("Not implemented");
+    return false;
 }
 
 
@@ -484,83 +338,40 @@ int VertexShape::getShapeType() const
 }
 
 
-IndexedShape::IndexedShape( SoIndexedShape* shape )
-    : VertexShape( shape )
-    , indexedshape_( shape )
-{}
-    
-    
-SoIndexedShape* createSoClass( Geometry::PrimitiveSet::PrimitiveType tp )
-{
-    switch ( tp ) {
-	case Geometry::PrimitiveSet::TriangleStrip:
-	    return new SoIndexedTriangleStripSet;
-	case Geometry::PrimitiveSet::TriangleFan:
-	    return new SoIndexedTriangleStripSet;
-	    
-	default:
-	    break;
-    }
-    
-    return 0;
-}
-    
-    
 IndexedShape::IndexedShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp )
     : VertexShape( tp, true )
-{
-    indexedshape_ = (SoIndexedShape*) shape_;
-}
-
-
-void IndexedShape::replaceShape( SoNode* node )
-{
-    mDynamicCastGet( SoIndexedShape*, is, node );
-    if ( !is ) return;
-
-    indexedshape_ = is;
-    Shape::replaceShape( node );
-}
+{}
 
 
 #define setGetIndex( resourcename, fieldname )  \
 int IndexedShape::nr##resourcename##Index() const \
-{ return indexedshape_->fieldname.getNum(); } \
+{ return 0; } \
  \
  \
 void IndexedShape::set##resourcename##Index( int pos, int idx ) \
-{ indexedshape_->fieldname.set1Value( pos, idx ); } \
+{ } \
  \
  \
 void IndexedShape::remove##resourcename##IndexAfter(int pos) \
-{  \
-    if ( indexedshape_->fieldname.getNum()>pos+1 ) \
-	indexedshape_->fieldname.deleteValues(pos+1); \
-} \
+{ } \
  \
  \
 int IndexedShape::get##resourcename##Index( int pos ) const \
-{ return indexedshape_->fieldname[pos]; } \
+{ return -1; } \
  \
  \
 void IndexedShape::set##resourcename##Indices( const int* ptr, int sz ) \
-{ return indexedshape_->fieldname.setValuesPointer( sz, ptr ); } \
+{ } \
 \
 void IndexedShape::set##resourcename##Indices( const int* ptr, int sz, \
 					       int start ) \
-{ return indexedshape_->fieldname.setValues( start, sz, ptr ); } \
+{ } \
 
 
 setGetIndex( Coord, coordIndex );
 setGetIndex( TextureCoord, textureCoordIndex );
 setGetIndex( Normal, normalIndex );
 setGetIndex( Material, materialIndex );
-
-
-void IndexedShape::copyCoordIndicesFrom( const IndexedShape& is )
-{
-    indexedshape_->coordIndex = is.indexedshape_->coordIndex;
-}
 
 
 int IndexedShape::getClosestCoordIndex( const EventInfo& ei ) const

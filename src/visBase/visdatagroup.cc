@@ -13,8 +13,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdataman.h"
 #include "iopar.h"
 
-#include <Inventor/nodes/SoSeparator.h>
-
 #include <osg/Group>
 
 mCreateFactoryEntry( visBase::DataObjectGroup );

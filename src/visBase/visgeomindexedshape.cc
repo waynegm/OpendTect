@@ -199,22 +199,26 @@ void GeomIndexedShape::enableColTab( bool yn )
 
     if ( yn )
     {
-	insertChild( childIndex(coords_->getInventorNode()),
-		ctab_->coltab_->getInventorNode() );
+	/*
+	ctab_->coltab_->getInventorNode() );
 	insertChild( childIndex(coords_->getInventorNode()),
 		ctab_->materialbinding_ );
+	*/
     }
     else if ( ctab_ )
     {
+	/*
 	removeChild( ctab_->coltab_->getInventorNode() );
 	removeChild( ctab_->materialbinding_ );
+	 */
     }
 }
 
 
 bool GeomIndexedShape::isColTabEnabled() const
 {
-    return ctab_ && childIndex( ctab_->coltab_->getInventorNode() )!=-1;
+    return false;
+    /*return ctab_ && childIndex( ctab_->coltab_->getInventorNode() )!=-1; */
 }
 
 

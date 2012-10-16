@@ -51,7 +51,7 @@ namespace visSurvey
 
 PreStackDisplay::PreStackDisplay()
     : VisualObjectImpl( true )
-    , draggerrect_( visBase::FaceSet::create() )
+    //, draggerrect_( visBase::FaceSet::create() )
     , pickstyle_( visBase::PickStyle::create() )
     , planedragger_( visBase::DepthTabPlaneDragger::create() )	
     , flatviewer_( visBase::FlatViewer::create() )

@@ -21,11 +21,6 @@ ________________________________________________________________________
 namespace osgManipulator { class TabBoxDragger; }
 namespace osg { class Switch; }
 
-class SoTabBoxDragger;
-class SoMaterial;
-class SoDragger;
-class SoSwitch;
-
 template <class T> class Interval;
 
 namespace visBase
@@ -38,7 +33,6 @@ mClass(visBase) BoxDragger : public DataObject
 public:
     friend class BoxDraggerCallbackHandler;
 
-//public:
     static BoxDragger*		create()
 				mCreateDataObj(BoxDragger);
 
@@ -72,37 +66,26 @@ public:
     Notifier<BoxDragger>	finished;
 
 protected:
-				~BoxDragger();
-    void			setOwnShapeHints();
+					~BoxDragger();
 
-    void			initOsgDragger();
-
-    static void			startCB( void*, SoDragger* );
-    static void			motionCB( void*, SoDragger* );
-    static void			valueChangedCB(void*, SoDragger* );
-    static void			finishCB( void*, SoDragger* );
-
-    SoSwitch*			onoff_;
-    SoTabBoxDragger*		boxdragger_;
-    SoMaterial*			boxmaterial_;
+    void				initOsgDragger();
 
     osgManipulator::TabBoxDragger*	osgboxdragger_;
     osg::Switch*			osgdraggerroot_;
     BoxDraggerCallbackHandler*		osgcallbackhandler_;
 
-    Interval<float>*		xinterval_;
-    Interval<float>*		yinterval_;
-    Interval<float>*		zinterval_;
+    Interval<float>*			xinterval_;
+    Interval<float>*			yinterval_;
+    Interval<float>*			zinterval_;
 
-    Interval<float>		widthranges_[3];
-    Interval<float>		spaceranges_[3];
+    Interval<float>			widthranges_[3];
+    Interval<float>			spaceranges_[3];
 
-    Coord3			prevwidth_;
-    Coord3			prevcenter_;
-    bool			selectable_;
+    Coord3				prevwidth_;
+    Coord3				prevcenter_;
+    bool				selectable_;
 
-    virtual SoNode*		gtInvntrNode();
-    virtual osg::Node*		gtOsgNode();
+    virtual osg::Node*			gtOsgNode();
 };
 
 };

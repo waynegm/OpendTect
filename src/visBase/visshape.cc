@@ -565,10 +565,8 @@ void IndexedShape::copyCoordIndicesFrom( const IndexedShape& is )
 
 int IndexedShape::getClosestCoordIndex( const EventInfo& ei ) const
 {
-    mDynamicCastGet(const FaceDetail*,facedetail,ei.detail)
-    if ( !facedetail ) return -1;
-
-    return facedetail->getClosestIdx( getCoordinates(), ei.localpickedpos );
+    pErrMsg( "Not implemented in osg. Needed?");
+    return -1;
 }
     
 

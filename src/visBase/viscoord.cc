@@ -13,11 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "errh.h"
 #include "vistransform.h"
-#include "UTMPosition.h"
 #include "visnormals.h"
-
-#include <Inventor/nodes/SoCoordinate3.h>
-#include <Inventor/nodes/SoGroup.h>
 
 #include <osg/Array>
 

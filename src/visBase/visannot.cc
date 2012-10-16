@@ -18,8 +18,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "iopar.h"
 #include "survinfo.h"
 
-#include "SoOD.h"
-
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/Switch>

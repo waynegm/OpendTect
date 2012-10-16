@@ -14,10 +14,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdataman.h"
 #include "visselman.h"
 
-#include <Inventor/nodes/SoNode.h>
-#include <Inventor/actions/SoWriteAction.h>
-#include <Inventor/SoOutput.h>
-
 #include <osg/Node>
 #include <osg/ValueObject>
 #include <osgDB/WriteFile>

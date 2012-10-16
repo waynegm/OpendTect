@@ -11,15 +11,14 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "visfaceset.h"
 
-#include <Inventor/nodes/SoIndexedFaceSet.h>
-
 mCreateFactoryEntry( visBase::FaceSet );
 
 namespace visBase
 {
 
 FaceSet::FaceSet()
-    : IndexedShape(new SoIndexedFaceSet)
-{}
+{
+    pErrMsg("Should never be called with osg.");
+}
 
 }; // namespace visBase

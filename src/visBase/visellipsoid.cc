@@ -32,7 +32,7 @@ Ellipsoid::Ellipsoid()
     , position_( new SoMatrixTransform )
     , transformation_( 0 )
 {
-    insertNode( position_ );
+//    insertNode( position_ );
 }
 
 

@@ -32,7 +32,6 @@ SET(OD_MODULE_SOURCES
 	   visdrawstyle.cc
 	   visellipsoid.cc
 	   visevent.cc
-	   visfaceset.cc
 	   visflatviewer.cc
 	   visforegroundlifter.cc
 	   visgridlines.cc

@@ -26,7 +26,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdrawstyle.h"
 #include "visellipsoid.h"
 #include "visevent.h"
-#include "visfaceset.h"
 #include "visflatviewer.h"
 #include "visforegroundlifter.h"
 #include "visgeomindexedshape.h"
@@ -101,7 +100,6 @@ mDefModInitFn(visBase)
     visBase::DrawStyle::initClass();
     visBase::Ellipsoid::initClass();
     visBase::EventCatcher::initClass();
-    visBase::FaceSet::initClass();
     visBase::FlatViewer::initClass();
     visBase::ForegroundLifter::initClass();
     visBase::GeomIndexedShape::initClass();

@@ -33,7 +33,7 @@ namespace visBase
 {
 
 PolyLineBase::PolyLineBase( SoVertexShape* node )
-    : VertexShape( node )
+    : VertexShape( Geometry::PrimitiveSet::LineStrips, true )
     , numvertices_( 0 )
 { }
 
@@ -73,7 +73,6 @@ void PolyLineBase::removePoint( int idx )
 
 PolyLine::PolyLine()
     : PolyLineBase( new SoLineSet )
-    , lineset_( dynamic_cast<SoLineSet*>( shape_ ) )
     , drawstyle_(0)
 {
     numvertices_ = &lineset_->numVertices;
@@ -85,8 +84,9 @@ void PolyLine::setLineStyle( const LineStyle& lst )
 {
     if ( !drawstyle_ ) 
     {
-	drawstyle_ = DrawStyle::create();
-	insertNode( drawstyle_->getInventorNode() );
+	pErrMsg("Implement drawstyle");
+	//drawstyle_ = DrawStyle::create();
+	//insertNode( drawstyle_->getInventorNode() );
     }
 
     drawstyle_->setLineStyle( lst );
@@ -153,26 +153,24 @@ void PolyLine3D::touchPrimitiveSet( int idx )
     
 
 IndexedPolyLine::IndexedPolyLine()
-    : IndexedShape( new SoIndexedLineSet )
+    : IndexedShape( Geometry::PrimitiveSet::LineStrips )
 { }
 
 
 IndexedPolyLine3D::IndexedPolyLine3D()
-    : IndexedShape( new SoIndexedLineSet3D )
+    : IndexedShape( Geometry::PrimitiveSet::LineStrips )
 { }
 
 
 float IndexedPolyLine3D::getRadius() const
 {
-    return ((SoIndexedLineSet3D*) shape_)->radius.getValue();
+    return 1;
+    //return ((SoIndexedLineSet3D*) shape_)->radius.getValue();
 }
 
 
 void IndexedPolyLine3D::setRadius(float nv,bool fixedonscreen,float maxdisplaysize)
 {
-    ((SoIndexedLineSet3D*) shape_)->radius.setValue(nv);
-    ((SoIndexedLineSet3D*) shape_)->screenSize.setValue(fixedonscreen);
-    ((SoIndexedLineSet3D*) shape_)->maxRadius.setValue(maxdisplaysize);
 }
 
 

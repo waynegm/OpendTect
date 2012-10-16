@@ -47,6 +47,7 @@ SET(OD_MODULE_SOURCES
 	   vismultitexture.cc
 	   vismultitexture2.cc
 	   visnormals.cc
+	   visnodestate.cc
 	   visobject.cc
 	   vispickstyle.cc
 	   visrandompos2body.cc

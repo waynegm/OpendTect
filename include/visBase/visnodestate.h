@@ -39,6 +39,7 @@ protected:
     
 private:
     void				doAdd(osg::StateAttribute*);
+    void				doRemove(osg::StateAttribute*);
     OsgRefMan<osg::StateSet>		stateset_;
 };
 

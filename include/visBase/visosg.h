@@ -16,6 +16,12 @@ ________________________________________________________________________
 /*! Definition of macros used to make osg-life easier */
 
 #include "refcount.h"
+#include "visbasemod.h"
+
+class Coord3;
+
+namespace osg { class Vec3f; }
+    
 
 #define mGetOsgArrPtr(tp,ptr) ((tp) ptr->getDataPointer() )
 #define mGetOsgVec2Arr(ptr) ((osg::Vec2Array*) ptr )
@@ -30,6 +36,12 @@ mExternC(visBase) void refOsgObj(void* obj);
 mExternC(visBase) void unrefOsgObj(void*);
 
 mDefRefMan( OsgRefMan, refOsgObj(ptr_), unrefOsgObj(ptr_) )
+
+namespace  visBase
+{
+    mGlobal(visBase) const Coord3& assign(Coord3&,const osg::Vec3f&);
+    mGlobal(visBase) const osg::Vec3f& assign(osg::Vec3f&,const Coord3&);
+}
 
 #endif
 

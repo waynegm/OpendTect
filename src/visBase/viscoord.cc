@@ -21,6 +21,23 @@ mCreateFactoryEntry( visBase::Coordinates );
 
 namespace visBase
 {
+    
+    
+const Coord3& assign( Coord3& crd, const osg::Vec3f& origin )
+{
+    crd.x = origin[0];
+    crd.y = origin[1];
+    crd.z = origin[2];
+    return crd;
+}
+    
+    
+const osg::Vec3f& assign( osg::Vec3f& vec,const Coord3& origin )
+{
+    vec.set( (float) origin.x, (float) origin.y, (float) origin.z );
+    return vec;
+}
+
 
 Coordinates::Coordinates()
     : transformation_( 0 )

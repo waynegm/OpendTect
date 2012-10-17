@@ -74,7 +74,6 @@ SET(OD_MODULE_SOURCES
 	   vistexture.cc
 	   vistexture2.cc
 	   vistexture3.cc
-	   vistexture3viewer.cc
 	   vistexturecoords.cc
 	   vistexturechannels.cc
 	   vistexturechannel2rgba.cc

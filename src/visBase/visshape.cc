@@ -59,6 +59,8 @@ Shape::~Shape()
     if ( material_ ) material_->unRef();
 
     if ( osgswitch_ ) osgswitch_->unref();
+    
+    deepUnRef( nodestates_ );
 }
 
 
@@ -76,6 +78,27 @@ void Shape::turnOn(bool n)
 }
 
 
+void Shape::doAddNodeState(visBase::NodeState* ns)
+{
+    ns->ref();
+    nodestates_ += ns;
+    ns->setStateSet( osgswitch_->getOrCreateStateSet() );
+}
+    
+
+visBase::NodeState* Shape::removeNodeState( visBase::NodeState* ns )
+{
+    const int idx = nodestates_.indexOf( ns );
+    if ( nodestates_.validIdx(idx) )
+    {
+	ns->setStateSet( 0 );
+	nodestates_.remove( idx )->unRef();
+    }
+    
+    return ns;
+}
+    
+    
 bool Shape::isOn() const
 {
     return !osgswitch_ ||
@@ -116,8 +139,8 @@ clssname* ownclass::gt##clssname() const \
 mDefSetGetItem( Shape, Texture2, texture2_, , );
 mDefSetGetItem( Shape, Texture3, texture3_, , );
 mDefSetGetItem( Shape, Material, material_,
-    material_->setStateSet( 0 ),
-    material_->setStateSet( osgswitch_->getOrCreateStateSet() ) )
+    removeNodeState( material_ ),
+    addNodeState( material_ ) )
 
 
 void Shape::setMaterialBinding( int nv )

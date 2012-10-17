@@ -21,7 +21,8 @@ namespace osg { class Geometry; class Geode; class Switch; class PrimitiveSet; }
 namespace visBase
 {
 
-class ForegroundLifter;    
+class NodeState;
+class ForegroundLifter;
 class VisColorTab;
 class Material;
 class Texture2;
@@ -63,11 +64,19 @@ public:
     void			fillPar(IOPar&) const;
 
     void			removeSwitch();
+    
+    template <class T> T*	addNodeState(T* ns)
+    				{ doAddNodeState(ns); return ns; }
+    NodeState*			removeNodeState(NodeState*);
 
 protected:
 
+    void			doAddNodeState(NodeState* ns);
+    
 				Shape( SoNode* );
     virtual			~Shape();
+    
+    ObjectSet<NodeState>	nodestates_;
 
     Texture2*			texture2_;
     Texture3*			texture3_;

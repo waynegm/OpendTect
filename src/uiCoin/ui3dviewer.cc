@@ -369,6 +369,9 @@ void ui3DViewerBody::setSceneID( int sceneid )
 	view->setSceneData( sceneroot_ );
 	view->addEventHandler( new osgViewer::StatsHandler );
 
+	// Unlike Coin, default OSG headlight has zero ambiance
+	view->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
+
 	osg::ref_ptr<osgGA::TrackballManipulator> manip =
 	    new osgGA::TrackballManipulator(
 		osgGA::StandardManipulator::DEFAULT_SETTINGS |

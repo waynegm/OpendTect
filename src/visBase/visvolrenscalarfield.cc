@@ -30,7 +30,6 @@ namespace visBase
 {
 
 #define mNrColors 256
-static const char* sKeyColTabID = "ColorTable ID";
 
 
 VolumeRenderScalarField::VolumeRenderScalarField()

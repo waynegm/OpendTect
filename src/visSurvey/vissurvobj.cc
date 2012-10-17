@@ -181,13 +181,14 @@ void SurveyObject::fillSOPar( IOPar& par ) const
 	par.mergeComp( attribpar, key );
     }
 
+    /* TODO: Save in own par
+
     const visBase::TextureChannel2RGBA* tc2rgba =
 	const_cast<SurveyObject*>(this)->getChannels2RGBA();
     mDynamicCastGet( const visBase::ColTabTextureChannel2RGBA*, cttc2rgba,
 		     tc2rgba );
 
-    /* TODO: Save in own par
-    if ( tc2rgba && !cttc2rgba )
+        if ( tc2rgba && !cttc2rgba )
     {
 	par.set( sKeyTC2RGBA(), tc2rgba->id() );
 	saveids += tc2rgba->id();

@@ -52,7 +52,7 @@ const char* Scene::sKeyTopImageID()	{ return "TopImage.ID"; }
 const char* Scene::sKeyBotImageID()	{ return "BotImage.ID"; }
 
 static const char* sKeydTectScene()	{ return "dTect.Scene."; }
-static const char* sKeyShowColTab()	{ return "Show ColTab"; }
+    //static const char* sKeyShowColTab()	{ return "Show ColTab"; }
 
 
 Scene::Scene()

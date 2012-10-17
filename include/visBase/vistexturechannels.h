@@ -102,12 +102,9 @@ protected:
 
     ObjectSet<ChannelInfo>	channelinfo_;
     MappedTextureDataSet*	tc_;
-    SoSwitch*			onoff_;
+
     TextureChannel2RGBA*	tc2rgba_;
     osgGeo::LayeredTexture*	osgtexture_;
-
-    virtual SoNode*		gtInvntrNode();
-
 };
 
 

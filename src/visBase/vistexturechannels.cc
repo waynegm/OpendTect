@@ -524,11 +524,9 @@ void ChannelInfo::updateOsgImages()
 
 TextureChannels::TextureChannels()
     : tc_( 0 )
-    , onoff_ ( new SoSwitch )
     , tc2rgba_( 0 )
     , osgtexture_( 0 )
 {
-    onoff_->ref();
     turnOn( true );
 
     osgtexture_ = new osgGeo::LayeredTexture;
@@ -543,8 +541,7 @@ TextureChannels::~TextureChannels()
 {
     deepErase( channelinfo_ );
     setChannels2RGBA( 0 );
-    onoff_->unref();
-
+    
     if ( osgtexture_ ) osgtexture_->unref();
 }
 
@@ -585,17 +582,13 @@ int TextureChannels::getSize( unsigned char dim ) const
 
 bool TextureChannels::turnOn( bool yn )
 {
-    const bool res = isOn();
-    const int newval = yn ? SO_SWITCH_ALL : SO_SWITCH_NONE;
-    if ( newval!=onoff_->whichChild.getValue() )
-	onoff_->whichChild = newval;
-    return res;
+    return !yn;
 }
 
 
 bool TextureChannels::isOn() const
 {
-    return onoff_->whichChild.getValue()!=SO_SWITCH_NONE;
+    return true;
 }
 
 
@@ -876,11 +869,9 @@ bool TextureChannels::setChannels2RGBA( TextureChannel2RGBA* nt )
 {
     if ( tc2rgba_ )
     {
-	onoff_->removeChild( tc2rgba_->getInventorNode() );
 	tc2rgba_->setChannels( 0 );
 	tc2rgba_->unRef();
 
-	onoff_->removeChild( tc_->getInventorNode() );
 	tc_->unRef();
 	tc_ = 0;
     }
@@ -897,9 +888,6 @@ bool TextureChannels::setChannels2RGBA( TextureChannel2RGBA* nt )
 	}
 
 	tc_->ref();
-	onoff_->addChild( tc_->getInventorNode() );
-
-	onoff_->addChild( tc2rgba_->getInventorNode() );
 	tc2rgba_->setChannels( this );
 	tc2rgba_->ref();
 
@@ -917,10 +905,6 @@ const TextureChannel2RGBA* TextureChannels::getChannels2RGBA() const
 
 TextureChannel2RGBA* TextureChannels::getChannels2RGBA()
 { return tc2rgba_; }
-
-
-SoNode* TextureChannels::gtInvntrNode()
-{ return onoff_; }
 
 
 const SbImagei32* TextureChannels::getChannels() const

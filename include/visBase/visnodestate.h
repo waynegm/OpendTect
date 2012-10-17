@@ -27,20 +27,21 @@ class NodeState : public CallBacker
 { mRefCountImpl(NodeState);
 public:
 
-    void			setStateSet(osg::StateSet*);
+    void			attachStateSet(osg::StateSet*);
+    void			detatchStateSet(osg::StateSet*);
 
 protected:
 				NodeState();
     
     template <class T> T*	addAttribute(T* a) { doAdd(a); return a; }
-
-    
-    ObjectSet<osg::StateAttribute>	attributes_;
     
 private:
+    
     void				doAdd(osg::StateAttribute*);
     void				doRemove(osg::StateAttribute*);
-    OsgRefMan<osg::StateSet>		stateset_;
+    
+    ObjectSet<osg::StateAttribute>	attributes_;
+    ObjectSet<osg::StateSet>		statesets_;
 };
 
 };

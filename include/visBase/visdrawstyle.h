@@ -51,8 +51,6 @@ public:
     void 		setLineWidth(int);
     const LineStyle&	lineStyle() const 		{ return linestyle_; }
     
-    void		setStateSet(osg::StateSet*);
-
     int			usePar( const IOPar& );
     void		fillPar( IOPar& ) const;
     

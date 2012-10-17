@@ -37,7 +37,8 @@ VisualObject::VisualObject( bool issel )
 
 VisualObject::~VisualObject()
 {
-    deepUnRef( nodestates_ );
+    while ( nodestates_.size() )
+	removeNodeState( nodestates_[0] );
 }
     
     
@@ -52,7 +53,7 @@ void VisualObject::doAddNodeState(visBase::NodeState* ns)
 	pErrMsg("Setting nodestate on class without stateset.");
     }
     else
-	ns->setStateSet( stateset );
+	ns->attachStateSet( stateset );
 }
 
     
@@ -61,7 +62,7 @@ visBase::NodeState* VisualObject::removeNodeState( visBase::NodeState* ns )
     const int idx = nodestates_.indexOf( ns );
     if ( nodestates_.validIdx(idx) )
     {
-	ns->setStateSet( 0 );
+	ns->detatchStateSet( getStateSet() );
 	nodestates_.remove( idx )->unRef();
     }
     
@@ -152,7 +153,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
 {
     if ( material_ )
     {
-	material_->setStateSet( 0 );
+	removeNodeState( material_ );
 	material_->unRef();
     }
 
@@ -161,7 +162,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
     if ( material_ )
     {
 	material_->ref();
-	material_->setStateSet( osgroot_->getOrCreateStateSet() );
+	addNodeState( material_ );
     }
 }
     

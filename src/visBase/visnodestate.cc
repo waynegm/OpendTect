@@ -21,32 +21,43 @@ NodeState::NodeState()
 
 NodeState::~NodeState()
 {
-    setStateSet( 0 );
+    while ( statesets_.size() )
+	detatchStateSet( statesets_[0]);
 }
 
 
-void NodeState::setStateSet( osg::StateSet* ns )
+void NodeState::attachStateSet( osg::StateSet* ns )
 {
-    if ( stateset_ )
-    {
-	for ( int idx=0; idx<attributes_.size(); idx++ )
-	    stateset_->removeAttribute( attributes_[idx] );
-    }
+    if ( statesets_.isPresent( ns ) )
+	return;
     
-    stateset_ = ns;
+    statesets_ += ns;
+    ns->ref();
     
-    if ( stateset_ )
-    {
-	for ( int idx=0; idx<attributes_.size(); idx++ )
-	    stateset_->setAttribute( attributes_[idx] );
-    }
+    for ( int idx=0; idx<attributes_.size(); idx++ )
+	ns->setAttribute( attributes_[idx] );
 }
+
+
+void NodeState::detatchStateSet( osg::StateSet* ns )
+{
+    if ( statesets_.isPresent( ns ) )
+	return;
+    
+    statesets_ -= ns;
+    
+    for ( int idx=0; idx<attributes_.size(); idx++ )
+	ns->setAttribute( attributes_[idx] );
+    
+    ns->unref();
+}
+
 
 
 void NodeState::doAdd( osg::StateAttribute* as)
 {
-    if ( stateset_ )
-	stateset_->setAttribute( as );
+    for ( int idx=0; idx<statesets_.size(); idx++ )
+	statesets_[idx]->setAttribute( as );
     
     attributes_ += as;
 }
@@ -54,8 +65,8 @@ void NodeState::doAdd( osg::StateAttribute* as)
 
 void NodeState::doRemove( osg::StateAttribute* as)
 {
-    if ( stateset_ )
-	stateset_->removeAttribute( as );
+    for ( int idx=0; idx<statesets_.size(); idx++ )
+	statesets_[idx]->removeAttribute( as );
     
     attributes_ -= as;
 }

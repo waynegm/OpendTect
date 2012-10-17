@@ -75,7 +75,16 @@ osg::StateSet* VisualObject::getStateSet()
 {
     return gtOsgNode() ? gtOsgNode()->getOrCreateStateSet() : 0;
 }
-    
+
+
+void VisualObject::setPickable( bool yn )
+{ enableTraversal( visBase::IntersectionTraversal, yn ); }
+
+
+bool VisualObject::isPickable() const
+{ return isTraversalEnabled( visBase::IntersectionTraversal ); }
+
+
 
 VisualObjectImpl::VisualObjectImpl( bool issel )
     : VisualObject( issel )

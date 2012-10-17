@@ -55,7 +55,7 @@ Annotation::Annotation()
     addChild( pickstyle_->getInventorNode() );
     pickstyle_->setStyle( PickStyle::Unpickable );
 
-    enableTraversal( visBase::IntersectionTraversal, false );
+    setPickable( false );
 
     float pos[8][3] =
     {

@@ -519,7 +519,7 @@ void PlaneDataDisplay::showManipulator( bool yn )
     rectanglepickstyle_->setStyle( yn ? visBase::PickStyle::Unpickable
 				      : visBase::PickStyle::Shape );
 
-    texturerect_->enableTraversal( visBase::IntersectionTraversal, !yn );
+    texturerect_->setPickable( !yn );
 }
 
 

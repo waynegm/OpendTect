@@ -65,19 +65,10 @@ public:
 
     void			removeSwitch();
     
-    template <class T> T*	addNodeState(T* ns)
-    				{ doAddNodeState(ns); return ns; }
-    NodeState*			removeNodeState(NodeState*);
-
 protected:
-
-    void			doAddNodeState(NodeState* ns);
-    
 				Shape( SoNode* );
     virtual			~Shape();
     
-    ObjectSet<NodeState>	nodestates_;
-
     Texture2*			texture2_;
     Texture3*			texture3_;
     Material*			material_;

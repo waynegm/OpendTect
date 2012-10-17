@@ -36,8 +36,44 @@ VisualObject::VisualObject( bool issel )
 
 
 VisualObject::~VisualObject()
-{}
+{
+    deepUnRef( nodestates_ );
+}
+    
+    
+    
+void VisualObject::doAddNodeState(visBase::NodeState* ns)
+{
+    ns->ref();
+    nodestates_ += ns;
+    osg::ref_ptr<osg::StateSet> stateset = getStateSet();
+    if ( !stateset )
+    {
+	pErrMsg("Setting nodestate on class without stateset.");
+    }
+    else
+	ns->setStateSet( stateset );
+}
 
+    
+visBase::NodeState* VisualObject::removeNodeState( visBase::NodeState* ns )
+{
+    const int idx = nodestates_.indexOf( ns );
+    if ( nodestates_.validIdx(idx) )
+    {
+	ns->setStateSet( 0 );
+	nodestates_.remove( idx )->unRef();
+    }
+    
+    return ns;
+}
+    
+    
+osg::StateSet* VisualObject::getStateSet()
+{
+    return gtOsgNode() ? gtOsgNode()->getOrCreateStateSet() : 0;
+}
+    
 
 VisualObjectImpl::VisualObjectImpl( bool issel )
     : VisualObject( issel )
@@ -149,8 +185,8 @@ osg::Node* VisualObjectImpl::gtOsgNode()
 {
     return osgroot_;
 }
-
-
+    
+    
 void VisualObjectImpl::addChild( SoNode* nn )
 {  }
 

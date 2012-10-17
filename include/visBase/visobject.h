@@ -20,13 +20,14 @@ ________________________________________________________________________
 
 class Coord3;
 
-namespace osg { class Switch; }
+namespace osg { class Switch; class StateSet; }
 
 namespace visBase
 {
 class Material;
 class Transformation;
 class EventCatcher;
+class NodeState;
 
 /*!\brief Base class for all objects that are visual on the scene. */
 
@@ -49,8 +50,15 @@ public:
     virtual NotifierAccess*	rightClicked()		{ return &rightClick; }
     const EventInfo*		rightClickedEventInfo() const{return rcevinfo;}
     const TypeSet<int>*		rightClickedPath() const;
+    
+    template <class T> T*	addNodeState(T* ns)
+				{ doAddNodeState(ns); return ns; }
+    NodeState*			removeNodeState(NodeState*);
 
 protected:
+    void			doAddNodeState(NodeState* ns);
+    virtual osg::StateSet*	getStateSet();
+    
     void			triggerSel()
     				{ if (isselectable) selnotifier.trigger(); }
     void			triggerDeSel()
@@ -60,17 +68,20 @@ protected:
 				~VisualObject();
 
 private:
-    bool						isselectable;
-    Notifier<VisualObject>				selnotifier;
-    Notifier<VisualObject>				deselnotifier;
-    Notifier<VisualObject>				rightClick;
-    const EventInfo*					rcevinfo;
+    
+    ObjectSet<NodeState>	nodestates_;
+    bool			isselectable;
+    Notifier<VisualObject>	selnotifier;
+    Notifier<VisualObject>	deselnotifier;
+    Notifier<VisualObject>	rightClick;
+    const EventInfo*		rcevinfo;
 };
 
 
 mClass(visBase) VisualObjectImpl : public VisualObject
 {
 public:
+
     void		turnOn(bool);
     bool		isOn() const;
     void		removeSwitch();
@@ -100,7 +111,7 @@ public:
     virtual void	fillPar(IOPar&) const;
 
 protected:
-
+    
     void		addChild(SoNode*);
     void		insertChild(int pos,SoNode*);
     void		removeChild(SoNode*);

@@ -35,25 +35,79 @@ public:
     
     using		osgManipulator::DraggerCallback::receive;
     bool		receive(const osgManipulator::MotionCommand&);
+    
 protected:
     
     DraggerBase&	dragger_;
+    osg::Matrix		startmatrix_;
 };
-
     
-
     
+    
+bool DraggerCallbackHandler::receive( const osgManipulator::MotionCommand& cmd )
+{
+    if ( cmd.getStage()==osgManipulator::MotionCommand::START )
+	startmatrix_ = dragger_.dragger_->getMatrix();
+    
+    if ( cmd.getStage()==osgManipulator::MotionCommand::START )
+    {
+	dragger_.started.trigger();
+    }
+    else if ( cmd.getStage()==osgManipulator::MotionCommand::MOVE )
+    {
+	dragger_.motion.trigger();
+    }
+    else if ( cmd.getStage()==osgManipulator::MotionCommand::FINISH )
+    {
+	dragger_.finished.trigger();
+	if ( startmatrix_ != dragger_.dragger_->getMatrix() )
+	    dragger_.changed.trigger();
+    }
+    
+    return true;
+}
+
+
 DraggerBase::DraggerBase()
     : started( this )
     , motion( this )
     , finished( this )
+    , changed( this )
     , displaytrans_( 0 )
+    , cbhandler_( 0 )
+    , dragger_( 0 )
 {}
     
     
 DraggerBase::~DraggerBase()
-{ if ( displaytrans_ ) displaytrans_->unRef(); }
+{
+    if ( displaytrans_ ) displaytrans_->unRef();
+    if ( dragger_ ) dragger_->unref();
+}
 
+
+void DraggerBase::initDragger( osgManipulator::Dragger* d )
+{
+    if ( dragger_ )
+    {
+	if ( cbhandler_ )
+	    dragger_->removeDraggerCallback( cbhandler_ );
+	
+	dragger_->unref();
+    }
+    
+    if ( cbhandler_ ) cbhandler_->unref();
+    
+    dragger_ = d;
+    
+    if ( dragger_ )
+    {
+	dragger_->ref();
+	cbhandler_ = new DraggerCallbackHandler( *this );
+	cbhandler_->ref();
+	dragger_->addDraggerCallback( cbhandler_ );
+    }
+}
     
 void DraggerBase::setDisplayTransformation( const mVisTrans* nt )
 {

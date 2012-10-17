@@ -27,23 +27,33 @@ namespace visBase
 /*! \brief Class for simple draggers
 */
 
+class DraggerCallbackHandler;
 class Transformation;
     
 mClass(visBase) DraggerBase : public DataObject
 {
 public:
+    
     Notifier<DraggerBase>	started;
     Notifier<DraggerBase>	motion;
     Notifier<DraggerBase>	finished;
+    Notifier<DraggerBase>	changed;
     
     void			setDisplayTransformation( const mVisTrans* );
     const mVisTrans*		getDisplayTransformation() const;
-
+    
 protected:
+    friend			class DraggerCallbackHandler;
 				DraggerBase();
     				~DraggerBase();
     
     const mVisTrans*		displaytrans_;
+    
+    void			initDragger(osgManipulator::Dragger*);
+    
+private:
+    DraggerCallbackHandler*	cbhandler_;
+    osgManipulator::Dragger*	dragger_;
 };
 
 

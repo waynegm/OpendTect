@@ -15,12 +15,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visevent.h"
 #include "vistransform.h"
 
-#include <Inventor/draggers/SoDragPointDragger.h>
-#include <Inventor/draggers/SoTranslate1Dragger.h>
-#include <Inventor/draggers/SoTranslate2Dragger.h>
-#include <Inventor/nodes/SoSwitch.h>
-#include <Inventor/nodes/SoSeparator.h>
-#include "SoScale3Dragger.h"
+#include <osg/Switch>
+#include <osgManipulator/Translate1DDragger>
+#include <osgManipulator/Translate2DDragger>
+#include <osg/MatrixTransform>
 
 mCreateFactoryEntry( visBase::Dragger );
 
@@ -28,24 +26,16 @@ namespace visBase
 {
 
 Dragger::Dragger()
-    : dragger_(0)
-    , started(this)
+    : started(this)
     , motion(this)
     , finished(this)
-    , onoff_( new SoSwitch )
-    , root_( new SoSeparator )
-    , positiontransform_( Transformation::create() )
+    , positiontransform_( new osg::MatrixTransform )
     , displaytrans_( 0 )
     , rightclicknotifier_(this)
     , rightclickeventinfo_( 0 )
+    , onoff_( new osg::Switch )
 {
-    onoff_->ref();
-    onoff_->addChild( root_ );
-    onoff_->whichChild = 0;
-
-    positiontransform_->ref();
-    root_->addChild( positiontransform_->getInventorNode() );
-    setDraggerType( Translate1D );
+    onoff_->addChild( positiontransform_ );
     setDefaultRotation();
 }
 
@@ -54,20 +44,16 @@ void Dragger::setDefaultRotation()
 {
     setRotation( Coord3(0,1,0), -M_PI_2 );
 }
+    
+    
+osg::Node* Dragger::osgNode()
+{
+    return onoff_;
+}
+    
 
 Dragger::~Dragger()
 {
-    if ( dragger_ )
-    {
-	dragger_->removeStartCallback( Dragger::startCB, this );
-	dragger_->removeMotionCallback( Dragger::motionCB, this );
-	dragger_->removeFinishCallback( Dragger::finishCB, this );
-	root_->removeChild( dragger_ );
-    }
-
-    root_->removeChild( positiontransform_->getInventorNode() );
-    positiontransform_->unRef();
-    onoff_->unref();
     if ( displaytrans_ ) displaytrans_->unRef();
 }
 
@@ -77,28 +63,23 @@ bool Dragger::selectable() const { return true; }
 
 void Dragger::setDraggerType( Type tp )
 {
-    if ( dragger_ )
-    {
-	dragger_->removeStartCallback( Dragger::startCB, this );
-	dragger_->removeMotionCallback( Dragger::motionCB, this );
-	dragger_->removeFinishCallback( Dragger::finishCB, this );
-	root_->removeChild( dragger_ );
-    }
-    
-    if ( tp == Translate3D )
-	dragger_ = new SoDragPointDragger;
-    else if ( tp==Translate2D )
-	dragger_ = new SoTranslate2Dragger;
-    else if ( tp==Translate1D )
-	dragger_ = new SoTranslate1Dragger;
-    else
-	dragger_ = new SoScale3Dragger;
-    
+    positiontransform_->removeChild( dragger_ );
 
-    root_->addChild( dragger_ );
-    dragger_->addStartCallback( Dragger::startCB, this );
-    dragger_->addMotionCallback( Dragger::motionCB, this );
-    dragger_->addFinishCallback( Dragger::finishCB, this );
+    switch ( tp )
+    {
+	case Translate1D:
+	    dragger_ = new osgManipulator::Translate1DDragger;
+	    break;
+	case Translate2D:
+	    dragger_ = new osgManipulator::Translate2DDragger;
+	    break;
+	case Translate3D:
+	case Scale3D:
+	    pErrMsg("Not impl");
+    };
+
+    positiontransform_->addChild( dragger_ );
+    pErrMsg("Setup callbacks");
 }
 
 
@@ -129,14 +110,7 @@ const mVisTrans* Dragger::getDisplayTransformation() const
 
 void Dragger::setOwnShape( DataObject* newshape, const char* partname )
 {
-    if ( newshape && newshape->getInventorNode() )
-	dragger_->setPart( partname, newshape->getInventorNode() );
-}
-
-
-SoNode* Dragger::getShape( const char* nm )
-{
-    return dragger_->getPart( nm, false );
+    pErrMsg("Not impl");
 }
 
 
@@ -155,98 +129,64 @@ const EventInfo* Dragger::rightClickedEventInfo() const
 { return rightclickeventinfo_; }
 
 
-void Dragger::startCB( void* obj, SoDragger* )
-{
-    ( (Dragger*)obj )->started.trigger();
-}
-
-
-void Dragger::motionCB( void* obj, SoDragger* )
-{
-    ( (Dragger*)obj )->motion.trigger();
-}
-
-
-void Dragger::finishCB( void* obj, SoDragger* )
-{
-    ( (Dragger*)obj )->finished.trigger();
-}
-
-
 void Dragger::turnOn( bool yn )
 {
-    onoff_->whichChild = yn ? 0 : SO_SWITCH_NONE;
+    if ( yn )
+	onoff_->setAllChildrenOn();
+    else
+	onoff_->setAllChildrenOff();
 }
 
 
 bool Dragger::isOn() const
 {
-    return !onoff_->whichChild.getValue();
+    return onoff_->getValue( 0 );
 }
 
 
 void Dragger::setSize( const Coord3& size )
 {
-    positiontransform_->setScale( size/2 );
-    mDynamicCastGet( SoScale3Dragger*, s3d, dragger_ );
-    if ( s3d ) s3d->scale.setValue( SbVec3f(1,1,1) );
+    osg::Matrix osgmatrix = positiontransform_->getMatrix();
+    osgmatrix.makeScale( size.x/2, size.y/2, size.z/2 );
+    positiontransform_->setMatrix( osgmatrix );
 }
 
 
 Coord3 Dragger::getSize() const
 {
-    SbVec3f scale( 1, 1, 1 );
-    mDynamicCastGet( SoScale3Dragger*, s3d, dragger_ );
-    if ( s3d ) scale = s3d->scale.getValue();
-
-    const Coord3 transscale = positiontransform_->transform(
-	    Coord3(scale[0],scale[1],scale[2]) );
-    const Coord3 transorigin = positiontransform_->transform( Coord3(0,0,0) );
-
-    return (transscale - transorigin)*2;
+    const osg::Matrix matrix = positiontransform_->getMatrix();
+    const osg::Vec3d vec = matrix.getScale();
+    return Coord3( vec.x()*2, vec.y()*2, vec.z()*2 );
 }
 
 
 void Dragger::setRotation( const Coord3& vec, float angle )
 {
-    positiontransform_->setRotation( vec, angle );
-}
+    osg::Matrix osgmatrix = positiontransform_->getMatrix();
+    osgmatrix.makeRotate( angle, osg::Vec3(vec.x,vec.y,vec.z));
 
-
-SoNode* Dragger::gtInvntrNode()
-{
-    return onoff_ ? (SoNode*) onoff_ : (SoNode*) root_;
+    positiontransform_->setMatrix( osgmatrix );
 }
 
 
 void Dragger::setPos( const Coord3& pos )
 {
     Coord3 newpos = displaytrans_ ? displaytrans_->transform( pos ) : pos;
-    positiontransform_->setTranslation( newpos );
-
-    mDynamicCastGet( SoTranslate1Dragger*, t1d, dragger_ )
-    mDynamicCastGet( SoTranslate2Dragger*, t2d, dragger_ )
-    mDynamicCastGet( SoDragPointDragger*, dpd, dragger_ )
-    if ( t1d ) t1d->translation.setValue( 0, 0, 0 );
-    else if ( t2d ) t2d->translation.setValue( 0, 0, 0 );
-    else if ( dpd ) dpd->translation.setValue( 0, 0, 0 );
+    
+    osg::Matrix osgmatrix = positiontransform_->getMatrix();
+    osgmatrix.makeTranslate( newpos.x, newpos.y, newpos.z );
+    positiontransform_->setMatrix( osgmatrix );
+    
+    if ( dragger_ ) dragger_->setMatrix( osg::Matrix::identity() );
 }
 
 
 Coord3 Dragger::getPos() const
 {
-    SbVec3f pos( 0, 0, 0 );
-    mDynamicCastGet( SoTranslate1Dragger*, t1d, dragger_ )
-    mDynamicCastGet( SoTranslate2Dragger*, t2d, dragger_ )
-    mDynamicCastGet( SoDragPointDragger*, dpd, dragger_ )
-    if ( t1d ) pos = t1d->translation.getValue();
-    else if ( t2d ) pos = t2d->translation.getValue();
-    else if ( dpd ) pos = dpd->translation.getValue();
-
-
-    const Coord3 coord = positiontransform_->transform(
-	    Coord3(pos[0],pos[1],pos[2]) );
-
+    osg::Vec3d pos = dragger_->getMatrix().getTrans();
+    pos = positiontransform_->getMatrix().preMult( pos );
+    const Coord3 coord = Conv::to<Coord3>( pos );
+        
     return displaytrans_ ? displaytrans_->transformBack( coord ) : coord;
 }
 

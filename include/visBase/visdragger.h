@@ -15,13 +15,11 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "visobject.h"
 #include "position.h"
+#include "visosg.h"
 
 class Color;
-
-class SoDragger;
-class SoSeparator;
-class SoSwitch;
-
+namespace osgManipulator { class Dragger; }
+namespace osg { class MatrixTransform; class Node; class Switch; }
 
 namespace visBase
 {
@@ -63,7 +61,6 @@ public:
 				    \note The object will not be reffed,
 					  so it's up to the caller to make sure
 					  it remains in memory */
-    SoNode*			getShape( const char* name );
     bool			selectable() const;
 
     Notifier<Dragger>		started;
@@ -76,22 +73,15 @@ public:
 protected:
     				~Dragger();
     void			triggerRightClick(const EventInfo* eventinfo);
-
-    static void			startCB(void*,SoDragger*);
-    static void			motionCB(void*,SoDragger*);
-    static void			finishCB(void*,SoDragger*);
+    osg::Node*			osgNode();
     
     Notifier<Dragger>		rightclicknotifier_;
     const EventInfo*		rightclickeventinfo_;
 
-    SoSwitch*			onoff_;
-    SoSeparator*		root_;
-    Transformation*		positiontransform_;
-    SoDragger*			dragger_;
-    const mVisTrans*		displaytrans_;
-
-    virtual SoNode*		gtInvntrNode();
-
+    OsgRefMan<osg::Switch>		onoff_;
+    OsgRefMan<osgManipulator::Dragger>	dragger_;
+    OsgRefMan<osg::MatrixTransform>	positiontransform_;
+    const mVisTrans*			displaytrans_;
 };
 
 } // namespace visBase

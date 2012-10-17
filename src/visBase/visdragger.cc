@@ -33,6 +33,7 @@ public:
 	: dragger_( dragger )
     {}
     
+    using		osgManipulator::DraggerCallback::receive;
     bool		receive(const osgManipulator::MotionCommand&);
 protected:
     

@@ -952,8 +952,8 @@ bool HorizonDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
     surf->setResolution( resolution_-1, tr );
 
     surf->setMaterial( 0 );
-    const int index = childIndex(drawstyle_->getInventorNode());
-    insertChild( index, surf->getInventorNode() );
+
+    addChild( surf->getInventorNode() );
     surf->turnOn( !displayonlyatsections_ );
 
     sections_ += surf;

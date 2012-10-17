@@ -57,7 +57,7 @@ EMObjectDisplay::EMObjectDisplay()
     , hasmoved( this )
     , changedisplay( this )
     , locknotifier( this )
-    , drawstyle_( visBase::DrawStyle::create() )
+    , drawstyle_( new visBase::DrawStyle )
     , nontexturecolisset_( false )
     , enableedit_( false )
     , restoresessupdate_( false )
@@ -67,8 +67,8 @@ EMObjectDisplay::EMObjectDisplay()
     parposattrshown_.erase();
 
     drawstyle_->ref();
-    addChild( drawstyle_->getInventorNode() );
-
+    addNodeState( drawstyle_ );
+    
     LineStyle defls; defls.width_ = 2;
     drawstyle_->setLineStyle( defls );
 
@@ -81,7 +81,6 @@ EMObjectDisplay::~EMObjectDisplay()
     if ( channel2rgba_ ) channel2rgba_->unRef();
     channel2rgba_ = 0;
 
-    removeChild( drawstyle_->getInventorNode() );
     drawstyle_->unRef();
     drawstyle_ = 0;
 
@@ -377,12 +376,6 @@ const LineStyle* EMObjectDisplay::lineStyle() const
 
 void EMObjectDisplay::setLineStyle( const LineStyle& ls )
 { drawstyle_->setLineStyle(ls); }
-
-
-void EMObjectDisplay::getLineWidthBounds( int& min, int& max )
-{
-    drawstyle_->getLineWidthBounds( min, max );
-}
 
 
 bool EMObjectDisplay::hasColor() const

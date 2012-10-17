@@ -65,8 +65,6 @@ public:
 
     const LineStyle*		lineStyle() const;
     void			setLineStyle(const LineStyle&);
-    void			getLineWidthBounds(int& min,int& max);
-
     void			showManipulator(bool);
     bool			isManipulatorShown() const;
 

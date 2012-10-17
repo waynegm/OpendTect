@@ -76,8 +76,7 @@ public:
     bool			allowMaterialEdit() const { return true; }
     const LineStyle*		lineStyle() const;
     void			setLineStyle(const LineStyle&);
-    void			getLineWidthBounds( int& min, int& max );
-
+    
     bool			hasColor() const;
     void			setColor(Color);
     Color			getColor() const;

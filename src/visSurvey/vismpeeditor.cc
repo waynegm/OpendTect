@@ -315,8 +315,8 @@ void MPEEditor::addDragger( const EM::PosID& pid )
     shapescale->setScreenSize(20);
     shapescale->setMinScale( 10 );
     shapescale->setMaxScale( 150 );
-    shapescale->setShape( dragger->getShape("translatorActive"));
-    dragger->setOwnShape( shapescale, "translatorActive" );
+    //shapescale->setShape( dragger->getShape("translatorActive"));
+    //dragger->setOwnShape( shapescale, "translatorActive" );
     shapescale->unRef();
 
     dragger->setPos( emeditor->getPosition(pid) );

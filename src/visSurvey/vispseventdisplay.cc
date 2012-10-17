@@ -42,7 +42,7 @@ PSEventDisplay::PSEventDisplay()
     , eventman_( 0 )
     , qualityrange_( 0, 1 )
     , displaytransform_( 0 )
-    , linestyle_( visBase::DrawStyle::create() )
+    , linestyle_( new visBase::DrawStyle )
     , horid_( -1 )
     , offsetscale_( 1 )
     , markercolor_( Single )
@@ -50,7 +50,7 @@ PSEventDisplay::PSEventDisplay()
 {
     setLockable();
     linestyle_->ref();
-    addChild( linestyle_->getInventorNode() );
+    addNodeState( linestyle_ );
     eventseeds_->ref();
     addChild( eventseeds_->getInventorNode() );
     ctabmapper_.setup_.type( ColTab::MapperSetup::Auto );

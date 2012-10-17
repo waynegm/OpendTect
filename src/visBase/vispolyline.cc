@@ -82,12 +82,8 @@ PolyLine::PolyLine()
 
 void PolyLine::setLineStyle( const LineStyle& lst )
 {
-    if ( !drawstyle_ ) 
-    {
-	pErrMsg("Implement drawstyle");
-	//drawstyle_ = DrawStyle::create();
-	//insertNode( drawstyle_->getInventorNode() );
-    }
+    if ( !drawstyle_ )
+	drawstyle_ = addNodeState( new DrawStyle );
 
     drawstyle_->setLineStyle( lst );
     if ( getMaterial() )

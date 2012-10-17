@@ -126,8 +126,6 @@ public:
 
     const LineStyle*		lineStyle() const;
     void			setLineStyle(const LineStyle&);
-    void			getLineWidthBounds(int& min,int& max);
-
     virtual void		getMousePosInfo(const visBase::EventInfo& ei,
 	    					IOPar& iop ) const
 				{ return MultiTextureSurveyObject

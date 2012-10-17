@@ -78,7 +78,7 @@ FaultDisplay::FaultDisplay()
     , stickselectmode_( false )
     , displayintersections_( false )
     , displayhorintersections_( false )
-    , drawstyle_( visBase::DrawStyle::create() )
+    , drawstyle_( new visBase::DrawStyle )
 {
     activestickmarkerpickstyle_->ref();
     activestickmarkerpickstyle_->setStyle( visBase::PickStyle::Unpickable );
@@ -107,7 +107,7 @@ FaultDisplay::FaultDisplay()
     }
 
     drawstyle_->ref();
-    addChild( drawstyle_->getInventorNode() );
+    addNodeState( drawstyle_ );
     drawstyle_->setLineStyle( LineStyle(LineStyle::Solid,2) );
 }
 
@@ -173,7 +173,6 @@ FaultDisplay::~FaultDisplay()
 
     deepErase( stickintersectpoints_ );
 
-    removeChild( drawstyle_->getInventorNode() );
     drawstyle_->unRef(); drawstyle_ = 0;
 
     DataPackMgr& dpman = DPM( DataPackMgr::SurfID() );
@@ -1725,13 +1724,6 @@ void FaultDisplay::setLineStyle( const LineStyle& lst )
 	drawstyle_->setLineStyle( lst );
 
     updateDisplay();
-}
-
-
-void FaultDisplay::getLineWidthBounds( int& min, int& max )
-{
-    drawstyle_->getLineWidthBounds( min, max );
-    min = -1;
 }
 
 

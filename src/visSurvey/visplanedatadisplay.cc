@@ -167,10 +167,6 @@ PlaneDataDisplay::PlaneDataDisplay()
     draggermaterial_ = new visBase::Material;
     draggermaterial_->ref();
 
-    draggerdrawstyle_ = visBase::DrawStyle::create();
-    draggerdrawstyle_->ref();
-    draggerdrawstyle_->setDrawStyle( visBase::DrawStyle::Lines );
-
     dragger_->setDim( (int) 0 );
 
     if ( (int) orientation_ )
@@ -228,7 +224,6 @@ PlaneDataDisplay::~PlaneDataDisplay()
     dragger_->unRef();
     rectanglepickstyle_->unRef();
     gridlines_->unRef();
-    draggerdrawstyle_->unRef();
     draggermaterial_->unRef();
 
     setBaseMap( 0 );
@@ -463,9 +458,7 @@ void PlaneDataDisplay::draggerMotion( CallBacker* )
     else if ( orientation_==Zslice && dragcs.zrg.start!=oldcs.zrg.start )
 	showplane = true;
    
-    draggerdrawstyle_->setDrawStyle( showplane
-	    ? visBase::DrawStyle::Filled
-	    : visBase::DrawStyle::Lines );
+
     draggermaterial_->setTransparency( showplane ? 0.5f : 0 );
 
  
@@ -544,7 +537,6 @@ void PlaneDataDisplay::resetManipulation()
 {
     CubeSampling cs = getCubeSampling( false, true );
     setDraggerPos( cs );
-    draggerdrawstyle_->setDrawStyle( visBase::DrawStyle::Lines );
     draggermaterial_->setTransparency( 0 );
 
     dragger_->showPlane( false );
@@ -556,7 +548,6 @@ void PlaneDataDisplay::acceptManipulation()
 {
     CubeSampling cs = getCubeSampling( true, true );
     setCubeSampling( cs );
-    draggerdrawstyle_->setDrawStyle( visBase::DrawStyle::Lines );
     draggermaterial_->setTransparency( 0 );
 
     dragger_->showPlane( false );

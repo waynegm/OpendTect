@@ -15,56 +15,60 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "visdata.h"
 #include "draw.h"
+#include "visnodestate.h"
 
-class SoDrawStyle;
+namespace osg {
+    class Point;
+    class LineStipple;
+    class LineWidth;
+};
+
 
 namespace visBase
 {
 /*! \brief
 */
-
-
-mClass(visBase) DrawStyle : public DataObject
+    
+    
+mClass(visBase) DrawStyle : public NodeState
 {
 public:
-    static DrawStyle*	create()
-			mCreateDataObj(DrawStyle);
-
+			DrawStyle();
     enum Style		{ Filled, Lines, Points, Invisible };
     			DeclareEnumUtils(Style);
 
     void		setDrawStyle( Style );
     Style		getDrawStyle() const;
-
+    
     void		setPointSize( float );
     float		getPointSize() const;
-
+    
     void		setLineStyle( const LineStyle& );
-    			/*!< Color in Linestyle is ignored, must be
-			     set separately.
-			*/
+			/*!< Color in Linestyle is ignored, must be
+			 set separately.
+			 */
+    
     void 		setLineWidth(int);
-    const LineStyle&	lineStyle() const { return linestyle; }
-
-    void		getLineWidthBounds( int& min, int& max );
+    const LineStyle&	lineStyle() const 		{ return linestyle_; }
+    
+    void		setStateSet(osg::StateSet*);
 
     int			usePar( const IOPar& );
     void		fillPar( IOPar& ) const;
-
-private:
-    virtual		~DrawStyle();
-
-    void		updateLineStyle();
     
-    LineStyle		linestyle;
-    SoDrawStyle*	drawstyle;
+protected:    
 
+    void			updateLineStyle();
+    
+    LineStyle			linestyle_;
+    
+    OsgRefMan<osg::Point>	pointsize_;
+    OsgRefMan<osg::LineStipple>	linestipple_;
+    OsgRefMan<osg::LineWidth>	linewidth_;
+    
     static const char*	linestylestr();
     static const char*	drawstylestr();
     static const char*	pointsizestr();
-
-    virtual SoNode*	gtInvntrNode();
-
 };
 
 };

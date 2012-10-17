@@ -57,7 +57,7 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     , shapehints_( visBase::ShapeHints::create() )
     , showmanipulator_( false )
     , displaypolygons_( false )
-    , drawstyle_( visBase::DrawStyle::create() )
+    , drawstyle_( new visBase::DrawStyle )
     , intsurf_( visBase::TriangleStripSet::create() )
 {
     nearestpolygonmarkerpickstyle_->ref();
@@ -182,13 +182,6 @@ void PolygonBodyDisplay::setLineStyle( const LineStyle& lst )
     setLineRadius( polygondisplay_ );
     if ( arePolygonsDisplayed() )
 	polygondisplay_->touch( false );
-}
-
-
-void PolygonBodyDisplay::getLineWidthBounds( int& min, int& max )
-{
-    drawstyle_->getLineWidthBounds( min, max );
-    min = -1;
 }
 
 

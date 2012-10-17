@@ -567,7 +567,7 @@ void uiContourTreeItem::createLines()
     applMgr()->visServer()->addObject( lines_, sceneID(), false );
     if ( !drawstyle_ )
     {
-	drawstyle_ = visBase::DrawStyle::create();
+	drawstyle_ = new visBase::DrawStyle;
 	drawstyle_->ref();
 	//if ( lines_ ) lines_->insertNode( drawstyle_->getInventorNode() );
     }

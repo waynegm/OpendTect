@@ -31,7 +31,7 @@ const char* GridLines::sKeyZShown()     { return "Zlines shown"; }
 
 GridLines::GridLines()
     : VisualObjectImpl(false)
-    , drawstyle_(DrawStyle::create())
+    , drawstyle_( new DrawStyle )
     , transformation_(0)
     , gridcs_(false)
     , csinlchanged_(false)
@@ -39,8 +39,9 @@ GridLines::GridLines()
     , cszchanged_(false)
 {
     inlines_ = crosslines_ = zlines_ = trcnrlines_ = 0;
+    drawstyle_->ref();
+    pErrMsg("Todo: Add drawstyle to stateset.");
 
-    addChild( drawstyle_->getInventorNode() );
     setMaterial( 0 );
 }
 
@@ -53,6 +54,8 @@ GridLines::~GridLines()
 	polylineset_[idx]->unRef();
 	polylineset_.remove(idx--);
     }
+    
+    drawstyle_->unRef();
 }
 
 

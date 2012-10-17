@@ -21,8 +21,9 @@ namespace visBase
 
 PointSet::PointSet()
     : VertexShape( Geometry::PrimitiveSet::Points, true )
-    , drawstyle_( DrawStyle::create() )
+    , drawstyle_( new DrawStyle )
 {
+    drawstyle_->ref();
     drawstyle_->setPointSize( 5.0 );
     pErrMsg("Fix drawstyle.");
     //insertNode( drawstyle_->getInventorNode() );

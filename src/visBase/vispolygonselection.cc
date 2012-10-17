@@ -40,11 +40,11 @@ PolygonSelection::PolygonSelection()
     : VisualObjectImpl( false )
     , transformation_( 0 )
     , selector_( new SoPolygonSelect )
-    , drawstyle_( DrawStyle::create() )
+    , drawstyle_( new DrawStyle )
     , polygon_( 0 )
 {
     drawstyle_->ref();
-    addChild( drawstyle_->getInventorNode() );
+    //addChild( drawstyle_->getInventorNode() );
     addChild( selector_ );
     selector_->polygonChange.addCallback(
 	    (SoCallbackListCB*) polygonChangeCB, this );

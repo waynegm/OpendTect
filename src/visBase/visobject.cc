@@ -83,7 +83,6 @@ VisualObjectImpl::VisualObjectImpl( bool issel )
     , material_( 0 )
     , righthandsystem_( true )
 {
-    //setMaterial( Material::create() );
 }
 
 

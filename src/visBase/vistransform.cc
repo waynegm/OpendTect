@@ -12,6 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistransform.h"
 #include "iopar.h"
 #include "trigonometry.h"
+#include "visosg.h"
 
 #include <osg/MatrixTransform>
 
@@ -40,7 +41,7 @@ Transformation::~Transformation()
 void Transformation::setRotation( const Coord3& vec, double angle )
 {
     osg::Matrix osgmatrix = node_->getMatrix();
-    const osg::Quat osgrotation( angle, osg::Vec3d(vec.x,vec.y,vec.z ) );
+    const osg::Quat osgrotation( angle, Conv::to<osg::Vec3d>(vec) );
     osgmatrix.setRotate( osgrotation );
     node_->setMatrix( osgmatrix );
 }
@@ -58,7 +59,7 @@ Coord3 Transformation::getTranslation() const
 {
     const osg::Matrix matrix = node_->getMatrix();
     const osg::Vec3d vec = matrix.getTrans();
-    return Coord3( vec.x(), vec.y(), vec.z() );
+    return Conv::to<Coord3>( vec );
 }
 
 
@@ -75,7 +76,7 @@ Coord3 Transformation::getScale() const
 {
     const osg::Matrix matrix = node_->getMatrix();
     const osg::Vec3d vec = matrix.getScale();
-    return Coord3( vec.x(), vec.y(), vec.z() );
+    return Conv::to<Coord3>( vec );
 }
     
     
@@ -137,9 +138,9 @@ void Transformation::updateNormalizationMode()
 
 Coord3 Transformation::transform( const Coord3& pos ) const
 {
-    osg::Vec3d res( pos.x, pos.y, pos.z );
+    osg::Vec3d res( Conv::to<osg::Vec3d>( pos ) );
     transform( res );
-    return Coord3( res[0], res[1], res[2] );
+    return Conv::to<Coord3>( res );
 }
 
 
@@ -159,9 +160,9 @@ void Transformation::transformBack( osg::Vec3d& res ) const
 
 Coord3 Transformation::transformBack( const Coord3& pos ) const
 {
-    osg::Vec3d res( pos.x, pos.y, pos.z );
+    osg::Vec3d res = Conv::to<osg::Vec3d>( pos );
     transformBack( res );
-    return Coord3( res[0], res[1], res[2] );
+    return Conv::to<Coord3>( res );
 }
 
 

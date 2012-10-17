@@ -28,9 +28,26 @@ namespace visBase
 */
 
 class Transformation;
+    
+mClass(visBase) DraggerBase : public DataObject
+{
+public:
+    Notifier<DraggerBase>	started;
+    Notifier<DraggerBase>	motion;
+    Notifier<DraggerBase>	finished;
+    
+    void			setDisplayTransformation( const mVisTrans* );
+    const mVisTrans*		getDisplayTransformation() const;
+
+protected:
+				DraggerBase();
+    				~DraggerBase();
+    
+    const mVisTrans*		displaytrans_;
+};
 
 
-mClass(visBase) Dragger : public DataObject
+mClass(visBase) Dragger : public DraggerBase
 {
 public:
     static Dragger*		create()
@@ -52,9 +69,7 @@ public:
     void			turnOn(bool);
     bool			isOn() const;
 
-    void			setDisplayTransformation( const mVisTrans* );
-    const mVisTrans*		getDisplayTransformation() const;
-
+    
     void			setOwnShape(DataObject*,
 	    				    const char* partname );
     				/*!< Sets a shape on the dragger.
@@ -63,9 +78,6 @@ public:
 					  it remains in memory */
     bool			selectable() const;
 
-    Notifier<Dragger>		started;
-    Notifier<Dragger>		motion;
-    Notifier<Dragger>		finished;
     NotifierAccess*		rightClicked() { return &rightclicknotifier_; }
     const TypeSet<int>*		rightClickedPath() const;
     const EventInfo*		rightClickedEventInfo() const;
@@ -81,7 +93,6 @@ protected:
     OsgRefMan<osg::Switch>		onoff_;
     OsgRefMan<osgManipulator::Dragger>	dragger_;
     OsgRefMan<osg::MatrixTransform>	positiontransform_;
-    const mVisTrans*			displaytrans_;
 };
 
 } // namespace visBase

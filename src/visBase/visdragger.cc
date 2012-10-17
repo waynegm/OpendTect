@@ -24,13 +24,61 @@ mCreateFactoryEntry( visBase::Dragger );
 
 namespace visBase
 {
+    
+    
+class DraggerCallbackHandler : public osgManipulator::DraggerCallback
+{
+public:
+    DraggerCallbackHandler( DraggerBase& dragger )
+	: dragger_( dragger )
+    {}
+    
+    bool		receive(const osgManipulator::MotionCommand&);
+protected:
+    
+    DraggerBase&	dragger_;
+};
+
+    
+
+    
+DraggerBase::DraggerBase()
+    : started( this )
+    , motion( this )
+    , finished( this )
+    , displaytrans_( 0 )
+{}
+    
+    
+DraggerBase::~DraggerBase()
+{ if ( displaytrans_ ) displaytrans_->unRef(); }
+
+    
+void DraggerBase::setDisplayTransformation( const mVisTrans* nt )
+{
+    if ( displaytrans_ )
+    {
+	displaytrans_->unRef();
+	displaytrans_ = 0;
+    }
+    
+    displaytrans_ = nt;
+    if ( displaytrans_ )
+    {
+	displaytrans_->ref();
+    }
+}
+
+
+const mVisTrans* DraggerBase::getDisplayTransformation() const
+{
+    return displaytrans_;
+}
+
+
 
 Dragger::Dragger()
-    : started(this)
-    , motion(this)
-    , finished(this)
-    , positiontransform_( new osg::MatrixTransform )
-    , displaytrans_( 0 )
+    : positiontransform_( new osg::MatrixTransform )
     , rightclicknotifier_(this)
     , rightclickeventinfo_( 0 )
     , onoff_( new osg::Switch )
@@ -54,7 +102,6 @@ osg::Node* Dragger::osgNode()
 
 Dragger::~Dragger()
 {
-    if ( displaytrans_ ) displaytrans_->unRef();
 }
 
 
@@ -80,31 +127,6 @@ void Dragger::setDraggerType( Type tp )
 
     positiontransform_->addChild( dragger_ );
     pErrMsg("Setup callbacks");
-}
-
-
-void Dragger::setDisplayTransformation( const mVisTrans* nt )
-{
-    Coord3 pos = getPos();
-    if ( displaytrans_ )
-    {
-	displaytrans_->unRef();
-	displaytrans_ = 0;
-    }
-
-    displaytrans_ = nt;
-    if ( displaytrans_ )
-    {
-	displaytrans_->ref();
-    }
-
-    setPos( pos );
-}
-
-
-const mVisTrans* Dragger::getDisplayTransformation() const
-{
-    return displaytrans_;
 }
 
 

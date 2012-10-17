@@ -546,9 +546,9 @@ void Horizon2DDisplay::zAxisTransformChg( CallBacker* )
 }
 
 
-void Horizon2DDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void Horizon2DDisplay::fillPar( IOPar& par ) const
 {
-    visSurvey::EMObjectDisplay::fillPar( par, saveids );
+    visSurvey::EMObjectDisplay::fillPar( par );
 }
 
 

@@ -192,7 +192,7 @@ public:
 protected:
     				~Scene();
 
-    void			init();
+    void			setup();
     void			updateAnnotationText();
     void			createTransforms(const HorSampling&);
     void			mouseMoveCB(CallBacker*);

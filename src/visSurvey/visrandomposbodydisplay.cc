@@ -167,9 +167,9 @@ NotifierAccess* RandomPosBodyDisplay::materialChange()
 { return &getMaterial()->change; }
 
 
-void RandomPosBodyDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void RandomPosBodyDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
     par.set( sKeyPSEarthModelID(), getMultiID() );
 }
 

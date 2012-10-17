@@ -1227,19 +1227,14 @@ void FaultStickSetDisplay::getMousePosInfo( const visBase::EventInfo& eventinfo,
 }
 
 
-void FaultStickSetDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void FaultStickSetDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
-
     par.set( sKeyEarthModelID(), getMultiID() );
 }
 
 
 int FaultStickSetDisplay::usePar( const IOPar& par )
 {
-    int res = visBase::VisualObjectImpl::usePar( par );
-    if ( res!=1 ) return res;
-
     MultiID newmid;
     if ( par.get(sKeyEarthModelID(),newmid) )
     {

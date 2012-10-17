@@ -108,8 +108,8 @@ public:
     virtual bool		setChannels2RGBA(visBase::TextureChannel2RGBA*);
     virtual visBase::TextureChannel2RGBA* getChannels2RGBA();
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
-    int				usePar(const IOPar&);
+    virtual void		fillPar(IOPar&) const;
+    virtual int			usePar(const IOPar&);
 
     NotifierAccess*		getMovementNotifier()	{ return &hasmoved; }
     Notifier<EMObjectDisplay>	changedisplay;

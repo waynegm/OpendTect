@@ -396,13 +396,11 @@ visBase::DataObject* uiVisPartServer::getObject( int id ) const
 
 
 void uiVisPartServer::addObject( visBase::DataObject* dobj, int sceneid,
-				 bool saveinsessions  )
+				 bool )
 {
     mDynamicCastGet(visSurvey::Scene*,scene,visBase::DM().getObject(sceneid))
     scene->addObject( dobj );
     objectaddedremoved.trigger();
-    dobj->doSaveInSessions( saveinsessions );
-
     setUpConnections( dobj->id() );
     if ( isSoloMode() )
     {
@@ -989,7 +987,7 @@ bool uiVisPartServer::deleteAllObjects()
 
     scenes_.erase();
     nrsceneschange_.trigger();
-    return visBase::DM().removeAll();
+    return true; //visBase::DM().removeAll();
 }
 
 
@@ -1311,46 +1309,9 @@ bool uiVisPartServer::usePar( const IOPar& par )
 	const_cast<SurveyInfo&>(SI()).setRange( cs, true );
     }
 
-    int sceneres = visBase::DM().usePar( par );
-    if ( sceneres==-1 )
-	return false;
-
-    if ( sceneres==0 )
-    {
-	const char* errmsg = visBase::DM().errMsg();
-	if ( errmsg )
-	    uiMSG().errorWithDetails( errmsg );
-    }
-
-    TypeSet<int> sceneids;
-    visBase::DM().getIds( typeid(visSurvey::Scene), sceneids );
-
-    TypeSet<int> hasconnections;
-    for ( int idx=0; idx<sceneids.size(); idx++ )
-    {
-	visSurvey::Scene* newscene =
-		(visSurvey::Scene*) visBase::DM().getObject( sceneids[idx] );
-	addScene( newscene );
-
-	float appvel;
-	if ( par.get(sKeyAppVel(),appvel) )
-	    newscene->setZStretch( appvel/1000 );
-
-	TypeSet<int> children;
-	getChildIds( newscene->id(), children );
-
-	for ( int idy=0; idy<children.size(); idy++ )
-	{
-	    int childid = children[idy];
-	    if ( hasconnections.indexOf( childid ) >= 0 ) continue;
-
-	    setUpConnections( childid );
-	    hasconnections += childid;
-
-	    turnOn( childid, isOn(childid) );
-	}
-    }
-
+    pErrMsg("Not implemented yet.");
+    
+    
     mpetools_->initFromDisplay();
 
     return true;
@@ -1389,7 +1350,7 @@ void uiVisPartServer::fillPar( IOPar& par ) const
     fms += cs.hrg.stop.crl; fms += cs.zrg.start; fms += cs.zrg.stop;
     par.set( sKeyWorkArea(), fms );
 
-    visBase::DM().fillPar( par, storids );
+    //visBase::DM().fillPar( par, storids );
 }
 
 

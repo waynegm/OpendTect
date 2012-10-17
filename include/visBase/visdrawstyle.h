@@ -49,7 +49,7 @@ public:
     void		getLineWidthBounds( int& min, int& max );
 
     int			usePar( const IOPar& );
-    void		fillPar( IOPar&, TypeSet<int>& ) const;
+    void		fillPar( IOPar& ) const;
 
 private:
     virtual		~DrawStyle();

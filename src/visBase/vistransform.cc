@@ -21,8 +21,6 @@ mCreateFactoryEntry( visBase::Transformation );
 namespace visBase
 {
 
-const char* Transformation::matrixstr()  { return "Matrix Row "; }
-
 Transformation::Transformation()
     : node_( 0 )
 {
@@ -166,56 +164,5 @@ Coord3 Transformation::transformBack( const Coord3& pos ) const
     return Coord3( res[0], res[1], res[2] );
 }
 
-
-void Transformation::fillPar( IOPar& par, TypeSet<int>& saveids ) const
-{
-    const osg::Matrix matrix = node_->getMatrix();
-    BufferString key = matrixstr(); key += 1; 
-    par.set( key, matrix(0,0), matrix(1,0), matrix(2,0), matrix(3,0) );
-
-    key = matrixstr(); key += 2;
-    par.set( key, matrix(0,1), matrix(1,1), matrix(2,1), matrix(3,1) );
-
-    key = matrixstr(); key += 3;
-    par.set( key, matrix(0,2), matrix(1,2), matrix(2,2), matrix(3,2) );
-
-    key = matrixstr(); key += 4;
-    par.set( key, matrix(0,3), matrix(1,3), matrix(2,3), matrix(3,3) );
-    return;
-}
-
-
-int Transformation::usePar( const IOPar& par )
-{
-    int res = DataObject::usePar( par );
-    if ( res!= 1 ) return res;
-
-    double matrix[4][4];
-    BufferString key = matrixstr(); key += 1; 
-
-    if ( !par.get( key, matrix[0][0],matrix[1][0],matrix[2][0],matrix[3][0] ))
-	return -1;
-
-    key = matrixstr(); key += 2;
-    if ( !par.get( key, matrix[0][1],matrix[1][1],matrix[2][1],matrix[3][1] ))
-	return -1;
-
-    key = matrixstr(); key += 3;
-    if ( !par.get( key, matrix[0][2],matrix[1][2],matrix[2][2],matrix[3][2] ))
-	return -1;
-
-    key = matrixstr(); key += 4;
-    if ( !par.get( key, matrix[0][3],matrix[1][3],matrix[2][3],matrix[3][3] ))
-	return -1;
-
-    setA(   matrix[0][0], matrix[1][0], matrix[2][0], matrix[3][0],
-	    matrix[0][1], matrix[1][1], matrix[2][1], matrix[3][1],
-	    matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2],
-	    matrix[0][3], matrix[1][3], matrix[2][3], matrix[3][3] );
-
-    return 1;
-}
-
-		  
 
 }; // namespace visBase

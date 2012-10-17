@@ -61,14 +61,6 @@ public:
     void                        setColor2(Color);
     Color                       getColor2() const;
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
-    int				usePar(const IOPar&);
-
-    static const char*		radiusstr();
-    static const char*		centerstr();
-    static const char*		color1str();	
-    static const char*		color2str();	
-
 protected:
     				~BeachBall();
 

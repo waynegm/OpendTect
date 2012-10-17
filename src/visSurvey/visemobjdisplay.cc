@@ -559,10 +559,8 @@ void EMObjectDisplay::getMousePosInfo( const visBase::EventInfo& eventinfo,
 }
 
 
-void EMObjectDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void EMObjectDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
-
     if ( emobject_ && !emobject_->isFullyLoaded() )
 	par.set( sKeySections(), displayedSections() );
 
@@ -579,7 +577,7 @@ void EMObjectDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     }
 
     par.set( sKeyPosAttrShown(), posattribs_ );
-    fillSOPar( par, saveids );
+    fillSOPar( par );
 }
 
 

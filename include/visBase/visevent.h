@@ -99,9 +99,6 @@ public:
     void			setHandled();
     void			reHandle(const EventInfo&);
 
-    void			fillPar( IOPar&, TypeSet<int>& ) const;
-    int				usePar( const IOPar& );
-
     void			setUtm2Display(ObjectSet<Transformation>&);
 
 protected:

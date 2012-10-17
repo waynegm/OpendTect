@@ -136,7 +136,7 @@ public:
     virtual float               calcDist(const Coord3&) const;
     virtual bool		allowsPicks() const		{ return true; }
 
-    virtual void		fillPar(IOPar&,TypeSet<int>&) const;
+    virtual void		fillPar(IOPar&) const;
     virtual int			usePar(const IOPar&);
 
     bool			canBDispOn2DViewer() const	{ return true; }

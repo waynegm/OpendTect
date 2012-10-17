@@ -203,9 +203,6 @@ SoNode* VisualObjectImpl::getChild(int idx)
 
 int VisualObjectImpl::usePar( const IOPar& iopar )
 {
-    int res = VisualObject::usePar( iopar );
-    if ( res != 1 ) return res;
-
     if ( material_ )
     {
 	PtrMan<IOPar> matpar = iopar.subselect( sKeyMaterial() );
@@ -221,10 +218,8 @@ int VisualObjectImpl::usePar( const IOPar& iopar )
 }
 
 
-void VisualObjectImpl::fillPar( IOPar& iopar,
-					 TypeSet<int>& saveids ) const
+void VisualObjectImpl::fillPar( IOPar& iopar ) const
 {
-    VisualObject::fillPar( iopar, saveids );
     if ( material_ )
     {
 	IOPar materialpar;

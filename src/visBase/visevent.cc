@@ -442,28 +442,6 @@ void EventCatcher::setUtm2Display( ObjectSet<Transformation>& nt )
 }
 
 
-void EventCatcher::fillPar( IOPar& par, TypeSet<int>& saveids ) const
-{
-    DataObject::fillPar( par, saveids );
-    par.set( eventtypestr(), (int) type_ );
-}
-
-
-int EventCatcher::usePar( const IOPar& par )
-{
-    int res = DataObject::usePar( par );
-    if ( res!= 1 ) return res;
-
-    int inttype;
-    if ( !par.get( eventtypestr(), inttype ))
-	return -1;
-
-    setEventType( (EventType) inttype );
-
-    return 1;
-}
-	
-    
 EventCatcher::~EventCatcher()
 {
     deepUnRef( utm2display_ );

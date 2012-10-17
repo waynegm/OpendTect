@@ -323,29 +323,6 @@ const mVisTrans* Marker::getDisplayTransformation() const
 { return transformation; }
 
 
-int Marker::usePar( const IOPar& iopar )
-{
-    int res = VisualObjectImpl::usePar( iopar );
-    if ( res != 1 ) return res;
-
-    Coord3 pos;
-    if ( !iopar.get( centerposstr, pos.x, pos.y, pos.z ) )
-        return -1;
-    setCenterPos( pos );
-
-    return 1;
-}
-
-
-void Marker::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
-{
-    VisualObjectImpl::fillPar( iopar, saveids );
-
-    Coord3 pos = centerPos();
-    iopar.set( centerposstr, pos.x, pos.y, pos.z );
-}
-
-
 void Marker::setZStretch( float stretch )
 {
     zstretch_ = stretch;

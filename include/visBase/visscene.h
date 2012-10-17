@@ -72,12 +72,8 @@ protected:
     virtual		~Scene();
     EventCatcher&	events_;
 
-    void		fillPar(IOPar&,TypeSet<int>&) const;
-    int			usePar(const IOPar&);
-
     void		fillOffsetPar( IOPar& ) const;
 
-    virtual SoNode*	gtInvntrNode();
     virtual osg::Node*	gtOsgNode();
 
     static void		firstRender(void*,SoAction*);

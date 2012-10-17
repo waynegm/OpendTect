@@ -104,10 +104,6 @@ public:
 						returned.
 				    \returns	combination of OD::ButtonState*/
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
-    int				usePar(const IOPar&);
-
-
     Notifier<DepthTabPlaneDragger>  started;
     Notifier<DepthTabPlaneDragger>  motion;
     Notifier<DepthTabPlaneDragger>  changed;

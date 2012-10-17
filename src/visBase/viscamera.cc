@@ -164,9 +164,6 @@ float Camera::getBalanceAdjustment() const
     
 int Camera::usePar( const IOPar& iopar )
 {
-    int res = DataObject::usePar( iopar );
-    if ( res != 1 ) return res;
-
     Coord3 pos;
     if ( iopar.get( sKeyPosition(), pos ) )
 	setPosition( pos );
@@ -192,10 +189,8 @@ int Camera::usePar( const IOPar& iopar )
 }
 
 
-void Camera::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
+void Camera::fillPar( IOPar& iopar ) const
 {
-    DataObject::fillPar( iopar, saveids );
-
     iopar.set( sKeyPosition(), position() );
     
     

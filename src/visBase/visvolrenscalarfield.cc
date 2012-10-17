@@ -346,24 +346,6 @@ void VolumeRenderScalarField::makeIndices( bool doset, TaskRunner* tr )
 }
 
 
-int VolumeRenderScalarField::usePar( const IOPar& par )
-{
-    int res = DataObject::usePar( par );
-    if ( res != 1 ) return res;
-
-    int coltabid;
-    if ( !par.get( sKeyColTabID, coltabid ) ) return -1;
-    RefMan<DataObject> dataobj = DM().getObject( coltabid );
-    if ( !dataobj ) return 0;
-    mDynamicCastGet(VisColorTab*,coltab,dataobj.ptr());
-    if ( !coltab ) return -1;
-
-    setColTabMapperSetup( coltab->colorMapper().setup_, 0 );
-    setColTabSequence( coltab->colorSeq().colors(), 0 );
-
-    return 1;
-}
-
 struct VolFileHeader
 {
     uint32_t	magic_number;

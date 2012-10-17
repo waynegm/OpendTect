@@ -1066,7 +1066,7 @@ SoNode* VolumeDisplay::gtInvntrNode()
 	}
     }
 
-    return VisualObjectImpl::gtInvntrNode();
+    return 0;
 }
 
 
@@ -1192,50 +1192,13 @@ bool VolumeDisplay::isOn() const
 { return onoffstatus_; }
 
 
-void VolumeDisplay::fillPar( IOPar& par, TypeSet<int>& saveids) const
+void VolumeDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
     const CubeSampling cs = getCubeSampling(false,true,0);
     cs.fillPar( par );
 
-    if ( volren_ )
-    {
-	int volid = volren_->id();
-	par.set( sKeyVolumeID(), volid );
-	if ( saveids.indexOf( volid )==-1 ) saveids += volid;
-    }
-
-    const int nrslices = slices_.size();
-    par.set( sKeyNrSlices(), nrslices );
-    for ( int idx=0; idx<nrslices; idx++ )
-    {
-	BufferString str( sKeySlice(), idx );
-	const int sliceid = slices_[idx]->id();
-	par.set( str, sliceid );
-	if ( saveids.indexOf(sliceid) == -1 ) saveids += sliceid;
-    }
-
-    const int nrisosurfaces = isosurfaces_.size();
-    par.set( sKeyNrIsoSurfaces(), nrisosurfaces );
-    for ( int idx=0; idx<nrisosurfaces; idx++ )
-    {
-	BufferString str( sKeyIsoValueStart() ); str += idx;
-	par.set( str, isosurfsettings_[idx].isovalue_ );
-
-	str = sKeyIsoOnStart(); str += idx;
-	par.setYN( str, isosurfaces_[idx]->isOn() );
-
-	str = sKeySurfMode(); str += idx;
-	par.set( str, isosurfsettings_[idx].mode_ );
-
-	str = sKeySeedsAboveIsov(); str += idx;
-	par.set( str, isosurfsettings_[idx].seedsaboveisoval_ );
-
-	str = sKeySeedsMid(); str += idx;
-	par.set( str, isosurfsettings_[idx].seedsid_ );
-    }
-
-    fillSOPar( par, saveids );
+    pErrMsg( "Not implemented" );
+    fillSOPar( par );
 }
 
 
@@ -1243,118 +1206,10 @@ int VolumeDisplay::usePar( const IOPar& par )
 {
     int res =  visBase::VisualObjectImpl::usePar( par );
     if ( res!=1 ) return res;
-
-    if ( !getMaterial() )
-	visBase::VisualObjectImpl::setMaterial( new visBase::Material );
-
-    PtrMan<IOPar> texturepar = par.subselect( sKeyTexture() );
-    if ( texturepar ) //old format (up to 4.0)
-    {
-	ColTab::MapperSetup mappersetup;
-	ColTab::Sequence sequence;
-
-	mappersetup.usePar(*texturepar);
-	sequence.usePar(*texturepar );
-	setColTabMapperSetup( 0, mappersetup, 0 );
-	setColTabSequence( 0, sequence, 0 );
-	if ( !as_.usePar(par) ) return -1;
-    }
-    else
-    {
-	res = useSOPar( par );
-	if ( res!=1 )
-	    return res;
-    }
-
-    int volid;
-    if ( par.get(sKeyVolumeID(),volid) )
-    {
-	RefMan<visBase::DataObject> dataobj = visBase::DM().getObject( volid );
-	if ( !dataobj ) return 0;
-	mDynamicCastGet(visBase::VolrenDisplay*,vr,dataobj.ptr());
-	if ( !vr ) return -1;
-	if ( volren_ )
-	{
-	    if ( childIndex(volren_->getInventorNode())!=-1 )
-		VisualObjectImpl::removeChild(volren_->getInventorNode());
-	    volren_->unRef();
-	}
-	volren_ = vr;
-	volren_->ref();
-	addChild( volren_->getInventorNode() );
-    }
-
-    while ( slices_.size() )
-	removeChild( slices_[0]->id() );
-
-    while ( isosurfaces_.size() )
-	removeChild( isosurfaces_[0]->id() );
-
-    int nrslices = 0;
-    par.get( sKeyNrSlices(), nrslices );
-    for ( int idx=0; idx<nrslices; idx++ )
-    {
-	BufferString str( sKeySlice(), idx );
-	int sliceid;
-	par.get( str, sliceid );
-	RefMan<visBase::DataObject> dataobj = visBase::DM().getObject(sliceid);
-	if ( !dataobj ) return 0;
-	mDynamicCastGet(visBase::OrthogonalSlice*,os,dataobj.ptr())
-	if ( !os ) return -1;
-	os->ref();
-	os->motion.notify( mCB(this,VolumeDisplay,sliceMoving) );
-	slices_ += os;
-	addChild( os->getInventorNode() );
-	// set correct dimensions ...
-	if ( !strcmp(os->name(),sKeyInline()) )
-	    os->setDim( cInLine() );
-	else if ( !strcmp(os->name(),sKeyCrossLine()) )
-	    os->setDim( cCrossLine() );
-	else if ( !strcmp(os->name(),sKeyTime()) )
-	    os->setDim( cTimeSlice() );
-    }
-
-    CubeSampling cs;
-    if ( cs.usePar(par) )
-    {
-	csfromsession_ = cs;
-	setCubeSampling( cs );
-    }
-
-    int nrisosurfaces;
-    if ( par.get( sKeyNrIsoSurfaces(), nrisosurfaces ) )
-    {
-	for ( int idx=0; idx<nrisosurfaces; idx++ )
-	{
-	    BufferString str( sKeyIsoValueStart() ); str += idx;
-	    float isovalue;
-	    if ( par.get( str, isovalue ) )
-	    {
-		addIsoSurface( 0, false );
-		isosurfsettings_[idx].isovalue_ = isovalue;
-	    }
-
-	    str = sKeyIsoOnStart(); str += idx;
-	    bool status = true;
-	    par.getYN( str, status );
-	    isosurfaces_[idx]->turnOn( status );
-	    
-	    str = sKeySurfMode(); str += idx;
-	    int smode;
-	    par.get( str, smode );
-	    isosurfsettings_[idx].mode_ = smode;
-	    
-	    str = sKeySeedsAboveIsov(); str += idx;
-	    int aboveisov;
-	    par.get( str, aboveisov );
-	    isosurfsettings_[idx].seedsaboveisoval_ = aboveisov;
     
-	    str = sKeySeedsMid(); str += idx;
-	    MultiID mid;
-	    par.get( str, mid );
-	    isosurfsettings_[idx].seedsid_ = mid;
-	}
-    }
+    
+    pErrMsg( "Not implemented" );
+
 
     return 1;
 }

@@ -122,10 +122,8 @@ const char* TopBotImage::getImageFilename() const
 { return filenm_.buf(); }
 
 
-void TopBotImage::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
+void TopBotImage::fillPar( IOPar& iopar ) const
 {
-    VisualObjectImpl::fillPar( iopar, saveids );
-     
     iopar.set( sKeyTopLeftCoord(), pos0_ );
     iopar.set( sKeyBottomRightCoord(), pos2_ );
     iopar.set( sKeyFileNameStr(), filenm_  );
@@ -134,9 +132,6 @@ void TopBotImage::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
 
 int TopBotImage::usePar( const IOPar& iopar )
 {
-    int res = VisualObjectImpl::usePar( iopar );
-    if ( res!=1 ) return res;
-    
     Coord3 ltpos;
     Coord3 brpos;
     iopar.get( sKeyTopLeftCoord(), ltpos );

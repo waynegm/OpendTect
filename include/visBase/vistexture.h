@@ -80,9 +80,6 @@ public:
     void		setColorPars(bool,bool,const Interval<float>&);
     const Interval<float>& getColorDataRange() const;
 
-    virtual void        fillPar(IOPar&,TypeSet<int>&) const;
-    virtual int         usePar(const IOPar&);
-
 protected:
     			Texture();
     			~Texture();

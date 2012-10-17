@@ -95,7 +95,7 @@ public:
 					Coord3& xyzpos,BufferString& val,
 					BufferString& info) const;
 
-    virtual void                fillPar(IOPar&,TypeSet<int>&) const;
+    virtual void                fillPar(IOPar&) const;
     virtual int                 usePar(const IOPar&);
 
 protected:

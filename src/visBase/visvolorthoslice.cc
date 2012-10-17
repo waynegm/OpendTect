@@ -20,9 +20,6 @@ mCreateFactoryEntry( visBase::OrthogonalSlice );
 namespace visBase
 {
 
-const char* OrthogonalSlice::dimstr()	 { return "Dim"; }
-const char* OrthogonalSlice::slicestr()  { return "Slice"; }
-
 OrthogonalSlice::OrthogonalSlice()
     : VisualObjectImpl( false )
     , slice_(new SoOrthoSlice)
@@ -191,30 +188,5 @@ void OrthogonalSlice::removeDragger()
     }
 }
 
-
-void OrthogonalSlice::fillPar( IOPar& par, TypeSet<int>& saveids ) const
-{
-    VisualObjectImpl::fillPar( par, saveids );
-
-    par.set( dimstr(), getDim() );
-    par.set( slicestr(), getSliceNr() );
-}
-
-
-int OrthogonalSlice::usePar( const IOPar& par )
-{
-    int res = VisualObjectImpl::usePar( par );
-    if ( res != 1 ) return res;
-
-    int dim;
-    if ( par.get(dimstr(),dim) )
-	setDim(dim);
-
-    int slicenr;
-    if ( par.get(slicestr(),slicenr) )
-	setSliceNr(slicenr);
-
-    return 1;
-}
 
 } // namespace visBase

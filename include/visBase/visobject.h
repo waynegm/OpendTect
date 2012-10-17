@@ -50,12 +50,6 @@ public:
     const EventInfo*		rightClickedEventInfo() const{return rcevinfo;}
     const TypeSet<int>*		rightClickedPath() const;
 
-    virtual int			usePar( const IOPar& iopar )
-				{ return DataObject::usePar(iopar); }
-    virtual void		fillPar( IOPar& iopar,
-	    				 TypeSet<int>& saveids ) const
-				{ DataObject::fillPar( iopar, saveids );}
-
 protected:
     void			triggerSel()
     				{ if (isselectable) selnotifier.trigger(); }
@@ -103,7 +97,7 @@ public:
     static const char*	sKeyIsOn();
 
     virtual int		usePar(const IOPar&);
-    virtual void	fillPar(IOPar&,TypeSet<int>&) const;
+    virtual void	fillPar(IOPar&) const;
 
 protected:
 

@@ -141,7 +141,7 @@ const char* SurveyObject::getInlCrlSystemName() const
 }
 
 
-void SurveyObject::fillSOPar( IOPar& par, TypeSet<int>& saveids ) const
+void SurveyObject::fillSOPar( IOPar& par ) const
 {
     if ( inlcrlsystem_ )
 	par.set( sKeySurvey(), inlcrlsystem_->name() );
@@ -186,11 +186,13 @@ void SurveyObject::fillSOPar( IOPar& par, TypeSet<int>& saveids ) const
     mDynamicCastGet( const visBase::ColTabTextureChannel2RGBA*, cttc2rgba,
 		     tc2rgba );
 
+    /* TODO: Save in own par
     if ( tc2rgba && !cttc2rgba )
     {
 	par.set( sKeyTC2RGBA(), tc2rgba->id() );
 	saveids += tc2rgba->id();
     }
+     */
 
     par.set( sKeyNrAttribs(), nrattribs );
 }

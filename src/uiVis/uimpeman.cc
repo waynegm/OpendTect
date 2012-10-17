@@ -580,7 +580,7 @@ visSurvey::MPEDisplay* uiMPEMan::getDisplay( int sceneid, bool create )
 
     visSurvey::MPEDisplay* mpedisplay = visSurvey::MPEDisplay::create();
 
-    visserv->addObject( mpedisplay, scene->id(), false ); // false or true?
+    visserv->addObject( mpedisplay, scene->id(), false );
     mpedisplay->setDraggerTransparency( 0 ); // to do: check 0
     mpedisplay->showDragger( toolbar->isOn(moveplaneidx) );
     mpedisplay->setColTabSequence( 0, ColTab::Sequence( 

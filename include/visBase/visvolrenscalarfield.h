@@ -68,8 +68,6 @@ public:
     const char*			writeVolumeFile(std::ostream&) const;
 				//!<\returns 0 on success, otherwise errmsg
 
-    virtual int			usePar(const IOPar&);
-
 protected:
     				~VolumeRenderScalarField();
 

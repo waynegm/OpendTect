@@ -102,7 +102,7 @@ public:
 	    				const ObjectSet<const SurveyObject>&, 
 					int whichobj );
      
-    void			fillPar(IOPar&, TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
 
     static const char*		sKeyParent()	{ return "Parent"; }

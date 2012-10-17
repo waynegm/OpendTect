@@ -50,12 +50,7 @@ public:
     void		restoreProportions(bool yn);
     bool		restoresProportions() const;
 
-    int			usePar( const IOPar& iopar );
-    void		fillPar( IOPar& iopar, TypeSet<int>& saveids ) const;
-	
 protected:
-
-    static const char*	shapeidstr;
 
     SoSeparator*	root;
     SoNode*		node;

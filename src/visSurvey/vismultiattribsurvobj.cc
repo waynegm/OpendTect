@@ -79,9 +79,9 @@ MultiTextureSurveyObject::~MultiTextureSurveyObject()
 }
 
 
-bool MultiTextureSurveyObject::_init()
+bool MultiTextureSurveyObject::init()
 {
-    if ( !visBase::DataObject::_init() )
+    if ( !visBase::DataObject::init() )
         return false;
 
     resolution_ = 0;
@@ -596,11 +596,8 @@ int MultiTextureSurveyObject::selectedTexture( int attrib ) const
 }
 
 
-void MultiTextureSurveyObject::fillPar( IOPar& par,
-					TypeSet<int>& saveids ) const
+void MultiTextureSurveyObject::fillPar( IOPar& par ) const
 {
-    visBase::VisualObject::fillPar( par, saveids );
-
     par.set( sKeyResolution(), resolution_ );
     par.setYN( visBase::VisualObjectImpl::sKeyIsOn(), isOn() );
     for ( int attrib=as_.size()-1; attrib>=0; attrib-- )
@@ -637,6 +634,7 @@ void MultiTextureSurveyObject::fillPar( IOPar& par,
 	par.mergeComp( attribpar, key );
     }
 
+    /*
     mDynamicCastGet( visBase::ColTabTextureChannel2RGBA*, cttc2rgba,
                      channels_ ? channels_->getChannels2RGBA() : 0 );
     if ( !cttc2rgba && channels_ )
@@ -644,17 +642,15 @@ void MultiTextureSurveyObject::fillPar( IOPar& par,
 	par.set( sKeyTC2RGBA(), channels_->getChannels2RGBA()->id() );
 	saveids += channels_->getChannels2RGBA()->id();
     }
+     */
 
     par.set( sKeyNrAttribs(), as_.size() );
-    fillSOPar( par, saveids );
+    fillSOPar( par );
 }
 
 
 int MultiTextureSurveyObject::usePar( const IOPar& par )
 {
-    const int res =  visBase::VisualObject::usePar( par );
-    if ( res!=1 ) return res;
-
     par.get( sKeyResolution(), resolution_ );
 
     bool ison = true;

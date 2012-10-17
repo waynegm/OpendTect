@@ -970,26 +970,24 @@ void PreStackDisplay::getMousePosInfo( const visBase::EventInfo& ei,
 }
 
 
-void PreStackDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void PreStackDisplay::fillPar( IOPar& par ) const
 {
     if ( !section_ && !seis2d_ )
 	return;
 
-    SurveyObject::fillSOPar( par, saveids );
-    VisualObjectImpl::fillPar( par, saveids );
+    SurveyObject::fillSOPar( par );
+    VisualObjectImpl::fillPar( par );
+    
     if ( section_ )
     {
-	saveids.addIfNew( section_->id() );
-        par.set( sKeyParent(), section_->id() );
+	par.set( sKeyParent(), section_->id() );
 	par.set( sKey::Position(), bid_ );
     }
 
     if  ( seis2d_ )
     {
-	saveids.addIfNew( seis2d_->id() );
-    	par.set( sKeyParent(), seis2d_->id() );
+	par.set( sKeyParent(), seis2d_->id() );
 	par.set( sKeyTraceNr(), trcnr_ );
-	//Line name is kept with parent
     }
     
     par.set( sKeyMultiID(), mid_ );

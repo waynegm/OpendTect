@@ -62,7 +62,7 @@ protected:
     virtual			~RandomPosBodyDisplay();
     
     void			updateVisFromEM();
-    virtual void		fillPar(IOPar&,TypeSet<int>& saveids) const;
+    virtual void		fillPar(IOPar&) const;
     virtual int			usePar(const IOPar&);
 
     const mVisTrans*		transform_;

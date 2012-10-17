@@ -171,7 +171,7 @@ public:
 
     void			setRightHandSystem(bool yn);
 
-    virtual void		fillPar(IOPar&,TypeSet<int>&) const;
+    virtual void		fillPar(IOPar&) const;
     virtual int			usePar(const IOPar&);
     const char*			errMsg() const { return errmsg_.str(); }
 

@@ -33,9 +33,6 @@ mCreateFactoryEntry( visBase::RandomTrack );
 namespace visBase
 {
 
-const char* RandomTrack::textureidstr = "Texture ID";
-const char* RandomTrack::draggersizestr = "DraggerSize";
-
 RandomTrack::RandomTrack()
     : VisualObjectImpl(false)
     , dragger(0)
@@ -523,43 +520,6 @@ void RandomTrack::setResolution( int res )
 int RandomTrack::getResolution() const
 {
     return sections[0]->getTexture2()->getResolution();
-}
-
-
-void RandomTrack::fillPar( IOPar& par, TypeSet<int>& saveids ) const
-{
-    VisualObjectImpl::fillPar( par, saveids );
-
-    int textureid = sections[0]->getTexture2()->id();
-    par.set( textureidstr, textureid );
-
-    Coord3 size = getDraggerSize();
-    par.set( draggersizestr, size.x, size.y, size.z );
-
-    if ( saveids.indexOf(textureid) == -1 ) saveids += textureid;
-}
-
-
-int RandomTrack::usePar( const IOPar& par )
-{
-    int res = VisualObjectImpl::usePar( par );
-    if ( res != 1 ) return res;
-
-    Coord3 size(1,1,1);
-    par.get( draggersizestr, size.x, size.y, size.z );
-    setDraggerSize( size );
-
-    int textureid;
-    if ( !par.get( textureidstr, textureid ) ) return -1;
-    DataObject* dataobj = DM().getObject( textureid );
-    if ( !dataobj ) return 0;
-    mDynamicCastGet(Texture2*,texture_,dataobj);
-    if ( !texture_ ) return -1;
-
-    for ( int idx=0; idx<sections.size(); idx++ )
-        sections[idx]->setTexture2( texture_ );
-
-    return 1;
 }
 
 

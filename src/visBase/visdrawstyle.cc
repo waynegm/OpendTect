@@ -137,10 +137,8 @@ int DrawStyle::usePar( const IOPar& par )
 }
 
 
-void DrawStyle::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void DrawStyle::fillPar( IOPar& par ) const
 {
-    DataObject::fillPar( par, saveids );
-
     BufferString linestyleval;
     linestyle.toString( linestyleval );
     par.set( linestylestr(), linestyleval );

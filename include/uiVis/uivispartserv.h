@@ -76,7 +76,7 @@ public:
     visBase::DataObject* getObject( int id ) const;
     int			highestID() const;
     void		addObject( visBase::DataObject*, int sceneid,
-				   bool saveinsessions);
+				   bool saveinsession);
     void		shareObject(int sceneid,int id);
     void		findObject(const std::type_info&,TypeSet<int>&);
     void		findObject(const MultiID&, TypeSet<int>& );

@@ -87,9 +87,6 @@ public:
     void		setDip(float inldip, float crldip);
     void		setZStretch(float);
 
-    int			usePar(const IOPar&);
-    void		fillPar(IOPar&,TypeSet<int>&) const;
-
 protected:
 			~Marker();
     const mVisTrans*	transformation;

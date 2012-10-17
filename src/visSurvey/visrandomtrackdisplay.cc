@@ -841,9 +841,9 @@ SurveyObject* RandomTrackDisplay::duplicate( TaskRunner* tr ) const
 }
 
 
-void RandomTrackDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void RandomTrackDisplay::fillPar( IOPar& par ) const
 {
-    visSurvey::MultiTextureSurveyObject::fillPar( par, saveids );
+    visSurvey::MultiTextureSurveyObject::fillPar( par );
 
     const Interval<float> depthrg = getDataTraceRange();
     par.set( sKeyDepthInterval(), depthrg );

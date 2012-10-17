@@ -134,10 +134,8 @@ int Shape::getMaterialBinding() const
 }
 
 
-void Shape::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
+void Shape::fillPar( IOPar& iopar ) const
 {
-    VisualObject::fillPar( iopar, saveids );
-
     if ( material_ )
     {
 	IOPar matpar;
@@ -151,9 +149,6 @@ void Shape::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
 
 int Shape::usePar( const IOPar& par )
 {
-    int res = VisualObject::usePar( par );
-    if ( res!=1 ) return res;
-
     bool ison;
     if ( par.getYN( sKeyOnOff(), ison) )
 	turnOn( ison );

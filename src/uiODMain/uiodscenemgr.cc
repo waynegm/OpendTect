@@ -918,8 +918,8 @@ void uiODSceneMgr::rebuildTrees()
 
 	for ( int idy=0; idy<visids.size(); idy++ )
 	{
-	    if ( !visServ().getObject(visids[idy])->saveInSessions() )
-		continue;
+	    /*if ( !visServ().getObject(visids[idy])->saveInSessions() )
+		continue; */
 	    uiODDisplayTreeItem::create( scene.itemmanager_, &applMgr(), 
 		    			 visids[idy] );
 	}

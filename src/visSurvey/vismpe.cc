@@ -721,17 +721,20 @@ void MPEDisplay::getMousePosInfo( const visBase::EventInfo&, Coord3& pos,
 }
 
 
-void MPEDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void MPEDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
 
+    /* TODO?
     mDynamicCastGet( visBase::TextureChannel2VolData*, cttc2vd,
                      channels_ ? channels_->getChannels2RGBA() : 0 );
-    if ( !cttc2vd )
+    
+     if ( !cttc2vd )
     {
 	par.set( sKeyTC2VolData(), channels_->getChannels2RGBA()->id() );
 	saveids += channels_->getChannels2RGBA()->id();
     }
+     */
 
     as_.fillPar( par );
     par.set( sKeyTransparency(), getDraggerTransparency() );
@@ -1118,31 +1121,6 @@ float MPEDisplay::getValue( const Coord3& pos_ ) const
         return mUdf(float);
 
     return val;
-}
-
-
-SoNode* MPEDisplay::gtInvntrNode()
-{
-    if ( !isinited_ )
-    {
-	isinited_ = true;
-	if ( channels_ && channels_->getChannels2RGBA() )
-	channels_->getChannels2RGBA()->allowShading( allowshading_ );
-
-	const int voltransidx = childIndex( voltrans_->getInventorNode() );
-	insertChild( voltransidx+1, channels_->getInventorNode() );
-	
-	channels_->turnOn( true );
-
-	if ( !slices_.size() )
-	{
-	    addSlice( cInLine(), false );
-	    addSlice( cCrossLine(), false );
-	    addSlice( cTimeSlice(), false );
-	}
-    }
-
-    return VisualObjectImpl::gtInvntrNode();
 }
 
 

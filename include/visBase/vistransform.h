@@ -74,19 +74,12 @@ public:
 
     Coord3		transformDir(const Coord3&) const;
     Coord3		transformDirBack(const Coord3&) const;
-
-    virtual void	fillPar( IOPar&, TypeSet<int>& ) const;
-    virtual int		usePar( const IOPar& );
-    
 private:
 
     virtual		~Transformation();
     void		updateNormalizationMode();
 
     osg::MatrixTransform* node_;
-
-    static const char*	matrixstr();
-
 };
 
 }

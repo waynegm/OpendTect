@@ -49,16 +49,10 @@ public:
     void		setDisplayTransformation( const mVisTrans* );
     const mVisTrans*	getDisplayTransformation() const { return transformation_; }
 
-    int			usePar( const IOPar& );
-    void		fillPar( IOPar&, TypeSet<int>& ) const;
-
 protected:
     			~Ellipsoid();
     const mVisTrans*	transformation_;
     SoMatrixTransform*	position_;
-    
-    static const char*	centerposstr();
-    static const char*	widthstr();
 };
 
 };

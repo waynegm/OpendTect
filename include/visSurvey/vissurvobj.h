@@ -287,7 +287,7 @@ public:
     virtual void		lock( bool yn )		{ locked_ = yn; }
     virtual bool		isLocked() const	{ return locked_; }
     virtual NotifierAccess*	getLockNotifier()	{ return 0; }
-    void	 		fillSOPar(IOPar&,TypeSet<int>&) const;
+    void	 		fillSOPar(IOPar&) const;
     int				useSOPar(const IOPar&);
 
     //TODO: as for now: vertical viewer is the only one available,

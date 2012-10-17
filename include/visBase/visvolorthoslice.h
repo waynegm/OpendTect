@@ -52,9 +52,6 @@ public:
 
     void			removeDragger();
 
-    virtual void		fillPar(IOPar&,TypeSet<int>&) const;
-    virtual int			usePar(const IOPar&);
-
     NotifierAccess&		dragStart();
     Notifier<OrthogonalSlice>	motion;
     NotifierAccess&		dragFinished();

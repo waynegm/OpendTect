@@ -941,20 +941,16 @@ void WellDisplay::dataTransformCB( CallBacker* )
 { fullRedraw(0); }
 
 
-void WellDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void WellDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
 
     par.set( sKeyEarthModelID, wellid_ );
-
-    const int viswellid = well_->id();
-    par.set( sKeyWellID, viswellid );
-    if ( saveids.indexOf(viswellid) == -1 ) saveids += viswellid;
 
     mGetWD(return);
     wd->displayProperties().fillPar( par );
 
-    fillSOPar( par, saveids );
+    fillSOPar( par );
 }
 
 
@@ -962,21 +958,6 @@ int WellDisplay::usePar( const IOPar& par )
 {
     int res = visBase::VisualObjectImpl::usePar( par );
     if ( res!=1 ) return res;
-
-    int viswellid;
-    if ( par.get(sKeyWellID,viswellid) )
-    {
-	DataObject* dataobj = visBase::DM().getObject( viswellid );
-	if ( !dataobj ) return 0;
-	mDynamicCastGet(visBase::Well*,well,dataobj)
-	if ( !well ) return -1;
-	setWell( well );
-    }
-    else
-    {
-	setWell( visBase::Well::create() );
-	viswellid = well_->id();
-    }
 
     MultiID newmid;
     if ( !par.get(sKeyEarthModelID,newmid) )
@@ -991,15 +972,6 @@ int WellDisplay::usePar( const IOPar& par )
     wd->displayProperties().usePar( par );
     displayLeftLog();
     displayRightLog();
-
-// Support for old sessions
-    BufferString linestyle;
-    if ( par.get(visBase::Well::linestylestr(),linestyle) )
-    {
-	LineStyle lst;
-	lst.fromString( linestyle );
-	setLineStyle( lst );
-    }
 
     return useSOPar( par );
 }

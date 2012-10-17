@@ -443,9 +443,9 @@ bool PolygonBodyDisplay::isBodyDisplayed() const
 { return bodydisplay_ ? bodydisplay_->isOn() : false; }
 
 
-void PolygonBodyDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void PolygonBodyDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
     par.set( sKeyEMPolygonSurfID(), getMultiID() );
 }
 

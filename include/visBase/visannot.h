@@ -75,7 +75,7 @@ public:
     void			setAnnotScale(int dim,int scale);
 
     void			setText( int dim, const char * );
-    void			fillPar( IOPar&, TypeSet<int>& ) const;
+    void			fillPar( IOPar& ) const;
     int				usePar( const IOPar& );
 
 protected:

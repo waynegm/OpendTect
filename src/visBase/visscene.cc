@@ -160,12 +160,6 @@ bool Scene::blockMouseSelection( bool yn )
 }
 
 
-SoNode* Scene::gtInvntrNode()
-{
-    return selroot_;
-}
-
-
 osg::Node* Scene::gtOsgNode()
 {
     return osgsceneroot_;
@@ -286,49 +280,12 @@ void Scene::mousePickCB( CallBacker* cb )
 }
 
 
-void Scene::fillPar( IOPar& par, TypeSet<int>& additionalsaves ) const
-{
-    DataObjectGroup::fillPar( par, additionalsaves );
-    IOPar lightpar;
-    light_->fillPar( lightpar );
-    
-    par.mergeComp( lightpar, sKeyLight() );
-    fillOffsetPar( par );
-}
-
-
 void Scene::fillOffsetPar( IOPar& par ) const
 {
     IOPar offsetpar;
     offsetpar.set( sKeyFactor(), polygonoffset_->getFactor() );
     offsetpar.set( sKeyUnits(), polygonoffset_->getUnits() );
     par.mergeComp( offsetpar, sKeyOffset() );
-}
-
-
-int Scene::usePar( const IOPar& par )
-{
-    int res = DataObjectGroup::usePar( par );
-    if ( res!=1 )
-	return res;
-    
-    PtrMan<IOPar> lightpar = par.subselect( sKeyLight() );
-    if ( !lightpar || light_->usePar( *lightpar ) )
-	return -1;
-
-    PtrMan<IOPar> settings = par.subselect( sKeyOffset() );
-    if ( settings )
-    {
-	float units, factor;
-	if ( settings->get( sKeyFactor(), factor ) &&
-	     settings->get( sKeyUnits(), units ) )
-	{
-	    polygonoffset_->setFactor( factor );
-	    polygonoffset_->setUnits( units );
-	}
-    }
-
-    return 1;
 }
 
 

@@ -131,7 +131,7 @@ public:
 
     static Seis2DDisplay*	getSeis2DDisplay(const MultiID&,const char*);
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
 
 protected:

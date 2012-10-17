@@ -510,9 +510,9 @@ Color MarchingCubesDisplay::getColor() const
 { return getMaterial()->getColor(); }
 
 
-void MarchingCubesDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void MarchingCubesDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
     par.set( sKeyEarthModelID(), getMultiID() );
 
     IOPar attribpar;

@@ -23,10 +23,6 @@ mCreateFactoryEntry( visBase::Ellipsoid );
 namespace visBase
 {
 
-const char* Ellipsoid::centerposstr()   { return "Center Pos"; }
-const char* Ellipsoid::widthstr()	{ return "Width"; }
-
-
 Ellipsoid::Ellipsoid()
     : Shape( new SoSphere )
     , position_( new SoMatrixTransform )
@@ -119,38 +115,6 @@ Coord3 Ellipsoid::getWidth() const
     res.z = scale[2]/2;
 
     return res;
-}
-
-
-int Ellipsoid::usePar( const IOPar& iopar )
-{
-    int res = Shape::usePar( iopar );
-    if ( res != 1 ) return res;
-
-    Coord3 pos;
-    if ( !iopar.get( centerposstr(), pos.x, pos.y, pos.z ) )
-	return -1;
-
-    setCenterPos( pos );
-
-    if ( !iopar.get( widthstr(), pos.x, pos.y, pos.z ) )
-	return -1;
-
-    setWidth( pos );
-
-    return 1;
-}
-
-
-void Ellipsoid::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
-{
-    Shape::fillPar( iopar, saveids );
-
-    Coord3 pos = getCenterPos();
-    iopar.set( centerposstr(), pos.x, pos.y, pos.z );
-
-    pos = getWidth();
-    iopar.set( widthstr(), pos.x, pos.y, pos.z );
 }
 
 

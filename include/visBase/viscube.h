@@ -47,15 +47,10 @@ public:
     void		setDisplayTransformation( const mVisTrans* );
     const mVisTrans*	getDisplayTransformation() const { return transformation; }
 
-    int			usePar( const IOPar& );
-    void		fillPar( IOPar&, TypeSet<int>& ) const;
-
 protected:
     			~Cube();
     const mVisTrans*	transformation;
     SoTranslation*	position;
-    static const char*	centerposstr;
-    static const char*	widthstr;
 };
 
 };

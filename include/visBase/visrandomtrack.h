@@ -99,15 +99,9 @@ public:
     CNotifier<RandomTrack,int>	knotmovement;
     				/*!< Sends the index of the knot moving */
 
-    static const char*		textureidstr;
-    static const char*		draggersizestr;
-
     void			setDisplayTransformation(const mVisTrans*);
     const mVisTrans*		getDisplayTransformation() const;
     
-    virtual void		fillPar( IOPar&, TypeSet<int>& ) const;
-    virtual int			usePar( const IOPar& );
-
 protected:
     				~RandomTrack();
     void			rebuild();

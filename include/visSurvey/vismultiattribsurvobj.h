@@ -93,7 +93,7 @@ public:
     void			selectTexture(int attrib, int texture );
     int				selectedTexture(int attrib) const;
 
-    void			fillPar(IOPar&, TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
     virtual bool                canBDispOn2DViewer() const	{ return true; }
     bool			canEnableTextureInterpolation() const
@@ -120,7 +120,7 @@ protected:
     virtual void		swapCache(int,int)			= 0;
     virtual void		emptyCache(int)				= 0;
     virtual bool		hasCache(int) const			= 0;
-    virtual bool		_init();
+    virtual bool		init();
 
     visBase::MultiTexture2*	texture_;
     visBase::TextureChannels*	channels_;

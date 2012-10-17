@@ -47,7 +47,7 @@ public:
     void			setDisplayTransformation(const mVisTrans*);
     const mVisTrans*		getDisplayTransformation() const;
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
     void			setScene(Scene*);
 

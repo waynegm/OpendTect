@@ -157,7 +157,7 @@ public:
     visBase::TextureChannel2RGBA* getChannels2RGBA();
     const visBase::TextureChannel2RGBA* getChannels2RGBA() const;
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
 
     bool                        canBDispOn2DViewer() const      { return true; }

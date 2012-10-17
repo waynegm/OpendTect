@@ -43,15 +43,6 @@ public:
     			DataManager();
     virtual		~DataManager();
 
-    bool		removeAll(int nriterations=1000);
-    			/*!< Will remove everything.  */
-
-    void		fillPar(IOPar&,TypeSet<int>&) const;
-    int			usePar(const IOPar&);
-    			/*!<\retval 1  success
-			    \retval -1 failure
-			    \retval 0  warnings. */
-
     const char*		errMsg() const;
 
     void		getIds(const SoPath*,TypeSet<int>&) const;

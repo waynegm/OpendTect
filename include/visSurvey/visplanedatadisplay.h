@@ -149,7 +149,7 @@ public:
     static const char*		sKeyDepthKey()		{ return "DepthKey"; }
     static const char*		sKeyPlaneKey()		{ return "PlaneKey"; }
 
-    virtual void		fillPar(IOPar&, TypeSet<int>&) const;
+    virtual void		fillPar(IOPar&) const;
     virtual int			usePar(const IOPar&);
 
     void			setDisplayTransformation(const mVisTrans*) {}

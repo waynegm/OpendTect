@@ -85,7 +85,7 @@ protected:
     void			zAxisTransformChg(CallBacker*);
     //ZAxisTransform*		zaxistransform_;
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
 
     ObjectSet<visBase::IndexedPolyLine3D>	lines_;

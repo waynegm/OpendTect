@@ -273,78 +273,21 @@ int PickSetDisplay::isMarkerClick( const TypeSet<int>& path ) const
 }
 
 
-void PickSetDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void PickSetDisplay::fillPar( IOPar& par ) const
 {
-    LocationDisplay::fillPar( par, saveids );
+    LocationDisplay::fillPar( par );
     par.set( sKeyDisplayBody(), shoulddisplaybody_ );
 }
 
 
 int PickSetDisplay::usePar( const IOPar& par )
 {
+    int res =  visSurvey::LocationDisplay::usePar( par );
+    if ( res != 1 ) return res;
+    
     bool showbody = false;
     par.getYN( sKeyDisplayBody(), showbody );
     displayBody( showbody );
-
-    int nopicks = 0;
-    if ( par.get(sKeyNrPicks(),nopicks) ) // old format
-    {
-	int res =  visBase::VisualObjectImpl::usePar( par );
-	if ( res != 1 ) return res;
-
-	mDeclareAndTryAlloc( Pick::Set*, newps, Pick::Set );
-	for ( int idx=0; idx<nopicks; idx++ )
-	{
-	    BufferString str;
-	    BufferString key = sKeyPickPrefix(); key += idx;
-	    if ( !par.get(key,str) )
-		return -1;
-
-	    FileMultiString fms( str );
-	    Coord3 pos( toDouble(fms[0]), toDouble(fms[1]), toDouble(fms[2]) );
-	    Sphere dir;
-	    if ( fms.size() > 3 )
-		dir = Sphere( (float) toDouble(fms[3]),
-			(float) toDouble(fms[4]), (float) toDouble(fms[5]) );
-
-	    *newps += Pick::Location( pos, dir );
-	}
-
-	int markertype = 0;
-	int pixsize = 3;
-
-	par.get( sKeyMarkerType(), markertype );
-	par.get( sKeyMarkerSize(), pixsize );
-	bool shwallpicks = true;
-	par.getYN( sKeyShowAll(), shwallpicks );
-	showAll( shwallpicks );
-
-	newps->disp_.markertype_ = markertype;
-	newps->disp_.pixsize_ = pixsize;
-	newps->disp_.color_ = getMaterial()->getColor();
-
-	BufferString psname;
-	par.get( sKey::Name(), psname );
-	newps->setName( psname );
-	setSet( newps );
-
-	PtrMan<CtxtIOObj> ctio = mMkCtxtIOObj(PickSet);
-	IOM().to( ctio->ctxt.getSelKey() );
-	const IOObj* existioobj = IOM().getLocal( psname );
-	if ( existioobj )
-	    storedmid_ = existioobj->key();
-	else
-	{
-	    ctio->setName( psname );
-	    IOM().getEntry( *ctio );
-	    storedmid_ = ctio->ioobj->key();
-	}
-    }
-    else
-    {
-	int res =  visSurvey::LocationDisplay::usePar( par );
-	if ( res != 1 ) return res;
-    }
 
     return 1;
 }

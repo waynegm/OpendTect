@@ -947,9 +947,9 @@ void LocationDisplay::removeSelection( const Selector<Coord3>& selector,
 }
 
 
-void LocationDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void LocationDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
 
     const int setidx = picksetmgr_->indexOf( *set_ );
     par.set( sKeyID(), setidx>=0 ? picksetmgr_->get(*set_) : "" );
@@ -958,7 +958,7 @@ void LocationDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     par.set( sKeyMarkerType(), set_->disp_.markertype_ );
     par.set( sKeyMarkerSize(), set_->disp_.pixsize_ );
 
-    fillSOPar( par, saveids );
+    fillSOPar( par );
 }
 
 

@@ -9,7 +9,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdata.h"
 
 #include "errh.h"
-#include "iopar.h"
 #include "keystrs.h"
 #include "visdataman.h"
 #include "visselman.h"
@@ -77,8 +76,9 @@ void DataObject::setName( const char* nm )
 DataObject::DataObject()
     : id_( -1 )
     , name_( 0 )
-    , saveinsessions_(true)
-{}
+{
+    DM().addObject( this );
+}
 
 
 DataObject::~DataObject()
@@ -127,39 +127,12 @@ void DataObject::setDisplayTransformation( const mVisTrans* trans )
 }   
     
 
-void DataObject::fillPar( IOPar& par, TypeSet<int>& ) const
-{
-    par.set( sKey::Type(), getClassName() );
-
-    const char* nm = name();
-    if ( nm )
-	par.set( sKey::Name(), nm );
-}
-
-
 bool DataObject::serialize( const char* filename, bool binary )
 {
     if ( !osgNode() )
 	return true;
     
     return osgDB::writeNodeFile( *osgNode(), std::string( filename ) );
-}
-
-
-int DataObject::usePar( const IOPar& par )
-{
-    const char* nm = par.find( sKey::Name() );
-    if ( nm )
-	setName( nm );
-
-    return 1;
-}
-
-
-bool DataObject::_init()
-{
-    DM().addObject( this );
-    return true;
 }
 
 

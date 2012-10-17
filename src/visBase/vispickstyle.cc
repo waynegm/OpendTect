@@ -61,24 +61,4 @@ PickStyle::Style PickStyle::getStyle() const
 SoNode* PickStyle::gtInvntrNode() { return pickstyle; }
 
 
-int PickStyle::usePar( const IOPar& iopar )
-{
-    int res = DataObject::usePar( iopar );
-    if ( res!=1 ) return res;
-
-    int style;
-    if ( !iopar.get(stylestr,style) )
-	return -1; 
-
-    setStyle( (Style) style );
-    return 1;
-}
-
-
-void PickStyle::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
-{
-    DataObject::fillPar( iopar, saveids );
-    iopar.set( stylestr, (int) getStyle() );
-}
-
 }; // namespace visBase

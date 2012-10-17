@@ -591,9 +591,8 @@ bool FaultDisplay::arePanelsDisplayedInFull() const
 }
 
 
-void FaultDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void FaultDisplay::fillPar( IOPar& par ) const
 {
-    visSurvey::MultiTextureSurveyObject::fillPar( par, saveids );
     par.set( sKeyEarthModelID(), getMultiID() );
     par.set( sKeyTriProjection(), triangulateAlg() );
 }
@@ -601,9 +600,6 @@ void FaultDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 
 int FaultDisplay::usePar( const IOPar& par )
 {
-    int res = visSurvey::MultiTextureSurveyObject::usePar( par );
-    if ( res!=1 ) return res;
-
     MultiID newmid;
     if ( par.get(sKeyEarthModelID(),newmid) )
     {

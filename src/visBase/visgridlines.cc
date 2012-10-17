@@ -315,53 +315,5 @@ void GridLines::setDisplayTransformation( const mVisTrans* tf )
 }
 
 
-void GridLines::fillPar( IOPar& par, TypeSet<int>& saveids ) const
-{
-    VisualObjectImpl::fillPar( par, saveids );
-
-    LineStyle ls;
-    getLineStyle( ls );
-    BufferString lsstr;
-    ls.toString( lsstr );
-    par.set( sKeyLineStyle(), lsstr );
-
-    gridcs_.fillPar( par );
-
-    par.setYN( sKeyInlShown(), areInlinesShown() );
-    par.setYN( sKeyCrlShown(), areCrosslinesShown() );
-    par.setYN( sKeyZShown(), areZlinesShown() );
-}
-
-
-int GridLines::usePar( const IOPar& par )
-{
-    const int res = VisualObjectImpl::usePar( par );
-    if ( res != 1 ) return res;
-
-    gridcs_.usePar( par );
-
-    bool inlshown = false;
-    par.getYN( sKeyInlShown(), inlshown );
-    showInlines( inlshown );
-
-    bool crlshown = false;
-    par.getYN( sKeyCrlShown(), crlshown );
-    showCrosslines( crlshown );
-
-    bool zshown = false;
-    par.getYN( sKeyZShown(), zshown );
-    showZlines( zshown );
-
-    BufferString lsstr;
-    if ( par.get(sKeyLineStyle(),lsstr) )
-    {
-	LineStyle ls;
-	ls.fromString( lsstr );
-	setLineStyle( ls );
-    }
-
-    return 1;
-}
-
 } // namespace visBase
 

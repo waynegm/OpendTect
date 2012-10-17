@@ -31,12 +31,6 @@ mCreateFactoryEntry( visBase::BeachBall );
 namespace visBase
 {
 
-const char* BeachBall::radiusstr()	{ return "Radius"; }
-const char* BeachBall::centerstr()	{ return "Center"; }
-const char* BeachBall::color1str()	{ return "Color1"; }
-const char* BeachBall::color2str()	{ return "Color2"; }
-
-
 BeachBall::BeachBall()
     : VisualObjectImpl(true) 
     , ball_(new SoBeachBall)
@@ -220,47 +214,6 @@ Color BeachBall::getColor2() const
     SbColor col = material_->diffuseColor[1];
     return Color( (unsigned char) (col[0]*255), (unsigned char) (col[1]*255), 
 	    (unsigned char) (col[2]*255) );
-}
-
-
-void BeachBall::fillPar( IOPar& par, TypeSet<int>& saveids ) const
-{
-    VisualObjectImpl::fillPar( par, saveids );
-
-    par.set( radiusstr(), getRadius() );
-    par.set( centerstr(), getCenterPosition() );
-    par.set( color1str(), getColor1() );
-    par.set( color2str(), getColor2() );
-}
-
-
-int BeachBall::usePar( const IOPar& par )
-{
-    pErrMsg("In usePar!");
-    int res = VisualObjectImpl::usePar( par );
-    if ( res != 1 ) return res;
-
-    float rd = getRadius();
-    if ( !par.get( radiusstr(), rd ) )
-	return -1;
-    setRadius( rd );
-
-    Coord3 center = getCenterPosition();
-    if ( !par.get( centerstr(), center ) )
-	return -1;
-    setCenterPosition( center );
-
-    Color col = getColor1();
-    if ( !par.get( color1str(), col ) )
-	return -1;
-    setColor1( col );
-
-    col = getColor2();
-    if ( !par.get( color2str(), col ) )
-	return -1;
-    setColor2( col );
-
-    return 1;
 }
 
 

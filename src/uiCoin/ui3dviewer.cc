@@ -952,8 +952,7 @@ void ui3DViewer::saveHomePos()
 
     if ( !camera ) return;
 
-    TypeSet<int> dummy;
-    camera->fillPar( homepos_, dummy );
+    camera->fillPar( homepos_ );
     homepos_.removeWithKey( sKey::Type() );
     SI().getPars().mergeComp( homepos_, sKeyHomePos() );
     SI().savePars();
@@ -996,10 +995,9 @@ void ui3DViewer::fillPar( IOPar& par ) const
 
     par.setYN( sKeyPersCamera(), isCameraPerspective() );
 
-    TypeSet<int> dummy;
     RefMan<visBase::Camera> camera = osgbody_->getVisCamera();
 
-    camera->fillPar( par, dummy );
+    camera->fillPar( par );
 
     par.mergeComp( homepos_, sKeyHomePos() );
 }

@@ -1947,10 +1947,10 @@ void HorizonDisplay::otherObjectsMoved(
 }
 
 
-void HorizonDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void HorizonDisplay::fillPar( IOPar& par ) const
 {
-    visBase::VisualObjectImpl::fillPar( par, saveids );
-    EMObjectDisplay::fillPar( par, saveids );
+    visBase::VisualObjectImpl::fillPar( par );
+    EMObjectDisplay::fillPar( par );
 
     if ( emobject_ && !emobject_->isFullyLoaded() )
     {
@@ -1963,6 +1963,7 @@ void HorizonDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     par.set( sKeyShift(), getTranslation().z );
     par.set( sKeyResolution(), getResolution() );
 
+    /* TODO: Implement something here
     const visBase::TextureChannel2RGBA* tc2rgba = getChannels2RGBA();
     mDynamicCastGet(const visBase::ColTabTextureChannel2RGBA*,cttc2rgba,tc2rgba)
     if ( tc2rgba && !cttc2rgba )
@@ -1971,6 +1972,7 @@ void HorizonDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 	par.set( MultiTextureSurveyObject::sKeyTC2RGBA(), ctid );
 	saveids += ctid;
     }
+     */
 
     for ( int channel=as_.size()-1; channel>=0; channel-- )
     {

@@ -1373,16 +1373,18 @@ SurveyObject* PlaneDataDisplay::duplicate( TaskRunner* tr ) const
 }
 
 
-void PlaneDataDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void PlaneDataDisplay::fillPar( IOPar& par ) const
 {
-    MultiTextureSurveyObject::fillPar( par, saveids );
+    MultiTextureSurveyObject::fillPar( par );
 
     par.set( sKeyOrientation(), getOrientationString( orientation_) );
     getCubeSampling( false, true ).fillPar( par );
 
+    /*TODO: Save gridlines-settings 
     const int gridlinesid = gridlines_->id();
     par.set( sKeyGridLinesID(), gridlinesid );
     if ( saveids.indexOf(gridlinesid) == -1 ) saveids += gridlinesid;
+     */
 }
 
 
@@ -1403,7 +1405,9 @@ int PlaneDataDisplay::usePar( const IOPar& par )
 	csfromsession_ = cs;
 	setCubeSampling( cs );
     }
-
+    
+    pErrMsg("Implement gridlines setting");
+/*
     int gridlinesid;
     if ( par.get(sKeyGridLinesID(),gridlinesid) )
     { 
@@ -1419,6 +1423,7 @@ int PlaneDataDisplay::usePar( const IOPar& par )
 	int childidx = childIndex( channels_->getInventorNode() );
 	insertChild( childidx, gridlines_->getInventorNode() );
     }
+ */
 
     return 1;
 }

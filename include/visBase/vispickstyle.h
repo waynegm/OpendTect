@@ -37,9 +37,6 @@ public:
     void		setStyle( Style );
     Style		getStyle() const;
 
-    int			usePar( const IOPar& );
-    void		fillPar( IOPar&, TypeSet<int>& ) const;
-
 protected:
 			~PickStyle();
 

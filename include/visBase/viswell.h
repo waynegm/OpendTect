@@ -182,7 +182,7 @@ public:
     const mVisTrans*		getDisplayTransformation() const;
     void			setZAxisTransform(ZAxisTransform*,TaskRunner*);
 
-    void			fillPar(IOPar&,TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
     int				usePar(const IOPar& par);
     int				markersize_;
     

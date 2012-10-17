@@ -80,7 +80,7 @@ Scene::Scene()
 {
     events_.eventhappened.notify( mCB(this,Scene,mouseMoveCB) );
     setAmbientLight( 1 );
-    init();
+    setup();
 
     if ( GetEnvVarYN("DTECT_MULTITEXTURE_NO_SHADING" ) )
 	userwantsshading_ = false;
@@ -113,7 +113,7 @@ void Scene::updateAnnotationText()
 }
 
 
-void Scene::init()
+void Scene::setup()
 {
     annot_ = visBase::Annotation::create();
 
@@ -136,8 +136,7 @@ void Scene::init()
     scenecoltab_ = visBase::SceneColTab::create();
     addUTMObject( scenecoltab_ );
     scenecoltab_->turnOn( false );
-    scenecoltab_->doSaveInSessions( false );
-
+    
     topimg_ = visBase::TopBotImage::create();
     topimg_->setName( "TopImage");
     addUTMObject( topimg_ );
@@ -815,7 +814,9 @@ const Color& Scene::cDefaultMarkerColor()
 
 void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 {
-    visBase::DataObject::fillPar( par, saveids );
+    pErrMsg("Not implemented");
+    
+    /*
     visBase::Scene::fillOffsetPar( par );
 
     int kid = 0;
@@ -827,8 +828,7 @@ void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 	     getObject(kid)==polyselector_ ) continue;
 
 	const visBase::DataObject* dobj = getObject( kid );
-	const bool saveinsess = dobj && dobj->saveInSessions();
-	if ( !saveinsess )
+	if ( !dobj )
 	    continue;
 
 	const int objid = dobj->id();
@@ -871,6 +871,7 @@ void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 
     par.set( sKeyTopImageID(), topimg_->id() );
     par.set( sKeyBotImageID(), botimg_->id() );
+     */
 }
 
 
@@ -891,7 +892,11 @@ void Scene::removeAll()
 int Scene::usePar( const IOPar& par )
 {
     removeAll();
-    init();
+    setup();
+    
+    pErrMsg("Not impl.");
+    
+    /*
 
     appallowshad_ = true;
     if ( !par.getYN( sKeyAppAllowShading(), appallowshad_ ) )
@@ -956,6 +961,7 @@ int Scene::usePar( const IOPar& par )
     res = getImageFromPar( par, sKeyBotImageID(), botimg_ );
     if ( res != 1 ) return res;
 
+     */
     return 1;
 }
 

@@ -21,10 +21,6 @@ mCreateFactoryEntry( visBase::Cube );
 namespace visBase
 {
 
-const char* Cube::centerposstr = "Center Pos";
-const char* Cube::widthstr = "Width";
-
-
 Cube::Cube()
     : Shape( new SoCube )
     , position( new SoTranslation )
@@ -90,38 +86,6 @@ Coord3 Cube::width() const
     
     pErrMsg("Not impl." );
     return Coord3::udf();
-}
-
-
-int Cube::usePar( const IOPar& iopar )
-{
-    int res = Shape::usePar( iopar );
-    if ( res != 1 ) return res;
-
-    Coord3 pos;
-    if ( !iopar.get( centerposstr, pos.x, pos.y, pos.z ) )
-	return -1;
-
-    setCenterPos( pos );
-
-    if ( !iopar.get( widthstr, pos.x, pos.y, pos.z ) )
-	return -1;
-
-    setWidth( pos );
-
-    return 1;
-}
-
-
-void Cube::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
-{
-    Shape::fillPar( iopar, saveids );
-
-    Coord3 pos = centerPos();
-    iopar.set( centerposstr, pos.x, pos.y, pos.z );
-
-    pos = width();
-    iopar.set( widthstr, pos.x, pos.y, pos.z );
 }
 
 

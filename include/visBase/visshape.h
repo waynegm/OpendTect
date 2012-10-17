@@ -60,7 +60,7 @@ public:
     int				getMaterialBinding() const;
 
     int				usePar(const IOPar&);
-    void			fillPar(IOPar&,TypeSet<int>&) const;
+    void			fillPar(IOPar&) const;
 
     void			removeSwitch();
 

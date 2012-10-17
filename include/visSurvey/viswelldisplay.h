@@ -136,7 +136,7 @@ public:
     bool			setZAxisTransform(ZAxisTransform*,TaskRunner*);
     const ZAxisTransform*	getZAxisTransform() const;
     
-    virtual void                fillPar(IOPar&,TypeSet<int>&) const;
+    virtual void                fillPar(IOPar&) const;
     virtual int                 usePar(const IOPar&);
     const char*			errMsg() const { return errmsg_.str(); }
 

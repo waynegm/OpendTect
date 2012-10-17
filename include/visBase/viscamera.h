@@ -68,7 +68,7 @@ public:
     Coord3 		centerFrustrum();
 
     int			usePar( const IOPar& );
-    void		fillPar( IOPar&, TypeSet<int>& ) const;
+    void		fillPar( IOPar& ) const;
 
 protected:
 

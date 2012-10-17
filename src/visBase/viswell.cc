@@ -731,10 +731,8 @@ const mVisTrans* Well::getDisplayTransformation() const
 { return transformation_; }
 
 
-void Well::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void Well::fillPar( IOPar& par ) const
 {
-    VisualObjectImpl::fillPar( par, saveids );
-
     BufferString linestyle;
     lineStyle().toString( linestyle );
     par.set( linestylestr(), linestyle );

@@ -135,9 +135,6 @@ public:
     NotifierAccess*	manipChanges();
     NotifierAccess*	manipEnds();
 
-    int			usePar( const IOPar& );
-    void		fillPar( IOPar&, TypeSet<int>& ) const;
-
 protected:
 			~Rectangle();
     void		moveManipRectangletoDragger(CallBacker* =0);

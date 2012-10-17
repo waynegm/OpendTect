@@ -82,7 +82,7 @@ public:
     void			displayIntersections(bool yn);
     bool			areIntersectionsDisplayed() const;
 
-    virtual void                fillPar(IOPar&,TypeSet<int>&) const;
+    virtual void                fillPar(IOPar&) const;
     virtual int                 usePar(const IOPar&);
 
     bool			setEMID(const EM::ObjectID&);

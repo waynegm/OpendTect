@@ -55,9 +55,6 @@ public:
     void			showZlines(bool);
     bool			areZlinesShown() const;
 
-    virtual void                fillPar(IOPar&,TypeSet<int>&) const;
-    virtual int			usePar(const IOPar&);
-
 protected:
 
     CubeSampling		gridcs_;

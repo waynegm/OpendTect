@@ -366,10 +366,8 @@ void Annotation::updateTextColor( CallBacker* )
 }
 
 
-void Annotation::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void Annotation::fillPar( IOPar& par ) const
 {
-    VisualObjectImpl::fillPar( par, saveids );
-
     BufferString key;
     
     const osg::Vec3f* cornercoords =
@@ -402,9 +400,6 @@ void Annotation::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 
 int Annotation::usePar( const IOPar& par )
 {
-    int res = VisualObjectImpl::usePar( par );
-    if ( res != 1 ) return res;
-
     BufferString key;
     for ( int idx=0; idx<8; idx++ )
     {

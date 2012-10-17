@@ -20,9 +20,6 @@ mCreateFactoryEntry( visBase::DataObjectGroup );
 namespace visBase
 {
 
-const char* DataObjectGroup::nokidsstr()	{ return "Number of Children"; }
-const char* DataObjectGroup::kidprefix()	{ return "Child "; }
-
 DataObjectGroup::DataObjectGroup()
     : osggroup_( new osg::Group )
     , separate_( true )
@@ -155,60 +152,5 @@ osg::Node* DataObjectGroup::gtOsgNode()
     return osggroup_;
 }
 
-
-void DataObjectGroup::fillPar( IOPar& par, TypeSet<int>& saveids)const
-{
-    DataObject::fillPar( par, saveids );
-    
-    par.set( nokidsstr(), objects_.size() );
-    
-    BufferString key;
-    for ( int idx=0; idx<objects_.size(); idx++ )
-    {
-	key = kidprefix();
-	key += idx;
-
-	int saveid = objects_[idx]->id();
-	if ( saveids.indexOf( saveid )==-1 ) saveids += saveid;
-
-	par.set( key, saveid );
-    }
-}
-
-
-int DataObjectGroup::usePar( const IOPar& par )
-{
-    int res = DataObject::usePar( par );
-    if ( res!= 1 ) return res;
-
-    int nrkids;
-    if ( !par.get( nokidsstr(), nrkids ) )
-	return -1;
-
-    BufferString key;
-    TypeSet<int> ids;
-    for ( int idx=0; idx<nrkids; idx++ )
-    {
-	key = kidprefix();
-	key += idx;
-
-	int newid;
-	if ( !par.get( key, newid ) )
-	    return -1;
-
-	if ( !DM().getObject( newid ) )
-	{
-	    res = 0;
-	    continue;
-	}
-
-	ids += newid;
-    }
-
-    for ( int idx=0; idx<ids.size(); idx++ )
-	addObject( ids[idx] );
-
-    return res;
-}
 
 }; // namespace visBase

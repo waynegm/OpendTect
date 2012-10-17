@@ -1060,9 +1060,9 @@ Seis2DDisplay* Seis2DDisplay::getSeis2DDisplay( const MultiID& lineset,
 }
 
 
-void Seis2DDisplay::fillPar( IOPar& par, TypeSet<int>& saveids ) const
+void Seis2DDisplay::fillPar( IOPar& par ) const
 {
-    visSurvey::MultiTextureSurveyObject::fillPar( par, saveids );
+    visSurvey::MultiTextureSurveyObject::fillPar( par );
 
     par.set( "GeomID", geomid_.toString() );
     par.set( sKeyLineSetID(), linesetid_ );

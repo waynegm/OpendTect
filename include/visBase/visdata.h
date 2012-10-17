@@ -79,10 +79,9 @@ public:
     void			enableTraversal(TraversalType,bool yn=true); 
     bool			isTraversalEnabled(TraversalType) const;
 
-    inline SoNode*		getInventorNode()	{return gtInvntrNode();}
+    inline SoNode*		getInventorNode()	{return 0;}
     inline const SoNode*	getInventorNode() const
-				{ return const_cast<DataObject*>(this)->
-							gtInvntrNode(); }
+				{ return 0; }
 
     virtual bool		pickable() const 	{ return selectable(); }
     virtual bool		rightClickable() const 	{ return selectable(); }
@@ -122,10 +121,6 @@ public:
 				    right or left handed. */
     virtual bool		isRightHandSystem() const	{ return true; }
 
-    virtual int			usePar(const IOPar&);
-    				/*!< Returns -1 on error and 1 on success.
-				     If it returns 0 it is missing something.
-				     Parse everything else and retry later.  */
     virtual const char*		errMsg() const	{ return 0; }
 
     virtual bool		acceptsIncompletePar() const    {return false;}
@@ -135,19 +130,15 @@ public:
 				    fail if usePar of this function returns
 				    0, and it doesn't help to retry.  */
 
-    virtual void		fillPar(IOPar&, TypeSet<int>&) const;
-
-    void			doSaveInSessions( bool yn )
-				{ saveinsessions_ = yn; }
-    bool			saveInSessions() const
-    				{ return saveinsessions_; }
-			
     bool			serialize(const char* filename,
 	    				  bool binary=false);
     
     void			setParent(DataObjectGroup* g) { parent_ = g; }
 
 protected:
+    virtual bool		init()			{ return true; }
+				//!<Called from create()
+
     friend class		SelectionManager;
     friend class		Scene;
     virtual void		triggerSel()				{}
@@ -157,12 +148,7 @@ protected:
     virtual void		triggerRightClick(const EventInfo* =0)	{}
     
 				DataObject();
-    virtual bool		_init();
-
-    bool			saveinsessions_;
-
-    virtual SoNode*		gtInvntrNode()		{ return 0; }
-
+    
     virtual osg::Node*		gtOsgNode()		{ return 0; }
 
     void			updateOsgNodeData();
@@ -178,8 +164,12 @@ private:
 
 #define _mCreateDataObj(clss) 					\
 {								\
-    clss* res = (clss*) createInternal();			\
-    return res;							\
+    clss* ret = new clss;					\
+    if ( !ret )							\
+        return 0;						\
+    if ( !ret->init() || !ret->isOK() )				\
+        { ret->ref(); ret->unRef(); return 0; }			\
+    return ret;							\
 }								\
 								\
 private:							\
@@ -191,8 +181,8 @@ public:								\
     static const char*	getStaticClassName();			\
 								\
     virtual const char*	getClassName() const; 			\
-protected:
-    
+protected:							\
+
 #define _mDeclConstr(clss)					\
     clss();							\
 public:
@@ -205,28 +195,12 @@ public:
 #define mImplVisInitClass( clss ) \
 void clss::initClass()						\
 {								\
-    visBase::DataManager::factory().addCreator(			\
-	clss::createInternal, #clss );				\
 }
 
 #define mCreateFactoryEntryNoInitClass( clss )			\
 const char* clss::getStaticClassName() { return #clss; }	\
 const char* clss::getClassName() const				\
-{ return clss::getStaticClassName(); }				\
-visBase::DataObject* clss::createInternal()			\
-{								\
-    clss* res = new clss;					\
-    if ( !res )							\
-	return 0;						\
-    if ( !res->_init() || !res->isOK() )			\
-    {								\
-	delete res;						\
-	return 0;						\
-    }								\
-								\
-    return res;							\
-}							
-
+{ return clss::getStaticClassName(); }
 
 #define mCreateFactoryEntry( clss )				\
 mImplVisInitClass( clss );					\

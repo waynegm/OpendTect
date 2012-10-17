@@ -40,6 +40,12 @@ public:
 
     void		setFrom(const Material&);
 
+    enum ColorMode	{ Ambient, Diffuse, Specular, Emission,
+			  AmbientAndDiffuse, Off };
+
+    void		setColorMode( ColorMode );
+    ColorMode		getColorMode() const;
+
     void		setColor(const Color&,int=0);
     const Color&	getColor(int matnr=0) const;
 
@@ -81,7 +87,7 @@ protected:
     void		createArray();
 
     TypeSet<Color>	color_;
-    TypeSet<float>	diffuseintencity_;
+    TypeSet<float>	diffuseintensity_;
     TypeSet<float>	transparency_;
     
     float		ambience_;

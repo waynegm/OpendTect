@@ -28,7 +28,7 @@ const char* Material::sKeyShininess()		{ return "Shininess"; }
 const char* Material::sKeyTransparency()	{ return "Transparency"; }
 
 Material::Material()
-    : material_( new osg::Material )
+    : material_( addAttribute(new osg::Material) )
     , colorarray_( 0 )
     , ambience_( 0.8 )
     , specularintensity_( 0 )
@@ -37,7 +37,7 @@ Material::Material()
     , change( this )
 {
     material_->ref();
-    material_->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
+    setColorMode( Off );
     setMinNrOfMaterials(0);
     updateMaterial(0);
 }
@@ -48,13 +48,13 @@ Material::~Material()
     material_->unref();
     if ( colorarray_ ) colorarray_->unref();
 }
-    
+
 
 #define mSetProp( prop ) prop = mat.prop
 void Material::setFrom( const Material& mat )
 {
     mSetProp( color_ );
-    mSetProp( diffuseintencity_ );
+    mSetProp( diffuseintensity_ );
     mSetProp( ambience_ );
     mSetProp( specularintensity_ );
     mSetProp( emmissiveintensity_ );
@@ -88,16 +88,16 @@ const Color& Material::getColor( int idx ) const
 void Material::setDiffIntensity( float n, int idx )
 {
     setMinNrOfMaterials(idx);
-    diffuseintencity_[idx] = n;
+    diffuseintensity_[idx] = n;
     updateMaterial( idx );
 }
 
 
 float Material::getDiffIntensity( int idx ) const
 {
-    if ( idx>=0 && idx<diffuseintencity_.size() )
-	return diffuseintencity_[idx];
-    return diffuseintencity_[0];
+    if ( idx>=0 && idx<diffuseintensity_.size() )
+	return diffuseintensity_[idx];
+    return diffuseintensity_[0];
 }
 
 
@@ -137,9 +137,9 @@ mSetGetProperty( float, Shininess, shininess_ );
 
 void Material::updateMaterial(int idx)
 {
-    const osg::Vec4 diffuse(color_[0].r() * diffuseintencity_[idx]/255,
-			    color_[0].g() * diffuseintencity_[idx]/255,
-			    color_[0].b() * diffuseintencity_[idx]/255,
+    const osg::Vec4 diffuse(color_[0].r() * diffuseintensity_[idx]/255,
+			    color_[0].g() * diffuseintensity_[idx]/255,
+			    color_[0].b() * diffuseintensity_[idx]/255,
 			    1.0-transparency_[0]);
     
     if ( !idx )
@@ -205,7 +205,7 @@ void Material::setMinNrOfMaterials(int minnr)
     while ( color_.size()<=minnr )
     {
 	color_ += Color(179,179,179);
-	diffuseintencity_ += 0.8;
+	diffuseintensity_ += 0.8;
 	transparency_ += 0.0;
     }
 }
@@ -270,5 +270,40 @@ void Material::createArray()
     mGetOsgVec4Arr(colorarray_)->
         push_back( material_->getDiffuse( osg::Material::FRONT ) );
 }
+
+
+void Material::setColorMode( ColorMode mode )
+{
+    if ( mode == Ambient ) 
+	material_->setColorMode( osg::Material::AMBIENT );
+    else if ( mode == Diffuse )
+	material_->setColorMode( osg::Material::DIFFUSE );
+    else if ( mode == Specular )
+	material_->setColorMode( osg::Material::SPECULAR );
+    else if ( mode == Emission )
+	material_->setColorMode( osg::Material::EMISSION );
+    else if ( mode == AmbientAndDiffuse )
+	material_->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
+    else
+	material_->setColorMode( osg::Material::OFF );
+}
+
+
+Material::ColorMode Material::getColorMode() const
+{ 
+    if ( material_->getColorMode() == osg::Material::AMBIENT )
+	return Ambient;
+    if ( material_->getColorMode() == osg::Material::DIFFUSE )
+	return Diffuse;
+    if ( material_->getColorMode() == osg::Material::SPECULAR )
+	return Specular;
+    if ( material_->getColorMode() == osg::Material::EMISSION )
+	return Emission;
+    if ( material_->getColorMode() == osg::Material::AMBIENT_AND_DIFFUSE )
+	return AmbientAndDiffuse;
+
+    return Off;
+}
+
 
 }; // namespace visBase

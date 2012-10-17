@@ -17,6 +17,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <osg/Switch>
 #include <osg/Material>
+#include <osg/BlendFunc>
 
 namespace visBase
 {
@@ -62,7 +63,7 @@ visBase::NodeState* VisualObject::removeNodeState( visBase::NodeState* ns )
     const int idx = nodestates_.indexOf( ns );
     if ( nodestates_.validIdx(idx) )
     {
-	ns->detatchStateSet( getStateSet() );
+	ns->detachStateSet( getStateSet() );
 	nodestates_.remove( idx )->unRef();
     }
     
@@ -82,6 +83,7 @@ VisualObjectImpl::VisualObjectImpl( bool issel )
     , material_( 0 )
     , righthandsystem_( true )
 {
+    //setMaterial( Material::create() );
 }
 
 
@@ -151,6 +153,8 @@ bool VisualObjectImpl::isOn() const
 
 void VisualObjectImpl::setMaterial( Material* nm )
 {
+    osg::StateSet* ss = osgroot_->getOrCreateStateSet();
+
     if ( material_ )
     {
 	removeNodeState( material_ );
@@ -162,7 +166,33 @@ void VisualObjectImpl::setMaterial( Material* nm )
     if ( material_ )
     {
 	material_->ref();
+	material_->change.notify( mCB(this,VisualObjectImpl,materialChangeCB) );
+	ss->setDataVariance( osg::Object::DYNAMIC );
 	addNodeState( material_ );
+    }
+}
+
+
+void VisualObjectImpl::materialChangeCB( CallBacker* )
+{
+    osg::StateSet* ss = osgroot_->getOrCreateStateSet();
+
+    const bool istransparent = getMaterial()->getTransparency() > 0.0;
+    const bool wastransparent =
+		    ss->getRenderingHint() == osg::StateSet::TRANSPARENT_BIN;
+
+    if ( !wastransparent && istransparent )
+    {
+	osg::ref_ptr<osg::BlendFunc> blendFunc = new osg::BlendFunc;
+	blendFunc->setFunction( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	ss->setAttributeAndModes( blendFunc );
+	ss->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+    }
+
+    if ( wastransparent && !istransparent )
+    {
+	ss->removeAttribute( osg::StateAttribute::BLENDFUNC );
+	ss->setRenderingHint( osg::StateSet::OPAQUE_BIN );
     }
 }
     

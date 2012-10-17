@@ -28,7 +28,7 @@ class NodeState : public CallBacker
 public:
 
     void			attachStateSet(osg::StateSet*);
-    void			detatchStateSet(osg::StateSet*);
+    void			detachStateSet(osg::StateSet*);
 
 protected:
 				NodeState();

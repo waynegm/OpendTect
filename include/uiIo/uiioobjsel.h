@@ -78,7 +78,6 @@ public:
 				     statusbars and similar */
     
     void			setSurveyDefaultSubsel(const char* subsel);
-
     void			setContext(const IOObjContext&);
     const CtxtIOObj&		getCtxtIOObj() const	{ return ctio_; }
     uiGroup*			getTopGroup()		{ return topgrp_; }
@@ -149,7 +148,6 @@ public:
     void		usePar( const IOPar& i ) { selgrp_->usePar(i); }
     
     void		setSurveyDefaultSubsel(const char*);
-
 protected:
 
     bool		acceptOK(CallBacker*)	{return selgrp_->processInput();}

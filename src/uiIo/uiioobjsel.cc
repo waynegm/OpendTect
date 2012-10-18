@@ -417,6 +417,9 @@ void uiIOObjSelGrp::selChg( CallBacker* cb )
     if ( mkdefbut_ )
 	mkdefbut_->setSensitive( allowsetdefault );
 
+    if ( mkdefbut_ )
+	mkdefbut_->setSensitive( allowsetdefault );
+
     toStatusBar( info );
     selectionChg.trigger();
 }

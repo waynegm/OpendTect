@@ -19,6 +19,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "simpnumer.h"
 #include "task.h"
 #include "thread.h"
+#include "visosg.h"
 
 #include "SoTextureChannelSet.h"
 #include "SoColTabTextureChannel2RGBA.h"
@@ -345,10 +346,8 @@ void ColTabTextureChannel2RGBA::updateOsgTexture() const
 
 		    proc->setColorSequence( osgcolsequences_[procidx] );
 
-		    const Color& col = getSequence(channel)->undefColor();
-		    const osg::Vec4f newudfcol( col.r(), col.g(), col.b(),
-			    			255-col.t() );
-		    proc->setNewUndefColor( newudfcol/255.0 );
+		    const Color& udfcol = getSequence(channel)->undefColor();
+		    proc->setNewUndefColor( Conv::to<osg::Vec4f>(udfcol) );
 		}
 		else
 		    layerids.remove( procidx );
@@ -445,10 +444,9 @@ void ColTabTextureChannel2RGBA::setSequence( int channel,
 	osgGeo::LayeredTexture& laytex = *channels_->getOsgTexture();
 	if ( laytex.getProcess(channel) )
 	{
-	    const Color& col = getSequence(channel)->undefColor();
-	    const osg::Vec4f newudfcol( col.r(), col.g(), col.b(),
-					255-col.t() );
-	    laytex.getProcess(channel)->setNewUndefColor( newudfcol/255.0 );
+	    const Color& udfcol = getSequence(channel)->undefColor();
+	    laytex.getProcess(channel)->setNewUndefColor( 
+		    				Conv::to<osg::Vec4f>(udfcol) );
 	}
     }
 }

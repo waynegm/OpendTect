@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "iopar.h"
 #include "vistransform.h"
 #include "vismaterial.h"
+#include "visosg.h"
 #include "vispickstyle.h"
 #include "separstr.h"
 #include "keystrs.h"
@@ -109,16 +110,13 @@ void Text::setJustification( Justification just )
 
 void Text::setColor( const Color& col )
 {
-    text_->setColor( osg::Vec4( float(col.r())/255, float(col.g())/255,
-				float(col.b())/255, 1.0-float(col.t())/255 ) );
+    text_->setColor( Conv::to<osg::Vec4>(col) );
 }
 
 
 Color Text::getColor() const
 {
-    osg::Vec4 col = text_->getColor();
-    return Color( mNINT32(255*col[0]), mNINT32(255*col[1]),
-		  mNINT32(255*col[2]), 255-mNINT32(255*col[3]) );
+    return Conv::to<Color>( text_->getColor() );
 }
 
     

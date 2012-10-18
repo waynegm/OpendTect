@@ -46,6 +46,9 @@ mDefRefMan( OsgRefMan, refOsgObj(ptr_), unrefOsgObj(ptr_) )
 #include <osg/Vec3>
 #include <osg/Vec3d>
 #include <position.h>
+#include <osg/Vec4>
+#include <osg/Vec4d>
+#include <color.h>
 #include <convert.h>
     
 namespace Conv
@@ -65,6 +68,31 @@ namespace Conv
     template <>
     inline void set( osg::Vec3d& _to, const Coord3& v )
     { _to.set(  v.x, v.y, v.z ); }
+
+
+#define mODColVal(val)   ( val<=0.0 ? 0  : val>=1.0 ? 255  : mNINT32(255*val) )
+#define mOsgColValF(val) ( val<=0 ? 0.0f : val>=255 ? 1.0f : float(val)/255   )
+#define mOsgColValD(val) ( val<=0 ? 0.0  : val>=255 ? 1.0  : double(val)/255  )
+
+    template <>
+    inline void set( Color& _to, const osg::Vec4f& col )
+    { _to.set( mODColVal(col[0]), mODColVal(col[1]),
+	       mODColVal(col[2]), 255-mODColVal(col[3]) ); }
+    
+    template <>
+    inline void set( osg::Vec4f& _to, const Color& col )
+    { _to.set( mOsgColValF(col.r()), mOsgColValF(col.g()),
+	       mOsgColValF(col.b()), 1.0f-mOsgColValF(col.t()) ); }
+    
+    template <>
+    inline void set( Color& _to, const osg::Vec4d& col )
+    { _to.set( mODColVal(col[0]), mODColVal(col[1]),
+	       mODColVal(col[2]), 255-mODColVal(col[3]) ); }
+    
+    template <>
+    inline void set( osg::Vec4d& _to, const Color& col )
+    { _to.set( mOsgColValD(col.r()), mOsgColValD(col.g()),
+	       mOsgColValD(col.b()), 1.0-mOsgColValD(col.t()) ); }
     
 } //Namespace conv
 
@@ -82,6 +110,20 @@ namespace Values
     {
     public:
 	static void		setUdf( osg::Vec3d& i )	{}
+    };
+
+    template<>
+    class Undef<osg::Vec4f>
+    {
+    public:
+	static void		setUdf( osg::Vec4f& i )	{}
+    };
+    
+    template<>
+    class Undef<osg::Vec4d>
+    {
+    public:
+	static void		setUdf( osg::Vec4d& i )	{}
     };
 
 } //Namespace Values

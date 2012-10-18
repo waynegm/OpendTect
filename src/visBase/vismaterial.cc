@@ -135,33 +135,25 @@ mSetGetProperty( float, EmmIntensity, emmissiveintensity_ );
 mSetGetProperty( float, Shininess, shininess_ );
 
 
-void Material::updateMaterial(int idx)
+#define mGetOsgCol( col, fac, transp ) \
+    osg::Vec4( col.r()*fac/255, col.g()*fac/255, col.b()*fac/255, 1.0-transp )
+
+void Material::updateMaterial( int idx )
 {
-    const osg::Vec4 diffuse(color_[0].r() * diffuseintensity_[idx]/255,
-			    color_[0].g() * diffuseintensity_[idx]/255,
-			    color_[0].b() * diffuseintensity_[idx]/255,
-			    1.0-transparency_[0]);
+    const osg::Vec4 diffuse =
+	mGetOsgCol( color_[idx], diffuseintensity_[idx], transparency_[idx] );
     
     if ( !idx )
     {
 	
 	material_->setAmbient( osg::Material::FRONT_AND_BACK,
-			      osg::Vec4(color_[0].r() * ambience_/255,
-				   color_[0].g() * ambience_/255,
-				   color_[0].b() * ambience_/255,
-				   1.0-transparency_[idx]) );
+		mGetOsgCol(color_[0],ambience_,transparency_[0]) );
 	material_->setSpecular( osg::Material::FRONT_AND_BACK,
-			      osg::Vec4(color_[0].r() * specularintensity_/255,
-					color_[0].g() * specularintensity_/255,
-					color_[0].b() * specularintensity_/255,
-					1.0-transparency_[idx]) );
+		mGetOsgCol(color_[0],specularintensity_,transparency_[0]) );
 	material_->setEmission( osg::Material::FRONT_AND_BACK,
-			      osg::Vec4(color_[0].r() * emmissiveintensity_/255,
-					color_[0].g() * emmissiveintensity_/255,
-					color_[0].b() * emmissiveintensity_/255,
-					1.0-transparency_[idx]) );
+		mGetOsgCol(color_[0],emmissiveintensity_,transparency_[0]) );
+
 	material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
-	
 	material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
 
 	if ( colorarray_ )

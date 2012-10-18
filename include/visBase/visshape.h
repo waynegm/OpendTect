@@ -85,6 +85,11 @@ protected:
 mClass(visBase) VertexShape : public Shape
 {
 public:
+    static VertexShape*	create()
+			mCreateDataObj(VertexShape);
+    
+    void		setPrimitiveType(Geometry::PrimitiveSet::PrimitiveType);
+			//!<Should be called before adding statesets
 
     mDeclSetGetItem( VertexShape, Coordinates, coords_ );
     mDeclSetGetItem( VertexShape, Normals, normals_ );
@@ -138,6 +143,8 @@ protected:
 				     bool creategeode );
     			~VertexShape();
     
+    void		setupGeode();
+    
     virtual void	addPrimitiveSetToScene(osg::PrimitiveSet*);
     virtual void	removePrimitiveSetFromScene(const osg::PrimitiveSet*);
     
@@ -153,7 +160,7 @@ protected:
     osg::Geometry*	osggeom_;
     
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
-    const Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
+    Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
 };
 
 #undef mDeclSetGetItem

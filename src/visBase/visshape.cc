@@ -32,6 +32,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Material>
 
 
+mCreateFactoryEntry( visBase::VertexShape );
+
 namespace visBase
 {
 
@@ -174,14 +176,28 @@ osg::Node* Shape::gtOsgNode()
     , texturecoords_( 0 ) \
     , geode_( geode ) \
     , node_( 0 ) \
-    , osggeom_( 0 )
+    , osggeom_( 0 ) \
+    , primitivetype_( Geometry::PrimitiveSet::Other )
+    
+    
+VertexShape::VertexShape()
+    : mVertexShapeConstructor( 0, new osg::Geode )
+{
+    setupGeode();
+}
+    
+    
     
 VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 			  bool creategeode )
     : mVertexShapeConstructor( 0, creategeode ? new osg::Geode : 0 )
-    , primitivetype_( tp )
 {
+    setupGeode();
+    setPrimitiveType( tp );
+}
     
+void VertexShape::setupGeode()
+{
     if ( geode_ )
     {
 	geode_->ref();
@@ -189,7 +205,18 @@ VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 	geode_->addDrawable( osggeom_ );
 	osgswitch_->addChild( geode_ );
 	node_ = geode_;
-	
+    }
+    
+    setCoordinates( Coordinates::create() );
+}
+    
+    
+void VertexShape::setPrimitiveType( Geometry::PrimitiveSet::PrimitiveType tp )
+{
+    primitivetype_ = tp;
+    
+    if ( osggeom_ )
+    {
 	if ( primitivetype_==Geometry::PrimitiveSet::Lines ||
 	    primitivetype_==Geometry::PrimitiveSet::LineStrips )
 	{
@@ -197,8 +224,6 @@ VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 						     osg::StateAttribute::OFF );
 	}
     }
-    
-    setCoordinates( Coordinates::create() );
 }
 
 

@@ -172,7 +172,8 @@ void VolumeDisplay::setInlCrlSystem(const InlCrlSystem* ics )
 
 void VolumeDisplay::setMaterial( visBase::Material* nm )
 {
-    getMaterial()->change.remove(mCB(this,VolumeDisplay,materialChange) );
+    if ( material_ )
+	material_->change.remove(mCB(this,VolumeDisplay,materialChange) );
     visBase::VisualObjectImpl::setMaterial( nm );
     if ( nm )
 	getMaterial()->change.notify( mCB(this,VolumeDisplay,materialChange) );

@@ -14,7 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "simpnumer.h"
 #include "viscolortab.h"
 #include "viscoord.h"
-#include "visfaceset.h"
+
 #include "vismaterial.h"
 #include "vistexturecoords.h"
 #include "SoTextureComposer.h"

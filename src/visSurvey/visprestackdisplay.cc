@@ -30,7 +30,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "viscoord.h"
 #include "visdataman.h"
 #include "visdepthtabplanedragger.h"
-#include "visfaceset.h"
 #include "visflatviewer.h"
 #include "visforegroundlifter.h"
 #include "vismaterial.h"
@@ -97,7 +96,7 @@ PreStackDisplay::PreStackDisplay()
     planedragger_->motion.notify( mCB(this,PreStackDisplay,draggerMotion) );
     planedragger_->finished.notify( mCB(this,PreStackDisplay,finishedCB) );
     addChild( planedragger_->getInventorNode() );
-    
+    /*
     draggerrect_->ref();
     draggerrect_->removeSwitch();
     draggerrect_->setVertexOrdering( 
@@ -121,7 +120,8 @@ PreStackDisplay::PreStackDisplay()
 
     planedragger_->setOwnShape( draggerrect_->getInventorNode() );
     
-    pickstyle_->ref();
+    */
+     pickstyle_->ref();
     addChild( pickstyle_->getInventorNode() );
     pickstyle_->setStyle( visBase::PickStyle::Shape );
 }
@@ -132,7 +132,7 @@ PreStackDisplay::~PreStackDisplay()
     lifter_->unRef();
 
     pickstyle_->unRef();
-    draggerrect_->unRef();
+    //draggerrect_->unRef();
     draggermaterial_->unRef();
 
     flatviewer_->dataChange.remove( mCB(this,PreStackDisplay,dataChangedCB) );

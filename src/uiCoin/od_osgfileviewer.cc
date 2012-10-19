@@ -11,34 +11,16 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "file.h"
 
 #include <QtGui/QApplication>
-#include <QtGui/QGridLayout>
 
 #include <osgViewer/Viewer>
-
-#include <osgViewer/ViewerEventHandlers>
-
 #include <osgGA/TrackballManipulator>
+#include <osgQt/GraphicsWindowQt>
 
-#include <osgDB/ReadFile>
 #include <osg/ShapeDrawable>
-
-#include <osgQt/GraphicsWindowQt>
-
-#include <iostream>
-
-
-#include <QtCore/QTimer>
-#include <QtGui/QApplication>
-#include <QtGui/QGridLayout>
-
-#include <osgViewer/CompositeViewer>
-#include <osgViewer/ViewerEventHandlers>
-
-#include <osgGA/TrackballManipulator>
+#include <osg/MatrixTransform>
+#include <osgManipulator/TabBoxDragger>
 
 #include <osgDB/ReadFile>
-
-#include <osgQt/GraphicsWindowQt>
 
 #include <iostream>
 

@@ -20,6 +20,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <osgGA/TrackballManipulator>
 
 #include <osgDB/ReadFile>
+#include <osg/ShapeDrawable>
 
 #include <osgQt/GraphicsWindowQt>
 
@@ -41,103 +42,47 @@ static const char* rcsID mUnusedVar = "$Id$";
 
 #include <iostream>
 
-class ViewerWidget : public QWidget, public osgViewer::CompositeViewer
-{
-public:
-    ViewerWidget(const char* filename) : QWidget()
-    {
-        setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
-
-        QWidget* widget1 = addViewWidget( createCamera(0,0,100,100),
-					 osgDB::readNodeFile(filename) );
-        
-        QGridLayout* grid = new QGridLayout;
-        grid->addWidget( widget1, 0, 0 );
-        setLayout( grid );
-
-        connect( &_timer, SIGNAL(timeout()), this, SLOT(update()) );
-        _timer.start( 10 );
-    }
-    
-    QWidget* addViewWidget( osg::Camera* camera, osg::Node* scene )
-    {
-        osgViewer::View* view = new osgViewer::View;
-        view->setCamera( camera );
-        addView( view );
-        
-        view->setSceneData( scene );
-        view->addEventHandler( new osgViewer::StatsHandler );
-        view->setCameraManipulator( new osgGA::TrackballManipulator );
-        
-	mDynamicCastGet(osgQt::GraphicsWindowQt*, gw,
-			camera->getGraphicsContext());
-        return gw ? gw->getGLWidget() : NULL;
-    }
-    
-    osg::Camera* createCamera( int xpos, int ypos, int w, int h,
-			       const std::string& name="",
-			       bool windowDecoration=false )
-    {
-        osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
-        osg::ref_ptr<osg::GraphicsContext::Traits> traits =
-		new osg::GraphicsContext::Traits;
-        traits->windowName = name;
-        traits->windowDecoration = windowDecoration;
-        traits->x = xpos;
-        traits->y = ypos;
-        traits->width = w;
-        traits->height = h;
-        traits->doubleBuffer = true;
-        traits->alpha = ds->getMinimumNumAlphaBits();
-        traits->stencil = ds->getMinimumNumStencilBits();
-        traits->sampleBuffers = ds->getMultiSamples();
-        traits->samples = ds->getNumMultiSamples();
-        
-        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
-        camera->setGraphicsContext( new osgQt::GraphicsWindowQt(traits.get()) );
-        
-        camera->setClearColor( osg::Vec4(0.2, 0.2, 0.6, 1.0) );
-        camera->setViewport(
-		    new osg::Viewport(0, 0, traits->width, traits->height) );
-	const double aspectratio = static_cast<double>(traits->width) /
-				   static_cast<double>(traits->height);
-        camera->setProjectionMatrixAsPerspective(
-            30.0f, aspectratio, 1.0f, 10000.0f );
-        return camera.release();
-    }
-    
-    virtual void paintEvent( QPaintEvent* )
-    { frame(); }
-
-protected:
-    
-    QTimer _timer;
-};
-
-
 int main( int argc, char** argv )
 {
-
     SetProgramArgs( argc, argv );
     if ( argc!=2 )
     {
 	std::cout << "Syntax: " << argv[0] << " <filename>\n";
 	return 1;
     }
-
     
-    QApplication app(argc, argv);
-
     BufferString file = argv[1];
 
     if ( !File::exists(file) )
     {
 	std::cout << "File " << file.buf() << " could not be found.\n";
+	return 1;
     }
+    
+    QApplication app(argc, argv);    
+    osgQt::initQtWindowingSystem();
 
-    ViewerWidget* viewWidget = new ViewerWidget( file.buf() );
-    viewWidget->setGeometry( 100, 100, 800, 600 );
-    viewWidget->show();
+    osg::Node* root = osgDB::readNodeFile( file.buf() );
+
+    if ( !root )
+    {
+	std::cout << "File " << file.buf() << " could not be read.\n";
+	return 1;
+    }
+    
+    osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
+    viewer->setSceneData( root );
+    viewer->setCameraManipulator( new osgGA::TrackballManipulator );
+    osgQt::setViewer( viewer.get() );
+    
+    osgQt::GLWidget* glw = new osgQt::GLWidget;
+    osgQt::GraphicsWindowQt* graphicswin = new osgQt::GraphicsWindowQt( glw );
+    
+    viewer->getCamera()->setViewport(
+		    new osg::Viewport(0, 0, glw->width(), glw->height() ) );
+    viewer->getCamera()->setGraphicsContext( graphicswin );
+
+    glw->show();
 
     return app.exec();
 }

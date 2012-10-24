@@ -31,21 +31,6 @@ namespace visBase
 {
 
 
-static void setOsgMatrix( osgManipulator::TabPlaneDragger& osgdragger, int dim,
-			  const osg::Vec3& scale, const osg::Vec3& trans )
-{ 
-    osg::Matrix mat;
-    if ( dim == 0 )
-	mat.makeRotate( osg::Vec3(1,0,0), osg::Vec3(0,1,0) );
-    else if ( dim == 2 )
-	mat.makeRotate( osg::Vec3(0,1,0), osg::Vec3(0,0,1) );
-
-    mat *= osg::Matrix::scale( scale );
-    mat *= osg::Matrix::translate( trans );
-    osgdragger.setMatrix( mat );
-}
-
-
 class PlaneDraggerCallbackHandler: public osgManipulator::DraggerCallback
 {
 
@@ -62,7 +47,9 @@ protected:
     void			constrain(bool translatedinline);
 
     DepthTabPlaneDragger&	dragger_;
-    osg::Matrix			startmatrix_;
+
+    osg::Matrix			initialosgmatrix_;
+    Coord3			initialworldtrans_;
 };
 
 
@@ -70,7 +57,10 @@ bool PlaneDraggerCallbackHandler::receive(
 				    const osgManipulator::MotionCommand& cmd )
 {
     if ( cmd.getStage()==osgManipulator::MotionCommand::START )
-	startmatrix_ = dragger_.osgdragger_->getMatrix();
+    {
+	initialosgmatrix_ = dragger_.osgdragger_->getMatrix();
+	initialworldtrans_ = dragger_.getWorldTrans();
+    }
 
     mDynamicCastGet( const osgManipulator::Scale1DCommand*, s1d, &cmd );
     mDynamicCastGet( const osgManipulator::Scale2DCommand*, s2d, &cmd );
@@ -87,7 +77,7 @@ bool PlaneDraggerCallbackHandler::receive(
 
     if ( ignore )
     {
-	dragger_.osgdragger_->setMatrix( startmatrix_ );
+	dragger_.osgdragger_->setMatrix( initialosgmatrix_ );
 	return true;
     }
 
@@ -103,7 +93,7 @@ bool PlaneDraggerCallbackHandler::receive(
     else if ( cmd.getStage()==osgManipulator::MotionCommand::FINISH )
     {
 	dragger_.finished.trigger();
-	if ( startmatrix_ != dragger_.osgdragger_->getMatrix() )
+	if ( initialosgmatrix_ != dragger_.osgdragger_->getMatrix() )
 	    dragger_.changed.trigger();
     }
 
@@ -113,8 +103,8 @@ bool PlaneDraggerCallbackHandler::receive(
 
 void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 {
-    osg::Vec3 scale = dragger_.osgdragger_->getMatrix().getScale();
-    osg::Vec3 center = dragger_.osgdragger_->getMatrix().getTrans();
+    Coord3 scale = dragger_.getWorldScale();
+    Coord3 center = dragger_.getWorldTrans();
 
     for ( int dim=0; dim<3; dim++ )
     {
@@ -155,7 +145,7 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 		double diff = scale[dim] - dragger_.widthranges_[dim].start;
 		if ( diff < 0 )
 		{
-		    if ( center[dim] < startmatrix_.getTrans()[dim] )
+		    if ( center[dim] < initialworldtrans_[dim] )
 			center[dim] -= 0.5*diff;
 		    else
 			center[dim] += 0.5*diff;
@@ -166,7 +156,7 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 		diff = scale[dim] - dragger_.widthranges_[dim].stop;
 		if ( diff > 0 )
 		{
-		    if ( center[dim] > startmatrix_.getTrans()[dim] )
+		    if ( center[dim] > initialworldtrans_[dim] )
 			center[dim] -= 0.5*diff;
 		    else
 			center[dim] += 0.5*diff;
@@ -177,7 +167,7 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 	}
     }
 
-    setOsgMatrix( *dragger_.osgdragger_, dragger_.dim_, scale, center );
+    dragger_.setOsgMatrix( scale, center );
 }
 
 
@@ -226,9 +216,8 @@ void DepthTabPlaneDragger::initOsgDragger()
 #if OSG_MIN_VERSION_REQUIRED(3,1,3)
     osgdragger_ = new osgManipulator::TabPlaneDragger( 12.0 );
     osgdragger_->setIntersectionMask( IntersectionTraversal );
-    osgdragger_->setActivationMouseButtonMask(
-	    			osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
-
+//    osgdragger_->setActivationMouseButtonMask(
+//	    			osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
 #else
     osgdragger_ = new osgManipulator::TabPlaneDragger();
 #endif
@@ -273,7 +262,7 @@ void DepthTabPlaneDragger::initOsgDragger()
     normals->push_back( osg::Vec3(0.0,1.0,0.0) );
 
     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
-    colors->push_back( osg::Vec4(0.7,0.7,0.7,0.3) );
+    colors->push_back( osg::Vec4(0.7,0.7,0.7,0.5) );
 
     osg::ref_ptr<osg::Geometry> plane = new osg::Geometry;
     plane->setVertexArray( vertices.get() );
@@ -286,7 +275,8 @@ void DepthTabPlaneDragger::initOsgDragger()
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;
     geode->addDrawable( plane.get() );
     geode->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
-    geode->getOrCreateStateSet()->setAttributeAndModes(
+    geode->getStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
+    geode->getStateSet()->setAttributeAndModes(
 	    	new osg::PolygonOffset(1.0,1.0), osg::StateAttribute::ON );
 
     osgdraggerplane_ = new osg::Switch();
@@ -295,6 +285,41 @@ void DepthTabPlaneDragger::initOsgDragger()
 
     showPlane( false );
     showDraggerBorder( true );
+}
+
+
+void DepthTabPlaneDragger::setOsgMatrix( const Coord3& worldscale,
+					 const Coord3& worldtrans )
+{
+    osg::Matrix mat;
+
+    if ( dim_ == 0 )
+	mat.makeRotate( osg::Vec3(1,0,0), osg::Vec3(0,1,0) );
+    else if ( dim_ == 2 )
+	mat.makeRotate( osg::Vec3(0,1,0), osg::Vec3(0,0,1) );
+
+    const Coord3 scale = transform_ ? transform_->transform(worldscale)
+				    : worldscale;
+    const Coord3 trans = transform_ ? transform_->transform(worldtrans)
+				    : worldtrans;
+
+    mat *= osg::Matrix::scale( Conv::to<osg::Vec3d>(scale) );
+    mat *= osg::Matrix::translate( Conv::to<osg::Vec3d>(trans) );
+    osgdragger_->setMatrix( mat );
+}
+
+
+Coord3 DepthTabPlaneDragger::getWorldScale() const
+{
+    Coord3 scale = Conv::to<Coord3>( osgdragger_->getMatrix().getScale() );
+    return transform_ ? transform_->transformBack(scale) : scale;
+}
+
+
+Coord3 DepthTabPlaneDragger::getWorldTrans() const
+{
+    Coord3 trans = Conv::to<Coord3>( osgdragger_->getMatrix().getTrans() );
+    return transform_ ? transform_->transformBack(trans) : trans;
 }
 
 
@@ -309,9 +334,7 @@ void DepthTabPlaneDragger::setCenter( const Coord3& newcenter, bool alldims )
 	centers_[2] = newcenter;
     }
 
-    setOsgMatrix( *osgdragger_, dim_,
-		  osgdragger_->getMatrix().getScale(),
-		  osg::Vec3(newcenter.x,newcenter.y,newcenter.z) );
+    setOsgMatrix( getWorldScale(), newcenter );
 }
 
 
@@ -335,9 +358,7 @@ void DepthTabPlaneDragger::setSize( const Coord3& scale, bool alldims )
 	sizes_[0] = newscale; sizes_[1] = newscale; sizes_[2] = newscale;
     }
 
-    setOsgMatrix( *osgdragger_, dim_,
-		  osg::Vec3f(newscale.x,newscale.y,newscale.z),
-		  osgdragger_->getMatrix().getTrans() );
+    setOsgMatrix( newscale, getWorldTrans() );
 }
 
 
@@ -370,15 +391,8 @@ void DepthTabPlaneDragger::setDim( int newdim )
     centers_[dim_] = center();
     sizes_[dim_] = size();
 
-    Interval<float> xlim, ylim, zlim;
-    getSpaceLimits( xlim, ylim, zlim );
-    Interval<float> xsizelim, ysizelim, zsizelim;
-    getWidthLimits( xsizelim, ysizelim, zsizelim );
-
     dim_ = newdim;
 
-    setSpaceLimits( xlim, ylim, zlim );
-    setWidthLimits( xsizelim, ysizelim, zsizelim );
     NotifyStopper stopper( changed );
     setSize( sizes_[dim_], false );
     setCenter( centers_[dim_], false );
@@ -420,7 +434,6 @@ void DepthTabPlaneDragger::getWidthLimits( Interval<float>& x,
 					   Interval<float>& y,
 					   Interval<float>& z ) const
 {
-
     x = widthranges_[0]; y = widthranges_[1]; z = widthranges_[2];
 }
 
@@ -431,12 +444,6 @@ void DepthTabPlaneDragger::setDisplayTransformation( const mVisTrans* nt )
 
     const Coord3 centerpos = center();
     const Coord3 savedsize = size();
-
-    Interval<float> xlim, ylim, zlim;
-    getSpaceLimits( xlim, ylim, zlim );
-    Interval<float> xsizelim, ysizelim, zsizelim;
-    getWidthLimits( xsizelim, ysizelim, zsizelim );
-
 
     if ( transform_ )
     {
@@ -452,8 +459,6 @@ void DepthTabPlaneDragger::setDisplayTransformation( const mVisTrans* nt )
 	transform_->ref();
     }
 
-    setSpaceLimits( xlim, ylim, zlim );
-    setWidthLimits( xsizelim, ysizelim, zsizelim );
     setSize( savedsize );
     setCenter( centerpos );
 }
@@ -462,11 +467,6 @@ void DepthTabPlaneDragger::setDisplayTransformation( const mVisTrans* nt )
 const mVisTrans* DepthTabPlaneDragger::getDisplayTransformation() const
 {
     return transform_;
-}
-
-
-void DepthTabPlaneDragger::setOwnShape( SoNode* newnode )
-{
 }
 
 
@@ -533,36 +533,6 @@ int DepthTabPlaneDragger::getTransDragKeys( bool depth ) const
 }
 
 
-
-Coord3 DepthTabPlaneDragger::world2Dragger( const Coord3& world,
-					    bool ispos ) const
-{
-    const Coord3 tpos = transform_ && ispos
-	? transform_->transform(world) : world;
-
-    if ( !dim_ )
-	return Coord3( tpos.z, tpos.y, tpos.x );
-    if ( dim_==1 )
-	return Coord3( tpos.x, tpos.z, tpos.y );
-
-    return tpos;
-}
-
-
-Coord3 DepthTabPlaneDragger::dragger2World( const Coord3& drag,
-					    bool ispos ) const
-{
-    const Coord3 tpos = transform_ && ispos
-	? transform_->transformBack(drag) : drag;
-    if ( !dim_ )
-	return Coord3( tpos.z, tpos.y, tpos.x );
-    if ( dim_==1 )
-	return Coord3( tpos.x, tpos.z, tpos.y );
-
-    return tpos;
-}
-
-    
 void DepthTabPlaneDragger::showDraggerBorder( bool yn )
 {
     const float borderopacity = yn ? 1.0 : 0.0;

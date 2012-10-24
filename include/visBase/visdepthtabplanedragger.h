@@ -84,8 +84,6 @@ public:
     void			setDisplayTransformation( const mVisTrans* );
     const mVisTrans*		getDisplayTransformation() const;
 
-    void			setOwnShape( SoNode* );
-
     void			showDraggerBorder(bool yn=true);
     bool			isDraggerBorderShown() const;
 
@@ -111,8 +109,11 @@ public:
 
 protected:
     				~DepthTabPlaneDragger();
-    Coord3			world2Dragger( const Coord3&, bool pos) const;
-    Coord3			dragger2World( const Coord3&, bool pos) const;
+
+    void			setOsgMatrix(const Coord3& worldscale,
+					     const Coord3& worldtrans);
+    Coord3			getWorldScale() const;			
+    Coord3			getWorldTrans() const;			
 
     void			initOsgDragger();
 

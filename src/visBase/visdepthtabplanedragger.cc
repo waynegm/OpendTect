@@ -340,8 +340,7 @@ void DepthTabPlaneDragger::setCenter( const Coord3& newcenter, bool alldims )
 
 Coord3 DepthTabPlaneDragger::center() const
 {
-    osg::Vec3 dragcenter = osgdragger_->getMatrix().getTrans();
-    return Coord3( dragcenter[0], dragcenter[1], dragcenter[2] );
+    return getWorldTrans();
 }
 
 
@@ -364,9 +363,7 @@ void DepthTabPlaneDragger::setSize( const Coord3& scale, bool alldims )
 
 Coord3 DepthTabPlaneDragger::size() const
 {
-
-    osg::Vec3 scale = osgdragger_->getMatrix().getScale();
-    return Coord3( scale[0], scale[1], scale[2] );
+    return getWorldScale();
 }
 
 

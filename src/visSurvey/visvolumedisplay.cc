@@ -113,6 +113,9 @@ VolumeDisplay::VolumeDisplay()
 
     boxdragger_->ref();
     boxdragger_->setBoxTransparency( 0.7 );
+    updateRanges( true, true );
+
+
     addChild( boxdragger_->getInventorNode() );
     boxdragger_->finished.notify( mCB(this,VolumeDisplay,manipMotionFinishCB) );
     getMaterial()->setColor( Color::White() );
@@ -271,8 +274,27 @@ void VolumeDisplay::dataTransformCB( CallBacker* )
 }
 
 
+void VolumeDisplay::setScene( Scene* sc )
+{
+    SurveyObject::setScene( sc );
+    if ( sc ) updateRanges( false, false );
+}
+
+
 void VolumeDisplay::updateRanges( bool updateic, bool updatez )
 {
+    const CubeSampling& csin = scene_ ? scene_->getCubeSampling()
+				      : getCubeSampling( 0 );
+
+    const Interval<float> inlrg( csin.hrg.start.inl, csin.hrg.stop.inl );
+    const Interval<float> crlrg( csin.hrg.start.crl, csin.hrg.stop.crl );
+
+    boxdragger_->setSpaceLimits( inlrg, crlrg, csin.zrg );
+    boxdragger_->setWidthLimits(
+			Interval<float>( 4*csin.hrg.step.inl, mUdf(float) ),
+			Interval<float>( 4*csin.hrg.step.crl, mUdf(float) ),
+			Interval<float>( 4*csin.zrg.step, mUdf(float) ) );
+
     if ( !datatransform_ ) return;
 
     const CubeSampling defcs( true );
@@ -280,8 +302,6 @@ void VolumeDisplay::updateRanges( bool updateic, bool updatez )
 	setCubeSampling( csfromsession_ );
     else
     {
-	const CubeSampling csin = scene_ ? scene_->getCubeSampling()
-					 : getCubeSampling( 0 );
 	CubeSampling cs = getInitCubeSampling( csin );
 	setCubeSampling( cs );
     }
@@ -668,9 +688,10 @@ void VolumeDisplay::updateIsoSurface( int idx, TaskRunner* tr )
     isosurfaces_[idx]->touch( false, tr );
 }
 
-
 void VolumeDisplay::manipMotionFinishCB( CallBacker* )
 {
+/* Looks like this will be obsolete (JCG)
+
     if ( scene_ && scene_->getZAxisTransform() )
 	return;
 
@@ -708,6 +729,7 @@ void VolumeDisplay::manipMotionFinishCB( CallBacker* )
 			    0.5*(cs.hrg.stop.crl + cs.hrg.start.crl),
 			    0.5*(cs.zrg.stop + cs.zrg.start) );
     boxdragger_->setCenter( newcenter );
+    */
 }
 
 

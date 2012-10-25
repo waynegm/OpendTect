@@ -24,16 +24,6 @@ namespace visBase
 {
 
 
-static void setOsgMatrix( osgManipulator::TabBoxDragger& osgdragger,
-			  const osg::Vec3& scale, const osg::Vec3& trans )
-{
-    osg::Matrix mat;
-    mat *= osg::Matrix::scale( scale );
-    mat *= osg::Matrix::translate( trans );
-    osgdragger.setMatrix( mat );
-}
-
-
 class BoxDraggerCallbackHandler: public osgManipulator::DraggerCallback
 {
 
@@ -50,7 +40,8 @@ protected:
     void			constrain();
 
     BoxDragger&			dragger_;
-    osg::Matrix			startmatrix_;
+    osg::Matrix			initialosgmatrix_;
+    Coord3			initialcenter_;
 };
 
 
@@ -58,7 +49,10 @@ bool BoxDraggerCallbackHandler::receive(
 				    const osgManipulator::MotionCommand& cmd )
 {
     if ( cmd.getStage()==osgManipulator::MotionCommand::START )
-	startmatrix_ = dragger_.osgboxdragger_->getMatrix();
+    {
+	initialosgmatrix_ = dragger_.osgboxdragger_->getMatrix();
+	initialcenter_ = dragger_.center();
+    }
 
     mDynamicCastGet( const osgManipulator::Scale1DCommand*, s1d, &cmd );
     mDynamicCastGet( const osgManipulator::Scale2DCommand*, s2d, &cmd );
@@ -67,7 +61,7 @@ bool BoxDraggerCallbackHandler::receive(
 
     if ( !s1d && !s2d && !translatedinplane )
     {
-	dragger_.osgboxdragger_->setMatrix( startmatrix_ );
+	dragger_.osgboxdragger_->setMatrix( initialosgmatrix_ );
 	return true;
     }
 
@@ -83,7 +77,7 @@ bool BoxDraggerCallbackHandler::receive(
     else if ( cmd.getStage()==osgManipulator::MotionCommand::FINISH )
     {
 	dragger_.finished.trigger();
-	if ( startmatrix_ != dragger_.osgboxdragger_->getMatrix() )
+	if ( initialosgmatrix_ != dragger_.osgboxdragger_->getMatrix() )
 	    dragger_.changed.trigger();
     }
 
@@ -93,8 +87,8 @@ bool BoxDraggerCallbackHandler::receive(
 
 void BoxDraggerCallbackHandler::constrain()
 {
-    osg::Vec3 scale = dragger_.osgboxdragger_->getMatrix().getScale();
-    osg::Vec3 center = dragger_.osgboxdragger_->getMatrix().getTrans();
+    Coord3 scale = dragger_.width();
+    Coord3 center = dragger_.center();
 
     for ( int dim=0; dim<3; dim++ )
     {
@@ -122,7 +116,7 @@ void BoxDraggerCallbackHandler::constrain()
 	    double diff = scale[dim] - dragger_.widthranges_[dim].start;
 	    if ( diff < 0 )
 	    {
-		if ( center[dim] < startmatrix_.getTrans()[dim] )
+		if ( center[dim] < initialcenter_[dim] )
 		    center[dim] -= 0.5*diff;
 		else
 		    center[dim] += 0.5*diff;
@@ -133,7 +127,7 @@ void BoxDraggerCallbackHandler::constrain()
 	    diff = scale[dim] - dragger_.widthranges_[dim].stop;
 	    if ( diff > 0 )
 	    {
-		if ( center[dim] > startmatrix_.getTrans()[dim] )
+		if ( center[dim] > initialcenter_[dim] )
 		    center[dim] -= 0.5*diff;
 		else
 		    center[dim] += 0.5*diff;
@@ -143,7 +137,7 @@ void BoxDraggerCallbackHandler::constrain()
 	}
     }
 
-    setOsgMatrix( *dragger_.osgboxdragger_, scale, center );
+    dragger_.setOsgMatrix( scale, center );
 }
 
 
@@ -155,37 +149,10 @@ BoxDragger::BoxDragger()
     , motion( this )
     , changed( this )
     , finished( this )
-    , xinterval_( 0 )
-    , yinterval_( 0 )
-    , zinterval_( 0 )
-    , selectable_( false )
     , osgboxdragger_( 0 )
     , osgdraggerroot_( 0 )
     , osgcallbackhandler_( 0 )
 {
-    initOsgDragger();
-}
-
-
-BoxDragger::~BoxDragger()
-{
-    if ( osgdraggerroot_ && osgboxdragger_ )
-    {
-	osgboxdragger_->removeDraggerCallback( osgcallbackhandler_ );
-	osgdraggerroot_->unref();
-    }
-
-    delete xinterval_;
-    delete yinterval_;
-    delete zinterval_;
-}
-
-
-void BoxDragger::initOsgDragger()
-{
-    if ( osgboxdragger_ )
-	return;
-
     osgdraggerroot_ = new osg::Switch();
     osgdraggerroot_->ref();
 
@@ -194,54 +161,81 @@ void BoxDragger::initOsgDragger()
 
     osgboxdragger_->setupDefaultGeometry();
     osgboxdragger_->setHandleEvents( true );
-    setBoxTransparency( 0.0 );
 
     osgcallbackhandler_ = new BoxDraggerCallbackHandler( *this );
+    osgboxdragger_->addDraggerCallback( osgcallbackhandler_ );
+
+    setBoxTransparency( 0.0 );
+
+    for ( int idx=osgboxdragger_->getNumDraggers()-1; idx>=0; idx-- )
+    {
+	mDynamicCastGet( osgManipulator::TabPlaneDragger*, tpd,
+			 osgboxdragger_->getDragger(idx) );
+
+	for ( int idy=tpd->getNumDraggers()-1; idy>=0; idy-- )
+	{
+	    osgManipulator::Dragger* dragger = tpd->getDragger( idy );
+	    mDynamicCastGet( osgManipulator::Scale1DDragger*, s1dd, dragger );
+	    if ( s1dd )
+	    {
+		s1dd->setColor( osg::Vec4(0.0,0.7,0.0,1.0) );
+		s1dd->setPickColor( osg::Vec4(0.0,1.0,0.0,1.0) );
+	    }
+	    mDynamicCastGet( osgManipulator::Scale2DDragger*, s2dd, dragger );
+	    if ( s2dd )
+	    {
+		s2dd->setColor( osg::Vec4(0.0,0.7,0.0,1.0) );
+		s2dd->setPickColor( osg::Vec4(0.0,1.0,0.0,1.0) );
+	    }
+	}
+    }
 }
 
 
-void BoxDragger::setBoxTransparency( float f )
+BoxDragger::~BoxDragger()
 {
-    if ( osgboxdragger_ )
-	osgboxdragger_->setPlaneColor( osg::Vec4(0.7,0.7,0.7,1.0-f) );
+    osgboxdragger_->removeDraggerCallback( osgcallbackhandler_ );
+    osgdraggerroot_->unref();
+}
+
+
+void BoxDragger::setOsgMatrix( const Coord3& worldscale,
+			       const Coord3& worldtrans )
+{
+    osg::Matrix mat;
+    mat *= osg::Matrix::scale( Conv::to<osg::Vec3d>(worldscale) );
+    mat *= osg::Matrix::translate( Conv::to<osg::Vec3d>(worldtrans) );
+    osgboxdragger_->setMatrix( mat );
+}
+
+
+void BoxDragger::setBoxTransparency( float transparency )
+{
+    osgboxdragger_->setPlaneColor( osg::Vec4(0.7,0.7,0.7,1.0-transparency) );
 }
 
 
 void BoxDragger::setCenter( const Coord3& pos )
 {
-    prevcenter_ = pos;
-
-    if ( osgboxdragger_ )
-    {
-	setOsgMatrix( *osgboxdragger_, osgboxdragger_->getMatrix().getScale(),
-		      osg::Vec3(pos.x,pos.y,pos.z) );
-    }
+    setOsgMatrix( width(), pos );
 }
 
 
 Coord3 BoxDragger::center() const
 {
-    
-    osg::Vec3 dragcenter = osgboxdragger_->getMatrix().getTrans();
-    return Coord3( dragcenter[0], dragcenter[1], dragcenter[2] );
+    return Conv::to<Coord3>( osgboxdragger_->getMatrix().getTrans() );
 }
 
 
-void BoxDragger::setWidth( const Coord3& pos )
+void BoxDragger::setWidth( const Coord3& scale )
 {
-    prevwidth_ = pos;
-
-
-    setOsgMatrix( *osgboxdragger_, osg::Vec3f(pos.x,pos.y,pos.z),	
-		      osgboxdragger_->getMatrix().getTrans() );
+    setOsgMatrix( scale, center() );
 }
 
 
 Coord3 BoxDragger::width() const
 {
-    
-    osg::Vec3 boxwidth = osgboxdragger_->getMatrix().getScale();
-    return Coord3( boxwidth[0], boxwidth[1], boxwidth[2] );
+    return Conv::to<Coord3>( osgboxdragger_->getMatrix().getScale() );
 }
 
 
@@ -249,18 +243,6 @@ void BoxDragger::setSpaceLimits( const Interval<float>& x,
 				 const Interval<float>& y,
 				 const Interval<float>& z )
 {
-    if ( !xinterval_ )
-    {
-	xinterval_ = new Interval<float>(x);
-	yinterval_ = new Interval<float>(y);
-	zinterval_ = new Interval<float>(z);
-	return;
-    }
-
-    *xinterval_ = x;
-    *yinterval_ = y;
-    *zinterval_ = z;
-
     spaceranges_[0] = x; spaceranges_[1] = y; spaceranges_[2] = z;
 
 }

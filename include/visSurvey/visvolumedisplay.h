@@ -187,6 +187,7 @@ protected:
     bool			selectable() const { return true; }
     bool			isSelected() const;
     const MouseCursor*		getMouseCursor() const { return &mousecursor_; }
+    void			setScene(Scene*);
 
     visBase::Transformation*			voltrans_;
     visBase::BoxDragger*			boxdragger_;

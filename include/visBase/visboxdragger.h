@@ -19,7 +19,7 @@ ________________________________________________________________________
 
 
 namespace osgManipulator { class TabBoxDragger; }
-namespace osg { class Switch; }
+
 
 template <class T> class Interval;
 
@@ -68,21 +68,16 @@ public:
 protected:
 					~BoxDragger();
 
-    void				initOsgDragger();
+    void				setOsgMatrix(const Coord3& worldscale,
+						     const Coord3& worldtrans);
 
     osgManipulator::TabBoxDragger*	osgboxdragger_;
     osg::Switch*			osgdraggerroot_;
     BoxDraggerCallbackHandler*		osgcallbackhandler_;
 
-    Interval<float>*			xinterval_;
-    Interval<float>*			yinterval_;
-    Interval<float>*			zinterval_;
-
     Interval<float>			widthranges_[3];
     Interval<float>			spaceranges_[3];
 
-    Coord3				prevwidth_;
-    Coord3				prevcenter_;
     bool				selectable_;
 
     virtual osg::Node*			gtOsgNode();

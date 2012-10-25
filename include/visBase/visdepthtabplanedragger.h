@@ -23,7 +23,6 @@ namespace osg { class Switch; }
 
 
 class Coord3;
-class IOPar;
 
 namespace visBase
 {
@@ -112,8 +111,6 @@ protected:
 
     void			setOsgMatrix(const Coord3& worldscale,
 					     const Coord3& worldtrans);
-    Coord3			getWorldScale() const;			
-    Coord3			getWorldTrans() const;			
 
     void			initOsgDragger();
 
@@ -129,10 +126,6 @@ protected:
 
     Interval<float>		widthranges_[3];
     Interval<float>		spaceranges_[3];
-
-    static const char*		dimstr();
-    static const char*		sizestr();
-    static const char*		centerstr();
 };
 
 };

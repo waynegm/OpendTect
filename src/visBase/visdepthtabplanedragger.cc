@@ -49,7 +49,7 @@ protected:
     DepthTabPlaneDragger&	dragger_;
 
     osg::Matrix			initialosgmatrix_;
-    Coord3			initialworldtrans_;
+    Coord3			initialcenter_;
 };
 
 
@@ -59,7 +59,7 @@ bool PlaneDraggerCallbackHandler::receive(
     if ( cmd.getStage()==osgManipulator::MotionCommand::START )
     {
 	initialosgmatrix_ = dragger_.osgdragger_->getMatrix();
-	initialworldtrans_ = dragger_.getWorldTrans();
+	initialcenter_ = dragger_.center();
     }
 
     mDynamicCastGet( const osgManipulator::Scale1DCommand*, s1d, &cmd );
@@ -103,8 +103,8 @@ bool PlaneDraggerCallbackHandler::receive(
 
 void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 {
-    Coord3 scale = dragger_.getWorldScale();
-    Coord3 center = dragger_.getWorldTrans();
+    Coord3 scale = dragger_.size();
+    Coord3 center = dragger_.center();
 
     for ( int dim=0; dim<3; dim++ )
     {
@@ -145,7 +145,7 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 		double diff = scale[dim] - dragger_.widthranges_[dim].start;
 		if ( diff < 0 )
 		{
-		    if ( center[dim] < initialworldtrans_[dim] )
+		    if ( center[dim] < initialcenter_[dim] )
 			center[dim] -= 0.5*diff;
 		    else
 			center[dim] += 0.5*diff;
@@ -156,7 +156,7 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 		diff = scale[dim] - dragger_.widthranges_[dim].stop;
 		if ( diff > 0 )
 		{
-		    if ( center[dim] > initialworldtrans_[dim] )
+		    if ( center[dim] > initialcenter_[dim] )
 			center[dim] -= 0.5*diff;
 		    else
 			center[dim] += 0.5*diff;
@@ -173,10 +173,6 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 
 //=============================================================================
 
-
-const char* DepthTabPlaneDragger::dimstr()	{ return "Dimension"; }
-const char* DepthTabPlaneDragger::sizestr()	{ return "Size."; }
-const char* DepthTabPlaneDragger::centerstr()	{ return "Center."; }
 
 DepthTabPlaneDragger::DepthTabPlaneDragger()
     : VisualObjectImpl( false )
@@ -309,20 +305,6 @@ void DepthTabPlaneDragger::setOsgMatrix( const Coord3& worldscale,
 }
 
 
-Coord3 DepthTabPlaneDragger::getWorldScale() const
-{
-    Coord3 scale = Conv::to<Coord3>( osgdragger_->getMatrix().getScale() );
-    return transform_ ? transform_->transformBack(scale) : scale;
-}
-
-
-Coord3 DepthTabPlaneDragger::getWorldTrans() const
-{
-    Coord3 trans = Conv::to<Coord3>( osgdragger_->getMatrix().getTrans() );
-    return transform_ ? transform_->transformBack(trans) : trans;
-}
-
-
 void DepthTabPlaneDragger::setCenter( const Coord3& newcenter, bool alldims )
 {
     centers_[dim_] = newcenter;
@@ -334,13 +316,14 @@ void DepthTabPlaneDragger::setCenter( const Coord3& newcenter, bool alldims )
 	centers_[2] = newcenter;
     }
 
-    setOsgMatrix( getWorldScale(), newcenter );
+    setOsgMatrix( size(), newcenter );
 }
 
 
 Coord3 DepthTabPlaneDragger::center() const
 {
-    return getWorldTrans();
+    Coord3 trans = Conv::to<Coord3>( osgdragger_->getMatrix().getTrans() );
+    return transform_ ? transform_->transformBack(trans) : trans;
 }
 
 
@@ -357,13 +340,14 @@ void DepthTabPlaneDragger::setSize( const Coord3& scale, bool alldims )
 	sizes_[0] = newscale; sizes_[1] = newscale; sizes_[2] = newscale;
     }
 
-    setOsgMatrix( newscale, getWorldTrans() );
+    setOsgMatrix( newscale, center() );
 }
 
 
 Coord3 DepthTabPlaneDragger::size() const
 {
-    return getWorldScale();
+    Coord3 scale = Conv::to<Coord3>( osgdragger_->getMatrix().getScale() );
+    return transform_ ? transform_->transformBack(scale) : scale;
 }
 
 

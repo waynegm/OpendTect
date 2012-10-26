@@ -19,7 +19,6 @@ SET(OD_MODULE_SOURCES
 		uiprintscenedlg.cc 
 		ui3dviewer.cc 
 		ui3dindirectviewer.cc 
-		uiosgviewer.cc 
 		uistereodlg.cc 
 		uithumbwheel.cc
 )

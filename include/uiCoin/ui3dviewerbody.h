@@ -19,6 +19,7 @@ ________________________________________________________________________
 
 namespace visBase { class Camera; class Scene; class Transformation; }
 namespace osgGA { class GUIActionAdapter; }
+namespace osgViewer { class CompositeViewer; class View; }
 class ui3DViewer;
 namespace osg
 {
@@ -86,6 +87,8 @@ public:
     bool			isAnimationEnabled() { return true; }
 
 protected:
+    
+    static osgViewer::CompositeViewer*	getCompositeViewer();
     virtual osgGA::GUIActionAdapter&	getActionAdapter()	= 0;
     virtual osg::GraphicsContext*	getGraphicsContext()	= 0;
 
@@ -98,16 +101,17 @@ protected:
     void				computeViewAllPosition();
 
 
-    uiOsgViewHandle			view_;
-    ui3DViewer&				handle_;
-    IOPar&				printpar_;
+    ui3DViewer&						handle_;
+    IOPar&						printpar_;
 
-    RefMan<visBase::Camera>		camera_;
-    RefMan<visBase::Scene>		scene_;
-    visBase::OsgRefMan<osg::Viewport>	viewport_;
-    visBase::OsgRefMan<osg::Group>	sceneroot_;
-    osg::Projection*			hudprojectionmatrix_;
-    RefMan<visBase::Transformation>	hudscene_;
+    RefMan<visBase::Camera>				camera_;
+    RefMan<visBase::Scene>				scene_;
+    visBase::OsgRefMan<osg::Viewport>			viewport_;
+    visBase::OsgRefMan<osg::Group>			sceneroot_;
+    visBase::OsgRefMan<osgViewer::CompositeViewer>	compositeviewer_;
+    visBase::OsgRefMan<osgViewer::View>			view_;
+    osg::Projection*					hudprojectionmatrix_;
+    RefMan<visBase::Transformation>			hudscene_;
 };
 
 #endif

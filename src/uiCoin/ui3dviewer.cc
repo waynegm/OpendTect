@@ -60,8 +60,6 @@ static const char* rcsID mUsedVar = "$Id$";
  
 #define col2f(rgb) float(col.rgb())/255
 
-#include "uiosgviewer.h"
-
 #include "uiobjbody.h"
 #include "keystrs.h"
 
@@ -74,6 +72,7 @@ static const char* sKeydTectScene()	{ return "dTect.Scene."; }
 
 DefineEnumNames(ui3DViewer,StereoType,0,"StereoType")
 { sKey::None().str(), "RedCyan", "QuadBuffer", 0 };
+
 
 
 class uiDirectViewBody : public ui3DViewerBody
@@ -110,6 +109,7 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     , sceneroot_( new osg::Group )
     , hudprojectionmatrix_( new osg::Projection )
     , hudscene_( visBase::Transformation::create() )
+    , compositeviewer_( 0 )
 {
     sceneroot_->addChild( hudprojectionmatrix_ );
     hudprojectionmatrix_->setName( "HUD projection Matrix");
@@ -144,7 +144,7 @@ ui3DViewerBody::~ui3DViewerBody()
 {			
     handle_.destroyed.trigger(handle_);
     delete &printpar_;
-    view_.detachView();
+    if ( compositeviewer_ ) compositeviewer_->removeView( view_ );
     viewport_->unref();
 }
 
@@ -153,12 +153,24 @@ uiObject& ui3DViewerBody::uiObjHandle()
 { return handle_; }
 
 
+osgViewer::CompositeViewer* ui3DViewerBody::getCompositeViewer()
+{
+    static osg::ref_ptr<osgViewer::CompositeViewer> viewer = 0;
+    if ( !viewer )
+    {
+	viewer = new osgViewer::CompositeViewer;
+	viewer->setThreadingModel( osgViewer::ViewerBase::SingleThreaded );
+	viewer->getEventVisitor()->setTraversalMask( visBase::EventTraversal );
+	osgQt::setViewer( viewer.get() );
+    }
+    
+    return viewer.get();
+}
+
+
 osg::Camera* ui3DViewerBody::getOsgCamera()
 {
-    if ( !view_.getOsgView() )
-	return 0;
-
-    return view_.getOsgView()->getCamera();
+    return view_ ? view_->getCamera() : 0;
 }
 
 
@@ -355,7 +367,7 @@ void ui3DViewerBody::setSceneID( int sceneid )
     
     sceneroot_->addChild( newscene->osgNode() );
     
-    if ( !view_.getOsgView() )
+    if ( !view_ )
     {
 	camera_ = visBase::Camera::create();
 
@@ -366,13 +378,13 @@ void ui3DViewerBody::setSceneID( int sceneid )
 	viewport_->ref();
 	osgcamera->setViewport( viewport_ );
 
-	osg::ref_ptr<osgViewer::View> view = new osgViewer::View;
-	view->setCamera( osgcamera );
-	view->setSceneData( sceneroot_ );
-	view->addEventHandler( new osgViewer::StatsHandler );
+	view_ = new osgViewer::View;
+	view_->setCamera( osgcamera );
+	view_->setSceneData( sceneroot_ );
+	view_->addEventHandler( new osgViewer::StatsHandler );
 
 	// Unlike Coin, default OSG headlight has zero ambiance
-	view->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
+	view_->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
 
 	osg::ref_ptr<osgGA::TrackballManipulator> manip =
 	    new osgGA::TrackballManipulator(
@@ -382,9 +394,11 @@ void ui3DViewerBody::setSceneID( int sceneid )
 
 	manip->setAutoComputeHomePosition( false );
 
-	view->setCameraManipulator( manip.get() );
-	view_.setOsgView( view );
-
+	view_->setCameraManipulator( manip.get() );
+    
+	compositeviewer_ = getCompositeViewer();
+	compositeviewer_->addView( view_ );
+	
 	// To put exaggerated bounding sphere radius offside
 	manip->setMinimumDistance( 0 );
 
@@ -456,12 +470,12 @@ void ui3DViewerBody::viewPlaneX()
 
 void ui3DViewerBody::viewAll()
 {
-    if ( !view_.getOsgView() )
+    if ( !view_ )
 	return;
 
     osg::ref_ptr<osgGA::CameraManipulator> manip =
 	static_cast<osgGA::CameraManipulator*>(
-	    view_.getOsgView()->getCameraManipulator() );
+	    view_->getCameraManipulator() );
 
     if ( !manip )
 	return;
@@ -479,12 +493,12 @@ void ui3DViewerBody::viewAll()
 
 void ui3DViewerBody::computeViewAllPosition()
 {
-    if ( !view_.getOsgView() )
+    if ( !view_ )
 	return;
     
     osg::ref_ptr<osgGA::CameraManipulator> manip =
     static_cast<osgGA::CameraManipulator*>(
-				view_.getOsgView()->getCameraManipulator() );
+				view_->getCameraManipulator() );
     
     osg::ref_ptr<osg::Node> node = manip ? manip->getNode() : 0;
     if ( !node )
@@ -641,7 +655,7 @@ void ui3DViewerBody::resetToHomePosition()
 void ui3DViewerBody::uiRotate( float angle, bool horizontal )
 {
     mDynamicCastGet( osgGA::StandardManipulator*, manip,
-		     view_.getOsgView()->getCameraManipulator() ); 
+		     view_->getCameraManipulator() );
     if ( !manip )
 	return;
 
@@ -659,7 +673,7 @@ void ui3DViewerBody::uiRotate( float angle, bool horizontal )
 void ui3DViewerBody::uiZoom( float rel, const osg::Vec3f* dir )
 {
     mDynamicCastGet( osgGA::StandardManipulator*, manip,
-		     view_.getOsgView()->getCameraManipulator() );
+		     view_->getCameraManipulator() );
 
     osg::ref_ptr<const osg::Camera> cam = getOsgCamera();
 

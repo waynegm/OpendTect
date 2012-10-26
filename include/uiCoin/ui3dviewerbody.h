@@ -13,7 +13,7 @@ ________________________________________________________________________
 -*/
 
 #include "uiobjbody.h"
-#include "uiosgviewer.h"
+
 #include "refcount.h"
 #include "visosg.h"
 

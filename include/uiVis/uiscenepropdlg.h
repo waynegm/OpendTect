@@ -49,6 +49,7 @@ protected:
     bool			hadannot_;
     bool			hadannotscale_;
     bool			hadannotgrid_;
+    bool			hadanimation_;
     Color			oldbgcolor_;
     float			oldmarkersize_;
     Color			oldmarkercolor_;
@@ -68,6 +69,7 @@ protected:
     uiColorInput*		markercolfld_;
     uiColorInput*		annotcolfld_;
     uiGenInputDlg*		separationdlg_;
+    uiCheckBox*			animationfld_;
 };
 
 #endif

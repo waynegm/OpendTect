@@ -121,7 +121,7 @@ int ODMain( int argc, char** argv )
 
 
 #define mMemStatusFld 4
-
+static BufferString cputxt_;
 
 uiODMain::uiODMain( uicMain& a )
     : uiMainWin(0,"OpendTect Main Window",5,true)
@@ -162,10 +162,14 @@ uiODMain::uiODMain( uicMain& a )
     timer_.tick.notify( mCB(this,uiODMain,timerCB) );
 
     statusBar()->setToolTip( mMemStatusFld,
-			     "System memory: Free/Available" );
+		     "System memory: Free/Available | CPU: Used/Available" );
     statusBar()->setTxtAlign( mMemStatusFld, Alignment::HCenter );
     memtimer_.tick.notify( mCB(this,uiODMain,memTimerCB) );
     memtimer_.start( 1000 );
+
+    cputxt_ = "[cpu] ";
+    cputxt_.add( Threads::getNrProcessors() ).add( "/" )
+	   .add( Threads::getSystemNrProcessors() );
 }
 
 
@@ -596,6 +600,7 @@ void uiODMain::memTimerCB( CallBacker* )
     txt			.add( iav/10 ).add( "." ).add( iav%10 )
 	.add( "/" )	.add( itot/10 ).add( "." ).add( itot%10 )
 	.add( ingb ? "G" : "M" );
+    txt.add( " | " ).add( cputxt_ );
     statusBar()->message( txt, mMemStatusFld );
 
     multiple_access = false;

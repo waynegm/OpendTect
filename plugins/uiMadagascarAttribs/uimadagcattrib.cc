@@ -45,7 +45,7 @@ uiMadAGCAttrib::uiMadAGCAttrib( uiParent* p, bool is2d )
 
 bool uiMadAGCAttrib::setParameters( const Attrib::Desc& desc )
 {
-    if ( strcmp(desc.attribName(),MadAGC::attribName()) )
+    if ( desc.attribName()!=MadAGC::attribName() )
 	return false;
 
     mIfGetInt( MadAGC::smoothzradiusStr(), zrad,
@@ -66,7 +66,7 @@ bool uiMadAGCAttrib::setInput( const Attrib::Desc& desc )
 
 bool uiMadAGCAttrib::getParameters( Attrib::Desc& desc )
 {
-    if ( strcmp(desc.attribName(),MadAGC::attribName()) )
+    if ( desc.attribName()!=MadAGC::attribName() )
 	return false;
 
     mSetInt( MadAGC::smoothzradiusStr(), smoothzradiusfld_->getIntValue() );

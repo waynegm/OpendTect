@@ -20,6 +20,11 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <string.h>
 
 
+BufferString::BufferString( const FixedString& s )
+    : mBufferStringSimpConstrInitList
+{ assignTo( s.str() ); }
+
+
 BufferString::BufferString( int sz, bool mknull )
     : minlen_(sz)
     , len_(0)
@@ -310,6 +315,12 @@ std::istream& operator >>( std::istream& s, BufferString& bs )
 }
 
 
+std::ostream& operator <<( std::ostream& s, const FixedString& fs )
+{
+    s << fs.str();
+    return s;
+}
+
 
 BufferStringSet::BufferStringSet()
     : ManagedObjectSet<BufferString>(false)
@@ -444,6 +455,12 @@ BufferStringSet& BufferStringSet::add( const char* s )
 {
     *this += new BufferString(s);
     return *this;
+}
+
+
+BufferStringSet& BufferStringSet::add( const FixedString& s )
+{
+    return add( s.str() );
 }
 
 
@@ -613,6 +630,10 @@ void BufferStringSet::unCat( const char* inpstr, char sepchar )
     if ( *ptr )
 	add( ptr );
 }
+
+
+FixedString& FixedString::operator=( const BufferString& b )
+{ptr_=b.buf();return *this;}
 
 
 bool FixedString::operator==( const char* s ) const

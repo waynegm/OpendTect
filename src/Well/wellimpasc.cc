@@ -588,8 +588,6 @@ static bool getTVDD2TModel( Well::D2TModel& d2t,
 		const TypeSet<float>& zvals, const TypeSet<float>& tvals,
 		const Well::Track& trck )
 {
-    // We assume the model is a sorted 1D velocity model
-    // All track positions are inserted to honour horizontal wells
     if ( zvals.size() < 2 )
 	return false;
     TypeSet<float> mds, ts;
@@ -603,47 +601,62 @@ static bool getTVDD2TModel( Well::D2TModel& d2t,
     float prevz = trck.pos(0).z;
     float prevt = tvals[iz] + ( trck.pos(0).z - zvals[iz] ) / curvel;
 
+    int idahmaxz = 0;
+    bool isdescending = false;
+    int nbdtptsadded = iz;
+
     for ( int idah=1; idah<trck.size(); idah++ )
     {
 	const float targetz = trck.pos(idah).z;
-	const bool isdescending = trck.pos(idah).z > trck.pos(idah-1).z;
+	isdescending = trck.pos(idah).z > trck.pos(idah-1).z;
 
 	if ( isdescending && iz+1 < zvals.size() )
 	{
 	    while ( targetz > zvals[iz+1] )
 	    {
-		if ( iz+2 < zvals.size() ) iz++;
-		else break;
-		const float relpos = ( zvals[iz] - trck.pos(idah-1).z ) /
-		    		     ( targetz - trck.pos(idah-1).z );
-		mds  += relpos*trck.dah(idah) + (1-relpos)*trck.dah(idah-1);
-		ts   += prevt + ( zvals[iz] - prevz ) / curvel;
-		curvel = ( zvals[iz+1] - zvals[iz] )/( tvals[iz+1] - tvals[iz] );
-		prevz = zvals[iz];
-		prevt = tvals[iz];
+		if ( (iz+2) >= zvals.size() ) break;
+		else
+		{
+		    iz++;
+		    if ( (iz-1) == nbdtptsadded )
+		    {
+			const float relpos = ( zvals[iz] - trck.pos(idah-1).z ) /
+			    		     ( targetz - trck.pos(idah-1).z );
+			mds += relpos*trck.dah(idah) + (1-relpos)*trck.dah(idah-1);
+			ts  += prevt + ( zvals[iz] - prevz ) / curvel;
+			nbdtptsadded++;
+		    }
+		    curvel = ( zvals[iz+1]-zvals[iz] )/( tvals[iz+1]-tvals[iz] );
+		    prevz = zvals[iz];
+		    prevt = tvals[iz];
+		}
 	    }
 	}
 	else
 	{
 	    while ( targetz < zvals[iz-1] )
 	    {
-		if ( iz-2 > 0 ) iz--;
-		else break;
-		const float relpos = ( zvals[iz] - trck.pos(idah-1).z ) /
-		   		     ( targetz - trck.pos(idah-1).z );
-		mds  += relpos*trck.dah(idah) + (1-relpos)*trck.dah(idah-1);
-		ts   += prevt + ( zvals[iz] - prevz ) / curvel;
-		curvel = ( zvals[iz] - zvals[iz-1] )/( tvals[iz] - tvals[iz-1] );
-		prevz = zvals[iz];
-		prevt = tvals[iz];
+		if ( (iz-1) < 0 ) break;
+		else
+		{
+		    iz--;
+		    curvel = ( zvals[iz]-zvals[iz-1] )/( tvals[iz]-tvals[iz-1] );
+		    prevz = zvals[iz];
+		    prevt = tvals[iz];
+		}
 	    }
 	}
 
-	mds   += trck.dah(idah);
-	ts    += prevt + ( targetz - prevz ) / curvel;
 	prevt += ( targetz - prevz ) / curvel;
 	prevz  = trck.pos(idah).z;
+	if ( targetz > trck.pos(idahmaxz).z )
+	    idahmaxz = idah;
     }
+
+    if ( isdescending ) iz--;
+
+    mds += trck.dah(idahmaxz);
+    ts  += tvals[iz] + ( trck.pos(idahmaxz).z - zvals[iz] ) / curvel;
 
     const int sz = mds.size();
     mAllocVarLenIdxArr( int, idxs, sz );

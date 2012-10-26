@@ -28,11 +28,8 @@ static const char* sKeyElasticPropSelID = "Elastic Property Selection";
 mImplFactory(Strat::LayerGenerator,Strat::LayerGenerator::factory)
 mDefSimpleTranslators(StratLayerSequenceGenDesc,mFileType,od,Mdl);
 
-
-
 const char* Strat::LayerSequenceGenDesc::sKeyWorkBenchParams()
 { return "Workbench parameters"; }
-
 
 Strat::LayerModelGenerator::LayerModelGenerator(
 		const Strat::LayerSequenceGenDesc& desc, Strat::LayerModel& lm,

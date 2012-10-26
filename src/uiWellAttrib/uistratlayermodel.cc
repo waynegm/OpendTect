@@ -53,7 +53,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 mDefineInstanceCreatedNotifierAccess(uiStratLayerModel)
 
-
 const char* uiStratLayerModel::sKeyModeler2Use()
 {
     return "dTect.Stratigraphic Modeler to use";
@@ -230,7 +229,9 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
     , lmp_(*new uiStratLayerModelLMProvider)
     , newModels(this)				   
     , levelChanged(this)				   
-    , waveletChanged(this)  
+    , waveletChanged(this)
+    , saveRequired(this) 
+    , retrieveRequired(this) 
 {
     setDeleteOnClose( true );
 
@@ -530,7 +531,8 @@ bool uiStratLayerModel::saveGenDesc() const
     MouseCursorChanger mcch( MouseCursor::Wait );
     
     
-    fillWorkbenchPars( desc_.getWorkBenchParams() );
+    fillWorkBenchPars( desc_.getWorkBenchParams() );
+    
     if ( !sd.usable() )
 	uiMSG().error( "Cannot open output file" );
     else if ( !desc_.putTo(*sd.ostrm) )
@@ -570,7 +572,8 @@ bool uiStratLayerModel::openGenDesc()
 	uiMSG().error(desc_.errMsg());
     sd.close();
     
-    if ( !useWorkbenchPars( desc_.getWorkBenchParams() ))
+    //Before calculation
+    if ( !gentools_->usePar( desc_.getWorkBenchParams() ) )
 	return false;
     
     if ( !rv )
@@ -579,9 +582,19 @@ bool uiStratLayerModel::openGenDesc()
     seqdisp_->setNeedSave( false );
     lmp_.setEmpty();
     seqdisp_->descHasChanged();
+
+    CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(), 
+	    		    const_cast<uiStratLayerModel*>(this) );
+    const_cast<uiStratLayerModel*>(this)->retrieveRequired.trigger( &caps );
+
     moddisp_->modelChanged();
     synthdisp_->modelChanged();
     delete elpropsel_; elpropsel_ = 0;
+    
+    //Set when everything is in place.
+    if ( !useDisplayPars( desc_.getWorkBenchParams() ))
+	return false;
+    
     setWinTitle();
     return true;
 }
@@ -745,14 +758,27 @@ Strat::LayerModel& uiStratLayerModel::layerModel()
 }
 
 
-bool uiStratLayerModel::useWorkbenchPars( const IOPar& par )
+bool uiStratLayerModel::useDisplayPars( const IOPar& par )
 {
+    if ( !modtools_->usePar( par ) )
+	return false;
+    
     return true;
 }
 
+    
 
-void uiStratLayerModel::fillWorkbenchPars( IOPar& par ) const
+void uiStratLayerModel::fillWorkBenchPars( IOPar& par ) const
 {
     par.setEmpty();
+    CBCapsule<IOPar*> caps( &par, const_cast<uiStratLayerModel*>(this) );
+    const_cast<uiStratLayerModel*>(this)->saveRequired.trigger( &caps );
+    gentools_->fillPar( par );
+    fillDisplayPars( par );
 }
 
+
+void uiStratLayerModel::fillDisplayPars( IOPar& par ) const
+{
+    modtools_->fillPar( par );
+}

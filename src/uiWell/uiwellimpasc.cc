@@ -85,6 +85,14 @@ uiWellImportAsc::uiWellImportAsc( uiParent* p )
     uiSeparator* sep = new uiSeparator( this, "H sep" );
     sep->attach( stretchedBelow, dataselfld_ );
 
+    float dispval = wd_.info().surfaceelev;
+    if ( !mIsZero(dispval, 0.01) )
+	wd_.info().surfaceelev = dispval;
+
+    dispval = wd_.info().replvel;
+    if ( !mIsUdf(dispval) )
+	wd_.info().replvel = dispval;
+
     const bool zistime = SI().zIsTime();
     if ( zistime )
     {
@@ -182,19 +190,37 @@ uiWellImportAscOptDlg( uiWellImportAsc* p )
     if ( SI().depthsInFeetByDefault() && !mIsUdf(info.surfaceelev) && zun_ ) 
 	dispval = zun_->userValue( -info.surfaceelev );
     if ( mIsZero(dispval,0.01) ) dispval = 0;
-    elevfld = new uiGenInput( this,
-		"Seismic Reference Datum",
-		FloatInpSpec(dispval) );
+    elevfld = new uiGenInput( this, "Seismic Reference Datum",
+	    			     FloatInpSpec(dispval) );
     elevfld->attach( alignedBelow, coordfld );
     zinftbox = new uiCheckBox( this, "Feet" );
     zinftbox->attach( rightOf, elevfld );
     zinftbox->setChecked( SI().depthsInFeetByDefault() );
 
+    dispval = info.replvel;
+    if ( mIsUdf(info.replvel) ) dispval = mUdf(float);
+    BufferString str = "Replacement velocity "; str += "(";
+    str += UnitOfMeasure::zUnitAnnot( false, true, false );
+    str += "/s)";
+    replvelfld = new uiGenInput( this, str, FloatInpSpec(dispval) );
+    replvelfld->attach( alignedBelow, elevfld );
+
+    dispval = info.groundelev;
+    if ( SI().depthsInFeetByDefault() && !mIsUdf(info.groundelev) && zun_ )
+	dispval = zun_->userValue( info.groundelev );
+    if ( mIsUdf(info.groundelev) ) dispval = mUdf(float);
+    gdelevfld = new uiGenInput( this, "Ground level elevation",
+       				       FloatInpSpec(dispval) );
+    gdelevfld->attach( alignedBelow, replvelfld );
+    zinftbox = new uiCheckBox( this, "Feet" );
+    zinftbox->attach( rightOf, gdelevfld );
+    zinftbox->setChecked( SI().depthsInFeetByDefault() );
+
     uiSeparator* horsep = new uiSeparator( this );
-    horsep->attach( stretchedBelow, elevfld );
+    horsep->attach( stretchedBelow, gdelevfld );
 
     idfld = new uiGenInput( this, "Well ID (UWI)", StringInpSpec(info.uwid) );
-    idfld->attach( alignedBelow, elevfld );
+    idfld->attach( alignedBelow, gdelevfld );
     
     operfld = new uiGenInput( this, "Operator", StringInpSpec(info.oper) );
     operfld->attach( alignedBelow, idfld );
@@ -220,6 +246,16 @@ bool acceptOK( CallBacker* )
 	    info.surfaceelev = zun_->internalValue( info.surfaceelev );
     }
 
+    info.replvel = replvelfld->getfValue();
+
+    if ( *gdelevfld->text() )
+    {
+	info.groundelev = gdelevfld->getfValue();
+	if ( zinftbox->isChecked() && !mIsUdf(info.groundelev) && zun_ )
+	    info.groundelev = zun_->internalValue( info.groundelev );
+    }
+
+
     info.uwid = idfld->text();
     info.oper = operfld->text();
     info.state = statefld->text();
@@ -232,6 +268,8 @@ bool acceptOK( CallBacker* )
     uiWellImportAsc*	uwia_;
     uiGenInput*		coordfld;
     uiGenInput*		elevfld;
+    uiGenInput*		replvelfld;
+    uiGenInput*		gdelevfld;
     uiGenInput*		idfld;
     uiGenInput*		operfld;
     uiGenInput*		statefld;
@@ -253,7 +291,7 @@ bool uiWellImportAsc::acceptOK( CallBacker* )
     {
 	doWork();
 	wd_.info().surfacecoord.x = wd_.info().surfacecoord.y = 0;
-	wd_.info().surfaceelev = 0;
+	wd_.info().groundelev = mUdf(float);
     }
     return false;
 }
@@ -318,7 +356,7 @@ bool uiWellImportAsc::doWork()
     }
 
     const IOObj* ioobj = outfld_->ioobj();
-    PtrMan<Translator> t = ioobj ? ioobj->getTranslator() : 0;
+    PtrMan<Translator> t = ioobj ? ioobj->createTranslator() : 0;
     mDynamicCastGet(WellTranslator*,wtr,t.ptr())
     if ( !wtr ) mErrRet( "Please choose a different name for the well.\n"
 	    		 "Another type object with this name already exists." );

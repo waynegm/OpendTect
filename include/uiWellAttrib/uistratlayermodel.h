@@ -67,6 +67,8 @@ public:
     Notifier<uiStratLayerModel>	newModels;
     Notifier<uiStratLayerModel>	levelChanged;
     Notifier<uiStratLayerModel>	waveletChanged;
+    Notifier<uiStratLayerModel> saveRequired;   // CallBacker: CBCapsule<IOPar>
+    Notifier<uiStratLayerModel> retrieveRequired;// CallBacker: CBCapsule<IOPar>
 
     bool			checkUnscaledWavelet();
 
@@ -123,8 +125,9 @@ protected:
 
     bool			closeOK();
     
-    void			fillWorkbenchPars(IOPar&) const;
-    bool			useWorkbenchPars(const IOPar&);
+    void			fillDisplayPars(IOPar&) const;
+    void			fillWorkBenchPars(IOPar&) const;
+    bool			useDisplayPars(const IOPar&);
 
 public:
 

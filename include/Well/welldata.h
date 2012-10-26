@@ -39,7 +39,10 @@ mClass(Well) Info : public ::NamedObject
 public:
 
 			Info( const char* nm )
-			    : ::NamedObject(nm), surfaceelev(0)	{}
+			    : ::NamedObject(nm)
+			    , surfaceelev(0)
+			    , replvel(mUdf(float))
+			    , groundelev(mUdf(float))	{}
 
     void                fillPar(IOPar&) const;
     void                usePar(const IOPar&);
@@ -51,6 +54,8 @@ public:
 
     Coord		surfacecoord;
     float		surfaceelev;
+    float		replvel;
+    float		groundelev;
 
     static const char*	sKeyuwid();
     static const char*	sKeyoper();
@@ -58,6 +63,8 @@ public:
     static const char*	sKeycounty();
     static const char*	sKeycoord();
     static const char*	sKeyelev();
+    static const char*  sKeyreplvel();
+    static const char*  sKeygroundelev();
 
 };
 

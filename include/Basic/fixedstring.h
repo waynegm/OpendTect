@@ -11,8 +11,12 @@ ________________________________________________________________________
 
 */
 
-#include "basicmod.h"
-#include "bufstring.h"
+#include "commondefs.h"
+#include "undefval.h"
+
+#include <iosfwd>
+
+class BufferString;
 
 
 /*! Class that holds a text string, and provides basic services around it. The
@@ -25,7 +29,7 @@ public:
 		FixedString(const char* p = 0 ) : ptr_(p) {}
     FixedString& operator=(const FixedString& f) { return *this = f.ptr_; }
     FixedString& operator=(const char* p)	{ ptr_ = p; return *this; }
-    FixedString& operator=(const BufferString& b){ptr_=b.buf();return *this;}
+    FixedString& operator=(const BufferString& b);
 
     bool	operator==(const char*) const;
     bool	operator!=(const char* s) const		{ return !(*this==s); }
@@ -46,12 +50,27 @@ protected:
     const char*	ptr_;
 };
 
+namespace Values
+{
+    template<>
+    class Undef<FixedString>
+    {
+    public:
+	static FixedString	val()			{ return FixedString();}
+	static bool		hasUdf()		{ return true; }
+	static bool		isUdf(const FixedString& s){return s.isEmpty();}
+	static void		setUdf(FixedString& s)	{ s = FixedString(); }
+    };
+}
+
 inline bool operator==(const char* a, const FixedString& b)
 { return b==a; }
  
  
 inline bool operator!=(const char* a, const FixedString& b)
 { return b!=a; }
+
+mGlobal(Basic) std::ostream& operator <<(std::ostream&,const FixedString&);
 
 
 #endif

@@ -70,6 +70,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vissurvscene.h"
 #include "visdatagroup.h"
 
+static const char* sKeydTectScene()	{ return "dTect.Scene."; }
+
 DefineEnumNames(ui3DViewer,StereoType,0,"StereoType")
 { sKey::None().str(), "RedCyan", "QuadBuffer", 0 };
 
@@ -744,6 +746,15 @@ ui3DViewer::ui3DViewer( uiParent* parnt, bool direct, const char* nm )
 	homepos_ = *homepospar;
 
     setViewMode( false );  // switches between view & interact mode
+
+#define mGetProp(get,str,tp,var,func) \
+    tp var; \
+    res = Settings::common().get(BufferString(sKeydTectScene(),str),var);\
+    if ( res ) func( var );
+
+    bool res = false;
+    mGetProp( get, sKeyBGColor(), Color, col, setBackgroundColor );
+    mGetProp( getYN, sKeyAnimate(), bool, yn, enableAnimation );
 }
 
 
@@ -789,6 +800,13 @@ void ui3DViewer::viewAll()
 	}
     }
 }
+
+
+void ui3DViewer::enableAnimation( bool yn )
+{ if ( osgbody_ ) osgbody_->setAnimationEnabled( yn ); }
+
+bool ui3DViewer::isAnimationEnabled() const
+{ return osgbody_ ? osgbody_->isAnimationEnabled() : false; }
 
 
 void ui3DViewer::setBackgroundColor( const Color& col )
@@ -983,6 +1001,17 @@ void ui3DViewer::toggleCameraType()
 Geom::Size2D<int> ui3DViewer::getViewportSizePixels() const
 {
     return osgbody_->getViewportSizePixels();
+}
+
+
+void ui3DViewer::savePropertySettings() const
+{
+#define mSaveProp(set,str,func) \
+    Settings::common().set( BufferString(sKeydTectScene(),str), func );
+
+    mSaveProp( set, sKeyBGColor(), getBackgroundColor() );
+    mSaveProp( setYN, sKeyAnimate(), isAnimationEnabled() );
+    Settings::common().write();
 }
 
 

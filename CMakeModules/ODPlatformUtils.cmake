@@ -63,6 +63,12 @@ if(UNIX) #Apple an Linux
 	    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wignored-qualifiers" )
 	endif()
 
+	if ( (CMAKE_CXX_COMPILER STREQUAL "/usr/bin/g++4") OR
+             (CMAKE_C_COMPILER STREQUAL "/usr/bin/gcc4") )
+            set( CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2" )
+            set( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2" )
+        endif()
+
     endif()
 
 
@@ -122,6 +128,8 @@ if(WIN32)
     #add_definitions( /wd4275 ) # 'identifier' : dll-interface
     add_definitions( /wd4996 ) # function': was declared deprecated
     add_definitions( /wd4101 ) # The local variable is never used (disable only for Windows)
+    add_definitions( /wd4267 ) # conversion from 'size_t' to 'type', possible loss of data
+    add_definitions( /wd4267 ) # conversion from 'size_t' to 'type', possible loss of data
     add_definitions( /wd4512 ) # class' : assignment operator could not be generated (not important)
     add_definitions( /wd4127 ) # conditional expression is constant, e.g. while ( true )
     add_definitions( /wd4189 ) # local variable is initialized but not referenced

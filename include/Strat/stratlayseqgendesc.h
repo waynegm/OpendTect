@@ -62,13 +62,13 @@ public:
     IOPar&		getWorkBenchParams()	{ return workbenchparams_; }
 
 protected:
-    static const char*		sKeyWorkBenchParams();
     IOPar			workbenchparams_;
 
     const RefTree&		rt_;
     PropertyRefSelection	propsel_;
     MultiID			elasticpropselmid_;
 
+    static const char*		sKeyWorkBenchParams();
     mutable BufferString	errmsg_;
 
 };

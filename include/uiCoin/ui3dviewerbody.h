@@ -81,6 +81,9 @@ public:
 
     virtual void		reSizeEvent(CallBacker*);
     void			toggleViewMode(CallBacker*);
+    
+    void			setAnimationEnabled(bool) { pErrMsg("Impl!"); }
+    bool			isAnimationEnabled() { return true; }
 
 protected:
     virtual osgGA::GUIActionAdapter&	getActionAdapter()	= 0;

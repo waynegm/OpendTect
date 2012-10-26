@@ -87,7 +87,6 @@ bool VolumeRenderScalarField::isOn() const
     SbVec3s size;
     void* ptr;
     SoVolumeData::DataType dt;
-    
     return voldata_->getVolumeData(size,ptr,dt) && ptr==indexcache_;
 }
 
@@ -202,9 +201,9 @@ const TypeSet<float>& VolumeRenderScalarField::getHistogram() const
 { return histogram_; }
 
 
-void VolumeRenderScalarField::setVolumeSize(  const Interval<float>& x,
-						  const Interval<float>& y,
-						  const Interval<float>& z )
+void VolumeRenderScalarField::setVolumeSize( const Interval<float>& x,
+					     const Interval<float>& y,
+					     const Interval<float>& z )
 {
     if ( !voldata_ )
 	return;
@@ -216,8 +215,10 @@ void VolumeRenderScalarField::setVolumeSize(  const Interval<float>& x,
 
 Interval<float> VolumeRenderScalarField::getVolumeSize( int dim ) const
 {
-     const SbBox3f size = voldata_->getVolumeSize();
-     return Interval<float>( size.getMin()[dim], size.getMax()[dim] );
+    if ( !voldata_ ) return Interval<float>();
+
+    const SbBox3f size = voldata_->getVolumeSize();
+    return Interval<float>( size.getMin()[dim], size.getMax()[dim] );
 }
 
 

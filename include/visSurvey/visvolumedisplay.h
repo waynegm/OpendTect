@@ -179,6 +179,7 @@ public:
 
 protected:
 				~VolumeDisplay();
+
     bool			updateSeedBasedSurface(int,TaskRunner* = 0);
     void			materialChange(CallBacker*);
     void			updateIsoSurfColor();
@@ -258,9 +259,6 @@ protected:
     static const char*		sKeySurfMode();
     static const char*		sKeySeedsMid();
     static const char*		sKeySeedsAboveIsov();
-
-    virtual SoNode*		gtInvntrNode();
-
 };
 
 } // namespace visSurvey

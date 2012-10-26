@@ -66,10 +66,11 @@ BufferString CmdComposer::factoryKey( const CallBacker* caller,
 BufferString CmdComposer::createFactoryKey( const Classifier* classifier,
 					    const char* keyword )
 {
+    FixedString classifiername = classifier->name();
     classifiers.insertAt( classifier, 0 );
     for ( int idx=classifiers.size()-1; idx>0; idx-- )
     {
-	if ( !strcmp(classifiers[idx]->name(), classifier->name()) )
+	if ( classifiers[idx]->name()==classifiername )
 	    delete classifiers.remove( idx );
     }
 
@@ -202,9 +203,10 @@ bool CmdComposer::accept( const CmdRecEvent& ev )
 
 bool CmdComposer::traceSrcWin( CmdRecEvent& ev ) const
 {
+    FixedString evidstr( ev.idstr_ );
     for ( int idx=0; idx<eventlist_.size(); idx++ )
     {
-	if ( !strcmp(eventlist_[idx]->idstr_, ev.idstr_) )
+	if ( eventlist_[idx]->idstr_==evidstr )
 	{
 	    ev.srcwin_ = eventlist_[idx]->srcwin_;
 	    ev.openqdlg_ = eventlist_[idx]->openqdlg_;

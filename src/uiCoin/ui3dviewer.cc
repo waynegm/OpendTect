@@ -105,29 +105,59 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     : uiObjectBody( parnt, 0 )
     , handle_( h )
     , printpar_(*new IOPar)
-    , viewport_( 0 )
     , sceneroot_( new osg::Group )
-    , hudprojectionmatrix_( new osg::Projection )
-    , hudscene_( visBase::Transformation::create() )
+    , hudview_( 0 )
+    , hudscene_( 0 )
+    , viewport_( new osg::Viewport )
     , compositeviewer_( 0 )
 {
-    sceneroot_->addChild( hudprojectionmatrix_ );
-    hudprojectionmatrix_->setName( "HUD projection Matrix");
-    hudprojectionmatrix_->setMatrix( osg::Matrix::ortho2D(0,1024,0,768) );
+}
+
+
+ui3DViewerBody::~ui3DViewerBody()
+{			
+    handle_.destroyed.trigger(handle_);
+    delete &printpar_;
+    if ( compositeviewer_ )
+    {
+	compositeviewer_->removeView( view_ );
+	compositeviewer_->removeView( hudview_ );
+    }
+}
+
+#define mMainCameraOrder    0
+#define mHudCameraOrder	    (mMainCameraOrder+1)
+
+void ui3DViewerBody::setupHUD()
+{
+    if ( hudview_ )
+	return;
     
-    hudscene_->setName( "HUD Scene" );
-    hudscene_->setAbsoluteReferenceFrame();
-    hudprojectionmatrix_->addChild( hudscene_->osgNode() );
+    osg::ref_ptr<osg::Camera> hudcamera = new osg::Camera;
+    hudcamera->setGraphicsContext( getGraphicsContext() );
+    hudcamera->setName("HUD Camera");
+    hudcamera->setProjectionMatrix( osg::Matrix::ortho2D(0,1024,0,768) );
+    hudcamera->setViewport( viewport_ );
+    hudcamera->setClearMask(GL_DEPTH_BUFFER_BIT);
+    hudcamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    hudcamera->setViewMatrix(osg::Matrix::identity());
+
     
-    osg::StateSet* hudstateset = new osg::StateSet();
-    hudscene_->osgNode()->setStateSet( hudstateset );
-        
-    //hudstateset->setMode( GL_BLEND, osg::StateAttribute::ON );
+    //draw subgraph after main camera view.
+    hudcamera->setRenderOrder(osg::Camera::POST_RENDER, mHudCameraOrder );
     
-    hudstateset->setMode( GL_DEPTH_TEST, osg::StateAttribute::OFF );
-    //hudstateset->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
-    hudstateset->setRenderBinDetails( 11, "RenderBin" );
+    //we don't want the camera to grab event focus from the viewers main cam(s).
+    hudcamera->setAllowEventFocus(false);
     
+    hudscene_ = visBase::Transformation::create();
+    
+    hudview_ = new osgViewer::View;
+    hudview_->setCamera( hudcamera );
+    hudcamera->addChild( hudscene_->osgNode() );
+    if ( !compositeviewer_ )
+	compositeviewer_ = getCompositeViewer();
+    
+    compositeviewer_->addView( hudview_ );
     
     /* Example on how to add something to the HUD. */
     visBase::Text2* hudtext = visBase::Text2::create();
@@ -140,12 +170,42 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
 }
 
 
-ui3DViewerBody::~ui3DViewerBody()
-{			
-    handle_.destroyed.trigger(handle_);
-    delete &printpar_;
-    if ( compositeviewer_ ) compositeviewer_->removeView( view_ );
-    viewport_->unref();
+void ui3DViewerBody::setupView()
+{
+    camera_ = visBase::Camera::create();
+    
+    mDynamicCastGet(osg::Camera*, osgcamera, camera_->osgNode() );
+    osgcamera->setGraphicsContext( getGraphicsContext() );
+    osgcamera->setClearColor( osg::Vec4(0.0f, 0.0f, 0.5f, 1.0f) );
+    osgcamera->setViewport( viewport_ );
+    osgcamera->setRenderOrder(osg::Camera::POST_RENDER, mMainCameraOrder );
+    
+    view_ = new osgViewer::View;
+    view_->setCamera( osgcamera );
+    view_->setSceneData( sceneroot_ );
+    view_->addEventHandler( new osgViewer::StatsHandler );
+    
+    // Unlike Coin, default OSG headlight has zero ambiance
+    view_->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
+    
+    osg::ref_ptr<osgGA::TrackballManipulator> manip =
+	new osgGA::TrackballManipulator(
+	    osgGA::StandardManipulator::DEFAULT_SETTINGS |
+	    osgGA::StandardManipulator::SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT );
+    
+    manip->setAutoComputeHomePosition( false );
+    
+    view_->setCameraManipulator( manip.get() );
+    
+    if ( !compositeviewer_ )
+	compositeviewer_ = getCompositeViewer();
+    compositeviewer_->addView( view_ );
+    
+    // To put exaggerated bounding sphere radius offside
+    manip->setMinimumDistance( 0 );
+    
+    // Camera projection must be initialized before computing home position
+    reSizeEvent( 0 );
 }
 
 
@@ -199,8 +259,8 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
 
     osgcamera->setProjectionMatrixAsPerspective( 45.0f, aspectratio,
 						  1.0f, 10000.0f );
-    hudprojectionmatrix_->setMatrix( osg::Matrix::ortho2D(0,widget->width(),
-							  0,widget->height() ));
+    hudview_->getCamera()->setProjectionMatrix(
+	osg::Matrix::ortho2D(0,widget->width(),0,widget->height() ));
 }
 
 
@@ -262,6 +322,8 @@ uiDirectViewBody::uiDirectViewBody( ui3DViewer& hndl, uiParent* parnt )
 
     graphicswin_ = new osgQt::GraphicsWindowQt( glw );
     setStretch(2,2);
+    setupHUD();
+    setupView();
 }
 
 
@@ -366,46 +428,6 @@ void ui3DViewerBody::setSceneID( int sceneid )
     if ( !newscene ) return;
     
     sceneroot_->addChild( newscene->osgNode() );
-    
-    if ( !view_ )
-    {
-	camera_ = visBase::Camera::create();
-
-	mDynamicCastGet(osg::Camera*, osgcamera, camera_->osgNode() );
-	osgcamera->setGraphicsContext( getGraphicsContext() );
-	osgcamera->setClearColor( osg::Vec4(0.0f, 0.0f, 0.5f, 1.0f) );
-	viewport_ = new osg::Viewport(0, 0, 600, 400 );
-	viewport_->ref();
-	osgcamera->setViewport( viewport_ );
-
-	view_ = new osgViewer::View;
-	view_->setCamera( osgcamera );
-	view_->setSceneData( sceneroot_ );
-	view_->addEventHandler( new osgViewer::StatsHandler );
-
-	// Unlike Coin, default OSG headlight has zero ambiance
-	view_->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
-
-	osg::ref_ptr<osgGA::TrackballManipulator> manip =
-	    new osgGA::TrackballManipulator(
-		osgGA::StandardManipulator::DEFAULT_SETTINGS |
-		osgGA::StandardManipulator::SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT
-	    );
-
-	manip->setAutoComputeHomePosition( false );
-
-	view_->setCameraManipulator( manip.get() );
-    
-	compositeviewer_ = getCompositeViewer();
-	compositeviewer_->addView( view_ );
-	
-	// To put exaggerated bounding sphere radius offside
-	manip->setMinimumDistance( 0 );
-
-	// Camera projection must be initialized before computing home position
-	reSizeEvent( 0 );
-    }
-
     scene_ = newscene;
 }
 

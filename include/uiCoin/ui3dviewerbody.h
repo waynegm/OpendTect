@@ -88,6 +88,9 @@ public:
 
 protected:
     
+    void				setupHUD();
+    void				setupView();
+    
     static osgViewer::CompositeViewer*	getCompositeViewer();
     virtual osgGA::GUIActionAdapter&	getActionAdapter()	= 0;
     virtual osg::GraphicsContext*	getGraphicsContext()	= 0;
@@ -106,11 +109,12 @@ protected:
 
     RefMan<visBase::Camera>				camera_;
     RefMan<visBase::Scene>				scene_;
-    visBase::OsgRefMan<osg::Viewport>			viewport_;
     visBase::OsgRefMan<osg::Group>			sceneroot_;
     visBase::OsgRefMan<osgViewer::CompositeViewer>	compositeviewer_;
     visBase::OsgRefMan<osgViewer::View>			view_;
-    osg::Projection*					hudprojectionmatrix_;
+    visBase::OsgRefMan<osg::Viewport>			viewport_;
+    
+    visBase::OsgRefMan<osgViewer::View>			hudview_;
     RefMan<visBase::Transformation>			hudscene_;
 };
 

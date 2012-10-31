@@ -118,9 +118,13 @@ void* uiMain::mainThread()
 
 uiMain& uiMain::theMain()
 { 
-    if ( themain_ ) return *themain_;
-    pFreeFnErrMsg("FATAL: no uiMain and no qApp.","uiMain::theMain()");
+    if ( !themain_ )
+    {
+	pErrMsg( "FATAL: no uiMain and no qApp." );
 	QApplication::exit( -1 );
+    }
+    
+    return *themain_;
 }
 
 

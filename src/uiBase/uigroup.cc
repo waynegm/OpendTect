@@ -85,7 +85,7 @@ void uiGroup::removeChild( uiBaseObject* child )
     const int idx = children_.indexOf( child );
     
     child->setParent( 0 );
-    delete children_.remove( idx );
+    delete children_.removeSingle( idx );
 }
 
 

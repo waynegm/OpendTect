@@ -31,7 +31,7 @@ public:
 			: DahObj("") 	{ *this = d2t; }
     D2TModel&		operator =(const D2TModel&);
 
-    float		getTime(float d_ah) const;
+    float		getTime(float d_ah, const Track&) const;
     float		getVelocity(float d_ah) const;
     float		getDah(float time) const;
 
@@ -55,7 +55,7 @@ protected:
 
     TypeSet<float>	t_;
 
-    void		removeAux( int idx )	{ t_.remove(idx); }
+    void		removeAux( int idx )	{ t_.removeSingle(idx); }
     void		eraseAux()		{ t_.erase(); }
 
 protected:

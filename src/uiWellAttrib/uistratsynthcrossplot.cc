@@ -30,6 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "attribdescset.h"
 #include "attribengman.h"
 #include "attribprocessor.h"
+#include "commondefs.h"
 #include "datapointset.h"
 #include "posvecdataset.h"
 #include "datacoldef.h"
@@ -103,16 +104,15 @@ DataPointSet* uiStratSynthCrossplot::getData( const Attrib::DescSet& seisattrs,
 	    const_cast<Attrib::DescSet*>(&seisattrs)->removeDesc(tmpdesc->id());
     }
 
-    DataPointSet* dps = seisattrs.createDataPointSet(Attrib::DescSetup());
+    DataPointSet* dps = seisattrs.createDataPointSet(Attrib::DescSetup(),false);
     if ( !dps )
-	{ uiMSG().error(seisattrs.errMsg()); return false; }
-    dps->dataSet().add( new DataColDef(sKey::Depth()) );
-    const int depthcol = dps->nrCols() - 1;
+	{ uiMSG().error(seisattrs.errMsg()); return 0; }
+    dps->dataSet().insert( dps->nrFixedCols(),new DataColDef(sKey::Depth()) );
+    dps->dataSet().insert( dps->nrFixedCols()+1,
+	    	new DataColDef(Strat::LayModAttribCalc::sKeyModelIdx()) );
     for ( int iattr=0; iattr<seqattrs.size(); iattr++ )
 	dps->dataSet().add(
 		new DataColDef(seqattrs.attr(iattr).name(),toString(iattr)) );
-    dps->dataSet().add(
-	    	new DataColDef(Strat::LayModAttribCalc::sKeyModelIdx()) );
 
     for ( int isynth=0; isynth<synthdatas_.size(); isynth++ )
     {
@@ -139,22 +139,25 @@ DataPointSet* uiStratSynthCrossplot::getData( const Attrib::DescSet& seisattrs,
 
 	if ( isynth == 0 )
 	{
-	const int nrextr = extrwin.nrSteps() + 1;
-	for ( int iextr=0; iextr<nrextr; iextr++ )
-	{
-	    const float relz = extrwin.atIndex( iextr );
-	    for ( int itrc=0; itrc<nrmdls; itrc++ )
+	    const int nrextr = extrwin.nrSteps() + 1;
+	    for ( int iextr=0; iextr<nrextr; iextr++ )
 	    {
-		const SeisTrc& trc = *tbuf.get( itrc );
-		DataPointSet::DataRow dr;
-		dr.pos_.nr_ = trc.info().nr;
-		dr.pos_.set( trc.info().coord );
-		dr.pos_.z_ = lvltms[itrc] + relz;
-		dr.data_.setSize( dps->nrCols(), mUdf(float) );
-		dr.data_[depthcol] = d2tmodels[itrc]->getDepth( dr.pos_.z_ );
-		dps->addRow( dr );
+		const float relz = extrwin.atIndex( iextr );
+		for ( int itrc=0; itrc<nrmdls; itrc++ )
+		{
+		    const SeisTrc& trc = *tbuf.get( itrc );
+		    DataPointSet::DataRow dr;
+		    dr.pos_.nr_ = trc.info().nr;
+		    dr.pos_.set( trc.info().coord );
+		    dr.pos_.z_ = lvltms[itrc] + relz;
+		    dr.data_.setSize( dps->nrCols(), mUdf(float) );
+		    float dah = d2tmodels[itrc]->getDepth( dr.pos_.z_ );
+		    if ( SI().depthsInFeet() )
+			dah *= mToFeetFactorF;
+		    dr.data_[0] = dah;
+		    dps->addRow( dr );
+		}
 	    }
-	}
 	}
     }
 
@@ -182,7 +185,7 @@ bool uiStratSynthCrossplot::extractSeisAttribs( DataPointSet& dps,
     BufferString errmsg;
     PtrMan<Attrib::EngineMan> aem = createEngineMan( attrs );
 
-    PtrMan<Executor> exec = aem->getTableExtractor( dps, attrs, errmsg,0,false);
+    PtrMan<Executor> exec = aem->getTableExtractor(dps,attrs,errmsg,2,false);
     if ( !exec )                                                                
     {                                                                           
 	uiMSG().error( errmsg );                                                
@@ -217,6 +220,7 @@ bool uiStratSynthCrossplot::launchCrossPlot( const DataPointSet& dps,
 	   .add( "-" ).add( extrwin.stop ).add( "]" );
     uiDataPointSet::Setup su( wintitl, false );
     uiDataPointSet* uidps = new uiDataPointSet( this, dps, su, 0 );
+    uidps->showXY( false );
     seisattrfld_->descSet().fillPar( uidps->storePars() );
     uidps->setDeleteOnClose( true );
     uidps->show();

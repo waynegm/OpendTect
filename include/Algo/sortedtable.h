@@ -94,7 +94,7 @@ bool  SortedTable<IDT,T>::remove(IDT theid)
 
     if ( pos==-1 ) return false;
 
-    vals_.remove( pos );
+    vals_.removeSingle( pos );
     ids_.remove( pos );
 
     return true;
@@ -198,7 +198,7 @@ bool  SortedPointers<T>::remove(int id_)
 
     if ( pos==-1 ) return false;
 
-    vals.remove( pos );
+    vals.removeSingle( pos );
     ids.remove( pos );
 
     return true;

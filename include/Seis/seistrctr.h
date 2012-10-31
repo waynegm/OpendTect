@@ -79,6 +79,11 @@ mClass(Seis) SeisTrcTranslatorGroup : public TranslatorGroup
 {				isTranslatorGroup(SeisTrc)
 public:
     			mDefEmptyTranslatorGroupConstructor(SeisTrc)
+    
+    static const char*	sKeyDefault3D() { return "Cube"; }
+    static const char*	sKeyDefault2D()	{ return "LineSet"; }
+    static const char*	sKeyDefaultAttrib() { return "Attribute"; }
+    const char*		getSurveyDefaultKey(const IOObj*) const;
 };
 
 

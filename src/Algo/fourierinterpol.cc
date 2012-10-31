@@ -86,7 +86,7 @@ bool FourierInterpol1D::doWork( od_int64 start ,od_int64 stop, int thread )
 
     Array1D<float_complex>& interpvals = *arrs_[thread];
 
-    for ( int idpt=start; idpt<=stop; idpt++ )
+    for ( int idpt=(int) start; idpt<=stop; idpt++ )
     {
 	float_complex cplxval = pts_[idpt].val_;
 	if ( mIsUdf( cplxval ) ) 
@@ -117,7 +117,7 @@ bool FourierInterpol1D::doFinish( bool success )
 
     while ( arrs_.size() > 1 )
     {
-	Array1D<float_complex>& arr = *arrs_.remove(1);
+	Array1D<float_complex>& arr = *arrs_.removeSingle(1);
 	for ( int idx=0; idx<sz_; idx++ )
 	{
 	    float_complex val = arrs_[0]->get( idx );
@@ -172,7 +172,7 @@ bool FourierInterpol2D::doWork( od_int64 start ,od_int64 stop, int thread )
 
     Array2D<float_complex>& interpvals = *arrs_[thread];
 
-    for ( int idpt=start; idpt<=stop; idpt++ )
+    for ( int idpt=(int) start; idpt<=stop; idpt++ )
     {
 	float_complex cplxval = pts_[idpt].val_;
 	if ( mIsUdf( cplxval ) ) 
@@ -213,7 +213,7 @@ bool FourierInterpol2D::doFinish( bool success )
 
     while ( arrs_.size() > 1 )
     {
-	Array2D<float_complex>& arr = *arrs_.remove(1);
+	Array2D<float_complex>& arr = *arrs_.removeSingle(1);
 	for ( int idx=0; idx<szx_; idx++ )
 	{
 	    for ( int idy=0; idy<szy_; idy++ )
@@ -275,7 +275,7 @@ bool FourierInterpol3D::doWork( od_int64 start ,od_int64 stop, int thread )
 
     Array3DImpl<float_complex>& interpvals = *arrs_[thread];
 
-    for ( int idpt=start; idpt<=stop; idpt++ )
+    for ( int idpt=(int) start; idpt<=stop; idpt++ )
     {
 	float_complex cplxval = pts_[idpt].val_;
 	if ( mIsUdf( cplxval ) ) 
@@ -326,7 +326,7 @@ bool FourierInterpol3D::doFinish( bool success )
 
     while ( arrs_.size() > 1 )
     {
-	Array3DImpl<float_complex>& arr = *arrs_.remove(1);
+	Array3DImpl<float_complex>& arr = *arrs_.removeSingle(1);
 	for ( int idx=0; idx<szx_; idx++ )
 	{
 	    for ( int idy=0; idy<szy_; idy++ )

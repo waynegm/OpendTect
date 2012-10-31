@@ -117,7 +117,8 @@ void GeomIndexedShape::ColTabMaterial::updatePropertiesFrom( const Material* m )
 {
     const float diffintensity = m->getDiffIntensity( 0 );
     const float transparency = m->getTransparency( 0 );
-    for ( int idx=0; idx<mNrMaterials; idx++ )
+    const int materialsize = mMAX( coltab_->nrOfMaterial(), (mNrMaterials) );
+    for ( int idx=0; idx<materialsize; idx++ )
     {
 	coltab_->setDiffIntensity( diffintensity, idx );
 	coltab_->setTransparency( transparency, idx );
@@ -310,8 +311,8 @@ if ( geom->type_==Geometry::IndexedGeometry::type ) \
     else \
     { \
 	shape = list##s_[idy]; \
-	list##s_.remove( idy ); \
-	list##geoms_.remove( idy ); \
+	list##s_.removeSingle( idy ); \
+	list##geoms_.removeSingle( idy ); \
     } \
  \
     new##list##s += shape; \
@@ -322,7 +323,7 @@ if ( geom->type_==Geometry::IndexedGeometry::type ) \
 #define mRemoveOld( list ) \
     while ( list##s_.size() ) \
     { \
-	SoIndexedShape* shape = list##s_.remove(0); \
+	SoIndexedShape* shape = list##s_.removeSingle(0); \
  \
 	const int idx = childIndex( shape ); \
 	mDynamicCastGet(SoNormalBinding*, nb, idx>0 ? getChild(idx-1) : 0); \

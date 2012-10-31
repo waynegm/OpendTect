@@ -134,10 +134,19 @@ void uiFlatViewer::updateTransforms()
 {
     const uiRect viewrect = getViewRect();
 
-    const double xscale = viewrect.width()/wr_.width();
-    const double yscale = viewrect.height()/wr_.height();
-    const double xpos = viewrect.left()-xscale*wr_.left();
-    const double ypos = viewrect.top()-yscale*wr_.top();
+    uiWorldRect wr = wr_;
+    if ( wr.left() > wr.right() ) 
+	wr.swapHor();
+    if ( wr.bottom() < wr.top() ) 
+	wr.swapVer();
+
+    if ( mIsZero(wr_.width(),mDefEps) || mIsZero(wr_.height(),mDefEps) )
+        return;
+
+    const double xscale = viewrect.width()/wr.width();
+    const double yscale = viewrect.height()/wr.height();
+    const double xpos = viewrect.left()-xscale*wr.left();
+    const double ypos = viewrect.top()-yscale*wr.top();
 
     worldgroup_->setPos( uiWorldPoint( xpos, ypos ) );
     worldgroup_->setScale( (float) xscale, (float) yscale );
@@ -368,7 +377,7 @@ FlatView::AuxData* uiFlatViewer::removeAuxData( int idx )
 
     worldgroup_->remove( auxdata_[idx]->getDisplay(), true );
     auxdata_[idx]->removeDisplay();
-    return auxdata_.remove(idx);
+    return auxdata_.removeSingle(idx);
 }
 
 

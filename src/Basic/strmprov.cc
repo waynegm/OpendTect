@@ -164,6 +164,10 @@ bool ExecOSCmd( const char* comm, bool inconsole, bool inbg )
 #endif
 }
 
+#ifndef __msvc__
+//! Create Execute command
+const char* GetExecCommand(const char* prognm,const char* filenm);
+
 const char* GetExecCommand( const char* prognm, const char* filenm )
 {
     static BufferString cmd;
@@ -176,6 +180,7 @@ const char* GetExecCommand( const char* prognm, const char* filenm )
     cmd += " \'"; cmd += fp.fullPath( FilePath::Unix ); cmd += "\' ";
     return cmd;
 }
+#endif
 
 
 bool ExecuteScriptCommand( const char* prognm, const char* filenm )
@@ -193,8 +198,7 @@ bool ExecuteScriptCommand( const char* prognm, const char* filenm )
     cmd += filenm;
     cmd += "\"";
     return ExecOSCmd( cmd, true, inbg );
-#endif
-    
+#else
     cmd = GetExecCommand( prognm, filenm );
     StreamProvider strmprov( cmd );
 
@@ -207,6 +211,7 @@ bool ExecuteScriptCommand( const char* prognm, const char* filenm )
     }
 
     return true;
+#endif
 }
 
 
@@ -540,7 +545,7 @@ void StreamProvider::unLoad( const char* key, bool isid )
     {
 	int plid = getPLID( key, isid );
 	if ( plid < 0 ) return;
-	delete plds.remove( plid, false );
+	delete plds.removeSingle( plid, false );
     }
 }
 
@@ -626,17 +631,19 @@ StreamProvider::StreamProvider( const char* hostnm, const char* fnm,
 }
 
 
-void StreamProvider::set( const char* inp )
+void StreamProvider::set( const char* inpstr )
 {
     iscomm_ = isbad_ = false;
     hostname_.setEmpty(); fname_.setEmpty();
 
-    if ( !inp || !strcmp(inp,sStdIO()) || !strcmp(inp,sStdErr()) )
-	{ fname_ = inp ? inp : sStdIO(); return; }
-    else if ( !*inp )
+    FixedString inp = inpstr;
+
+    if ( !inp || inp==sStdIO() || inp==sStdErr() )
+	{ fname_ = inpstr ? inpstr : sStdIO(); return; }
+    else if ( inp.isEmpty() )
 	{ isbad_ = true; return; }
 
-    char* ptr = (char*)inp;
+    char* ptr = (char*)inpstr;
     mSkipBlanks( ptr );
     if ( *ptr == '@' ) { iscomm_ = true; ptr++; }
 

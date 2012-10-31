@@ -23,7 +23,9 @@ ________________________________________________________________________
 #include "strmoper.h"
 
 #ifdef __win__
-#include <direct.h>
+# include <direct.h>
+#else
+# include <unistd.h>
 #endif
 
 #ifndef OD_NO_QT
@@ -90,7 +92,8 @@ void RecursiveCopier::makeFileList( const char* dir )
 	BufferString relpath( srcdir.relativeFilePath(curdir.buf())
 						.toAscii().constData() );
 	filelist_.add( relpath );
-	makeFileList( curdir );
+	if ( !File::isLink(curdir) )
+	    makeFileList( curdir );
     }
 }
 
@@ -112,20 +115,16 @@ int RecursiveCopier::nextStep()
 
     FilePath srcfile( src_, filelist_.get(fileidx_) );
     FilePath destfile( dest_, filelist_.get(fileidx_) );
-    if ( isDirectory(srcfile.fullPath()) )
-    {
-	if ( !File::createDir(destfile.fullPath()) )
-	    mErrRet("Cannot create directory ",destfile.fullPath())
-
-	fileidx_++;
-	return MoreToDo();
-    }
-
     if ( File::isLink(srcfile.fullPath()) )
     {
 	BufferString linkval = linkValue( srcfile.fullPath() );
 	if ( !createLink(linkval,destfile.fullPath()) )
 	    mErrRet("Cannot create symbolic link ",destfile.fullPath())
+    }
+    else if ( isDirectory(srcfile.fullPath()) )
+    {
+	if ( !File::createDir(destfile.fullPath()) )
+	    mErrRet("Cannot create directory ",destfile.fullPath())
     }
     else if ( !File::copy(srcfile.fullPath(),destfile.fullPath()) )
 	    mErrRet("Cannot create file ", destfile.fullPath())
@@ -446,6 +445,7 @@ bool changeDir( const char* dir )
 #endif
 }
 
+
 bool makeWritable( const char* fnm, bool yn, bool recursive )
 {
     BufferString cmd;
@@ -601,7 +601,11 @@ const char* getCurrentPath()
 #ifndef OD_NO_QT
     pathstr = QDir::currentPath().toAscii().constData();
 #else
-    pFreeFnErrMsg(not_implemented_str,"getCurrentPath");
+# ifdef __win__
+    _getcwd( pathstr.buf(), pathstr.minBufSize() );
+# else
+    getcwd( pathstr.buf(), pathstr.minBufSize() );
+# endif
 #endif
     return pathstr.buf();
 }

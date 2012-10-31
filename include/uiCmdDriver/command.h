@@ -44,6 +44,7 @@ public:
     			Command(CmdDriver& cmddrv)
 			    : drv_(cmddrv)
     			{}
+    virtual		~Command()			{}
 
     virtual const char* name() const			= 0; 			
     virtual bool	act(const char* parstr)		= 0;
@@ -306,7 +307,7 @@ protected:
 	for ( int idx=objsfound.size()-1; idx>=0; idx-- ) \
 	{ \
 	    if ( idx != selidx ) \
-		objsfound.remove( idx );  \
+		objsfound.removeSingle( idx );  \
 	} \
     } \
 }
@@ -565,7 +566,7 @@ protected:
 	StringProcessor strproc( valstr ); \
 	const char* quote = strproc.convertToDouble() ? "" : "\""; \
 	mLogStrm << " -->> " << identnm << (isarg ? "'" : "") \
-		 << (strcmp(identnm,"") ? " = " : "") \
+		 << (FixedString(identnm).isEmpty() ? "" : " = " ) \
 		 << quote << valstr << quote << std::endl; \
     }
 
@@ -743,7 +744,7 @@ protected:
 	mDynamicCastGet( const objcls2*, uiobj2, objsfound[idx] ); \
 	mDynamicCastGet( const objcls3*, uiobj3, objsfound[idx] ); \
 	if ( !uiobj1 && !uiobj2 && !uiobj3 ) \
-	    objsfound.remove( idx ); \
+	    objsfound.removeSingle( idx ); \
     } \
 \
     int errkeyidx; \

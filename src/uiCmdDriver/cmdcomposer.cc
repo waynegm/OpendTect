@@ -66,11 +66,12 @@ BufferString CmdComposer::factoryKey( const CallBacker* caller,
 BufferString CmdComposer::createFactoryKey( const Classifier* classifier,
 					    const char* keyword )
 {
+    FixedString classifiername = classifier->name();
     classifiers.insertAt( classifier, 0 );
     for ( int idx=classifiers.size()-1; idx>0; idx-- )
     {
-	if ( !strcmp(classifiers[idx]->name(), classifier->name()) )
-	    delete classifiers.remove( idx );
+	if ( classifiers[idx]->name()==classifiername )
+	    delete classifiers.removeSingle( idx );
     }
 
     BufferString fackey;
@@ -166,7 +167,7 @@ bool CmdComposer::accept( const CmdRecEvent& ev )
 
 	if ( !refnrstack_.isEmpty() && ev.refnr_==refnrstack_[0] )
 	{
-	    refnrstack_.remove( 0 );
+	    refnrstack_.removeSingle( 0 );
 
 	    if ( ev.begin_ )
 		// in case accept(ev) was called tail-recursively
@@ -202,9 +203,10 @@ bool CmdComposer::accept( const CmdRecEvent& ev )
 
 bool CmdComposer::traceSrcWin( CmdRecEvent& ev ) const
 {
+    FixedString evidstr( ev.idstr_ );
     for ( int idx=0; idx<eventlist_.size(); idx++ )
     {
-	if ( !strcmp(eventlist_[idx]->idstr_, ev.idstr_) )
+	if ( eventlist_[idx]->idstr_==evidstr )
 	{
 	    ev.srcwin_ = eventlist_[idx]->srcwin_;
 	    ev.openqdlg_ = eventlist_[idx]->openqdlg_;
@@ -243,8 +245,8 @@ void CmdComposer::addToEventList( const CmdRecEvent& ev )
 	    return;
     }
 
-    delete eventlist_.remove( sz-2 );
-    delete eventlist_.remove( sz-3 );
+    delete eventlist_.removeSingle( sz-2 );
+    delete eventlist_.removeSingle( sz-3 );
 }
 
 
@@ -261,7 +263,7 @@ void CmdComposer::shrinkEventList( int firstnr, int lastnr )
     for ( int idx=sz-1; idx>=0; idx-- )
     {
 	if ( idx>=firstidx && idx<=lastidx )
-	    delete eventlist_.remove( idx );
+	    delete eventlist_.removeSingle( idx );
     }
 }
 

@@ -134,18 +134,15 @@ bool FSStoFault3DConverter::convert()
 {
     fault3d_.geometry().selectAllSticks();
     fault3d_.geometry().removeSelectedSticks( setup_.addtohistory_ );
-    bool selhorpicked;
-
+    bool selhorpicked = false;
     for ( int sidx=0; sidx<fss_.nrSections(); sidx++ )
     {
-	const int sid = fss_.sectionID( sidx );
+	const EM::SectionID sid = fss_.sectionID( sidx );
 	readSection( sid );
-
-	if ( !sidx )
+	if ( sidx==0 )
 	    selhorpicked = preferHorPicked();
 
-	selectSticks( selhorpicked );
-		
+	selectSticks( selhorpicked );		
 	if ( setup_.sortsticks_ )
 	    geometricSort( selhorpicked ? MAXDOUBLE : 0.0 );
 
@@ -405,14 +402,14 @@ void FSStoFault3DConverter::selectSticks( bool selhorpicked )
 	    		   sticks_[idx]->pickedOnHorizon();
 
 	if ( ishorpicked != selhorpicked )
-	    delete sticks_.remove( idx );
+	    delete sticks_.removeSingle( idx );
     }
     if ( selhorpicked )
 	return;
 
     bool useinlcrlsep = setup_.useinlcrlslopesep_;
     double slopethres = setup_.stickslopethres_;
-    bool inlsteeper;
+    bool inlsteeper = true;
 
     if ( useinlcrlsep )
     {
@@ -468,7 +465,7 @@ void FSStoFault3DConverter::selectSticks( bool selhorpicked )
 	    if ( (stick.pickedOnInl() && inlsteeper==selhorsticks) ||
 		 (stick.pickedOnCrl() && inlsteeper!=selhorsticks) )
 	    {
-		delete sticks_.remove( idx );
+		delete sticks_.removeSingle( idx );
 		continue;
 	    }
 	    if ( mIsUdf(setup_.stickslopethres_) )
@@ -477,7 +474,7 @@ void FSStoFault3DConverter::selectSticks( bool selhorpicked )
 
 	const double slope = stick.slope( setup_.zscale_ );
 	if ( !mIsUdf(slope) && (slope<fabs(slopethres)) != selhorsticks )
-	    delete sticks_.remove( idx );
+	    delete sticks_.removeSingle( idx );
     }
 }
 

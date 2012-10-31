@@ -152,7 +152,7 @@ void uiSeis2DFileMan::lineSel( CallBacker* )
 	for ( int ida=0; ida<strs2rem.size(); ida++ )
 	{
 	    const int index = sharedattribs.indexOf( strs2rem.get(ida) );
-	    sharedattribs.remove( index );
+	    sharedattribs.removeSingle( index );
 	}
     }
 
@@ -265,7 +265,9 @@ void uiSeis2DFileMan::makeDefault( CallBacker* )
     if ( !objinfo_ || !objinfo_->ioObj() ) return;
 
     BufferString attrnm = attrfld_->getText();
-    SI().getPars().set( sKey::DefAttribute(), attrnm );
+    SI().getPars().set(
+       IOPar::compKey(sKey::Default(),
+		      SeisTrcTranslatorGroup::sKeyDefaultAttrib()), attrnm );
     SI().savePars();
 }
 

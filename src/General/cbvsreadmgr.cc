@@ -35,7 +35,7 @@ CBVSReadMgr::CBVSReadMgr( const char* fnm, const CubeSampling* cs,
 {
     bool foundone = false;
 
-    if ( !fnm || !strcmp(fnm,StreamProvider::sStdIO()) )
+    if ( !fnm || FixedString(fnm)==StreamProvider::sStdIO() )
     {
 	addReader( &std::cin, cs, glob_info_only, forceusecbvsinfo );
 	if ( readers_.isEmpty() )
@@ -148,8 +148,8 @@ int CBVSReadMgr::pruneReaders( const CubeSampling& cs )
 	if ( !localinfo.geom_.includesInline(-1)
 	  && !localinfo.geom_.includesInline(-2) )
 	{
-	    delete readers_.remove( idx );
-	    fnames_.remove( idx );
+	    delete readers_.removeSingle( idx );
+	    fnames_.removeSingle( idx );
 	    idx--;
 	}
     }

@@ -21,6 +21,7 @@ ________________________________________________________________________
 #define mRounded(typ,x)		roundOff<typ>( x )
 #define mNINT32(x)		mRounded( od_int32, x )
 #define mNINT64(x)		mRounded( od_int64, x )
+#define mCast(tp,v)		((tp)(v))
 
 #define mSWAP(x,y,tmp)		{ tmp = x; x = y; y = tmp; }
 #define mMAX(x,y)		( (x)>(y) ? (x) : (y) )
@@ -53,6 +54,24 @@ ________________________________________________________________________
 #ifndef M_SQRT1_2
 # define M_SQRT1_2	0.70710678118654752440
 #endif
+
+//Float versions
+#ifndef M_PIf
+# define M_PIf		3.14159265358979323846f
+#endif
+
+#ifndef M_PI_2f
+# define M_PI_2f	1.57079632679489661923f
+#endif
+
+#ifndef M_PI_4f
+# define M_PI_4f	0.78539816339744830962f
+#endif
+
+#ifndef M_SQRT1_2f
+# define M_SQRT1_2f	0.70710678118654752440f
+#endif
+
 
 #ifndef MAXFLOAT
 # define MAXFLOAT	3.4028234663852886e+38F

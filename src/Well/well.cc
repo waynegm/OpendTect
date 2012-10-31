@@ -25,7 +25,11 @@ const char* Well::Info::sKeyoper()	{ return "Operator"; }
 const char* Well::Info::sKeystate()	{ return "State"; }
 const char* Well::Info::sKeycounty()	{ return "County"; }
 const char* Well::Info::sKeycoord()	{ return "Surface coordinate"; }
+const char* Well::Info::sKeykbelev()	{ return "Reference Datum elevation"; }
 const char* Well::Info::sKeyelev()	{ return "Surface elevation"; }
+const char* Well::Info::sKeyreplvel()	{ return "Replacement velocity"; }
+const char* Well::Info::sKeygroundelev(){ return "Ground level elevation"; }
+const char* Well::Info::sKeyreplveldz()	{ return "Replacement velocity dz"; }
 const char* Well::D2TModel::sKeyTimeWell()	{ return "=Time"; }
 const char* Well::D2TModel::sKeyDataSrc()	{ return "Data source"; }
 const char* Well::Marker::sKeyDah()	{ return "Depth along hole"; }
@@ -400,7 +404,7 @@ void Well::Log::removeTopBottomUdfs()
     {
 	if ( !mIsUdf(val_[idx]) )
 	    break;
-	dah_.remove( idx ); val_.remove( idx );
+	dah_.removeSingle( idx ); val_.removeSingle( idx );
     }
 
     if ( defrg.start == 0 )
@@ -876,7 +880,7 @@ bool Well::Track::alwaysDownward() const
 }
 
 
-void Well::Track::toTime( const D2TModel& d2t )
+void Well::Track::toTime( const D2TModel& d2t, const Track& track )
 {
     TypeSet<float> newdah;
     TypeSet<Coord3> newpos;
@@ -924,7 +928,7 @@ void Well::Track::toTime( const D2TModel& d2t )
     for ( int idx=0; idx<dah_.size(); idx++ )
     {
 	Coord3& pt = pos_[idx];
-	pt.z = d2t.getTime( dah_[idx] );
+	pt.z = d2t.getTime( dah_[idx], track );
     }
 
     zistime_ = true;
@@ -943,8 +947,27 @@ Well::D2TModel& Well::D2TModel::operator =( const Well::D2TModel& d2t )
 }
 
 
-float Well::D2TModel::getTime( float dh ) const
-{ return TimeDepthModel::getTime( dah_.arr(), t_.arr(), size(), dh ); }
+float Well::D2TModel::getTime( float dh, const Track& track ) const
+{
+    const int dtsize = size();
+    if ( track.nrPoints() < 2 || dtsize < 2 )
+	return TimeDepthModel::getTime( dah_.arr(), t_.arr(), dtsize, dh );
+    else
+    {
+	int idahtop = 0;
+	idahtop = IdxAble::getLowIdx(dah_,dtsize,dh);
+	if ( idahtop < 0 )
+	    idahtop = 0;
+	else if ( idahtop >= (dtsize-2) )
+	    idahtop = dtsize-2;
+
+	const float ztop = track.getPos(dah_[idahtop]).z;
+	const float zbase= track.getPos(dah_[idahtop+1]).z;
+	const float curvel = ( zbase - ztop ) / ( t_[idahtop+1] - t_[idahtop] );
+
+	return t_[idahtop] + ( track.getPos(dh).z - ztop ) / curvel;
+    }
+}
 
 
 float Well::D2TModel::getDah( float time ) const
@@ -976,7 +999,11 @@ void Well::Info::fillPar(IOPar& par) const
     surfacecoord.fill( coord.buf() );
     par.set( sKeycoord(), coord );
 
+    par.set( sKeykbelev(), kbelev );
     par.set( sKeyelev(), surfaceelev );
+    par.set( sKeyreplvel(), replvel );
+    par.set( sKeygroundelev(), groundelev );
+    par.set( sKeyreplveldz(), replveldz );
 }
 
 void Well::Info::usePar(const IOPar& par)
@@ -991,6 +1018,10 @@ void Well::Info::usePar(const IOPar& par)
     par.get( sKeycoord(), coord );
     surfacecoord.use( coord );
 
+    par.get( sKeykbelev(), kbelev );
     par.get( sKeyelev(), surfaceelev );
+    par.get( sKeyreplvel(), replvel );
+    par.get( sKeygroundelev(), groundelev );
+    par.get( sKeyreplveldz(), replveldz );
 }
 

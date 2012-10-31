@@ -145,7 +145,7 @@ void BinIDValueSet::randomSubselect( od_int64 maxsz )
 	{ setEmpty(); return; }
 
     const bool buildnew = ((od_int64)maxsz) < (orgsz / ((od_int64)2));
-    Stats::RandGen::subselect( idxs, orgsz, maxsz );
+    Stats::randGen().subselect( idxs, orgsz, maxsz );
     TypeSet<Pos> poss;
     if ( buildnew )
     {
@@ -679,11 +679,11 @@ void BinIDValueSet::remove( const Pos& pos )
     if ( pos.j < 0 || pos.j >= crls.size() )
 	return;
 
-    crls.remove( pos.j );
+    crls.removeSingle( pos.j );
     if ( crls.size() )
     {
 	if ( nrvals_ )
-	    getValSet(pos).remove( pos.j*nrvals_, (pos.j+1)*nrvals_ - 1 );
+	    getValSet(pos).removeRange( pos.j*nrvals_, (pos.j+1)*nrvals_ - 1 );
     }
     else
     {
@@ -754,9 +754,43 @@ void BinIDValueSet::removeVal( int validx )
 	TypeSet<float>& vals = getValSet(iinl);
 	TypeSet<int>& crls = getCrlSet(iinl);
 	for ( int icrl=crls.size()-1; icrl>=0; icrl-- )
-	    vals.remove( nrvals_*icrl+validx );
+	    vals.removeSingle( nrvals_*icrl+validx );
     }
     const_cast<int&>(nrvals_)--;
+}
+
+bool BinIDValueSet::insertVal( int validx )
+{
+    if ( validx < 0 || validx >= nrvals_ )
+	return false;
+    
+    const int oldnrvals = nrvals_;
+    const_cast<int&>( nrvals_ ) = oldnrvals+1;
+
+    for ( int iinl=0; iinl<inls_.size(); iinl++ )
+    {
+	const int nrcrl = getCrlSet(iinl).size();
+	TypeSet<float>* oldvals = valsets_[iinl];
+	mDeclareAndTryAlloc( TypeSet<float>*, newvals,
+			     TypeSet<float>( nrcrl*nrvals_, mUdf(float) ) );
+	if ( !newvals )
+	    return false;
+	valsets_.replace( iinl, newvals );
+	float* oldarr = oldvals->arr();
+	float* newarr = newvals->arr();
+	for ( int icrl=0; icrl<nrcrl; icrl++ )
+	{
+	    memcpy( newarr+(icrl*nrvals_), oldarr+(icrl*oldnrvals),
+		    (validx) * sizeof(float) );
+	    memcpy( newarr+(icrl*nrvals_+validx+1),
+		    oldarr+(icrl*oldnrvals+validx+1),
+		    (oldnrvals-validx) * sizeof(float) );
+	}
+
+	delete oldvals;
+    }
+
+    return true;
 }
 
 
@@ -938,8 +972,8 @@ void BinIDValueSet::remove( const HorSampling& hrg, bool removeinside )
 		isin = crlrg.includes(crl,false) && crlrg.snap( crl )==crl;
 		if ( isin==removeinside )
 		{
-		    crls.remove( idy );
-		    vals.remove( idy*nrvals_, idy*nrvals_+nrvals_-1 );
+		    crls.removeSingle( idy );
+		    vals.removeRange( idy*nrvals_, idy*nrvals_+nrvals_-1 );
 		}
 	    }
 	}
@@ -949,11 +983,9 @@ void BinIDValueSet::remove( const HorSampling& hrg, bool removeinside )
 
 void BinIDValueSet::removeLine( int idx )
 {
-    inls_.remove( idx );
-    delete crlsets_[idx];
-    crlsets_.remove( idx );
-    delete valsets_[idx];
-    valsets_.remove( idx );
+    inls_.removeSingle( idx );
+    delete crlsets_.removeSingle( idx );
+    delete valsets_.removeSingle( idx );
 }
 
 

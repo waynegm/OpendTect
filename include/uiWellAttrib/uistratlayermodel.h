@@ -67,6 +67,8 @@ public:
     Notifier<uiStratLayerModel>	newModels;
     Notifier<uiStratLayerModel>	levelChanged;
     Notifier<uiStratLayerModel>	waveletChanged;
+    Notifier<uiStratLayerModel> saveRequired;   // CallBacker: CBCapsule<IOPar>
+    Notifier<uiStratLayerModel> retrieveRequired;// CallBacker: CBCapsule<IOPar>
 
     bool			checkUnscaledWavelet();
 
@@ -79,6 +81,9 @@ public:
 
     //Utility
     SyntheticData*		getCurrentSyntheticData() const;
+
+    void			setSynthView(const uiWorldRect& wr);
+    const uiWorldRect&		curSynthView() const; 
 
 protected:
 
@@ -119,6 +124,10 @@ protected:
     void			manPropsCB(CallBacker*);
 
     bool			closeOK();
+    
+    void			fillDisplayPars(IOPar&) const;
+    void			fillWorkBenchPars(IOPar&) const;
+    bool			useDisplayPars(const IOPar&);
 
 public:
 

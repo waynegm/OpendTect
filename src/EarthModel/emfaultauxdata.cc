@@ -190,9 +190,9 @@ void FaultAuxData::updateDataInfoFile( Action act, int sdidx,
     {
 	if ( act==Remove )
 	{
-	    delete pars.remove(existparidx);
-	    sdusernames_.remove( existparidx );
-    	    sdfilenames_.remove( existparidx );
+	    delete pars.removeSingle(existparidx);
+	    sdusernames_.removeSingle( existparidx );
+    	    sdfilenames_.removeSingle( existparidx );
 	}
 	else
 	{
@@ -310,7 +310,7 @@ Executor* FaultAuxData::dataLoader( int selidx )
 	return 0; 
 
     PtrMan<EMSurfaceTranslator> tr = 
-	(EMSurfaceTranslator*)ioobj->getTranslator();
+	(EMSurfaceTranslator*)ioobj->createTranslator();
     if ( !tr || !tr->startRead(*ioobj) )
 	return 0;
 

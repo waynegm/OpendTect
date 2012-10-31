@@ -178,10 +178,11 @@ int DisplayLinkManager::getDisplayPropertyLinkID( int idx ) const
 
 int DisplayLinkManager::addDisplayPropertyLink( DisplayPropertyLink* lnk )
 {
+    FixedString lnktype = lnk->type();
     Threads::MutexLocker lock( lock_ );
     for ( int idx=propertylinks_.size()-1; idx>=0; idx-- )
     {
-	if ( strcmp(propertylinks_[idx]->type(), lnk->type() ) )
+	if ( propertylinks_[idx]->type()!=lnktype )
 	    continue;
 
 	//If we have at least one holder in common, we can combine them
@@ -231,8 +232,8 @@ void DisplayLinkManager::removeDisplayPropertyLink( int id )
     if ( idx<0 )
 	return;
 
-    delete propertylinks_.remove( idx );
-    propertylinkids_.remove( idx );
+    delete propertylinks_.removeSingle( idx );
+    propertylinkids_.removeSingle( idx );
 }
 
 
@@ -268,7 +269,7 @@ void DisplayLinkManager::removeHolder( DisplayPropertyHolder* hldr )
 		link.removeHolder( hldr );
 		if ( !link.isValid() )
 		{
-		    delete propertylinks_.remove( idx );
+		    delete propertylinks_.removeSingle( idx );
 		    break;
 		}
 	    }

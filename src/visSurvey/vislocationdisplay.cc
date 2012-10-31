@@ -71,6 +71,7 @@ LocationDisplay::LocationDisplay()
     , polyline_(0)
     , needline_(false)
     , pickedsobjid_(-1)
+    , voiidx_(-1)
 {
     group_->ref();
     addChild( group_->getInventorNode() );
@@ -149,7 +150,31 @@ void LocationDisplay::setSetMgr( Pick::SetMgr* mgr )
 void LocationDisplay::fullRedraw( CallBacker* )
 {
     if ( !set_ ) return;
+    
 
+    if ( datatransform_ && datatransform_->needsVolumeOfInterest() )
+    {
+	CubeSampling cs( false );
+	for ( int pidx=0; pidx<set_->size(); pidx++ )
+	{
+	    Pick::Location loc = (*set_)[pidx];
+	    BinID bid = SI().transform( loc.pos );
+	    const float zval = loc.pos.z;
+	    cs.hrg.include( bid );
+	    cs.zrg.include( zval, false );
+	}
+
+	if ( set_->size() )
+	{
+	    if ( voiidx_<0 )
+		voiidx_ = datatransform_->addVolumeOfInterest( cs, true );
+	    else
+		datatransform_->setVolumeOfInterest( voiidx_, cs, true );
+
+	    datatransform_->loadDataIfMissing( voiidx_ );
+	}
+    }
+    
     getMaterial()->setColor( set_->disp_.color_ );
     const int nrpicks = set_->size();
 
@@ -650,7 +675,7 @@ bool LocationDisplay::addPick( const Coord3& pos, const Sphere& dir,
 	insertpick = locidx >= 0;
 
 	sowinghistory.insert( 0, pos );
-	sowinghistory.remove( 2 );
+	sowinghistory.removeSingle( 2 );
     }
     else
 	sower_->alternateSowingOrder( false );
@@ -692,7 +717,7 @@ void LocationDisplay::removePick( int removeidx )
 
     Pick::SetMgr::ChangeData cd( Pick::SetMgr::ChangeData::ToBeRemoved,
 				 set_, removeidx );
-    set_->remove( removeidx );
+    set_->removeSingle( removeidx );
     picksetmgr_->reportChange( 0, cd );
     
     if ( needline_ ) createLine();
@@ -872,8 +897,9 @@ bool LocationDisplay::setZAxisTransform( ZAxisTransform* zat, TaskRunner* tr )
 	datatransform_->ref();
     }
 
+    
     fullRedraw();
-    showAll( !datatransform_ || !datatransform_->needsVolumeOfInterest() ); 
+    showAll( datatransform_ && datatransform_->needsVolumeOfInterest() ); 
     return true;
 }
 

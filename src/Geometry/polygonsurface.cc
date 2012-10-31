@@ -121,10 +121,10 @@ bool PolygonSurface::removePolygon( int polygonnr )
 {
     mGetValidPolygonIdx( polygonidx, polygonnr, 0, false );
 
-    polygons_.remove( polygonidx );
-    polygonnormals_.remove( polygonidx );
-    firstknots_.remove( polygonidx );
-    concavedirs_.remove( polygonidx );
+    polygons_.removeSingle( polygonidx );
+    polygonnormals_.removeSingle( polygonidx );
+    firstknots_.removeSingle( polygonidx );
+    concavedirs_.removeSingle( polygonidx );
 
     triggerNrPosCh( RowCol(polygonidx,PolygonRemove).toInt64() );
     if ( blocksCallBacks() )
@@ -174,7 +174,7 @@ bool PolygonSurface::removeKnot( const RowCol& rc )
     if ( polygons_[polygonidx]->size() <= 1 )
 	return removePolygon( rc.row );
 
-    polygons_[polygonidx]->remove( knotidx );
+    polygons_[polygonidx]->removeSingle( knotidx );
     triggerNrPosCh( RowCol(polygonidx,PolygonChange).toInt64() );
     
     return true;

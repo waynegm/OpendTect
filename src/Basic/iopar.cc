@@ -81,8 +81,8 @@ bool IOPar::isEqual( const IOPar& iop, bool worder ) const
 	}
 	else
 	{
-	    const char* res = iop.find( getKey(idx) );
-	    if ( !res || strcmp(res,getValue(idx)) )
+	    FixedString res = iop.find( getKey(idx) );
+	    if ( !res || res!=getValue(idx) )
 		return false;
 	}
     }
@@ -111,17 +111,17 @@ int IOPar::indexOf( const char* key ) const
 }
 
 
-const char* IOPar::getKey( int nr ) const
+FixedString IOPar::getKey( int nr ) const
 {
     if ( nr >= size() ) return "";
-    return keys_.get( nr ).buf();
+    return FixedString(keys_.get( nr ).buf() );
 }
 
 
-const char* IOPar::getValue( int nr ) const
+FixedString IOPar::getValue( int nr ) const
 {
     if ( nr >= size() ) return "";
-    return vals_.get( nr ).buf();
+    return FixedString(vals_.get( nr ).buf() );
 }
 
 
@@ -151,7 +151,7 @@ void IOPar::setEmpty()
 void IOPar::remove( int idx )
 {
     if ( idx >= size() ) return;
-    keys_.remove( idx ); vals_.remove( idx );
+    keys_.removeSingle( idx ); vals_.removeSingle( idx );
 }
 
 
@@ -626,16 +626,16 @@ template <class T>
 static bool iopget_scaled( const IOPar& iop, const char* s,
 			   T** vptrs, int nrvals, T sc, bool setudf )
 {
-    const char* ptr = iop.find( s );
+    FixedString ptr = iop.find( s );
     bool havedata = false;
-    if ( setudf || (ptr && *ptr) )
+    if ( setudf || !ptr.isEmpty() )
     {
 	FileMultiString fms = ptr;
 	for ( int idx=0; idx<nrvals; idx++ )
 	{
 	    ptr = fms[idx];
 	    T& f( *(vptrs[idx]) );
-	    if ( *ptr )
+	    if ( !ptr.isEmpty() )
 	    {
 		havedata = true;
 		Conv::udfset( f, ptr );
@@ -1090,7 +1090,7 @@ bool IOPar::write( const char* fnm, const char* typ ) const
 bool IOPar::write( std::ostream& strm, const char* typ ) const
 {
 
-    if ( typ && !strcmp(typ,sKeyDumpPretty()) )
+    if ( typ && FixedString(typ)==sKeyDumpPretty() )
 	dumpPretty( strm );
     else
     {

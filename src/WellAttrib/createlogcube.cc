@@ -39,7 +39,7 @@ LogCubeCreator::LogCubeCreator( const Well::Data& wd )
     if ( !wtextr.execute() )
 	pErrMsg( "unable to extract position" );
     wtextr.getBIDs( binids_ );
-    extractparams_.setFixedRange( SI().zRange( true ), true );
+    extractparams_.setFixedRange( SI().zRange(true), SI().zDomain().isTime() );
 }
 
 
@@ -52,7 +52,7 @@ LogCubeCreator::~LogCubeCreator()
 void LogCubeCreator::setInput( ObjectSet<LogCubeData>& lcds, int nrdupltrcs )
 {
     while ( !lcds.isEmpty() )
-	logdatas_ += lcds.remove(0);
+	logdatas_ += lcds.removeSingle(0);
 
     nrduplicatetrcs_ = nrdupltrcs;
 }
@@ -129,8 +129,8 @@ bool LogCubeCreator::writeLog2Cube( const LogCubeData& lcd ) const
     const Well::D2TModel* d2t = wd_.d2TModel();
     if ( SI().zIsTime() && !extractparams_.isInTime() && d2t )
     {
-	zrg.start = d2t->getTime( zrg.start );
-	zrg.stop = d2t->getTime( zrg.stop );
+	zrg.start = d2t->getTime( zrg.start, wd_.track() );
+	zrg.stop = d2t->getTime( zrg.stop, wd_.track() );
     }
     zrg.step = trc.info().sampling.step;
     for ( int idztrc=0; idztrc<trc.size(); idztrc++ )

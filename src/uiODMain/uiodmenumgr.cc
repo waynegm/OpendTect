@@ -172,7 +172,7 @@ void uiODMenuMgr::enableActButton( bool yn )
 { \
     while ( !set.isEmpty() ) \
     { \
-	uiPopupMenu* pmnu = set.remove(0); \
+	uiPopupMenu* pmnu = set.removeSingle(0); \
 	if ( pmnu ) delete pmnu; \
     } \
 }
@@ -380,6 +380,7 @@ void uiODMenuMgr::fillManMenu()
 	    		"man_strat" )
     mInsertPixmapItem( manmnu_, "Wa&velets ...", mManWvltMnuItm, "man_wvlt" )
     mInsertPixmapItem( manmnu_, "&Wells ...", mManWellMnuItm, "man_wll"  )
+    manmnu_->insertSeparator();
 }
 
 

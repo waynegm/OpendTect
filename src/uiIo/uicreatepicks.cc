@@ -138,6 +138,24 @@ bool uiGenPosPicks::acceptOK( CallBacker* c )
 
     dps_ = new DataPointSet( *prov, ObjectSet<DataColDef>(), filt );
     mRestorCursor();
+    
+    const od_int64 dpssize = dps_->size();
+    if ( dpssize>50000 )
+    {
+	BufferString msg( "Pickset would contain " );
+	msg += dpssize;
+	msg += " points which might consume unexpected time & memory.";
+	msg += "Do you want to continue?";
+	if ( !uiMSG().askGoOn(msg) )
+	{
+	    mRestorCursor();
+	    delete dps_; dps_ = 0;
+	    return false;
+	}
+    }
+
+    dps_ = new DataPointSet( *prov, ObjectSet<DataColDef>(), filt );
+    mRestorCursor();
     if ( dps_->isEmpty() )
 	{ delete dps_; dps_ = 0; mErrRet("No matching locations found") }
 
@@ -238,14 +256,13 @@ void uiGenRandPicks2D::horSel( uiComboBox* sel, uiComboBox* tosel )
     const char* curnm = tosel->text();
     const int idx = hornms_.indexOf( nm );
     BufferStringSet hornms( hornms_ );
-    BufferString* bs = 0;
-    if ( idx >= 0 ) bs = hornms.remove( idx );
+    
+    if ( idx >= 0 ) hornms.removeSingle( idx );
 
     tosel->setEmpty();
     tosel->addItem( "Select" );
     tosel->addItems( hornms );
     tosel->setCurrentItem( curnm );
-    if ( bs ) delete bs;
 }
 
 

@@ -29,21 +29,31 @@ public:
     void			makeFileList(const char* zipfile);
     const BufferStringSet&	getFileList() const	{ return filelist_; }
 
-    bool			unZipArchive(const char* src,const char* dest,
+    static bool			unZipArchive(const char* src,const char* dest,
+	    				     BufferString& errmsg,
 					     TaskRunner* tr=0);
-    bool			unZipFile(const char* ziparchive,
-					  const char* fnm,const char* path);
+    static bool			unZipFile(const char* ziparchive,
+					  const char* fnm,const char* path,
+					  BufferString& errmsg);
 
-    bool			makeZip(const char* zipfilenm,
-					BufferStringSet&,
-				        TaskRunner* tr=0,
+    static bool			makeZip(const char* zipfilenm,
+					const BufferStringSet&,
+				        BufferString& errmsg,	
+					TaskRunner* tr=0,
 					ZipHandler::CompLevel c=
-							    ZipHandler::Normal);
-    bool			appendToArchive(const char* zipfile,
+					ZipHandler::Normal);
+    static bool			makeZip(const char* zipfilenm,
+					const char* tozip,
+					BufferString& errmsg,
+					TaskRunner* tr=0,
+					ZipHandler::CompLevel c=
+					ZipHandler::Normal);
+    static bool			appendToArchive(const char* zipfile,
 						const char* toappend,
+						BufferString& errmsg,
 						TaskRunner* tr=0,
 						ZipHandler::CompLevel c=
-							    ZipHandler::Normal);
+						ZipHandler::Normal);
 
 protected:
 
@@ -53,51 +63,52 @@ protected:
     BufferString		errmsg_;
     BufferStringSet		filelist_;
     BufferString		filelistname_;
-    bool			needfilelist_ ;
+    bool				needfilelist_ ;
 
-    ZipHandler&			ziphdler_;
 };
 
 
 mClass(Basic) Zipper : public Executor
 {
 public:
-				 Zipper(ZipHandler& zh)
-				 : Executor( "Compressing Files" )
-				 , ziphd_(zh)
-				 , nrdone_(0)	{}
+				Zipper(ZipHandler& zh)
+				: Executor( "Compressing Files" )
+				, ziphd_(zh)
+				, nrdone_(0)
+				, nrdir_(0)			{}
 
-    const char*			 message() const;
-    od_int64			 nrDone() const;
-    const char*			 nrDoneText() const;
-    od_int64			 totalNr() const;
+    const char*			message() const;
+    od_int64			nrDone() const;
+    const char*			nrDoneText() const;
+    od_int64			totalNr() const;
 
 protected:
 
-    int				 nextStep();
-    ZipHandler&			 ziphd_;
-    int				 nrdone_;
+    od_int32				nextStep();
+    ZipHandler&			ziphd_;
+    od_int32				nrdone_;
+    od_int32				nrdir_;
 };
 
 
 mClass(Basic) UnZipper : public Executor
 {
 public:
-				 UnZipper(ZipHandler& zh)
-				 : Executor("Uncompressing Files")
-				 , ziphd_(zh)
-				 , nrdone_(0)	{}
+				UnZipper(ZipHandler& zh)
+				: Executor("Uncompressing Files")
+				, ziphd_(zh)
+				, nrdone_(0)	{}
 
-    const char*			 message() const;
-    od_int64			 nrDone() const;
-    const char*			 nrDoneText() const;
-    od_int64			 totalNr() const;
+    const char*			message() const;
+    od_int64			nrDone() const;
+    const char*			nrDoneText() const;
+    od_int64			totalNr() const;
 
 protected:
 
-    int				 nextStep();
-    ZipHandler&			 ziphd_;
-    int				 nrdone_;
+    od_int32				nextStep();
+    ZipHandler&			ziphd_;
+    od_int32				nrdone_;
 };
 
 

@@ -20,7 +20,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "stattype.h"
 #include  <iostream>
 
-#define mNrThinning 20	
+#define mNrThinning 80	
 
 class VeinSliceCalculator : public ParallelTask
 {
@@ -50,7 +50,7 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
 	                Array2DImpl<bool> (isz,csz) );
     const bool is_t_slic = true;
 
-    for ( int idz=start; idz<=stop && shouldContinue(); idz++, addToNrDone(1) )
+    for ( int idz=(int) start; idz<=stop && shouldContinue(); idz++, addToNrDone(1) )
     {
 	for ( int idx=0; idx<isz; idx++ )
 	{
@@ -112,7 +112,7 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
     mDeclareAndTryAlloc( PtrMan<Array2DImpl<float> >, azimuth_sect,
 	    Array2DImpl<float> (isz,csz) );
 
-    for ( int idz=start; idz<=stop && shouldContinue(); idz++,addToNrDone(1) )
+    for ( int idz=(int) start; idz<=stop && shouldContinue(); idz++,addToNrDone(1) )
     {
 	for ( int idx=0; idx<isz; idx++ )
 	{
@@ -168,7 +168,7 @@ bool FingerVein::compute( bool domerge, bool dothinning,
 		*score, tr ) )
 	return false;
 
-    const od_int64 datasz = input_.info().getTotalSz();
+    const int datasz = (int) input_.info().getTotalSz();
     mDeclareAndTryAlloc( PtrMan<Array2DImpl<float> >, tmparr,
 	    Array2DImpl<float> (input_.info()) );
     if ( !tmparr ) return false;
@@ -280,11 +280,25 @@ void FingerVein::removeSmallComponents( Array2D<bool>& data, int minfltlength,
 
 void FingerVein::thinning( Array2D<bool>& res )
 {
-    mDeclareAndTryAlloc( PtrMan<Array2DImpl<bool> >, tmp,
+    /*mDeclareAndTryAlloc( PtrMan<Array2DImpl<bool> >, tmp,
 	    Array2DImpl<bool> (res.info()) );
     if ( !tmp ) return;
     tmp->copyFrom( res );
-    FaultOrientation::thinning( *tmp, res );
+    FaultOrientation::thinning( *tmp, res );*/
+    
+    mDeclareAndTryAlloc( PtrMan<Array2DImpl<char> >, tmp,
+	    Array2DImpl<char> (res.info()) );
+    if ( !tmp ) return;
+
+    bool* inp = res.getData();
+    char* data = tmp->getData();
+    const int sz = res.info().getTotalSz();
+    for ( int idx=0; idx<sz; idx++ )
+	data[idx] = inp[idx] ? 1 : 0;
+
+    FaultOrientation::skeletonHilditch( *tmp );
+    for ( int idx=0; idx<sz; idx++ )
+	inp[idx] = data[idx]>0;
 }
 
 
@@ -780,7 +794,7 @@ void FaultOrientation::stablizeDip( const Array3D<bool>& conf_bina,
     TypeSet<float> arc_set, angle_set;
     for ( int idx=0; idx<4; idx++ )
     {
-	arc_set += idx*M_PI/4;
+	arc_set += idx*M_PI_4f;
 	angle_set += idx*45.f;
     }
 
@@ -1145,7 +1159,7 @@ void FaultOrientation::computeDipPCA( const Array3D<bool>& conf_base,
     TypeSet<float> arc_set, angle_set;
     for ( int idx=0; idx<4; idx++ )
     {
-	arc_set += idx*M_PI/4;
+	arc_set += idx*M_PI_4f;
 	angle_set += idx*45.f;
     }
 
@@ -1338,7 +1352,7 @@ void FaultOrientation::stabilizeAngleSection( const Array2D<bool>& conf_sect,
 	Array2D<float>& angl_stab )
 {
     const float* anglvals = angl_sect.getData();
-    const int totalsz = angl_sect.info().getTotalSz();
+    const int totalsz = (int) angl_sect.info().getTotalSz();
     float* angstabvals = angl_stab.getData();
     for ( int idx=0; idx<totalsz; idx++ )
 	angstabvals[idx] = anglvals[idx]; 
@@ -1505,7 +1519,7 @@ float FaultOrientation::getAnglePCA( const TypeSet<int>& point_set_x,
 	if ( mIsZero(eigenvec[0],1e-8) )
 	    return 90;
 
-	azimuth_dip = atan( eigenvec[1]/eigenvec[0] )*180/M_PI;
+	azimuth_dip = atan( eigenvec[1]/eigenvec[0] )*180/M_PIf;
 	if ( azimuth_dip<0 )
 	    azimuth_dip += 180;
     }
@@ -1822,7 +1836,7 @@ bool FaultOrientation::compute2DVeinBinary( const Array2D<float>& input,
     if ( !tmparr ) return false;
     tmparr->copyFrom( *vein_score );
     float* vein_score_vector_sort = tmparr->getData();
-    const od_int64 datasz = input.info().getTotalSz();
+    const int datasz = (int) input.info().getTotalSz();
     sort_array(vein_score_vector_sort,datasz);
 
     const od_int64 thresholdidx = (od_int64)(perc*datasz);
@@ -1974,7 +1988,6 @@ void FaultOrientation::thinStep( const Array2D<bool>& input,
 	    bool bw01 = !idx ? false : input.get(idx-1,idy);
 	    bool bw02 = !idx || idy==lastidy ? false : input.get(idx-1,idy+1);
 	    bool bw10 = !idy ? false : input.get(idx,idy-1);
-	    bool bw11 = input.get(idx,idy);
 	    bool bw12 = idy==lastidy ? false : input.get(idx,idy+1);
 	    bool bw20 = idx==lastidx || !idy ? false : input.get(idx+1,idy-1);
 	    bool bw21 = idx==lastidx ? false : input.get(idx+1,idy);
@@ -1997,8 +2010,8 @@ void FaultOrientation::thinStep( const Array2D<bool>& input,
 	    if ( NCondition2<2 || NCondition2>3 )
 		continue;
 	    
-	    int NCondition3 = firststep ? ((bw12 | bw01 | (!bw22)) & bw12)
-					: ((bw20 | bw21 | (!bw11)) & bw10);
+	    int NCondition3 = firststep ? ((bw02 | bw01 | (!bw22)) & bw12)
+					: ((bw20 | bw21 | (!bw00)) & bw10);
 	    if ( !NCondition3 )
 		output.set( idx, idy, 0 );
 	}
@@ -2026,8 +2039,8 @@ bool FaultOrientation::computeMaxCurvature( const Array2D<float>& input,
     {
 	for ( int idy=0; idy<sidesize; idy++ )
 	{
-	    xtmp->set( idx, idy, idy-winsize );
-	    ytmp->set( idx, idy, idx-winsize );
+	    xtmp->set( idx, idy, mCast(float,idy-winsize) );
+	    ytmp->set( idx, idy, mCast(float,idx-winsize) );
 	}
     }
 
@@ -2046,9 +2059,9 @@ bool FaultOrientation::computeMaxCurvature( const Array2D<float>& input,
     if ( !h || !hx || !hy || !hxx || !hxy | !hyy )
 	return false;
 
-    const float sigma2 = sigma*sigma;
-    const float sigma4 = sigma2*sigma2;
-    const float coef = 1.0/(2*M_PI*sigma2);
+    const int sigma2 = sigma*sigma;
+    const int sigma4 = sigma2*sigma2;
+    const float coef = 1.0f/(2*M_PIf*sigma2);
     for ( int idx=0; idx<sidesize; idx++ )
     {
 	for ( int idy=0; idy<sidesize; idy++ )
@@ -2150,7 +2163,7 @@ bool FaultOrientation::computeMaxCurvature( const Array2D<float>& input,
 	angle_set_sin2;
     for ( int idx=0; idx<nrangles; idx++ )
     {
-	const float angle = M_PI*idx/nrangles;
+	const float angle = M_PIf*idx/nrangles;
 	const float cosangle = cos(angle);
 	const float sinangle = sin(angle);
 	angle_set += angle;
@@ -2178,7 +2191,7 @@ bool FaultOrientation::computeMaxCurvature( const Array2D<float>& input,
 		    fxy->get(idx,idy)*2*angle_set_cos[idz]*angle_set_sin[idz] +
     		    fyy->get(idx,idy)*angle_set_sin2[idz];
 
-		float demomenator = Math::PowerOf( 1.0+dir1*dir1, 1.5 );
+		float demomenator = Math::PowerOf( 1.0f+dir1*dir1, 1.5f );
 		k->set( idx, idy, idz, dir2/demomenator ); 
 	    }
 	}
@@ -2682,3 +2695,161 @@ bool FaultOrientation::computeMaxCurvature( const Array2D<float>& input,
 
     return true;
 }
+
+
+/*
+void FaultOrientation::prepareSkeleton( unsigned char *ip, unsigned char *jp, 
+    unsigned long width, unsigned long hight )
+{
+    for( unsigned long i=0; i<hight; i++ )
+    {
+	for( unsigned long j=0; j<width; j++)
+	{
+	    if(ip[i*width+j]>0)
+		jp[i*width+j]=1;
+	    else
+		jp[i*width+j]=0;
+	}
+    }
+}*/
+
+void FaultOrientation::skeletonHilditch( Array2D<char>& input )
+{
+    const int width = input.info().getSize(0);
+    const int hight = input.info().getSize(1);
+    const int totalsz = width*hight;
+
+    mDeclareAndTryAlloc( PtrMan<Array2DImpl<char> >, icopy,
+	    Array2DImpl<char> (input.info()) );
+    if ( !icopy ) return;
+
+    char* tmp = icopy->getData();
+    char* data = input.getData();
+    for( int i=0; i<totalsz; i++ )
+    {
+	if( data[i]!=0 )
+	{
+	    data[i]=1;
+	    tmp[i]=1;
+	}
+    }
+
+    bool shori;
+    do
+    {
+	shori = false;
+	/*search all input,if pixel value=-1(gived by last circle),
+	  delete the pixel*/
+	for( int i=0; i<totalsz; i++ )
+	{
+	    if( data[i]<0 ) 
+		data[i] = 0;
+	    tmp[i] = data[i];
+	}
+
+	for( int i=1; i<width-1; i++)
+	{
+	    for( int j=1; j<hight-1; j++)
+	    {
+		const int pidx = i*hight+j;
+		if( data[pidx]!=1 ) //not foreground pixel
+		    continue;
+		
+		//pixel position in input
+		int p11 = (i-1)*hight+j-1;//low left
+		int p12 = p11 + 1;//left
+		int p13 = p12 + 1;//high left
+		int p21 = i*hight+j-1;//below
+		int p22 = p21 + 1;//center
+		int p23 = p22 + 1;//above
+		int p31 = (i+1)*hight+j-1;//low right
+		int p32 = p31 + 1;//right
+		int p33 = p32 + 1;//high right
+		
+		//4-neighbourhood is all foreground
+		if( (tmp[p12] && tmp[p21] && tmp[p23] && tmp[p32])!=0 )
+    		    continue;
+
+		//sum of 8-neighbourhood
+		const int nrn = tmp[p11] + tmp[p12] + tmp[p13] + tmp[p21] + 
+		    tmp[p23] + tmp[p31] + tmp[p32] + tmp[p33];
+		//if the sum of 8-neighbourhood <=1,
+		////that is to say it is the noise or the end of contour
+		////delete the center pixel
+
+		if(nrn <= 1)
+		{
+    		    data[p22] = 2;
+		    continue;
+		}
+
+		char n[10];
+		n[4] = data[p11];//low left
+		n[3] = data[p12];//left
+		n[2] = data[p13];//high left
+		n[5] = data[p21];//below
+		n[1] = data[p23];//above
+		n[6] = data[p31];//low right
+		n[7] = data[p32];//right
+		n[8] = data[p33];//high right
+		n[9] = n[1];   //above
+		
+		int count = 0;
+		for( int k=1; k<8; k=k+2 )
+		{
+    		    if( (!n[k]) && (n[k+1] || n[k+2]) )
+			count++;
+		}
+		if( count!=1 )
+		{
+    		    data[p22] = 2;//deleted
+    		    continue;
+		}
+		//left pixel=-1
+		if( data[p12] == -1 )
+		{
+    		    data[p12] = 0;
+    		    n[3] = 0;
+    		    count = 0;
+    		    for( int k=1; k<8; k=k+2)
+    		    {
+			if( (!n[k])&&(n[k+1]||n[k+2]) )
+	    		    count++;
+    		    }
+    		    if( count != 1 )
+    		    {
+			data[p12] = -1;
+			continue;
+    		    }
+    		    data[p12] = -1;
+    		    n[3] = -1;
+		}
+		//below pixel!=-1
+		if( data[p21]!=-1 )
+		{
+    		    data[p22] = -1;
+    		    shori = true;
+    		    continue;
+		}
+
+		data[p21] = 0;
+		n[5] = 0;
+		count = 0;
+		for( int k=1; k<8; k=k+2 )
+		{
+    		    if( (!n[k]) && (n[k+1] || n[k+2]) )
+			count++;
+		}
+
+		if( count == 1 )
+		{
+    		    data[p21] = -1;
+    		    data[p22] = -1;
+    		    shori =true;
+		}
+		else
+    		    data[p21] = -1;
+	    }
+	}	
+    }while( shori );
+}    

@@ -9,7 +9,7 @@ ________________________________________________________________________
 -*/
 static const char* rcsID mUsedVar = "$Id$";
 
-#include "flthortools.h"
+#include "faulttrace.h"
 
 #include "binidvalset.h"
 #include "emfaultstickset.h"
@@ -81,7 +81,7 @@ void FaultTrace::set( int idx, const Coord3& pos, float trcnr )
 void FaultTrace::remove( int idx )
 {
     Threads::MutexLocker lock( mutex_ );
-    coords_.remove( idx );
+    coords_.removeSingle( idx );
 }
 
 

@@ -654,7 +654,7 @@ bool uiLoadLogsDlg::acceptOK( CallBacker* )
 	{
 	    if ( !existlogmsg.isEmpty() ) existlogmsg += ", "; 
 	    existlogmsg += lognms.get( idx ); 
-	    lognms.remove( idx );
+	    lognms.removeSingle( idx );
 	}
     }
     if ( !existlogmsg.isEmpty() )
@@ -894,8 +894,8 @@ void uiExportLogs::writeLogs( StreamData& sdo, const Well::Data& wd )
 
 	    float z = (float) pos.z;
 	    if ( infeet ) z *= mToFeetFactorF;
-	    else if ( insec ) z = wd.d2TModel()->getTime( md );
-	    else if ( inmsec ) z = wd.d2TModel()->getTime( md ) * 1000;
+	    else if ( insec ) z = wd.d2TModel()->getTime( md, wd.track() );
+	    else if ( inmsec ) z = wd.d2TModel()->getTime( md, wd.track() ) * 1000;
 	    *sdo.ostrm << '\t' << z;
 	}
 

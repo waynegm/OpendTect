@@ -19,13 +19,14 @@ ________________________________________________________________________
 
 
 template <class T> class Array2D;
+template <class T> class Array2DSlice;
 template <class T> class Array3D;
 template <class T> class TypeSet;
 
 class TaskRunner;
 
 /*Classify connected components of a binarized array 2D, components are sorted 
-  in size. User could get the best quadratic fit for the compoment if needed. */
+  in size. User could get the best quadratic fit for the component if needed. */
 
 mClass(Algo) ConnComponents
 {
@@ -57,26 +58,34 @@ protected:
 };
 
 
-mClass(Algo) ConnComponents3D
+mClass(Algo) ConnComponents3D 
 {
 public:    
 
-    				ConnComponents3D(const Array3D<bool>&,bool hc);
-				~ConnComponents3D()	{}
+    				ConnComponents3D(const Array3D<bool>&);
+				~ConnComponents3D();
 
     void			compute(TaskRunner* tr=0); 
 
+    struct VPos	{
+				VPos() : i(-1),j(-1),k(-1) {}
+				int i;int j;int k;
+    		};
     int				nrComponents() const; 
-    const TypeSet<int>*		getComponent(int compidx);
+    const ObjectSet<VPos>*	getComponent(int compidx);
+    				/*<Comp size is sorted descending. */
 
 protected:
 
-    void			classifyMarks(Array3D<int>& mark);
-    void			setMark(Array3D<int>& r,int source,int newval);
+    void			addToComponent(
+	    			const TypeSet<TypeSet<TypeSet<int> > >& comps, 
+				int sliceidx,int compidx,
+				TypeSet<TypeSet<unsigned char> >& usedcomps,
+				ObjectSet<VPos>& rescomp);
+
     const Array3D<bool>&	input_;
-    TypeSet< TypeSet<int> >	components_;
+    ObjectSet< ObjectSet<VPos> > components_;
     TypeSet<int>		sortedindex_;
-    bool			highconn_;
 };
 
 

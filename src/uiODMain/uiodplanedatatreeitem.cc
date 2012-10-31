@@ -11,6 +11,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uiodplanedatatreeitem.h"
 
+#include "seistrctr.h"
 #include "uiattribpartserv.h"
 #include "uigridlinesdlg.h"
 #include "uimenu.h"
@@ -185,8 +186,10 @@ void uiODPlaneDataTreeItem::setAtWellLocation( const Well::Data& wd )
 
 bool uiODPlaneDataTreeItem::getDefaultDescID( Attrib::DescID& descid )
 {
-    BufferString keystr( SI().pars().find(sKey::DefCube()) );
-    if ( keystr.isEmpty() )
+    BufferString key( IOPar::compKey(sKey::Default(),
+			SeisTrcTranslatorGroup::sKeyDefault3D()) );
+    BufferString midstr( SI().pars().find(key) );
+    if ( midstr.isEmpty() )
     {
 	const IODir* iodir = IOM().dirPtr();
 	ObjectSet<IOObj> ioobjs = iodir->getObjs();
@@ -203,11 +206,11 @@ bool uiODPlaneDataTreeItem::getDefaultDescID( Attrib::DescID& descid )
 	}
 
 	if ( nrod3d == 1 )
-	    keystr = ioobjs[def3didx]->key();
+	    midstr = ioobjs[def3didx]->key();
     }
 
     uiAttribPartServer* attrserv = applMgr()->attrServer();
-    descid = attrserv->getStoredID( keystr.buf(),false );
+    descid = attrserv->getStoredID( midstr.buf(),false );
     const Attrib::DescSet* ads =
 	Attrib::DSHolder().getDescSet( false, true );
     if ( descid.isValid() && ads )

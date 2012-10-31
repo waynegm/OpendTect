@@ -118,8 +118,7 @@ void uiIOSelect::updateFromEntries()
 	    inp_->addItem( usrnm );
 	else
 	{
-	    delete entries_[idx];
-	    entries_.remove( idx );
+	    entries_.removeSingle( idx );
 	    idx--;
 	}
     }
@@ -322,7 +321,7 @@ const char* uiIOSelect::getItem( int idx ) const
     const int nrspec = specialitems.size();
     const int nrentries = entries_.size();
     return idx < nrspec
-	 ? (idx < 0 ? "" : specialitems.getValue(idx))
+	 ? (idx < 0 ? "" : specialitems.getValue(idx).str())
 	 : (idx < nrentries + nrspec ? entries_.get(idx-nrspec).buf() : "");
 }
 

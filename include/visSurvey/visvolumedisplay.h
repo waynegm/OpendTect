@@ -179,6 +179,8 @@ public:
 
 protected:
 				~VolumeDisplay();
+
+    void			init();
     bool			updateSeedBasedSurface(int,TaskRunner* = 0);
     void			materialChange(CallBacker*);
     void			updateIsoSurfColor();

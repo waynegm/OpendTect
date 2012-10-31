@@ -292,15 +292,11 @@ void HorizonDisplay::removeEMStuff()
 
     while ( intersectionlines_.size() )
     {
-	intersectionlines_[0]->unRef();
-	intersectionpointsets_[0]->unRef();
-
-	intersectionlines_.remove(0);
-	intersectionpointsets_.remove(0);
-	intersectionlineids_.remove(0);
+	intersectionpointsets_.removeSingle(0)->unRef();
+	intersectionlineids_.removeSingle(0);
 	if ( zaxistransform_ )
 	    zaxistransform_->removeVolumeOfInterest( intersectionlinevoi_[0] );
-	intersectionlinevoi_.remove(0);
+	intersectionlinevoi_.removeSingle(0);
 
     }
 
@@ -580,16 +576,15 @@ bool HorizonDisplay::removeAttrib( int channel )
     for ( int idx=0; idx<sections_.size(); idx++ )
 	sections_[idx]->removeChannel( channel );
 
-    curshiftidx_.remove( channel );
-    userrefs_.remove( channel );
-    enabled_.remove( channel );
-    delete shifts_.remove( channel );
+    curshiftidx_.removeSingle( channel );
+    userrefs_.removeSingle( channel );
+    enabled_.removeSingle( channel );
+    delete shifts_.removeSingle( channel );
     DPM( DataPackMgr::FlatID() ).release( datapackids_[channel] );
-    datapackids_.remove( channel );
-    coltabmappersetups_.remove( channel );
-    coltabsequences_.remove( channel );
-    delete as_[channel];
-    as_.remove( channel );
+    datapackids_.removeSingle( channel );
+    coltabmappersetups_.removeSingle( channel );
+    coltabsequences_.removeSingle( channel );
+    delete as_.removeSingle( channel );
 
     for ( int chan=channel; chan<nrAttribs(); chan++ )
     {
@@ -725,7 +720,8 @@ void HorizonDisplay::createAndDispDataPack( int channel,
 					    const DataPointSet* positions,
 					    TaskRunner* tr )
 {
-    if ( !positions ) return;
+    if ( !positions || sections_.isEmpty() ) 
+	return;
 
     BufferStringSet* attrnms = new BufferStringSet();
     for ( int idx=0; idx<positions->nrCols(); idx++ )
@@ -737,7 +733,11 @@ void HorizonDisplay::createAndDispDataPack( int channel,
 	sections_.isEmpty() ? 0 : sections_[0]->getCache( channel );
     const bool isz = attrnms->size()>=1 &&
 		     !strcmp(attrnms->get(0).buf(),"Depth");
-    BinID step( SI().inlStep(), SI().crlStep() );
+
+    StepInterval<int> dispinlrg = sections_[0]->displayedRowRange();
+    StepInterval<int> dispcrlrg = sections_[0]->displayedColRange();
+    BinID step( dispinlrg.step, dispcrlrg.step );
+
     mDeclareAndTryAlloc(BIDValSetArrAdapter*, bvsarr, 
 	    		BIDValSetArrAdapter(*cache,isz?0:2,step));
     const char* catnm = isz ? "Geometry" : "Horizon Data";
@@ -745,12 +745,10 @@ void HorizonDisplay::createAndDispDataPack( int channel,
 			   : (attrnms->size()>1 ? attrnms->get(1).buf() : "");
     mDeclareAndTryAlloc(MapDataPack*,newpack,MapDataPack(catnm,dpnm,bvsarr));
 
-    StepInterval<int> tempinlrg = bvsarr->hrg_.inlRange();
-    StepInterval<int> tempcrlrg = bvsarr->hrg_.crlRange();
-    StepInterval<double> inlrg( (double)tempinlrg.start, (double)tempinlrg.stop,
-	    			(double)tempinlrg.step );
-    StepInterval<double> crlrg( (double)tempcrlrg.start, (double)tempcrlrg.stop,
-	    			(double)tempcrlrg.step );
+    StepInterval<double> inlrg( (double)dispinlrg.start, (double)dispinlrg.stop,
+	    			(double)dispinlrg.step );
+    StepInterval<double> crlrg( (double)dispcrlrg.start, (double)dispcrlrg.stop,
+	    			(double)dispcrlrg.step );
     BufferStringSet dimnames;
     dimnames.add("X").add("Y").add("In-Line").add("Cross-line");
     newpack->setProps( inlrg, crlrg, true, &dimnames );
@@ -910,9 +908,8 @@ void HorizonDisplay::removeSectionDisplay( const EM::SectionID& sid )
     if ( idx<0 ) return;
 
     removeChild( sections_[idx]->getInventorNode() );
-    sections_[idx]->unRef();
-    sections_.remove( idx );
-    sids_.remove( idx );
+    sections_.removeSingle( idx )->unRef();
+    sids_.removeSingle( idx );
 };
 
 
@@ -1642,21 +1639,19 @@ void HorizonDisplay::updateIntersectionLines(
 	if ( !lineshouldexist[idx] )
 	{
 	    removeChild( intersectionlines_[idx]->getInventorNode() );
-	    intersectionlines_[idx]->unRef();
 	    removeChild( intersectionpointsets_[idx]->getInventorNode() );
-	    intersectionpointsets_[idx]->unRef();
 
-	    lineshouldexist.remove(idx);
-	    intersectionlines_.remove(idx);
-	    intersectionpointsets_.remove(idx);
-	    intersectionlineids_.remove(idx);
+	    lineshouldexist.removeSingle(idx);
+	    intersectionlines_.removeSingle(idx)->unRef();
+	    intersectionpointsets_.removeSingle(idx)->unRef();
+	    intersectionlineids_.removeSingle(idx);
 	    if ( zaxistransform_ )
 	    {
 		zaxistransform_->removeVolumeOfInterest(
 			intersectionlinevoi_[idx] );
 	    }
 
-	    intersectionlinevoi_.remove(idx);
+	    intersectionlinevoi_.removeSingle(idx);
 	    idx--;
 	}
     }

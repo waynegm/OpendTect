@@ -27,6 +27,7 @@ const char* Pos::SubsampFilter::typeStr() { return sKey::Subsample(); }
 const char* Pos::SubsampFilter::eachStr() { return "Pass each"; }
 
 
+
 Pos::Filter* Pos::Filter::make( const IOPar& iop, bool is2d )
 {
     if ( is2d )
@@ -44,9 +45,9 @@ bool Pos::Filter3D::includes( const Coord& c, float z ) const
 
 Pos::Filter3D* Pos::Filter3D::make( const IOPar& iop )
 {
-    const char* typ = iop.find(sKey::Type());
+    FixedString typ = iop.find(sKey::Type());
     if ( !typ ) return 0;
-    Pos::Filter3D* filt = strcmp(typ,Pos::FilterSet::typeStr())
+    Pos::Filter3D* filt = typ!=Pos::FilterSet::typeStr()
 			? factory().create( typ )
 			: (Pos::Filter3D*)new Pos::FilterSet3D;
     if ( filt )
@@ -67,9 +68,9 @@ int Pos::Filter2D::nrLines() const
 
 Pos::Filter2D* Pos::Filter2D::make( const IOPar& iop )
 {
-    const char* typ = iop.find(sKey::Type());
+    FixedString typ = iop.find(sKey::Type());
     if ( !typ ) return 0;
-    Pos::Filter2D* filt = strcmp(typ,Pos::FilterSet::typeStr())
+    Pos::Filter2D* filt = typ!=Pos::FilterSet::typeStr()
 			? factory().create( typ )
 			: (Pos::Filter2D*)new Pos::FilterSet2D;
     if ( filt )
@@ -85,7 +86,7 @@ void Pos::Filter2D::addLineID( const PosInfo::GeomID& geomid )
 void Pos::Filter2D::removeLineID( int lidx )
 {
     if ( geomids_.validIdx(lidx) )
-	geomids_.remove( lidx );
+	geomids_.removeSingle( lidx );
 }
 
 
@@ -253,14 +254,14 @@ bool Pos::FilterSet2D::includes( int nr, float z, int lidx ) const
 
 void Pos::RandomFilter::initStats()
 {
-    Stats::RandGen::init();
+    Stats::randGen().init();
     if ( passratio_ > 1 ) passratio_ /= 100;
 }
 
 
 bool Pos::RandomFilter::drawRes() const
 {
-    return Stats::RandGen::get() < passratio_;
+    return Stats::randGen().get() < passratio_;
 }
 
 
@@ -329,6 +330,10 @@ void Pos::SubsampFilter2D::initClass()
 {
     Pos::Filter2D::factory().addCreator( create, sKey::Subsample() );
 }
+
+
+bool Pos::Provider::isProvider() const
+{ return true; }
 
 
 float Pos::Provider::estRatio( const Pos::Provider& prov ) const

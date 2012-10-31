@@ -25,6 +25,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "separstr.h"
 #include "seisioobjinfo.h"
 #include "survinfo.h"
+#include "seistrctr.h"
 #include "odver.h"
 
 namespace Attrib
@@ -84,10 +85,11 @@ DescID DescSet::ensureDefStoredPresent() const
     BufferString idstr; DescID retid;
 
     if ( is2d_ )
-	idstr = LineKey( SI().pars().find(sKey::DefLineSet()),
-			 SI().pars().find(sKey::DefAttribute()) );
+	idstr =
+	    LineKey( SI().pars().find(SeisTrcTranslatorGroup::sKeyDefault2D()),
+		SI().pars().find(SeisTrcTranslatorGroup::sKeyDefaultAttrib()));
     else
-	idstr = SI().pars().find( sKey::DefCube() );
+	idstr = SI().pars().find( SeisTrcTranslatorGroup::sKeyDefault3D() );
 
     if ( defidstr_ == idstr && defattribid_ != DescID::undef() )
 	return defattribid_;
@@ -259,9 +261,8 @@ void DescSet::removeDesc( const DescID& id )
     if ( descs_[idx]->descSet()==this )
 	descs_[idx]->setDescSet(0);
 
-    descs_[idx]->unRef();
-    descs_.remove(idx);
-    ids_.remove(idx);
+    descs_.removeSingle(idx)->unRef();
+    ids_.removeSingle(idx);
 }
 
 
@@ -947,7 +948,7 @@ DescSet* DescSet::optimizeClone( const TypeSet<DescID>& targets ) const
     while ( needednodes.size() )
     {
 	const DescID needednode = needednodes[0];
-	needednodes.remove( 0 );
+	needednodes.removeSingle( 0 );
 	const Desc* dsc = getDesc( needednode );
 	if ( !dsc )
 	{
@@ -1142,14 +1143,16 @@ void DescSet::setContainStoredDescOnly( bool yn )
 }
 
 
-DataPointSet* DescSet::createDataPointSet( Attrib::DescSetup dsu ) const
+DataPointSet* DescSet::createDataPointSet( Attrib::DescSetup dsu,
+					   bool withstored ) const
 {
     TypeSet<DataPointSet::DataRow> pts;
     ObjectSet<DataColDef> dcds;
     for ( int idx=0; idx<descs_.size(); idx++ )
     {
 	const Attrib::Desc* tmpdsc = desc(idx);
-	if ( !tmpdsc || (tmpdsc->isHidden() && !dsu.hidden_) )
+	if ( !tmpdsc || (tmpdsc->isHidden() && !dsu.hidden_) ||
+	     (tmpdsc->isStored() && !withstored) )
 	    continue;
 
 	BufferString defstr;

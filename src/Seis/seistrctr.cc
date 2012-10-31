@@ -8,6 +8,7 @@
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "seistrctr.h"
+#include "keystrs.h"
 #include "seistrc.h"
 #include "seisinfo.h"
 #include "seispacketinfo.h"
@@ -42,6 +43,19 @@ SeisTrcTranslator::ComponentData::ComponentData( const SeisTrc& trc, int icomp,
 	: BasicComponentInfo(nm)
 {
     datachar = trc.data().getInterpreter(icomp)->dataChar();
+}
+
+
+const char*
+SeisTrcTranslatorGroup::getSurveyDefaultKey(const IOObj* ioobj) const
+{
+    if ( ioobj && SeisTrcTranslator::is2D( *ioobj ) )
+	return sKeyDefault2D();
+    
+    if ( SI().survDataType()==SurveyInfo::Only2D )
+	return sKeyDefault2D();
+
+    return sKeyDefault3D();
 }
 
 
@@ -511,7 +525,7 @@ bool SeisTrcTranslator::getRanges( const MultiID& ky, CubeSampling& cs,
 bool SeisTrcTranslator::getRanges( const IOObj& ioobj, CubeSampling& cs,
 				   const char* lk )
 {
-    PtrMan<Translator> transl = ioobj.getTranslator();
+    PtrMan<Translator> transl = ioobj.createTranslator();
     mDynamicCastGet(SeisTrcTranslator*,tr,transl.ptr());
     if ( !tr ) return false;
     PtrMan<Seis::SelData> sd = 0;

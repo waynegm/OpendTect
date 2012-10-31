@@ -255,7 +255,6 @@ void uiFlatViewControl::rubBandCB( CallBacker* cb )
     Geom::Point2D<double> centre = wr.centre();
     Geom::Size2D<double> newsz = wr.size();
 
-    const uiWorldRect oldview( vwrs_[0]->curView() );
     setNewView( centre, newsz );
 }
 
@@ -294,15 +293,7 @@ void uiFlatViewControl::applyProperties( CallBacker* cb )
     mDynamicCastGet( uiFlatViewer*, vwr, &propdlg_->viewer() );
     if ( !vwr ) return;
 
-    const uiWorldRect cv( vwr->curView() );
-    FlatView::Annotation& annot = vwr->appearance().annot_;
-    if ( (cv.right() > cv.left()) == annot.x1_.reversed_ )
-	{ annot.x1_.reversed_ = !annot.x1_.reversed_; flip( true ); }
-    if ( (cv.top() > cv.bottom()) == annot.x2_.reversed_ )
-	{ annot.x2_.reversed_ = !annot.x2_.reversed_; flip( false ); }
-
     const int selannot = propdlg_->selectedAnnot();
-
     vwr->setAnnotChoice( selannot );
     vwr->handleChange( FlatView::Viewer::All );
 }

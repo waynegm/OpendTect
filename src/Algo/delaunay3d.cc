@@ -276,7 +276,7 @@ int DAGTetrahedraTree::insertPoint( const Coord3& coord, int& dupid )
     if ( !insertPoint( ci, dupid ) )
     {
 	if ( coordlist_->size()==ci+1 )
-	    coordlist_->remove( ci );
+	    coordlist_->removeSingle( ci );
 
 	return cNoVertex();
     }
@@ -1024,9 +1024,9 @@ void DAGTetrahedraTree::legalizeTetrahedras( TypeSet<int>& v0s,
 	const int ti = tis[start];
 	if ( start>10000 )
 	{
-	    v0s.remove( 0, start );
-	    v1s.remove( 0, start );
-	    tis.remove( 0, start );
+	    v0s.removeRange( 0, start );
+	    v1s.removeRange( 0, start );
+	    tis.removeRange( 0, start );
 	    start = 0;
 	}
 	else 

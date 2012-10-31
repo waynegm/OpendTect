@@ -313,18 +313,18 @@ void PosInfo::CubeData::limitTo( const HorSampling& hsin )
     {
 	PosInfo::LineData* ld = (*this)[iidx];
 	if ( !hs.inlOK(ld->linenr_) )
-	{ ld = remove( iidx ); delete ld; continue; }
+	{ ld = removeSingle( iidx ); delete ld; continue; }
 
 	int nrvalidsegs = 0;
 	for ( int iseg=ld->segments_.size()-1; iseg>=0; iseg-- )
 	{
 	    StepInterval<int>& seg = ld->segments_[iseg];
 	    if ( seg.start > hs.stop.crl || seg.stop < hs.start.crl )
-	    { ld->segments_.remove( iseg ); continue; }
+	    { ld->segments_.removeSingle( iseg ); continue; }
 
 	    seg.step = Math::LCMOf( seg.step, hs.step.crl );
 	    if ( !seg.step )
-	    { ld->segments_.remove( iseg ); continue; }
+	    { ld->segments_.removeSingle( iseg ); continue; }
 
 	    if ( seg.start < hs.start.crl )
 	    {
@@ -351,12 +351,12 @@ void PosInfo::CubeData::limitTo( const HorSampling& hsin )
 		seg.stop = newstop;
 	    }
 	    if ( seg.start > seg.stop )
-		ld->segments_.remove( iseg );
+		ld->segments_.removeSingle( iseg );
 	    else nrvalidsegs++;
 	}
 
 	if ( !nrvalidsegs )
-	{ ld = remove( iidx ); delete ld; }
+	{ ld = removeSingle( iidx ); delete ld; }
     }
 }
 
@@ -529,7 +529,7 @@ bool PosInfo::CubeData::isFullyRectAndReg() const
 	return sz == 1;
     const PosInfo::LineData::Segment seg = ld->segments_[0];
 
-    int lnrstep;
+    int lnrstep = mUdf(int);
     for ( int ilnr=0; ilnr<sz; ilnr++ )
     {
 	ld = (*this)[ilnr];

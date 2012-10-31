@@ -175,7 +175,13 @@ void Well::setTrack( const TypeSet<Coord3>& pts )
 	    continue;
 
 	if ( ptidx>=track_->size() )
-	    track_->addPoint( crd );
+	{
+	    const int lastidx = track_->size();
+	    const Coord3 lastcrd =
+		track_->getPoint( lastidx >= 0 ? lastidx-1 : lastidx );
+	    if ( lastcrd != crd )
+		track_->addPoint( crd );
+	}
 	else
 	    track_->setPoint( ptidx, crd );
 	ptidx++;
@@ -502,7 +508,7 @@ void Well::removeLogs()
     {
 	log_[idx]->unrefNoDelete();
 	removeChild( log_[idx]  );
-	log_.remove( idx );
+	log_.removeSingle( idx );
     }
 }
 

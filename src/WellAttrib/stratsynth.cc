@@ -214,7 +214,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
     errmsg_.setEmpty(); 
 
     if ( lm.isEmpty() ) 
-	return false;
+	return 0;
 
     Seis::RaySynthGenerator synthgen;
     synthgen.setWavelet( wvlt_, OD::UsePtr );
@@ -234,17 +234,17 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	if ( !fillElasticModel( lm, aimod, idm ) )
 	{
 	    BufferString msg( errmsg_ );
-	    mErrRet( msg.buf(), return false;) 
+	    mErrRet( msg.buf(), return 0;) 
 	}
 	maxsz = mMAX( aimod.size(), maxsz );
 	synthgen.addModel( aimod );
     }
     if ( maxsz == 0 )
-	return false;
+	return 0;
 
     if ( maxsz == 1 )
 	mErrRet( "Model has only one layer, please add an other layer.", 
-		return false; );
+		return 0; );
 
     if ( (tr && !tr->execute( synthgen ) ) || !synthgen.execute() )
     {
@@ -278,7 +278,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	ObjectSet<PreStack::Gather> gatherset;
 	while ( tbufs.size() )
 	{
-	    SeisTrcBuf* tbuf = tbufs.remove( 0 );
+	    SeisTrcBuf* tbuf = tbufs.removeSingle( 0 );
 	    PreStack::Gather* gather = new PreStack::Gather();
 	    if ( !gather->setFromTrcBuf( *tbuf, 0 ) )
 		{ delete gather; continue; }
@@ -294,7 +294,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	SeisTrcBuf* dptrcbuf = new SeisTrcBuf( true );
 	while ( tbufs.size() )
 	{
-	    SeisTrcBuf* tbuf = tbufs.remove( 0 );
+	    SeisTrcBuf* tbuf = tbufs.removeSingle( 0 );
 	    SeisTrcPropChg stpc( *tbuf->get( 0 ) );
 	    while ( tbuf->size() > 1 )
 	    {
@@ -317,7 +317,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	Seis::RaySynthGenerator::RayModel& rm = synthgen.result( imdl );
 	rm.getD2T( tmpd2ts, true );
 	if ( !tmpd2ts.isEmpty() )
-	    sd->d2tmodels_ += tmpd2ts.remove(0);
+	    sd->d2tmodels_ += tmpd2ts.removeSingle(0);
 	deepErase( tmpd2ts );
     }
 

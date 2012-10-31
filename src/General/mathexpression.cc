@@ -411,7 +411,7 @@ float MathExpressionAND::getValue() const
 
 static int ensureRandInited()
 {
-    Stats::RandGen::init();
+    Stats::randGen().init();
     return 0;
 }
 
@@ -423,7 +423,7 @@ float MathExpressionRandom::getValue() const
 	return mUdf(float);
 
     static int dum mUnusedVar = ensureRandInited();
-    return ( float )( maxval * Stats::RandGen::get() );
+    return ( float )( maxval * Stats::randGen().get() );
 }
 
 
@@ -435,7 +435,7 @@ float MathExpressionGaussRandom::getValue() const
 	return mUdf(float);
 
     static int dum mUnusedVar = ensureRandInited();
-    return ( float ) Stats::RandGen::getNormal(0,stdev);
+    return ( float ) Stats::randGen().getNormal(0,stdev);
 }
 
 
@@ -546,13 +546,13 @@ bool MathExpression::setInput( int inp, MathExpression* obj )
 
 	for ( int idx=0; idx<obj->nrVariables(); idx++ )
 	{
-	    const char* str = obj->fullVariableExpression(idx);
+	    FixedString str = obj->fullVariableExpression(idx);
 
 	    bool found=false;
 
 	    for ( int idy=0; idy<nrVariables(); idy++ )
 	    {
-		if ( !strcmp( str, fullVariableExpression(idy) ) )	
+		if ( str==fullVariableExpression(idy) )
 		{
 		    (*variableobj_[idy]) += inp;
 		    (*variablenr_[idy]) += idx;

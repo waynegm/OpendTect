@@ -83,7 +83,7 @@ void HostData::init( const char* nm )
     { \
 	char* ptr=bs.buf(); \
 	for ( unsigned int idx=0; idx<bs.size(); idx++, ptr++ ) \
-	    { *ptr = tolower(*ptr); } \
+	    { *ptr = (char) tolower(*ptr); } \
     }
 
 static FilePath getReplacePrefix( const FilePath& dir_,
@@ -245,7 +245,7 @@ bool HostDataList::readHostFile( const char* fname )
 		newhd->aliases_.add( bufptr );
 
 	    mGetVStr(1);
-	    newhd->iswin_ = !strcmp( bufptr, "win" );
+	    newhd->iswin_ = FixedString(bufptr)== "win";
 
 	    mGetVStr(2);
 	    if ( *bufptr )

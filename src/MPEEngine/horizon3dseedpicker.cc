@@ -15,7 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "autotracker.h"
 #include "emhorizon3d.h"
 #include "emmanager.h"
-#include "flthortools.h"
+#include "faulttrace.h"
 #include "horizonadjuster.h"
 #include "sectionextender.h"
 #include "sectiontracker.h"
@@ -431,7 +431,7 @@ bool Horizon3DSeedPicker::retrackFromSeedList()
 	for ( int idx=addedpos.size()-1; idx>=0; idx-- )
 	{
 	    if ( !hor->isDefined(sectionid_,addedpos[idx]) )
-		addedpos.remove(idx);
+		addedpos.removeSingle(idx);
 	}
     }
 

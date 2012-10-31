@@ -60,6 +60,7 @@ uiViewer3DMgr::uiViewer3DMgr()
 {
     posdialogs_.allowNull();
     visserv_->removeAllNotifier().notify( mCB(this,uiViewer3DMgr,removeAllCB) );
+    visserv_->objectaddedremoved.notify( mCB(this,uiViewer3DMgr,sceneChangeCB));
     RefMan<MenuHandler> menuhandler = visserv_->getMenuHandler();
 
     IOM().surveyToBeChanged.notify(mCB(this,uiViewer3DMgr,surveyToBeChangedCB));
@@ -75,6 +76,7 @@ uiViewer3DMgr::uiViewer3DMgr()
 uiViewer3DMgr::~uiViewer3DMgr()
 {
     visserv_->removeAllNotifier().remove( mCB(this,uiViewer3DMgr,removeAllCB) );
+    visserv_->objectaddedremoved.remove( mCB(this,uiViewer3DMgr,sceneChangeCB));
     RefMan<MenuHandler> menuhandler = visserv_->getMenuHandler(); 
 
     IOM().surveyToBeChanged.remove(mCB(this,uiViewer3DMgr,surveyToBeChangedCB));
@@ -211,14 +213,16 @@ void uiViewer3DMgr::handleMenuCB( CallBacker* cb )
 	menu->setIsHandled( true );
 	visserv_->removeObject( psv, sceneid );
 	const int idx = viewers3d_.indexOf( psv );
-	delete posdialogs_.remove( idx );
-	viewers3d_.remove( idx )->unRef();
+	delete posdialogs_.removeSingle( idx );
+	viewers3d_.removeSingle( idx )->unRef();
     }
     else if ( mnuid==proptymenuitem_.id )
     {
 	menu->setIsHandled( true );
-	uiViewer3DSettingDlg dlg(menu->getParent(), *psv, *this, *preprocmgr_);
-	dlg.go();
+	uiViewer3DSettingDlg* dlg = new uiViewer3DSettingDlg(
+		menu->getParent(), *psv, *this, *preprocmgr_);
+	dlg->setDeleteOnClose( true );
+	dlg->go();
     }
     else if ( mnuid==positionmenuitem_.id )
     {
@@ -462,7 +466,7 @@ uiFlatViewMainWin* uiViewer3DMgr::create2DViewer( const BufferString& title,
     if ( !fdp )
     {
 	DPM(DataPackMgr::FlatID()).release( dp );
-	return false;
+	return 0;
     }
 
     vwr.setPack( false, dpid, false, true );
@@ -531,7 +535,7 @@ void uiViewer3DMgr::viewer2DSelDataCB( CallBacker* cb )
     for ( int idx=0; idx<selgnms.size(); idx++ )
     {
 	if ( allgnms.isPresent( selgnms.get( idx ).buf() ) ) 
-	    allgnms.remove( allgnms.indexOf( selgnms.get( idx ).buf() ) );
+	    allgnms.removeSingle(allgnms.indexOf( selgnms.get( idx ).buf() ) );
     }
 
     selids.erase(); 
@@ -567,7 +571,7 @@ void uiViewer3DMgr::viewer2DClosedCB( CallBacker* cb )
     viewers2d_[idx]->windowClosed.remove(
 	    mCB(this,uiViewer3DMgr,viewer2DClosedCB) );
 
-    viewers2d_.remove( idx );
+    viewers2d_.removeSingle( idx );
 }
 
 
@@ -584,8 +588,8 @@ void uiViewer3DMgr::sceneChangeCB( CallBacker* )
 	if ( pdd && (!scene || scene->getFirstIdx( pdd )==-1 ) )
 	{
 	    removeViewWin( dpid );
-	    viewers3d_.remove( idx );
-	    delete posdialogs_.remove( idx );
+	    viewers3d_.removeSingle( idx );
+	    delete posdialogs_.removeSingle( idx );
 	    if ( scene ) visserv_->removeObject( psv, scene->id() );
 	    psv->unRef();
 	    idx--;
@@ -594,8 +598,8 @@ void uiViewer3DMgr::sceneChangeCB( CallBacker* )
 	if ( s2d && (!scene || scene->getFirstIdx( s2d )==-1 ) )
 	{
 	    removeViewWin( dpid );
-	    viewers3d_.remove( idx );
-	    delete posdialogs_.remove( idx );
+	    viewers3d_.removeSingle( idx );
+	    delete posdialogs_.removeSingle( idx );
 	    if ( scene ) visserv_->removeObject( psv, scene->id() );
 	    psv->unRef();
 	    idx--;
@@ -609,7 +613,7 @@ void uiViewer3DMgr::removeViewWin( int dpid )
     for ( int idx=0; idx<viewers2d_.size(); idx++ )
     {
 	if ( viewers2d_[idx]->viewer().packID(false) == dpid )
-    	    delete viewers2d_.remove( idx );
+    	    delete viewers2d_.removeSingle( idx );
     }
 }
 

@@ -11,21 +11,23 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "genc.h"
 
+#include "uimain.h"
+
 #include "uidialog.h"
 #include "uilabel.h"
 
 #ifdef __msvc__
-#include "winmain.h"
+//#include "winmain.h"
 #endif
 
-#include <QApplication>
+
 
 
 int main( int argc, char** argv )
 {
     SetProgramArgs( argc, argv );
     
-    QApplication app( argc, argv );
+    uiMain app( argc, argv );
     
     uiDialog dlg( uiDialog::Setup("Hello", "World", "NoHelpID" ));
     

@@ -13,6 +13,7 @@ SET(OD_MODULE_SOURCES
 		uidialog.cc
 		uigroup.cc
 		uilabel.cc
+		uimain.cc
 		uiwindowbase.cc
 	)
 SET(OD_MODULE_GUI_PROGS od_test_uiBase.cc )

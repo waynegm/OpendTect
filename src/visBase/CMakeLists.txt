@@ -79,6 +79,7 @@ SET(OD_MODULE_SOURCES
 	   vistexturechannel2rgba.cc
            vistexturechannel2voldata.cc
 	   vistexturerect.cc
+	   visthumbwheel.cc
 	   vistopbotimage.cc
 	   vistransform.cc
 	   vistristripset.cc

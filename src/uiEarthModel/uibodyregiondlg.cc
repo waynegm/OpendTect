@@ -85,7 +85,8 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
     const int horsz = hors_.size();
     const bool usepolygon = !plg_.isEmpty();
     
-    for ( int idx=start; idx<=stop && shouldContinue(); idx++, addToNrDone(1) )
+    for ( int idx=mCast(int,start); idx<=stop && shouldContinue(); 
+						    idx++, addToNrDone(1) )
     {
 	const int inlidx = idx/crlsz;
 	const int crlidx = idx%crlsz;
@@ -94,8 +95,8 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
 	     bid.crl==cs_.hrg.start.crl || bid.crl==cs_.hrg.stop.crl )
 	    continue;/*Extended one layer*/
 
-	if ( usepolygon && 
-	     !plg_.isInside(Geom::Point2D<float>(bid.inl,bid.crl),true,0.01) )
+	if ( usepolygon && !plg_.isInside(Geom::Point2D<float>(
+		     mCast(float,bid.inl), mCast(float,bid.crl)), true, 0.01) )
 	    continue;
 
 	for ( int idz=1; idz<zsz-1; idz++ ) /*Extended one layer*/
@@ -141,17 +142,21 @@ public:
 ImplicitBodyRegionExtractor( const TypeSet<MultiID>& surflist, 
 	const TypeSet<char>& sides, const CubeSampling& cs, Array3D<float>& res,
 	const ODPolygon<float>& plg )
-    : res_( res )
-    , cs_( cs )
-    , plg_( plg )	      
-    , bidinplg_( 0 )			      
+    : res_(res)
+    , cs_(cs)
+    , plg_(plg)
+    , bidinplg_(0)
 {
     res_.setAll( 1 );
 
-    c_[0] = Geom::Point2D<float>(cs_.hrg.start.inl, cs_.hrg.start.crl);
-    c_[1] = Geom::Point2D<float>(cs_.hrg.stop.inl, cs_.hrg.start.crl);
-    c_[2] = Geom::Point2D<float>(cs_.hrg.stop.inl, cs_.hrg.stop.crl);
-    c_[3] = Geom::Point2D<float>(cs_.hrg.start.inl, cs_.hrg.stop.crl);
+    c_[0] = Geom::Point2D<float>( mCast(float,cs_.hrg.start.inl), 
+	                          mCast(float,cs_.hrg.start.crl) );
+    c_[1] = Geom::Point2D<float>( mCast(float,cs_.hrg.stop.inl), 
+				  mCast(float,cs_.hrg.start.crl) );
+    c_[2] = Geom::Point2D<float>( mCast(float,cs_.hrg.stop.inl), 
+				  mCast(float,cs_.hrg.stop.crl) );
+    c_[3] = Geom::Point2D<float>( mCast(float,cs_.hrg.start.inl), 
+				  mCast(float,cs_.hrg.stop.crl) );
 
     for ( int idx=0; idx<surflist.size(); idx++ )
     {
@@ -167,10 +172,10 @@ ImplicitBodyRegionExtractor( const TypeSet<MultiID>& surflist,
 	{
 	    mDynamicCastGet( EM::Fault3D*, emflt, emobj );
 	    Geometry::FaultStickSurface* flt = 
-	    emflt ? emflt->geometry().sectionGeometry(0) : 0;
+		emflt ? emflt->geometry().sectionGeometry(0) : 0;
 	    if ( !flt ) continue;
+
 	    emflt->ref();
-	    
 	    Geometry::ExplFaultStickSurface* efs = 
 		new Geometry::ExplFaultStickSurface(0,SI().zScale());
 	    efs->setCoordList( new Coord3ListImpl, new Coord3ListImpl );
@@ -196,7 +201,8 @@ ImplicitBodyRegionExtractor( const TypeSet<MultiID>& surflist,
 	    const int inlidx = cs_.hrg.inlIdx(bid.inl);
 	    const int crlidx = cs_.hrg.crlIdx(bid.crl);	    
 	    bidinplg_->set( inlidx, crlidx, plg_.isInside(
-			Geom::Point2D<float>(bid.inl,bid.crl),true,0.01) );
+		    Geom::Point2D<float>( mCast(float,bid.inl),
+					 mCast(float,bid.crl) ),true,0.01 ) );
 	}
     }
 }
@@ -242,7 +248,8 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
     }
     const int cornersz = corners.size();
 
-    for ( int idz=start; idz<=stop && shouldContinue(); idz++, addToNrDone(1) )
+    for ( int idz=mCast(int,start); idz<=stop && shouldContinue(); 
+						    idz++, addToNrDone(1) )
     {
 	if ( !idz || idz==lastzidx )
 	    continue;
@@ -363,7 +370,8 @@ bool inFaultRange( const BinID& pos, int curidx,
 	ids[idx] = idx;
 	BinID bid = SI().transform( crds[idx] );
 	inls[idx] = bid.inl;
-	bidpos += Geom::Point2D<float>(bid.inl,bid.crl);
+	bidpos += Geom::Point2D<float>( mCast(float,bid.inl),
+					mCast(float,bid.crl) );
     }
 
     sort_coupled( mVarLenArr(inls), mVarLenArr(ids), sz );
@@ -403,7 +411,8 @@ bool inFaultRange( const BinID& pos, int curidx,
 	poly.add( c_[3] );
     }
 
-    return poly.isInside(Geom::Point2D<float>(pos.inl,pos.crl),true,0);
+    return poly.isInside(Geom::Point2D<float>( mCast(float,pos.inl),
+						mCast(float,pos.crl)),true,0 );
 }
 
 
@@ -416,7 +425,7 @@ void computeHorOuterRange()
 	const Geometry::BinIDSurface* surf = 
 	    hors_[idx]->geometry().sectionGeometry(hors_[idx]->sectionID(0));
 	const Array2D<float>* depth = surf ? surf->getArray() : 0;
-	const int sz = depth ? depth->info().getTotalSz() : 0;
+	const int sz = depth ? mCast( int,depth->info().getTotalSz() ) : 0;
 	if ( !sz ) continue;
 
 	const float* data = depth->getData();

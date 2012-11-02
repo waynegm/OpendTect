@@ -57,7 +57,7 @@ int minThreadSize() const { return 100; }
 bool doWork( od_int64 start, od_int64 stop, int )
 {
     const TypeSet<int>& texturecols = explsurf_.texturecolcoords_;
-    for ( int stickpos= start; stickpos<=stop; stickpos++, addToNrDone(1) )
+    for ( int stickpos=mCast(int,start); stickpos<=stop; stickpos++, addToNrDone(1) )
     {
 	int stickidx = -1;
 	int panelidx = -1;
@@ -101,9 +101,11 @@ bool doWork( od_int64 start, od_int64 stop, int )
 	    DataPointSet::Pos dpsetpos( pos );
 	    DataPointSet::DataRow datarow( dpsetpos, 1 );
 	    datarow.data_.setSize( dpset_.nrCols(), mUdf(float) );
-	    datarow.data_[i_column_-dpset_.nrFixedCols()] =  knotpos;
-	    datarow.data_[j_column_-dpset_.nrFixedCols()] =  stickpos;
-	    dpsetlock_.lock();
+	    datarow.data_[i_column_-dpset_.nrFixedCols()] =  
+					          mCast( float, knotpos );
+	    datarow.data_[j_column_-dpset_.nrFixedCols()] =  
+						  mCast( float, stickpos );
+	    dpsetlock_.lock(); 
 	    dpset_.addRow( datarow );
 	    dpsetlock_.unLock();
 	}
@@ -331,7 +333,7 @@ int minThreadSize() const { return 1; }
 
 bool doWork( od_int64 start, od_int64 stop, int )
 {
-    for ( int idx=start; idx<=stop; idx++, addToNrDone(1) )
+    for ( int idx=mCast(int,start); idx<=stop; idx++, addToNrDone(1) )
     {
 	if ( updatesticksnotpanels_ )
 	{
@@ -362,9 +364,9 @@ ExplFaultStickSurface::ExplFaultStickSurface( FaultStickSurface* surf,
     : surface_( 0 )
     , displaysticks_( true )
     , displaypanels_( true )
-    , scalefacs_( 1, 1, zscale )
+    , scalefacs_( 1, 1, mIsUdf(zscale) ? SI().zScale() : zscale )
     , needsupdate_( true )
-    , needsupdatetexture_( false )			  
+    , needsupdatetexture_( false )
     , maximumtexturesize_( 1024 )
     , texturesize_( mUdf(int), mUdf(int) )
     , texturepot_( true )
@@ -1160,7 +1162,7 @@ bool ExplFaultStickSurface::setProjTexturePositions( DataPointSet& dps )
 {
     //Refine needed for pos calculation
 
-    const float zscale = SI().zDomain().userFactor();
+    const float zscale = mCast( float, SI().zDomain().userFactor() );
     
     TypeSet<Coord> knots;
     TypeSet<int> knotids;
@@ -1259,8 +1261,8 @@ bool ExplFaultStickSurface::setProjTexturePositions( DataPointSet& dps )
 	    DataPointSet::Pos dpsetpos( pos );
 	    DataPointSet::DataRow datarow( dpsetpos, 1 );
 	    datarow.data_.setSize( nrcs, mUdf(float) );
-	    datarow.data_[ic] =  row;
-	    datarow.data_[jc] =  col;
+	    datarow.data_[ic] =  mCast( float, row );
+	    datarow.data_[jc] =  mCast( float, col );
 	    dps.addRow( datarow );
 	}
     }

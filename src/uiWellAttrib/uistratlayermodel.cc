@@ -587,6 +587,8 @@ bool uiStratLayerModel::openGenDesc()
     synthdisp_->modelChanged();
     delete elpropsel_; elpropsel_ = 0;
     
+    gentools_->genReq.trigger();
+
     CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(), 
 	    		    const_cast<uiStratLayerModel*>(this) );
     const_cast<uiStratLayerModel*>(this)->retrieveRequired.trigger( &caps );
@@ -704,6 +706,8 @@ void uiStratLayerModel::displayFRResult( SyntheticData* synthdata )
     lmp_.useed_ = (bool)synthdata;
     synthdisp_->displaySynthetic( synthdata ? synthdata
 				    : synthdisp_->getCurrentSyntheticData() );
+    levelChanged.trigger();	//no change in fact but a redraw is needed
+
     moddisp_->modelChanged();
 }
 

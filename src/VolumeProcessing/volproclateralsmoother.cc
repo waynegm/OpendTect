@@ -70,7 +70,7 @@ void reportRowDone(CallBacker*)
 bool doWork( od_int64 start, od_int64 stop, int thread )
 {
     if ( pars_.type_==Stats::Average ) //&& !mIsUdf(pars_.rowdist_) )
-	return processKernel( start, stop, thread );
+	return processKernel( mCast(int,start), mCast(int,stop), thread );
     return processFilter( start, stop, thread );
 }
 
@@ -89,7 +89,7 @@ bool processFilter( od_int64 start, od_int64 stop, int thread )
 
     for ( od_int64 idx=start; idx<=stop && shouldContinue(); idx++ )
     {
-	const int depthindex = i2samples_.start+idx;
+	const int depthindex = mCast( int, i2samples_.start+idx );
 	const int inputdepth = depthindex-i2_;
 	const int outputdepth = depthindex-o2_;
 	inputslice.setPos( 2, inputdepth );
@@ -197,7 +197,7 @@ bool processKernel( int start, int stop, int thread )
     {
 	double sum = 0;
 	od_int64 nrvals = 0;
-	const int depthindex = i2samples_.start+depthidx;
+	const int depthindex = mCast( int, i2samples_.start+depthidx );
 	const int inputdepth = depthindex-i2_;
 	const int outputdepth = depthindex-o2_;
 
@@ -215,7 +215,7 @@ bool processKernel( int start, int stop, int thread )
 		int inputpos1 = kernelorigin1+idx1;
 		mFixEdges( 1 );
 
-		const int offset = slice.info().getOffset( idx0, idx1 );
+		const int offset = mCast(int,slice.info().getOffset(idx0,idx1));
 		const float val = input_.get(inputpos0,inputpos1,inputdepth);
 		if ( mIsUdf(val) )
 		    missingdata = true;
@@ -253,7 +253,8 @@ bool processKernel( int start, int stop, int thread )
 		    val = fixedval_;
 		}
 
-		for ( int idx=slice.info().getTotalSz()-1; idx>=0; idx-- )
+		for ( int idx=mCast(int,slice.info().getTotalSz()-1); idx>=0; 
+									idx-- )
 		{
 		    if ( wasudfptr[idx] )
 			sliceptr[idx] = val;
@@ -278,7 +279,7 @@ bool processKernel( int start, int stop, int thread )
 		const int outputpos1 = globalpos1-o1_;
 
 		const int offset =
-		    slice.info().getOffset( kernelpos0, kernelpos1 );
+		   mCast( int, slice.info().getOffset(kernelpos0, kernelpos1) );
 
 		if ( dontfilludf && wasudfptr[offset] )
 		    continue;

@@ -32,9 +32,11 @@ public:
     inline virtual ManagedObjectSet<T>& operator -=( T* ptr );
 
     inline virtual void		erase();
-    inline virtual void		remove(int,int);
-    inline virtual T*		remove( int idx, bool kporder=true )
-				{ return ObjectSet<T>::remove(idx,kporder); }
+    inline virtual void		removeRange(od_int64,od_int64);
+    inline virtual T*		removeSingle( int idx, bool kporder=true );
+				/*!<Deletes entry and returns 0 */
+    inline virtual T*		removeAndTake(int idx, bool kporder=true );
+				/*!<Does not delete the entry. */
 
     inline void			setEmpty()		{ erase(); }
 
@@ -97,16 +99,35 @@ void ManagedObjectSet<T>::erase()
 
 
 template <class T> inline
-void ManagedObjectSet<T>::remove( int i1, int i2 )
+T* ManagedObjectSet<T>::removeSingle( int idx, bool kporder )
 {
-    for ( int idx=i1; idx<=i2; idx++ )
+    if ( isarr_ )
+	delete [] (*this)[idx];
+    else
+	delete (*this)[idx];
+
+    ObjectSet<T>::removeSingle( idx, kporder );
+    return 0; //Don't give anyone a chance to play with the deleted object
+}
+
+
+template <class T> inline
+void ManagedObjectSet<T>::removeRange( od_int64 i1, od_int64 i2 )
+{
+    for ( int idx=(int)i1; idx<=i2; idx++ )
     {
 	if ( isarr_ )
 	    delete [] (*this)[idx];
 	else
 	    delete (*this)[idx];
     }
-    ObjectSet<T>::remove( i1, i2 );
+    ObjectSet<T>::removeRange( i1, i2 );
+}
+
+template <class T> inline
+T* ManagedObjectSet<T>::removeAndTake(int idx, bool kporder )
+{
+    return ObjectSet<T>::removeSingle( idx, kporder );
 }
 
 

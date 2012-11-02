@@ -33,6 +33,7 @@ public:
 
     const Coord3&	pos( int idx ) const	{ return pos_[idx]; }
     float		value( int idx ) const	{ return (float) pos_[idx].z; }
+    float		getKbElev() const	{ return dah_[0] - value(0); }
     int			nrPoints() const	{ return pos_.size(); }
     bool		zIsTime() const		{ return zistime_; }
 
@@ -74,8 +75,8 @@ protected:
     TypeSet<Coord3>	pos_;
     bool		zistime_;
 
-    void		removeAux( int idx )		{ pos_.remove(idx); }
-    void		eraseAux()			{ pos_.erase(); }
+    void		removeAux( int idx )	{ pos_.removeSingle(idx); }
+    void		eraseAux()		{ pos_.erase(); }
 
 };
 

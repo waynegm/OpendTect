@@ -144,12 +144,12 @@ void Horizon2DLine::syncRow( const PosInfo::GeomID& geomid,
 	if ( Coord((*rows_[rowidx])[colidx]).isDefined() )
 	    break;
 	
-	rows_[rowidx]->remove( colidx );
+	rows_[rowidx]->removeSingle( colidx );
     }
 
     while ( rows_[rowidx]->size() && !Coord((*rows_[rowidx])[0]).isDefined() )
     {
-	rows_[rowidx]->remove( 0 );
+	rows_[rowidx]->removeSingle( 0 );
 	colsampling_[rowidx].start += colsampling_[rowidx].step;
     }
 
@@ -163,13 +163,12 @@ void Horizon2DLine::removeRow( const PosInfo::GeomID& geomid )
     if ( rowidx<0 || rowidx>=rows_.size() )
 	return;
 
-    delete rows_[rowidx];
-    rows_.remove( rowidx, false );
-    geomids_.remove( rowidx );
-    colsampling_.remove( rowidx, false );
+    delete rows_.removeSingle( rowidx, false );
+    geomids_.removeSingle( rowidx, false );
+    colsampling_.removeSingle( rowidx, false );
     if ( !rowidx )
     {
-	if ( rows_.size() ) firstrow_++; //Inrease only if we still have rows.
+	if ( rows_.size() ) firstrow_++; //Inrcease only if we still have rows.
     }
     else
     {
@@ -190,12 +189,12 @@ void Horizon2DLine::removeCols( const PosInfo::GeomID& geomid, int col1,
 
     if ( colrg.start == col1 )
     {
-	rows_[rowidx]->remove( startidx, stopidx );
+	rows_[rowidx]->removeRange( startidx, stopidx );
 	colsampling_[rowidx].start = col2 + colrg.step;
     }
     else if ( colrg.stop == col2 )
     {
-	rows_[rowidx]->remove( startidx, stopidx );
+	rows_[rowidx]->removeRange( startidx, stopidx );
     }
     else
     {

@@ -63,8 +63,8 @@ od_int64 nrIterations() const { return nrsamples_; }
 bool doWork( od_int64 start, od_int64 stop, int threadid )
 {
     if ( !res_ ) return true;
-    return provider_.computeData( *res_, relpos_, start+z0_, stop-start+1,
-	    			  threadid );
+    return provider_.computeData( *res_, relpos_, mCast(int,start+z0_), 
+					 mCast(int,stop-start+1), threadid );
 }
 
 
@@ -168,7 +168,7 @@ Provider* Provider::internalCreate( Desc& desc, ObjectSet<Provider>& existing,
 	    		internalCreate( *inputdesc, existing, issame, errstr );
 	if ( !inputprovider )
 	{
-	    existing.remove(existing.indexOf(newprov), existing.size()-1 );
+	    existing.removeRange(existing.indexOf(newprov),existing.size()-1 );
 	    newprov->unRef();
 	    return 0;
 	}
@@ -180,7 +180,7 @@ Provider* Provider::internalCreate( Desc& desc, ObjectSet<Provider>& existing,
 
     if ( !newprov->checkInpAndParsAtStart() )
     {
-	existing.remove( existing.indexOf(newprov), existing.size()-1 );
+	existing.removeRange( existing.indexOf(newprov), existing.size()-1 );
 	BufferString attribnm = newprov->desc_.attribName();
 	if ( attribnm == StorageProvider::attribName() )
 	{
@@ -528,7 +528,7 @@ int Provider::moveToNextTrace( BinID startpos, bool firstcheck )
     if ( getDesc().descSet()->is2D() )
 	prevtrcnr_ = currentbid_.crl;
 
-    bool needmove;
+    bool needmove = false;
     bool docontinue = true;
     ObjectSet<Provider> movinginputs;
     while ( docontinue )
@@ -941,7 +941,7 @@ void Provider::resetZIntervals()
 	    inputs_[idx]->resetZIntervals();
 
     for ( int idx=localcomputezintervals_.size(); idx>0; idx-- )
-	localcomputezintervals_.remove(idx-1);
+	localcomputezintervals_.removeSingle(idx-1);
 }
     
 
@@ -1114,7 +1114,7 @@ void Provider::setOutputInterestSize( bool preserve )
 	    outputinterest_.append( addon );
 	}
 	else
-	    outputinterest_.remove( desc_.nrOutputs()-1, outintsz-1 );
+	    outputinterest_.removeRange( desc_.nrOutputs()-1, outintsz-1 );
     }
     else
 	outputinterest_ = TypeSet<int>(desc_.nrOutputs(),0);
@@ -1322,7 +1322,7 @@ int Provider::getTotalNrPos( bool is2d )
     if ( seldata_ && seldata_->type() == Seis::Table )
     {
 	mDynamicCastGet(const Seis::TableSelData*,tsd,seldata_)
-	return tsd->binidValueSet().totalSize();
+	return mCast( int, tsd->binidValueSet().totalSize() );
     }
     if ( !possiblevolume_ || !desiredvolume_ )
 	return false;

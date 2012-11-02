@@ -203,22 +203,22 @@ static void takeSimilarObjs( ObjectSet<const uiObject>& objects,
 	const BufferString objkey = CmdComposer::factoryKey( newobj );
 	bool yn = srckey && objkey==srckey;
 
-	if ( !strcmp(srckey, "UILINEEDIT") )
+	if ( FixedString(srckey) == "UILINEEDIT" )
 	    yn = yn || objkey=="UISPINBOX" || objkey=="UICOMBOBOX";
 
-	if ( !strcmp(srckey, "UILABEL") )
+	if ( FixedString(srckey) == "UILABEL" )
 	    yn = yn || dynamic_cast<const uiLabel*>(newobj);
-	if ( !strcmp(srckey, "UIGROUPOBJ") )
+	if ( FixedString(srckey) == "UIGROUPOBJ" )
 	    yn = yn || dynamic_cast<const uiGroupObj*>(newobj);
-	if ( !strcmp(srckey, "UISEPARATOR") )
+	if ( FixedString(srckey) == "UISEPARATOR" )
 	    yn = yn || dynamic_cast<const uiSeparator*>(newobj);
 
 	if ( tofront!=yn && toback!=yn )
-	    objects.remove( idx );
+	    objects.removeSingle( idx );
 	else if ( toback && yn )
-	    objects += objects.remove( idx );
+	    objects += objects.removeSingle( idx );
 	else if ( tofront && yn )
-	    objects.insertAt( objects.remove(idx++), offset++ );
+	    objects.insertAt( objects.removeSingle(idx++), offset++ );
 	else
 	    idx++;
 
@@ -284,13 +284,13 @@ static bool doFindKeyStr( const uiMainWin& srcwin, CmdRecEvent& event,
 	    if ( aliases.isEmpty() )
 	    {
 		csobjfinder.getAliases( *relatives[0], aliases );
-		relatives.remove( 0 );
+		relatives.removeSingle( 0 );
 	    }
 
 	    ObjectSet<const uiObject> newobjset = curobjset;
 	    FileMultiString newkeystr;
 	    newkeystr += aliases[0]->buf(); 
-	    aliases.remove( 0 );
+	    aliases.removeSingle( 0 );
 
 	    csobjfinder.selectNodes( newobjset, newkeystr );
 	    if ( newobjset.indexOf(event.object_) < 0 )
@@ -572,7 +572,7 @@ void CmdRecorder::handleEvent( CallBacker* cb )
 	{
 	    const int idx = popuprefnrs_.indexOf( ev.refnr_ );
 	    if ( idx >= 0 )
-		popuprefnrs_.remove( idx );
+		popuprefnrs_.removeSingle( idx );
 	}
 	return;
     }
@@ -637,7 +637,7 @@ void CmdRecorder::handleEvent( CallBacker* cb )
             if ( candidates[idx]->accept(ev) )
 		ev.nraccepts_++;
 
-	    candidates.remove( idx );
+	    candidates.removeSingle( idx );
 	}
     }
 
@@ -673,7 +673,7 @@ void CmdRecorder::handleEvent( CallBacker* cb )
 	    updatecomposers = true;
 
 	if ( composers_[idx]->done() )
-	    delete composers_.remove( idx );
+	    delete composers_.removeSingle( idx );
     }
 
     if ( updatecomposers )

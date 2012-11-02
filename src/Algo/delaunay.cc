@@ -68,9 +68,9 @@ bool DelaunayTriangulator::doWork( od_int64 start, od_int64 stop,int threadid )
     for ( od_int64 idx=start; idx<=stop && shouldContinue(); idx++ )
     {
 	const od_int64 scopeidx = permutation_ ? permutation_[idx] : idx;
-	const od_int64 coordid = calcscope_.atIndex( scopeidx, 1 );
+	const od_int64 coordid = calcscope_.atIndex( mCast(int, scopeidx), 1 );
 	int dupid;
-       	if ( !tree_.insertPoint( coordid, dupid ) )
+       	if ( !tree_.insertPoint( mCast(int, coordid), dupid ) )
 	    return false;
 
 	addToNrDone(1);
@@ -273,7 +273,7 @@ int DAGTriangleTree::insertPoint( const Coord& coord, int& dupid )
 	mMultiThread( coordlock_.writeLock() );
 
 	if ( coordlist_->size()==ci+1 )
-	    coordlist_->remove( ci );
+	    coordlist_->removeSingle( ci );
 
 	mMultiThread( coordlock_.writeUnLock() );
 	return cNoVertex();
@@ -630,9 +630,9 @@ void DAGTriangleTree::legalizeTriangles( TypeSet<char>& v0s, TypeSet<char>& v1s,
 	
 	if ( start>10000 )
 	{
-	    v0s.remove( 0, start );
-	    v1s.remove( 0, start );
-	    tis.remove( 0, start );
+	    v0s.removeRange( 0, start );
+	    v1s.removeRange( 0, start );
+	    tis.removeRange( 0, start );
 	    start = 0;
 	}
 	else
@@ -1165,9 +1165,9 @@ bool Triangle2DInterpolator::setFromAzimuth( const TypeSet<int>& tmpvertices,
 	if ( tmpvertices[idx]<0 )
 	{
 	    if ( usedinit[0]==-1 )
-		usedinit[0] = tmpvertices[idx];
+		usedinit[0] = mCast( char, tmpvertices[idx] );
 	    else
-		usedinit[1] = tmpvertices[idx];
+		usedinit[1] = mCast( char, tmpvertices[idx] );
 	}
     }
 
@@ -1179,7 +1179,7 @@ bool Triangle2DInterpolator::setFromAzimuth( const TypeSet<int>& tmpvertices,
 	{
 	    if ( initidx==usedinit[0] ) continue;
 
-	    usedinit[1] = initidx;
+	    usedinit[1] = mCast( char, initidx );
 	    initb = triangles_.getInitCoord( usedinit[1] );
 	    if ( pointInTriangle2D(pt,initcenter_,inita,initb,0) )
 		break;

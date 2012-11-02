@@ -51,7 +51,7 @@ Interval<float> A2DBitMapInpData::scale( const Interval<float>& clipratio,
 
 float A2DBitMapInpData::midVal() const
 {
-    const TypeSet<float>& statpts = clipper_.statPts();
+    const LargeValVec<float>& statpts = clipper_.statPts();
     return statpts.size() ? statpts[statpts.size()/2] : mUdf(float);
 }
 
@@ -487,7 +487,7 @@ void VDA2DBitMapGenerator::doFill()
 
 bool VDA2DBitMapGenerator::doWork( od_int64 start, od_int64 stop, int )
 {
-    for ( int idx=start; idx<=stop; idx++ )
+    for ( int idx=mCast(int,start); idx<=stop; idx++ )
     {
 	drawStrip( stripstodraw_[idx] );
     }

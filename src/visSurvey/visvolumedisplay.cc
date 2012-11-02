@@ -395,8 +395,7 @@ void VolumeDisplay::removeChild( int displayid )
 	{
 	    VisualObjectImpl::removeChild( slices_[idx]->getInventorNode() );
 	    slices_[idx]->motion.remove( mCB(this,VolumeDisplay,sliceMoving) );
-	    slices_[idx]->unRef();
-	    slices_.remove(idx,false);
+	    slices_.removeSingle(idx,false)->unRef();
 	    return;
 	}
     }
@@ -407,9 +406,9 @@ void VolumeDisplay::removeChild( int displayid )
 	{
 	    VisualObjectImpl::removeChild(
 		    isosurfaces_[idx]->getInventorNode() );
-	    isosurfaces_[idx]->unRef();
-	    isosurfaces_.remove(idx,false);
-	    isosurfsettings_.remove(idx,false);
+
+	    isosurfaces_.removeSingle(idx,false)->unRef();
+	    isosurfsettings_.removeSingle(idx,false);
 	    return;
 	}
     }

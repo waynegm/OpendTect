@@ -128,7 +128,7 @@ uiStratSimpleLayerModelDisp::uiStratSimpleLayerModelDisp(
     , dispeach_(1)
     , fillmdls_(true)
     , uselithcols_(true)
-    , showzoomed_(false)
+    , showzoomed_(true)
     , vrg_(0,1)
     , logblckitms_(*new uiGraphicsItemSet)
     , lvlitms_(*new uiGraphicsItemSet)
@@ -275,7 +275,7 @@ void uiStratSimpleLayerModelDisp::removeLayers( Strat::LayerSequence& seq,
 {
     if ( !doall )
     {
-	delete seq.layers().remove( layidx );
+	delete seq.layers().removeSingle( layidx );
 	seq.prepareUse();
     }
     else
@@ -291,7 +291,7 @@ void uiStratSimpleLayerModelDisp::removeLayers( Strat::LayerSequence& seq,
 		const Strat::Layer& lay = *ls.layers()[ilay];
 		if ( &lay.unitRef() == &lur )
 		{
-		    delete ls.layers().remove( ilay );
+		    delete ls.layers().removeSingle( ilay );
 		    ilay--; needprep = true;
 		}
 	    }

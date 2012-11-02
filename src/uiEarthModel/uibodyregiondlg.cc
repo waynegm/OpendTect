@@ -85,7 +85,8 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
     const int horsz = hors_.size();
     const bool usepolygon = !plg_.isEmpty();
     
-    for ( int idx=start; idx<=stop && shouldContinue(); idx++, addToNrDone(1) )
+    for ( int idx=mCast(int,start); idx<=stop && shouldContinue(); 
+						    idx++, addToNrDone(1) )
     {
 	const int inlidx = idx/crlsz;
 	const int crlidx = idx%crlsz;
@@ -141,10 +142,10 @@ public:
 ImplicitBodyRegionExtractor( const TypeSet<MultiID>& surflist, 
 	const TypeSet<char>& sides, const CubeSampling& cs, Array3D<float>& res,
 	const ODPolygon<float>& plg )
-    : res_( res )
-    , cs_( cs )
-    , plg_( plg )	      
-    , bidinplg_( 0 )			      
+    : res_(res)
+    , cs_(cs)
+    , plg_(plg)
+    , bidinplg_(0)
 {
     res_.setAll( 1 );
 
@@ -167,10 +168,10 @@ ImplicitBodyRegionExtractor( const TypeSet<MultiID>& surflist,
 	{
 	    mDynamicCastGet( EM::Fault3D*, emflt, emobj );
 	    Geometry::FaultStickSurface* flt = 
-	    emflt ? emflt->geometry().sectionGeometry(0) : 0;
+		emflt ? emflt->geometry().sectionGeometry(0) : 0;
 	    if ( !flt ) continue;
+
 	    emflt->ref();
-	    
 	    Geometry::ExplFaultStickSurface* efs = 
 		new Geometry::ExplFaultStickSurface(0,SI().zScale());
 	    efs->setCoordList( new Coord3ListImpl, new Coord3ListImpl );
@@ -242,7 +243,8 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
     }
     const int cornersz = corners.size();
 
-    for ( int idz=start; idz<=stop && shouldContinue(); idz++, addToNrDone(1) )
+    for ( int idz=mCast(int,start); idz<=stop && shouldContinue(); 
+						    idz++, addToNrDone(1) )
     {
 	if ( !idz || idz==lastzidx )
 	    continue;
@@ -416,7 +418,7 @@ void computeHorOuterRange()
 	const Geometry::BinIDSurface* surf = 
 	    hors_[idx]->geometry().sectionGeometry(hors_[idx]->sectionID(0));
 	const Array2D<float>* depth = surf ? surf->getArray() : 0;
-	const int sz = depth ? depth->info().getTotalSz() : 0;
+	const int sz = depth ? mCast( int,depth->info().getTotalSz() ) : 0;
 	if ( !sz ) continue;
 
 	const float* data = depth->getData();
@@ -628,7 +630,7 @@ void uiBodyRegionDlg::removeSurfaceCB( CallBacker* )
     if ( currow==-1 ) return;
 
     if ( currow<surfacelist_.size() )
-	surfacelist_.remove( currow );
+	surfacelist_.removeSingle( currow );
 
     table_->removeRow( currow );
     removebutton_->setSensitive( surfacelist_.size() );

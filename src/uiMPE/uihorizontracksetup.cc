@@ -261,9 +261,8 @@ uiGroup* uiHorizonSetupGroup::createPropertyGroup()
 
     seedsliderfld_ = new uiSliderExtra( grp,
 	    			uiSliderExtra::Setup("Seed Size").
-				withedit(true),	"Slider Size" );
-    seedsliderfld_->sldr()->setMinValue( 1 );
-    seedsliderfld_->sldr()->setMaxValue( 15 );
+				withedit(true),	"Seed Size" );
+    seedsliderfld_->sldr()->setInterval( 1, 15 );
     seedsliderfld_->sldr()->valueChanged.notify(
 	    		mCB(this,uiHorizonSetupGroup,seedSliderMove));
     seedsliderfld_->attach( alignedBelow, seedtypefld_ );
@@ -700,7 +699,7 @@ bool uiHorizonSetupGroup::commitToTracker( bool& fieldchange ) const
 	{
 	    int size = horadj_->getAmplitudeThresholds().size();
 	    fieldchange = true;
-	    horadj_->getAmplitudeThresholds().remove( idx, size-1 );
+	    horadj_->getAmplitudeThresholds().removeRange( idx, size-1 );
 	}
     }
     else
@@ -755,7 +754,7 @@ bool uiHorizonSetupGroup::commitToTracker( bool& fieldchange ) const
 	{
 	    int size = horadj_->getAllowedVariances().size();
 	    fieldchange = true;
-	    horadj_->getAllowedVariances().remove( idx, size-1 );
+	    horadj_->getAllowedVariances().removeRange( idx, size-1 );
 	}
     }
 

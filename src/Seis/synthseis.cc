@@ -362,7 +362,7 @@ od_int64 MultiTraceSynthGenerator::nrIterations() const
 bool MultiTraceSynthGenerator::doWork(od_int64 start, od_int64 stop, int thread)
 {
     SynthGenerator& synthgen = *synthgens_[thread];
-    for ( int idx=start; idx<=stop; idx++ )
+    for ( int idx=mCast(int,start); idx<=stop; idx++ )
     {
 	synthgen.setModel( *(*models_)[idx] );
 
@@ -381,7 +381,7 @@ bool MultiTraceSynthGenerator::doWork(od_int64 start, od_int64 stop, int thread)
 
 	lock_.unLock();
 
-	addToNrDone( synthgen.currentProgress() );
+	addToNrDone( mCast(int,synthgen.currentProgress()) );
     }
     return true;
 }
@@ -455,7 +455,7 @@ bool RaySynthGenerator::doPrepare( int )
     ObjectSet<RayTracer1D>& rt1ds = rtr.rayTracers();
     for ( int idx=rt1ds.size()-1; idx>=0; idx-- )
     {
-	const RayTracer1D* rt1d = rt1ds.remove(idx);
+	const RayTracer1D* rt1d = rt1ds.removeSingle(idx);
 	RayModel* rm = new RayModel( *rt1d, offsets_.size() );
 	delete rt1d;
 
@@ -493,7 +493,7 @@ bool RaySynthGenerator::doPrepare( int )
 bool RaySynthGenerator::doWork( od_int64 start, od_int64 stop, int )
 {
     IOPar par; fillPar( par );
-    for ( int idx=start; idx<=stop; idx++, addToNrDone(1) )
+    for ( int idx=mCast(int,start); idx<=stop; idx++, addToNrDone(1) )
     {
 	if ( !shouldContinue() )
 	    return false;
@@ -562,7 +562,7 @@ const SeisTrc* RaySynthGenerator::RayModel::stackedTrc() const
     SeisTrc* trc = new SeisTrc( *outtrcs_[0] );
     SeisTrcPropChg stckr( *trc );
     for ( int idx=1; idx<outtrcs_.size(); idx++ )
-	stckr.stack( *outtrcs_[idx], false, idx );
+	stckr.stack( *outtrcs_[idx], false, mCast(float,idx) );
 
     return trc;
 }

@@ -39,7 +39,7 @@ LogCubeCreator::LogCubeCreator( const Well::Data& wd )
     if ( !wtextr.execute() )
 	pErrMsg( "unable to extract position" );
     wtextr.getBIDs( binids_ );
-    extractparams_.setFixedRange( SI().zRange( true ), true );
+    extractparams_.setFixedRange( SI().zRange(true), SI().zDomain().isTime() );
 }
 
 
@@ -52,7 +52,7 @@ LogCubeCreator::~LogCubeCreator()
 void LogCubeCreator::setInput( ObjectSet<LogCubeData>& lcds, int nrdupltrcs )
 {
     while ( !lcds.isEmpty() )
-	logdatas_ += lcds.remove(0);
+	logdatas_ += lcds.removeSingle(0);
 
     nrduplicatetrcs_ = nrdupltrcs;
 }
@@ -95,7 +95,7 @@ bool LogCubeCreator::doWork( od_int64 start, od_int64 stop, int )
     if ( SI().zIsTime() && !wd_.haveD2TModel() )
 	mErrRet( "No depth/time model found" );
 
-    for ( int idx=start; idx<=stop; idx++ )
+    for ( int idx=mCast(int,start); idx<=stop; idx++ )
     {
 	if ( !shouldContinue() )
 	    return false;

@@ -1085,7 +1085,8 @@ bool uiEMPartServer::changeAuxData( const EM::ObjectID& oid,
 	    bool* maskptr = mask->getData();
 	    if ( maskptr )
 	    {
-		for ( int idx=mask->info().getTotalSz()-1; idx>=0; idx-- )
+		for ( int idx=mCast(int,mask->info().getTotalSz()-1); idx>=0; 
+									idx-- )
 		{
 		    *maskptr = !mIsUdf(*arrptr);
 		    maskptr++;
@@ -1423,7 +1424,7 @@ void uiEMPartServer::fillPickSet( Pick::Set& ps, MultiID horid )
 	    if ( geom ) z = (float) geom->computePosition( Coord(bid.inl,bid.crl) ).z;
 	    if ( mIsUdf(z) )
 	    {
-		ps.remove( idx );
+		ps.removeSingle( idx );
 		continue;
 	    }
 	}

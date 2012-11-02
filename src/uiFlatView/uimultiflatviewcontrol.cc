@@ -44,7 +44,7 @@ uiMultiFlatViewControl::uiMultiFlatViewControl( uiFlatViewer& vwr,
 uiMultiFlatViewControl::~uiMultiFlatViewControl()
 {
     for ( int idx=zoommgrs_.size()-1; idx>=1; idx-- )
-	delete zoommgrs_.remove( idx );
+	delete zoommgrs_.removeSingle( idx );
 }
 
 
@@ -120,7 +120,6 @@ void uiMultiFlatViewControl::rubBandCB( CallBacker* cb )
     Geom::Point2D<double> centre = wr.centre();
     Geom::Size2D<double> newsz = wr.size();
 
-    const uiWorldRect oldview( activevwr_->curView() );
     setNewView( centre, newsz );
 }
 
@@ -216,8 +215,9 @@ void uiMultiFlatViewControl::parsCB( CallBacker* cb )
 void uiMultiFlatViewControl::setZoomBoxesCB( CallBacker* cb )
 {
     for ( int idx=0; idx<zoomboxes_.size(); idx++ )
-	vwrs_[idx]->removeAuxData( zoomboxes_[idx] );
-    deepErase( zoomboxes_ );
+	delete vwrs_[idx]->removeAuxData( zoomboxes_[idx] );
+
+    zoomboxes_.erase();
 
     if ( iszoomcoupled_ || !activeVwr() || !drawzoomboxes_ ) 
 	return;

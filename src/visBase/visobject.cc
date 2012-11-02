@@ -64,7 +64,7 @@ visBase::NodeState* VisualObject::removeNodeState( visBase::NodeState* ns )
     if ( nodestates_.validIdx(idx) )
     {
 	ns->detachStateSet( getStateSet() );
-	nodestates_.remove( idx )->unRef();
+	nodestates_.removeSingle( idx )->unRef();
     }
     
     return ns;

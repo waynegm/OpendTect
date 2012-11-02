@@ -173,11 +173,10 @@ void Time2DepthStretcher::removeVolumeOfInterest( int id )
     if ( idx<0 )
 	return;
 
-    delete voidata_[idx];
-    voidata_.remove( idx );
-    voivols_.remove( idx );
-    voiintime_.remove( idx );
-    voiids_.remove( idx );
+    delete voidata_.removeSingle( idx );
+    voivols_.removeSingle( idx );
+    voiintime_.removeSingle( idx );
+    voiids_.removeSingle( idx );
 }
 
 
@@ -352,7 +351,7 @@ Time2DepthStretcherProcessor( FloatMathFunction& func,
 bool doWork( od_int64 start, od_int64 stop, int )
 {
     float depth = zrg_.center();
-    for ( int idx=start; idx<=stop; idx++ )
+    for ( int idx=mCast(int,start); idx<=stop; idx++ )
     {
 	const float t = sd_.atIndex( idx );
 	res_[idx] = trg_.includes(t,false) &&

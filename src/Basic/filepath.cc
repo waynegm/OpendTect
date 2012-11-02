@@ -134,7 +134,7 @@ void FilePath::setFileName( const char* fnm )
     if ( !fnm || !*fnm )
     {
 	if ( lvls_.size() )
-	    delete lvls_.remove( lvls_.size()-1 );
+	    delete lvls_.removeSingle( lvls_.size()-1 );
     }
     else if ( lvls_.isEmpty() )
 	add( fnm );
@@ -441,7 +441,7 @@ void FilePath::compress( int startlvl )
 
 	if ( idx-remoffs >= 0 )
 	{
-	    lvls_.remove( idx-remoffs, idx );
+	    lvls_.removeRange( idx-remoffs, idx );
 	    idx -= remoffs + 1;
 	}
     }

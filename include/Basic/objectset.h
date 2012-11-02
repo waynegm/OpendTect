@@ -35,6 +35,7 @@ template <class T>
 class ObjectSet : public OD::Set
 {
 public:
+    				typedef int size_type;
 
     inline 			ObjectSet();
     inline			ObjectSet(const ObjectSet<T>&);
@@ -44,22 +45,22 @@ public:
 
     inline bool			nullAllowed() const	{ return allow0_; }
     inline void			allowNull(bool yn=true);
-    inline int			size() const		{ return vec_.size(); }
-    inline virtual int		nrItems() const		{ return size(); }
+    inline size_type			size() const		{ return vec_.size(); }
+    inline virtual od_int64	nrItems() const		{ return size(); }
 
-    inline virtual bool		validIdx(int) const;
+    inline virtual bool		validIdx(od_int64) const;
     inline virtual bool		isPresent(const T*) const;
-    inline virtual int		indexOf(const T*) const;
-    inline virtual T*		operator[](int);
-    inline virtual const T*	operator[](int) const;
+    inline virtual size_type		indexOf(const T*) const;
+    inline virtual T*		operator[](size_type);
+    inline virtual const T*	operator[](size_type) const;
     inline virtual T*		operator[](const T*) const; //!< check & unconst
 
-    inline virtual T*		replace(int idx,T*);
-    inline virtual void		insertAt(T* newptr,int);
-    inline virtual void		insertAfter(T* newptr,int);
+    inline virtual T*		replace(size_type idx,T*);
+    inline virtual void		insertAt(T* newptr,size_type);
+    inline virtual void		insertAfter(T* newptr,size_type);
     inline virtual void		copy(const ObjectSet<T>&);
     inline virtual void		append(const ObjectSet<T>&);
-    inline virtual void		swap(int,int);
+    inline virtual void		swap(od_int64,od_int64);
     inline virtual void		reverse(); 
 
     inline virtual ObjectSet<T>& operator +=(T*);
@@ -68,9 +69,10 @@ public:
     inline virtual T*		pop();
 
     inline virtual void		erase()		{ plainErase(); }
-    virtual inline T*		remove(int,bool preserve_order=true);
+    				
+    virtual inline T*		removeSingle(size_type,bool keep_order=true);
     				/*!<\returns the removed pointer. */
-    inline virtual void		remove(int from,int to);
+    virtual void		removeRange(od_int64 from,od_int64 to);
 
     inline T*			first();
     inline const T*		first() const;
@@ -80,7 +82,7 @@ public:
 
 protected:
 
-    VectorAccess<void*>		vec_;
+    VectorAccess<void*,size_type>	vec_;
     bool			allow0_;
 
 public:
@@ -91,7 +93,7 @@ public:
 
 
 #define mObjectSetApplyToAll( os, op ) \
-    for ( int idx=os.size()-1; idx>=0; idx-- ) \
+    for ( ObjectSet<int>::size_type idx=os.size()-1; idx>=0; idx-- ) \
 	op
 
 #define mObjectSetApplyToAllFunc( fn, op, extra ) \
@@ -104,11 +106,11 @@ inline void fn( ObjectSet<T>& os ) \
 
 
 //! empty the ObjectSet deleting all objects pointed to.
-mObjectSetApplyToAllFunc( deepErase, delete os.remove(idx),  )
+mObjectSetApplyToAllFunc( deepErase, delete os.removeSingle(idx),  )
 
 
 //! empty the ObjectSet deleting all objects pointed to.
-mObjectSetApplyToAllFunc( deepEraseArr, delete [] os.remove(idx), )
+mObjectSetApplyToAllFunc( deepEraseArr, delete [] os.removeSingle(idx), )
 
 
 //! append copies of one set's objects to another ObjectSet.
@@ -155,7 +157,7 @@ inline void deepCopyClone( ObjectSet<T>& to, const ObjectSet<S>& from )
 
 //! Locate object in set
 template <class T,class S>
-inline int indexOf( const ObjectSet<T>& os, const S& val )
+inline typename ObjectSet<T>::size_type indexOf( const ObjectSet<T>& os, const S& val )
 {
     for ( int idx=0; idx<os.size(); idx++ )
     {
@@ -170,7 +172,7 @@ inline int indexOf( const ObjectSet<T>& os, const S& val )
 template <class T,class S>
 inline const T* find( const ObjectSet<T>& os, const S& val )
 {
-    const int idx = indexOf( os, val );
+    const typename ObjectSet<T>::size_type idx = indexOf( os, val );
     return idx == -1 ? 0 : os[idx];
 }
 
@@ -179,7 +181,7 @@ inline const T* find( const ObjectSet<T>& os, const S& val )
 template <class T,class S>
 inline T* find( ObjectSet<T>& os, const S& val )
 {
-    const int idx = indexOf( os, val );
+    const typename ObjectSet<T>::size_type idx = indexOf( os, val );
     return idx == -1 ? 0 : os[idx];
 }
 
@@ -187,12 +189,12 @@ inline T* find( ObjectSet<T>& os, const S& val )
 template <class T>
 inline void _ObjectSet_sortWithNull( ObjectSet<T>& os )
 {
-    const int sz = os.size();
-    for ( int d=sz/2; d>0; d=d/2 )
+    const typename ObjectSet<T>::size_type sz = os.size();
+    for ( typename ObjectSet<T>::size_type d=sz/2; d>0; d=d/2 )
     {
-	for ( int i=d; i<sz; i++ )
+	for ( typename ObjectSet<T>::size_type i=d; i<sz; i++ )
 	{
-	    for ( int j=i-d; j>=0; j-=d )
+	    for ( typename ObjectSet<T>::size_type j=i-d; j>=0; j-=d )
 	    {
 		T* o1 = os[j]; T* o2 = os[j+d];
 		if ( !o2 || o1 == o2 || (o1 && !(*o1 > *o2) ) )
@@ -211,11 +213,18 @@ inline void sort( ObjectSet<T>& os )
 	_ObjectSet_sortWithNull(os);
     else
     {
-	const int sz = os.size();
-	for ( int d=sz/2; d>0; d=d/2 )
-	    for ( int i=d; i<sz; i++ )
-		for ( int j=i-d; j>=0 && *os[j]>*os[j+d]; j-=d )
+	const typename ObjectSet<T>::size_type sz = os.size();
+	for ( typename ObjectSet<T>::size_type d=sz/2; d>0; d=d/2 )
+	{
+	    for ( typename ObjectSet<T>::size_type i=d; i<sz; i++ )
+	    {
+		for ( typename ObjectSet<T>::size_type j=i-d;
+		     j>=0 && *os[j]>*os[j+d]; j-=d )
+		{
 		    os.swap( j, j+d );
+		}
+	    }
+	}
     }
 }
 
@@ -242,12 +251,12 @@ void ObjectSet<T>::allowNull( bool yn )
 
 
 template <class T> inline
-bool ObjectSet<T>::validIdx( int idx ) const
+bool ObjectSet<T>::validIdx( od_int64 idx ) const
 { return idx>=0 && idx<size(); }
 
 
 template <class T> inline
-T* ObjectSet<T>::operator[]( int idx )
+T* ObjectSet<T>::operator[]( size_type idx )
 {
 #ifdef __debug__
     if ( !validIdx(idx) )
@@ -258,7 +267,7 @@ T* ObjectSet<T>::operator[]( int idx )
 
 
 template <class T> inline
-const T* ObjectSet<T>::operator[]( int idx ) const
+const T* ObjectSet<T>::operator[]( size_type idx ) const
 {
 #ifdef __debug__
     if ( !validIdx(idx) )
@@ -271,16 +280,16 @@ const T* ObjectSet<T>::operator[]( int idx ) const
 template <class T> inline
 T* ObjectSet<T>::operator[]( const T* t ) const
 {
-    const int idx = indexOf(t);
+    const size_type idx = indexOf(t);
     return idx < 0 ? 0 : const_cast<T*>(t);
 }
 
 
 template <class T> inline
-int ObjectSet<T>::indexOf( const T* ptr ) const
+typename ObjectSet<T>::size_type ObjectSet<T>::indexOf( const T* ptr ) const
 {
-    const int sz = size();
-    for ( int idx=0; idx<sz; idx++ )
+    const size_type sz = size();
+    for ( size_type idx=0; idx<sz; idx++ )
 	if ( (const T*)vec_[idx] == ptr ) return idx;
 	    return -1;
 }
@@ -312,28 +321,28 @@ ObjectSet<T>& ObjectSet<T>::operator -=( T* ptr )
 
 
 template <class T> inline
-void ObjectSet<T>::swap( int idx0, int idx1 )
+void ObjectSet<T>::swap( od_int64 idx0, od_int64 idx1 )
 {
     if ( idx0<0 || idx0>=size() || idx1<0 || idx1>=size() )
 	return;
-    void* tmp = vec_[idx0];
-    vec_[idx0] = vec_[idx1];
-    vec_[idx1] = tmp;
+    void* tmp = vec_[(size_type)idx0];
+    vec_[(size_type)idx0] = vec_[(size_type)idx1];
+    vec_[(size_type)idx1] = tmp;
 }
 
 
 template <class T> inline
 void ObjectSet<T>::reverse()
 {
-    const int sz = size();
-    const int hsz = sz/2;
-    for ( int idx=0; idx<hsz; idx++ )
+    const size_type sz = size();
+    const size_type hsz = sz/2;
+    for ( size_type idx=0; idx<hsz; idx++ )
 	swap( idx, sz-1-idx );
 }
 
 
 template <class T> inline
-T* ObjectSet<T>::replace( int idx, T* newptr )
+T* ObjectSet<T>::replace( size_type idx, T* newptr )
 {
     if ( idx<0 || idx>=size() ) return 0;
     T* ptr = (T*)vec_[idx];
@@ -342,14 +351,14 @@ T* ObjectSet<T>::replace( int idx, T* newptr )
 
 
 template <class T> inline
-void ObjectSet<T>::insertAt( T* newptr, int idx )
+void ObjectSet<T>::insertAt( T* newptr, size_type idx )
 {
     vec_.insert( idx, (void*)newptr );
 }
 
 
 template <class T> inline
-void ObjectSet<T>::insertAfter( T* newptr, int idx )
+void ObjectSet<T>::insertAfter( T* newptr, size_type idx )
 {
     *this += newptr;
     if ( idx < 0 )
@@ -374,9 +383,9 @@ void ObjectSet<T>::copy( const ObjectSet<T>& os )
 template <class T> inline
 void ObjectSet<T>::append( const ObjectSet<T>& os )
 {
-    const int sz = os.size();
+    const size_type sz = os.size();
     vec_.setCapacity( size()+sz );
-    for ( int idx=0; idx<sz; idx++ )
+    for ( size_type idx=0; idx<sz; idx++ )
 	*this += const_cast<T*>( os[idx] );
 }
 
@@ -389,21 +398,21 @@ void ObjectSet<T>::push( T* ptr )
 template <class T> inline
 T* ObjectSet<T>::pop()
 {
-    int sz = size();
+    size_type sz = size();
     if ( !sz ) return 0;
-    return remove( sz-1 );
+    return removeSingle( sz-1 );
 }
 
 
 template <class T> inline
-T* ObjectSet<T>::remove( int idx, bool kporder )
+T* ObjectSet<T>::removeSingle( size_type idx, bool kporder)
 {
     T* res = (T*)vec_[idx];
     if ( kporder )
 	vec_.remove( idx );
     else
     {
-	const int lastidx = size()-1;
+	const size_type lastidx = size()-1;
 	if ( idx!=lastidx )
 	    vec_[idx] = vec_[lastidx];
 	vec_.remove( lastidx );
@@ -412,8 +421,9 @@ T* ObjectSet<T>::remove( int idx, bool kporder )
 }
 
 
-template <class T> inline void ObjectSet<T>::remove( int i1, int i2 )
-{ vec_.remove( i1, i2 ); }
+template <class T> inline
+void ObjectSet<T>::removeRange( od_int64 i1, od_int64 i2 )
+{ vec_.remove( (size_type)i1, (size_type)i2 ); }
 template <class T> inline T* ObjectSet<T>::first()
 { return isEmpty() ? 0 : (*this)[0]; }
 template <class T> inline const T* ObjectSet<T>::first() const

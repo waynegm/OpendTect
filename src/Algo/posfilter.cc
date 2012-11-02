@@ -27,6 +27,7 @@ const char* Pos::SubsampFilter::typeStr() { return sKey::Subsample(); }
 const char* Pos::SubsampFilter::eachStr() { return "Pass each"; }
 
 
+
 Pos::Filter* Pos::Filter::make( const IOPar& iop, bool is2d )
 {
     if ( is2d )
@@ -85,7 +86,7 @@ void Pos::Filter2D::addLineID( const PosInfo::GeomID& geomid )
 void Pos::Filter2D::removeLineID( int lidx )
 {
     if ( geomids_.validIdx(lidx) )
-	geomids_.remove( lidx );
+	geomids_.removeSingle( lidx );
 }
 
 
@@ -331,11 +332,15 @@ void Pos::SubsampFilter2D::initClass()
 }
 
 
+bool Pos::Provider::isProvider() const
+{ return true; }
+
+
 float Pos::Provider::estRatio( const Pos::Provider& prov ) const
 {
     if ( is2D() )
-	return ( prov.estNrPos()*prov.estNrZPerPos() )/
-	       ( estNrPos() * estNrZPerPos() );
+	return mCast( float, ( prov.estNrPos()*prov.estNrZPerPos() )/
+	       ( estNrPos() * estNrZPerPos() ) );
     else
     {
 	mDynamicCastGet(const Pos::Provider3D*,prov3d,&prov);

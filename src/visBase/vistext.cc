@@ -146,7 +146,7 @@ void Text2::removeText( const Text* txt )
 	return;
     
     geode_->removeDrawable( &texts_[idx]->getDrawable() );
-    texts_.remove( idx );
+    texts_.removeSingle( idx );
 }
 
     

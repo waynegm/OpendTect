@@ -579,7 +579,7 @@ void HorizonSection::addChannel()
 void HorizonSection::removeChannel( int channelidx )
 { 
     channels_->removeChannel( channelidx ); 
-    delete cache_.remove( channelidx );
+    delete cache_.removeSingle( channelidx );
 }
 
 

@@ -87,7 +87,7 @@ SqlDB::MantisDBMgr::MantisDBMgr( const ConnectionData* cd, const char* usernm )
     if ( !isopen )
     {
 	errmsg_ = "Unable to open database please check network connection";
-       	errmsg_.add ( " or cosult database administrator" );
+       	errmsg_.add ( " or consult database administrator" );
     }
 
     if ( username_.isEmpty() )
@@ -573,13 +573,13 @@ void SqlDB::MantisDBMgr::addBugTextTableEntryToSet( BugTextTableEntry& tt )
 
 void SqlDB::MantisDBMgr::removeBugTableEntryFromSet( int tableidx )
 { 
-    bugs_.remove( tableidx, true );
+    bugs_.removeSingle( tableidx, true );
 }
 
 
 void SqlDB::MantisDBMgr::removeBugTextTableEntryFromSet( int tableidx )
 {
-    texttables_.remove( tableidx, true );
+    texttables_.removeSingle( tableidx, true );
 }
 
 

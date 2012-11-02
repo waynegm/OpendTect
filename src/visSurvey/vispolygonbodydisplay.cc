@@ -535,8 +535,7 @@ void PolygonBodyDisplay::mouseCB( CallBacker* cb )
    
     CubeSampling mouseplanecs; 
     mouseplanecs.setEmpty();
-    EM::PosID mousepid( EM::PosID::udf() );
-
+    
     for ( int idx=0; idx<eventinfo.pickedobjids.size(); idx++ )
     {
 	const int visid = eventinfo.pickedobjids[idx];
@@ -887,8 +886,8 @@ void PolygonBodyDisplay::otherObjectsMoved(
 	    explicitintersections_->setPlane(planeids_[idy], normal, positions);
 	    planeids += planeids_[idy];
 
-	    intersectionobjs_.remove( idy );
-	    planeids_.remove( idy );
+	    intersectionobjs_.removeSingle( idy );
+	    planeids_.removeSingle( idy );
 	}
     }
 

@@ -196,7 +196,7 @@ public:
 	TypeSet<EM::SubID> newlist;
 	TypeSet<EM::SubID> newsrclist;
 	TypeSet<EM::SubID> removelist;
-	for ( int idx=start; idx<=stop; idx++ )
+	for ( int idx=mCast(int,start); idx<=stop; idx++ )
 	{
 	    char count;
 	    if ( blacklist_.get( list_[idx], count ) && count>7 )
@@ -289,7 +289,7 @@ int AutoTracker::nextStep()
 	    char count = 0;
 	    blacklist_.get( addedpos[idx], count );
 	    blacklist_.set( addedpos[idx], count+1 );
-	    addedpos.remove(idx);
+	    addedpos.removeSingle(idx);
 	}
     }
 

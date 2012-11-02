@@ -16,6 +16,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "statruncalc.h"
 #include "survinfo.h"
 
+#include <math.h>
+
 
 namespace Attrib
 {
@@ -63,7 +65,7 @@ void Energy::updateDefaults( Desc& desc )
     mDynamicCastGet( ZGateParam*, zgate, paramgate )
     float roundedzstep = SI().zStep()*SI().zDomain().userFactor();
     if ( roundedzstep > 0 )
-	roundedzstep = (int)( roundedzstep );
+	roundedzstep = floor ( roundedzstep );
     zgate->setDefaultValue( Interval<float>(-roundedzstep*7, roundedzstep*7) );
 }
 

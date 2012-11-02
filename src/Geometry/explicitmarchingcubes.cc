@@ -83,14 +83,14 @@ protected:
 	const MultiDimStorage<MarchingCubesModel>& models = 
 	    surface_.getSurface()->models_;
 
-	for ( int idx=start; idx<=stop && shouldContinue();
+	for ( int idx=mCast(int,start); idx<=stop && shouldContinue();
 	      idx++, addToNrDone(1) )
 	{
 	    if ( usetable )
 		memcpy( idxs, tableidxs+idx*3, sizeof(int)*3 );
 	    else if ( idx==start )
 	    {
-		if ( !models.getIndex(start,idxs) )
+		if ( !models.getIndex(mCast(int,start),idxs) )
 		    return false;
 	    }
 	    else
@@ -400,11 +400,11 @@ ExplicitMarchingCubesSurface::getAxisScale( int dim ) const
     else if ( coordindices[bsz-1]!=-1 ) \
     { \
 	if ( coordindices[bsz-2]==-1 ) \
-	    coordindices.remove( bsz-1 ); \
+	    coordindices.removeSingle( bsz-1 ); \
 	else if ( coordindices[bsz-3]==-1 ) \
 	{ \
-	    coordindices.remove( bsz-1 ); \
-	    coordindices.remove( bsz-2 ); \
+	    coordindices.removeSingle( bsz-1 ); \
+	    coordindices.removeSingle( bsz-2 ); \
 	} \
 	else \
 	    coordindices += -1; \

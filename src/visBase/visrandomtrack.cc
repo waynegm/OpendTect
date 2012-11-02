@@ -222,7 +222,7 @@ void RandomTrack::removeKnot( int idx )
 	return;
     }
 
-    knots.remove( idx );
+    knots.removeSingle( idx );
     rebuild();
 
     if ( dragger )
@@ -452,7 +452,7 @@ void RandomTrack::rebuild()
 	TriangleStripSet* strip = sections[idx];
 	removeChild( strip->getInventorNode() );
 	strip->unRef();
-	sections.remove( idx );
+	sections.removeSingle( idx );
     }
 
     if ( sections.isEmpty() ) return;

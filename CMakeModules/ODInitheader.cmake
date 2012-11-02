@@ -31,12 +31,12 @@ MACRO( OD_CREATE_INIT_HEADER )
 	set ( INITHEADER ${INCLUDEDIR}/${OD_MODULE_NAME_LOWER}mod.h )
 	set ( EXPORTHEADER ${OD_MODULE_NAME_LOWER}export.h )
 	if ( EXISTS ${INCLUDEDIR}/${EXPORTHEADER} )
-	    set ( MODFILEHEADER "#include \"${EXPORTHEADER}\"" )
+	    set ( EXPORTFILEHEADER "#include \"${EXPORTHEADER}\"" )
 	endif()
 
 	foreach ( DEP ${OD_MODULE_DEPS} )
 	    string ( TOLOWER ${DEP} DEPLOWER )
-	    set ( MODFILEHEADER "${MODFILEHEADER}${OD_NEWLINE}#include \"${DEPLOWER}mod.h\"" )
+	    set ( MODFILEHEADER "${MODFILEHEADER}\n#include \"${DEPLOWER}mod.h\"" )
 	endforeach()
 
 	CONFIGURE_FILE( ${OpendTect_DIR}/CMakeModules/templates/initheader.h.in 

@@ -197,8 +197,14 @@ bool Well::Reader::getInfo( std::istream& strm ) const
 	    wd.info().county = astrm.value();
 	else if ( astrm.hasKeyword(Well::Info::sKeycoord()) )
 	    wd.info().surfacecoord.use( astrm.value() );
-	else if ( astrm.hasKeyword(Well::Info::sKeyelev()) )
-	    wd.info().surfaceelev = astrm.getFValue();
+	else if ( astrm.hasKeyword(Well::Info::sKeyOldelev()) )
+	{
+	    const float readsurfelev = astrm.getFValue(); //needed for old files
+	    wd.info().srdelev = mIsUdf(readsurfelev ) ? 0  :
+	       			    -1.f * readsurfelev;
+	}
+	else if ( astrm.hasKeyword(Well::Info::sKeySRD()) )
+	    wd.info().srdelev = astrm.getFValue();
 	else if ( astrm.hasKeyword(Well::Info::sKeyreplvel()) )
 	    wd.info().replvel = astrm.getFValue();
 	else if ( astrm.hasKeyword(Well::Info::sKeygroundelev()) )

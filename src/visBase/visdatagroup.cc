@@ -133,7 +133,8 @@ void DataObjectGroup::removeObject( int idx )
     DataObject* sceneobject = objects_[idx];
     osggroup_->removeChild( sceneobject->osgNode() );
 
-    objects_.remove( idx );
+
+    objects_.removeSingle( idx );
 
     sceneobject->setParent( 0 );
     sceneobject->unRef();

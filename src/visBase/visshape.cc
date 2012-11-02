@@ -432,7 +432,7 @@ void VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
     mDynamicCastGet( OSGPrimitiveSet*, osgps,primitivesets_[pidx]  );
     removePrimitiveSetFromScene( osgps->getPrimitiveSet() );
     
-    primitivesets_.remove( pidx )->unRef();
+    primitivesets_.removeSingle( pidx )->unRef();
 }
     
     
@@ -543,7 +543,7 @@ public:
 			    const int idx = size()-1;
 			    if ( idx<0 ) return mUdf(int);
 			    const int res = indices_[idx];
-			    indices_.remove(idx);
+			    indices_.removeSingle(idx);
 			    return res;
 			}
     

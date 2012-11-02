@@ -795,7 +795,6 @@ Coord3 Rectangle::getDraggerSize() const
 
 void Rectangle::moveObjectToManipRect()
 {
-    SbVec3f centerpos( maniprecttrans->translation.getValue());
     SbVec3f scale = maniprectscale->scaleFactor.getValue();
 
     SbVec3f origopos( (float) manipOrigo().x, (float) manipOrigo().y, 
@@ -824,7 +823,6 @@ bool Rectangle::isManipRectOnObject() const
 {
     bool res = true;
     float eps = 1e-5;
-    SbVec3f centerpos( maniprecttrans->translation.getValue());
     SbVec3f scale = maniprectscale->scaleFactor.getValue();
 
     SbVec3f origopos( (float) manipOrigo().x, 

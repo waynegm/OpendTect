@@ -180,7 +180,7 @@ bool dgbSurfaceReader::readParData( std::istream& strm, const IOPar& toppar,
 	}
 
 	for ( int idx=0; idx<nrsections; idx++ )
-	    sectionids_ += readInt32( strm );
+	    sectionids_ += mCast(EM::SectionID,readInt32(strm));
 
 	if ( !strm ) { msg_ = sMsgReadError(); return false; }
 
@@ -203,7 +203,7 @@ bool dgbSurfaceReader::readParData( std::istream& strm, const IOPar& toppar,
 	    int sectionid = idx;
 	    BufferString key = sSectionIDKey( idx );
 	    toppar.get(key.buf(), sectionid);
-	    sectionids_+= sectionid;
+	    sectionids_ += (EM::SectionID)sectionid;
 
 	}
 
@@ -293,8 +293,8 @@ int dgbSurfaceReader::scanFor2DGeom( TypeSet< StepInterval<int> >& trcranges )
 	{
 	    if ( mIsUdf(lineids[idx]) )
 	    {
-		lineids.remove( idx );
-		linenames_.remove( idx );
+		lineids.removeSingle( idx );
+		linenames_.removeSingle( idx );
 		continue;
 	    }
 	    idx++;
@@ -1262,14 +1262,9 @@ void dgbSurfaceReader::createSection( const SectionID& sectionid )
     StepInterval<int> crlrg = readcolrange_ ? *readcolrange_ : colrange_;
     inlrg.sort(); crlrg.sort();
 
-    Array2D<float>* arr = new Array2DImpl<float>( inlrg.nrSteps()+1,
-	    					  crlrg.nrSteps()+1 );
-    float* ptr = arr->getData();
-    for ( int idx=arr->info().getTotalSz()-1; idx>=0; idx-- )
-    {
-	*ptr = mUdf(float);
-	ptr++;
-    }
+    Array2D<float>* arr =
+	new Array2DImpl<float>( inlrg.nrSteps()+1, crlrg.nrSteps()+1 );
+    arr->setAll( mUdf(float) );
 
     bidsurf->setArray( RowCol( inlrg.start, crlrg.start),
 	    	       RowCol( inlrg.step, crlrg.step ), arr, true );
@@ -1937,7 +1932,7 @@ bool dgbSurfaceWriter::writeRow( std::ostream& strm )
 	if ( colcoords[idx].isDefined() )
 	    break;
 
-	colcoords.remove(idx);
+	colcoords.removeSingle(idx);
     }
 
     if ( !writeInt32(strm,colcoords.size(),colcoords.size()?sTab():sEOL()) )

@@ -24,6 +24,9 @@ PosInfo::Line2DData::Line2DData( const char* lnm )
 int PosInfo::Line2DData::gtIndex( int nr, bool& found ) const
 {
     const int sz = posns_.size();
+    if ( sz==0 )
+        { found = false; return -1; }
+
     int i0 = 0, i1 = sz - 1;
     int nr0 = posns_[i0].nr_; int nr1 = posns_[i1].nr_;
     if ( nr < nr0 )
@@ -95,7 +98,7 @@ void PosInfo::Line2DData::remove( int nr )
 {
     bool found; int idx = gtIndex( nr, found );
     if ( !found ) return;
-    posns_.remove( idx );
+    posns_.removeSingle( idx );
 }
 
 
@@ -104,7 +107,7 @@ void PosInfo::Line2DData::limitTo( Interval<int> trcrg )
     trcrg.sort();
     for ( int idx=0; idx<posns_.size(); idx++ )
 	if ( posns_[idx].nr_ < trcrg.start || posns_[idx].nr_ > trcrg.stop )
-	    posns_.remove( idx-- );
+	    posns_.removeSingle( idx-- );
 }
 
 

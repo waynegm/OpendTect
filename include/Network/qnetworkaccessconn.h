@@ -14,7 +14,10 @@ ________________________________________________________________________
 
 
 #include "odnetworkaccess.h"
+#include "odnetworkreply.h"
 #include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 
 QT_BEGIN_NAMESPACE
 
@@ -36,6 +39,8 @@ private slots:
 
 void finished( QNetworkReply* reply )
 {
+    receiver_->finished.trigger();
+    receiver_->stopEventLoop();
 }
 
 
@@ -49,6 +54,7 @@ private:
 class QNetworkReplyConn : public QObject
 {
     Q_OBJECT
+    friend class ODNetworkReply; 
 
 protected:
 
@@ -78,36 +84,48 @@ QNetworkReplyConn( QNetworkReply* sndr, ODNetworkReply* rec )
 private slots:
 
 void downloadProgress(qint64,qint64)
-{}
+{
+}
 
 void error(QNetworkReply::NetworkError)
-{}
+{
+    receiver_->error.trigger();
+}
 
 void finished()
-{}
+{
+    receiver_->finished.trigger();
+}
 
 void metaDataChanged()
-{}
+{
+}
 
 void uploadProgress(qint64,qint64)
-{}
+{    
+}
 
 void aboutToClose()
-{}
+{
+}
 
 void bytesWritten(qint64)
-{}
+{
+}
 
 void readChannelFinished()
-{}
+{
+}
 
 void readyRead()
-{}
+{
+    receiver_->readyRead.trigger();
+}
 
 private:
 
-    QNetworkReply*	sender_;
-    ODNetworkReply*	receiver_;
+    QNetworkReply*		sender_;
+    ODNetworkReply*		receiver_;
 
 };
 

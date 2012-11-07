@@ -83,44 +83,38 @@ QNetworkReplyConn( QNetworkReply* sndr, ODNetworkReply* rec )
 
 private slots:
 
-void downloadProgress(qint64,qint64)
+void downloadProgress(qint64 nrdone,qint64 totalnr)
 {
+    if ( totalnr != -1 )
+    {
+	receiver_->getODNetworkTask()->setNrDone( nrdone );
+	receiver_->getODNetworkTask()->setTotalNr( totalnr );
+    }
 }
 
 void error(QNetworkReply::NetworkError)
-{
-    receiver_->error.trigger();
-}
+{ receiver_->error.trigger(); }
 
 void finished()
-{
-    receiver_->finished.trigger();
-}
+{ receiver_->finished.trigger(); }
 
 void metaDataChanged()
-{
-}
+{}
 
 void uploadProgress(qint64,qint64)
-{    
-}
+{}
 
 void aboutToClose()
-{
-}
+{}
 
 void bytesWritten(qint64)
-{
-}
+{}
 
 void readChannelFinished()
-{
-}
+{}
 
 void readyRead()
-{
-    receiver_->readyRead.trigger();
-}
+{ receiver_->readyRead.trigger(); }
 
 private:
 

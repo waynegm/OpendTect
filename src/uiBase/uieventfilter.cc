@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id: uiobj.cc 26529 2012-09-30 11:26:40Z na
 #include "uiobj.h"
 #include <QEvent>
 #include <QWidget>
+#include <QWeakPointer>
 
 mUseQtnamespace
 
@@ -38,7 +39,8 @@ public:
 	if ( qobj_ )
 	    return;
 	
-	qobj_ = obj;
+	QSharedPointer<QObject> newobj( obj );
+	qobj_ = newobj;
 	obj->installEventFilter( this );
     }
     void				detachFilter()
@@ -125,7 +127,9 @@ bool uiEventFilterImpl::eventFilter(QObject* obj, QEvent* ev )
     if ( qobj_.isNull() )
 	return false;
     
-    if ( qobj_.data()!=obj )
+    QSharedPointer<QObject> objptr( qobj_ );
+    
+    if ( objptr.data()!=obj )
 	return false;
     
     if ( !eventtypes_.isPresent( ev->type() ) )

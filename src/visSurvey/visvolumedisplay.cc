@@ -115,19 +115,18 @@ VolumeDisplay::VolumeDisplay()
     boxdragger_->setBoxTransparency( 0.7 );
     updateRanges( true, true );
 
-
-    addChild( boxdragger_->getInventorNode() );
-    boxdragger_->finished.notify( mCB(this,VolumeDisplay,manipMotionFinishCB) );
     getMaterial()->setColor( Color::White() );
     getMaterial()->setAmbience( 0.3 );
     getMaterial()->setDiffIntensity( 0.8 );
     getMaterial()->change.notify(mCB(this,VolumeDisplay,materialChange) );
     voltrans_->ref();
-    addChild( voltrans_->getInventorNode() );
-    voltrans_->setRotation( Coord3(0,1,0), M_PI_2 );
+
+    inl2displaytrans_->addObject( voltrans_ );
 
     scalarfield_ = visBase::VolumeRenderScalarField::create();
     scalarfield_->ref(); //Don't add it here, do that in getInventorNode
+
+    voltrans_->addObject( scalarfield_ );
 
     CubeSampling sics = SI().sampling( true );
     CubeSampling cs = getInitCubeSampling( sics );
@@ -475,13 +474,11 @@ void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
     const Interval<float> xintv( cs.hrg.start.inl, cs.hrg.stop.inl );
     const Interval<float> yintv( cs.hrg.start.crl, cs.hrg.stop.crl );
     const Interval<float> zintv( cs.zrg.start, cs.zrg.stop );
-    voltrans_->setTranslation( 
-	    	Coord3(xintv.center(),yintv.center(),zintv.center()) );
-    voltrans_->setRotation( Coord3( 0, 1, 0 ), M_PI_2 );
-    voltrans_->setScale( Coord3(-zintv.width(),yintv.width(),xintv.width()) );
-    scalarfield_->setVolumeSize( Interval<float>(-0.5,0.5),
-	    		    Interval<float>(-0.5,0.5),
-			    Interval<float>(-0.5,0.5) );
+
+    voltrans_->setTransRotScale(
+			Coord3(xintv.start,yintv.start,zintv.start),
+			Coord3( 0, 1, 0 ), M_PI_2,
+			Coord3(-zintv.width(),yintv.width(),xintv.width()) );
 
     for ( int idx=0; idx<slices_.size(); idx++ )
 	slices_[idx]->setSpaceLimits( Interval<float>(-0.5,0.5), 
@@ -498,10 +495,9 @@ void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
 
     resetManipulation();
 
-
-     boxdragger_->setCenter(
+    boxdragger_->setCenter(
 		    Coord3(xintv.center(),yintv.center(),zintv.center()) );
-     boxdragger_->setWidth(
+    boxdragger_->setWidth(
 		    Coord3(xintv.width(),yintv.width(),zintv.width()) );
 }
 

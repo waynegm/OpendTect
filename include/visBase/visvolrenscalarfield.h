@@ -18,7 +18,7 @@ ________________________________________________________________________
 #include "visdata.h"
 #include "coltabmapper.h"
 #include "coltabsequence.h"
-
+#include "visosg.h"
 
 class TaskRunner;
 class SoGroup;
@@ -28,6 +28,11 @@ class SoVolumeData;
 class IOPar;
 template <class T> class Array3D;
 template <class T> class ValueSeries;
+
+
+namespace osgVolume { class Volume; class VolumeTile; class ImageLayer; }
+namespace osg { class Switch; class Image; class TransferFunction1D; }
+
 
 namespace visBase
 {
@@ -56,8 +61,8 @@ public:
 	    					   TaskRunner* tr );
     const ColTab::Mapper&	getColTabMapper();
 
-    void			setBlendColor(const Color&);
-    const Color&		getBlendColor() const;
+//    void			setBlendColor(const Color&);
+//    const Color&		getBlendColor() const;
     const TypeSet<float>&	getHistogram() const;
 
     void			setVolumeSize(const Interval<float>& x,
@@ -94,6 +99,15 @@ protected:
     bool			useshading_;
 
     virtual SoNode*		gtInvntrNode();
+    virtual osg::Node*		gtOsgNode();
+
+    OsgRefMan<osgVolume::VolumeTile>	osgvoltile_;
+    OsgRefMan<osg::Switch>		osgvolroot_;
+    OsgRefMan<osgVolume::Volume>	osgvolume_;
+    OsgRefMan<osgVolume::ImageLayer>	osgimagelayer_;
+    OsgRefMan<osg::Image>		osgvoldata_;
+    OsgRefMan<osg::TransferFunction1D>	osgtransfunc_;
+
 
 };
 

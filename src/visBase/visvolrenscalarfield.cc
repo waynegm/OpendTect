@@ -19,6 +19,12 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "ostream"
 
+#include <osgVolume/Volume>                                                     
+#include <osgVolume/VolumeTile>
+#include <osgVolume/FixedFunctionTechnique>
+#include <osgVolume/RayTracedTechnique>
+#include <osg/TransferFunction>
+
 #include <Inventor/nodes/SoGroup.h>
 
 #include <VolumeViz/nodes/SoTransferFunction.h>
@@ -45,15 +51,50 @@ VolumeRenderScalarField::VolumeRenderScalarField()
     , sz0_( 1 )
     , sz1_( 1 )
     , sz2_( 1 )
-    , blendcolor_( Color::White() )
+//    , blendcolor_( Color::White() )
     , useshading_( true )
     , sequence_( ColTab::Sequence( ColTab::defSeqName() ) )
+    , osgvoltile_( new osgVolume::VolumeTile() )
+    , osgvolume_( new osgVolume::Volume() )
+    , osgvolroot_( new osg::Switch() )
+    , osgimagelayer_( new osgVolume::ImageLayer() )
+    , osgvoldata_( new osg::Image() )
+    , osgtransfunc_( new osg::TransferFunction1D() )
 {
+    osgimagelayer_->setImage( osgvoldata_ );
+    osgvolume_->addChild( osgvoltile_ );
+    osgvoltile_->setLayer( osgimagelayer_ );
+    osgvolroot_->addChild( osgvolume_ );
+
+//    osgVolume::AlphaFuncProperty* ap = new osgVolume::AlphaFuncProperty(0.5);
+//    osgVolume::SampleDensityProperty* sd = new osgVolume::SampleDensityProperty(0.005);
+//    osgVolume::TransparencyProperty* tp = new osgVolume::TransparencyProperty(1.0);
+
+    osgtransfunc_->allocate( mNrColors );
+    osg::ref_ptr<osgVolume::TransferFunctionProperty> tfp =
+		    new osgVolume::TransferFunctionProperty( osgtransfunc_ );
+
+//    osgimagelayer_->addProperty( ap );
+//    osgimagelayer_->addProperty( sd );
+//    osgimagelayer_->addProperty( tp );
+
+    osgimagelayer_->addProperty( tfp );
+
+
     root_->ref();
 
     useshading_ = Settings::common().isTrue( "dTect.Use VolRen shading" );
     if ( !useshading_ )
 	SetEnvVar( "CVR_DISABLE_PALETTED_FRAGPROG", "1" );
+
+    if ( useshading_ )
+	osgvoltile_->setVolumeTechnique(new osgVolume::RayTracedTechnique);
+    else
+	osgvoltile_->setVolumeTechnique(new osgVolume::FixedFunctionTechnique);
+
+//    Not (yet) used by OSG because of mipmap problems:
+//    osgimagelayer_->setMinFilter( osg::Texture::LINEAR_MIPMAP_LINEAR );
+//    osgimagelayer_->setMagFilter( osg::Texture::LINEAR );
 }
 
 
@@ -67,6 +108,10 @@ VolumeRenderScalarField::~VolumeRenderScalarField()
 
 bool VolumeRenderScalarField::turnOn( bool yn )
 {
+    const bool wason = isOn();
+    osgvolroot_->setValue( 0, yn );
+    return wason;
+/*
     if ( !voldata_ ) return false;
     const bool wason = isOn();
      if ( !yn )
@@ -76,11 +121,14 @@ bool VolumeRenderScalarField::turnOn( bool yn )
 	 voldata_->setVolumeData( SbVec3s(sz2_,sz1_,sz0_),
 				 indexcache_, SoVolumeData::UNSIGNED_BYTE );
     return wason;
+*/
 }
 
 
 bool VolumeRenderScalarField::isOn() const
 {
+    return osgvolroot_->getValue(0);
+/*
     if ( !voldata_ ) 
 	return false;
 
@@ -88,6 +136,7 @@ bool VolumeRenderScalarField::isOn() const
     void* ptr;
     SoVolumeData::DataType dt;
     return voldata_->getVolumeData(size,ptr,dt) && ptr==indexcache_;
+*/
 }
 
 
@@ -185,7 +234,7 @@ void VolumeRenderScalarField::setColTabMapperSetup( const ColTab::MapperSetup&
     makeIndices( false, tr );
 }
 
-
+/*
 void VolumeRenderScalarField::setBlendColor( const Color& col )
 {
     blendcolor_ = col;
@@ -195,7 +244,7 @@ void VolumeRenderScalarField::setBlendColor( const Color& col )
 
 const Color& VolumeRenderScalarField::getBlendColor() const
 { return blendcolor_; }
-
+*/
 
 const TypeSet<float>& VolumeRenderScalarField::getHistogram() const
 { return histogram_; }
@@ -246,6 +295,12 @@ SoNode* VolumeRenderScalarField::gtInvntrNode()
 }
 
 
+osg::Node* VolumeRenderScalarField::gtOsgNode()
+{
+    return osgvolroot_;
+}
+
+
 void VolumeRenderScalarField::clipData( TaskRunner* tr )
 {
     if ( !datacache_ )
@@ -259,6 +314,17 @@ void VolumeRenderScalarField::clipData( TaskRunner* tr )
 
 void VolumeRenderScalarField::makeColorTables()
 {
+    osg::TransferFunction1D::ColorMap colmap;
+    for ( int idx=0; idx<mNrColors-1; idx++ )
+    {
+	const Color col = sequence_.color( float(idx)/(mNrColors-2) );
+	colmap[ float(idx)/(mNrColors-1) ] = Conv::to<osg::Vec4>( col );
+    }
+
+    colmap[ 1.0 ] = Conv::to<osg::Vec4>( sequence_.undefColor() );
+    osgtransfunc_->assign( colmap );
+
+/*
     if ( !transferfunc_ )
 	return;
 
@@ -299,6 +365,7 @@ void VolumeRenderScalarField::makeColorTables()
 
     transferfunc_->colorMap.enableNotify(didnotify);
     transferfunc_->colorMap.touch();
+    */
 }
 
 
@@ -316,7 +383,7 @@ void VolumeRenderScalarField::makeIndices( bool doset, TaskRunner* tr )
     }
 
     ColTab::MapperTask<unsigned char> indexer( mapper_, totalsz,
-	mNrColors-2, *datacache_, indexcache_ );
+	mNrColors-1, *datacache_, indexcache_ );
 
     if ( (tr&&!tr->execute( indexer ) ) || !indexer.execute() )
 	return;
@@ -326,23 +393,31 @@ void VolumeRenderScalarField::makeIndices( bool doset, TaskRunner* tr )
     for ( int idx=mNrColors-2; idx>=0; idx-- )
     {
 	if ( histogram[idx]>max )
-	max = histogram[idx];
+	    max = histogram[idx];
     }
 
     if ( max )
     {
 	histogram_.setSize( mNrColors-1, 0 );
 	for ( int idx=mNrColors-2; idx>=0; idx-- )
-        histogram_[idx] = (float) histogram[idx]/max;
+	    histogram_[idx] = (float) histogram[idx]/max;
     }
 
     if ( doset )
     {
-	voldata_->setVolumeData( SbVec3s(sz2_,sz1_,sz0_),
-			         indexcache_, SoVolumeData::UNSIGNED_BYTE );
+//	voldata_->setVolumeData( SbVec3s(sz2_,sz1_,sz0_),
+//			         indexcache_, SoVolumeData::UNSIGNED_BYTE );
+
+	osgvoldata_->setImage( sz2_, sz1_, sz0_, GL_LUMINANCE, GL_LUMINANCE,
+		GL_UNSIGNED_BYTE, indexcache_, osg::Image::NO_DELETE, 1 );
     }
     else
-	voldata_->touch();
+    {
+//	voldata_->touch();
+	osgvoldata_->dirty();
+    }
+
+    osgvoltile_->setDirty( true );
 }
 
 

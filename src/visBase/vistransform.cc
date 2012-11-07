@@ -37,13 +37,23 @@ Transformation::~Transformation()
     //node is unreffed in visBase::DataObjectGroup
 }
 
+    
+#define mUpdateOsgMatrix( statement ) \
+    osg::Vec3d trans, scale; \
+    osg::Quat rot, so; \
+    node_->getMatrix().decompose( trans, rot, scale, so ); \
+    statement; \
+    osg::Matrix mat = osg::Matrix::inverse( osg::Matrix::rotate(so) ); \
+    mat *= osg::Matrix::scale( scale ); \
+    mat *= osg::Matrix::rotate( so ); \
+    mat *= osg::Matrix::rotate( rot ); \
+    mat *= osg::Matrix::translate( trans ); \
+    node_->setMatrix( mat );
+
 
 void Transformation::setRotation( const Coord3& vec, double angle )
 {
-    osg::Matrix osgmatrix = node_->getMatrix();
-    const osg::Quat osgrotation( angle, Conv::to<osg::Vec3d>(vec) );
-    osgmatrix.setRotate( osgrotation );
-    node_->setMatrix( osgmatrix );
+    mUpdateOsgMatrix( rot = osg::Quat(angle,Conv::to<osg::Vec3d>(vec)) );
 }
 
 
@@ -65,9 +75,7 @@ Coord3 Transformation::getTranslation() const
 
 void Transformation::setScale( const Coord3& vec )
 {
-    osg::Matrix osgmatrix = node_->getMatrix();
-    osgmatrix.makeScale( vec.x, vec.y, vec.z );
-    node_->setMatrix( osgmatrix );
+    mUpdateOsgMatrix( scale = Conv::to<osg::Vec3d>(vec) );
     updateNormalizationMode();
 }
 
@@ -78,8 +86,20 @@ Coord3 Transformation::getScale() const
     const osg::Vec3d vec = matrix.getScale();
     return Conv::to<Coord3>( vec );
 }
-    
-    
+
+
+void Transformation::setTransRotScale( const Coord3& trans,                   
+				       const Coord3& rot,double angle,  
+				       const Coord3& scale ) 
+{
+    osg::Matrix mat = osg::Matrix::scale( Conv::to<osg::Vec3d>(scale) ); 
+    mat *= osg::Matrix::rotate( osg::Quat(angle,Conv::to<osg::Vec3d>(rot)) );
+    mat *= osg::Matrix::translate( Conv::to<osg::Vec3d>(trans) );
+    node_->setMatrix( mat );
+    updateNormalizationMode();
+}
+
+
 void Transformation::setAbsoluteReferenceFrame()
 {
     node_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);

@@ -55,6 +55,10 @@ public:
 
     void		setScale( const Coord3& );
     Coord3		getScale() const;
+
+    void		setTransRotScale(const Coord3& trans,
+	    				 const Coord3& rotvec,double rotangle,
+					 const Coord3& scale);
     
     void		setAbsoluteReferenceFrame();
 

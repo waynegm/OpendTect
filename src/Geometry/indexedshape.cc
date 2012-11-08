@@ -54,7 +54,7 @@ IndexedPrimitiveSet* IndexedPrimitiveSet::create( bool large )
     
 RangePrimitiveSet* RangePrimitiveSet::create()
 {
-    return (RangePrimitiveSet*) PrimitiveSetCreator::create( true, false );
+    return (RangePrimitiveSet*) PrimitiveSetCreator::create( false, false );
 }
 
     

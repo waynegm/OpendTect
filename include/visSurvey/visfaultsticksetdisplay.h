@@ -23,11 +23,11 @@ ________________________________________________________________________
 namespace visBase 
 { 
     class Transformation;
-    class IndexedPolyLine3D;
+    class Lines;
     class PickStyle;
 }
 
-namespace Geometry { class FaultStickSet; } 
+namespace Geometry { class FaultStickSet; class IndexedPrimitiveSet; } 
 namespace EM { class FaultStickSet; }
 namespace MPE { class FaultStickSetEditor; }
 
@@ -143,8 +143,8 @@ protected:
 
     TypeSet<EM::PosID>		editpids_;
 
-    visBase::IndexedPolyLine3D* sticks_;
-    visBase::IndexedPolyLine3D* activestick_;
+    visBase::Lines*		sticks_;
+    visBase::Lines*		activestick_;
 
     visBase::PickStyle*		stickspickstyle_;
     visBase::PickStyle*		activestickpickstyle_;
@@ -155,7 +155,7 @@ protected:
     bool			ctrldown_;
 
     ObjectSet<visBase::DataObjectGroup>	knotmarkers_;
-
+    Geometry::IndexedPrimitiveSet* lineprimitiveset_;
     struct StickIntersectPoint
     {
 	Coord3			pos_;

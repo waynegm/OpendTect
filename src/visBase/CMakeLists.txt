@@ -41,6 +41,7 @@ SET(OD_MODULE_SOURCES
 	   vishorizonsection.cc
 	   vislevelofdetail.cc
 	   vislight.cc
+	   vislines.cc
 	   vismarker.cc
 	   vismarchingcubessurface.cc
 	   vismaterial.cc

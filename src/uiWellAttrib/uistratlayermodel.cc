@@ -91,7 +91,7 @@ void theCB( CallBacker* cb )
 	if ( defmodnr < 0 )
 	    modnm.setEmpty();
 	else
-	    givechoice = *fms[1] != 'A';
+	    givechoice = fms.size()>1 && *fms[1] != 'A';
     }
 
     if ( givechoice )
@@ -273,6 +273,11 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
 
     modtools_->attach( ensureBelow, moddisp_ );
     gentools_->attach( ensureBelow, seqdisp_->outerObj() );
+
+    uiToolBar* helptb = new uiToolBar( this, "Help toolbar", uiToolBar::Right );
+    uiToolButtonSetup htbsu( "contexthelp", "Help",
+	    		     mCB(this,uiStratLayerModel,helpCB) );
+    helptb->addButton( htbsu );
 
     uiSplitter* hspl;
     if ( !seqdisp_->separateDisplay() )
@@ -664,6 +669,9 @@ void uiStratLayerModel::setModelProps()
     for ( int idx=0; idx<conts.size(); idx++ )
 	nms.add( conts[idx]->name() );
     modtools_->setContentNames( nms );
+
+    delete elpropsel_; elpropsel_ = 0;
+    setElasticProps();
 }
 
 
@@ -785,4 +793,10 @@ void uiStratLayerModel::fillWorkBenchPars( IOPar& par ) const
 void uiStratLayerModel::fillDisplayPars( IOPar& par ) const
 {
     modtools_->fillPar( par );
+}
+
+
+void uiStratLayerModel::helpCB( CallBacker* )                                       
+{                                                                                      
+    uiMainWin::provideHelp( "110.2.0" );
 }

@@ -218,7 +218,7 @@ bool MarchingCubesModel::operator==( const MarchingCubesModel& mc ) const
 	if ( axispos<0 ) axispos=0; \
 	else if ( axispos>cMaxAxisPos ) \
 	    axispos = cMaxAxisPos; \
-	axispos_[axis] = axispos; \
+	axispos_[axis] = mCast( unsigned char, axispos ); \
     } \
     else \
 	axispos_[axis] = cUdfAxisPos; \
@@ -274,25 +274,11 @@ bool MarchingCubesModel::set( const Array3D<float>& arr, int i0, int i1, int i2,
 
     if ( !use2 && !use1 && !use0 )
     {
-	return false; //How about on the edge?
-
 	model_ = 0;
 	submodel_ = 0;
-	if ( !use2 )
-	    axispos_[mZ] = cUdfAxisPos;
-	else
-	    mCalcCoord( 001, mZ );
-
-	if ( !use1 )
-	    axispos_[mY] = cUdfAxisPos;
-	else
-	    mCalcCoord( 010, mY );
-
-	if ( !use0 )
-	    axispos_[mX] = cUdfAxisPos;
-	else
-	    mCalcCoord( 100, mX );
-
+	axispos_[mZ] = cUdfAxisPos;
+	axispos_[mY] = cUdfAxisPos;
+	axispos_[mX] = cUdfAxisPos;
 	return true;
     }
 
@@ -360,11 +346,11 @@ bool MarchingCubesModel::readFrom( std::istream& strm, bool binary )
     else
     {
 	int res;
-	strm >> res; model_ = res;
-	strm >> res; submodel_ = res;
-	strm >> res; axispos_[mX] = res;
-	strm >> res; axispos_[mY] = res;
-	strm >> res; axispos_[mZ] = res;
+	strm >> res; model_ = mCast( unsigned char, res );
+	strm >> res; submodel_ = mCast( unsigned char, res );
+	strm >> res; axispos_[mX] = mCast( unsigned char, res );
+	strm >> res; axispos_[mY] = mCast( unsigned char, res );
+	strm >> res; axispos_[mZ] = mCast( unsigned char, res );
     }
 
     return strm;

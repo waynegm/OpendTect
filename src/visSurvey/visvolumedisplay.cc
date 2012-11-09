@@ -471,9 +471,19 @@ int VolumeDisplay::volRenID() const
     
 void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
 {
-    const Interval<float> xintv( cs.hrg.start.inl, cs.hrg.stop.inl );
-    const Interval<float> yintv( cs.hrg.start.crl, cs.hrg.stop.crl );
+    const Interval<float> xintv( mCast(float,cs.hrg.start.inl), 
+				    mCast(float,cs.hrg.stop.inl) );
+    const Interval<float> yintv( mCast(float,cs.hrg.start.crl), 
+				    mCast(float,cs.hrg.stop.crl) );
     const Interval<float> zintv( cs.zrg.start, cs.zrg.stop );
+
+    voltrans_->setTranslation( 
+	    	Coord3(xintv.center(),yintv.center(),zintv.center()) );
+    voltrans_->setRotation( Coord3( 0, 1, 0 ), M_PI_2 );
+    voltrans_->setScale( Coord3(-zintv.width(),yintv.width(),xintv.width()) );
+    scalarfield_->setVolumeSize( Interval<float>(-0.5,0.5),
+	    		    Interval<float>(-0.5,0.5),
+			    Interval<float>(-0.5,0.5) );
 
     voltrans_->setTransRotScale(
 			Coord3(xintv.start,yintv.start,zintv.start),
@@ -664,8 +674,8 @@ void VolumeDisplay::updateIsoSurface( int idx, TaskRunner* tr )
     {
 	isosurfaces_[idx]->getSurface()->removeAll(); 
 	isosurfaces_[idx]->setBoxBoundary(
-		cache_->cubeSampling().hrg.inlRange().stop,
-		cache_->cubeSampling().hrg.crlRange().stop,
+		mCast(float,cache_->cubeSampling().hrg.inlRange().stop),
+		mCast(float,cache_->cubeSampling().hrg.crlRange().stop),
 		cache_->cubeSampling().zrg.stop );
 	isosurfaces_[idx]->setScales(
 		cache_->inlsampling_, cache_->crlsampling_,
@@ -760,12 +770,12 @@ float VolumeDisplay::slicePosition( visBase::OrthogonalSlice* slice ) const
     if ( dim == 2 )
     {
 	slicepos += (float) voltrans_->getTranslation()[0];
-	pos = SI().inlRange(true).snap(slicepos);
+	pos = mCast( float, SI().inlRange(true).snap(slicepos) );
     }
     else if ( dim == 1 )
     {
 	slicepos += (float) voltrans_->getTranslation()[1];
-	pos = SI().crlRange(true).snap(slicepos);
+	pos = mCast( float, SI().crlRange(true).snap(slicepos) );
     }
     else
     {
@@ -1203,6 +1213,115 @@ int VolumeDisplay::usePar( const IOPar& par )
     
     pErrMsg( "Not implemented" );
 
+
+    PtrMan<IOPar> texturepar = par.subselect( sKeyTexture() );
+    if ( texturepar ) //old format (up to 4.0)
+    {
+	ColTab::MapperSetup mappersetup;
+	ColTab::Sequence sequence;
+
+	mappersetup.usePar(*texturepar);
+	sequence.usePar(*texturepar );
+	setColTabMapperSetup( 0, mappersetup, 0 );
+	setColTabSequence( 0, sequence, 0 );
+	if ( !as_.usePar(par) ) return -1;
+    }
+    else
+    {
+	res = useSOPar( par );
+	if ( res!=1 )
+	    return res;
+    }
+
+    int volid;
+    if ( par.get(sKeyVolumeID(),volid) )
+    {
+	RefMan<visBase::DataObject> dataobj = visBase::DM().getObject( volid );
+	if ( !dataobj ) return 0;
+	mDynamicCastGet(visBase::VolrenDisplay*,vr,dataobj.ptr());
+	if ( !vr ) return -1;
+	if ( volren_ )
+	{
+	    if ( childIndex(volren_->getInventorNode())!=-1 )
+		VisualObjectImpl::removeChild(volren_->getInventorNode());
+	    volren_->unRef();
+	}
+	volren_ = vr;
+	volren_->ref();
+	addChild( volren_->getInventorNode() );
+    }
+
+    while ( slices_.size() )
+	removeChild( slices_[0]->id() );
+
+    while ( isosurfaces_.size() )
+	removeChild( isosurfaces_[0]->id() );
+
+    int nrslices = 0;
+    par.get( sKeyNrSlices(), nrslices );
+    for ( int idx=0; idx<nrslices; idx++ )
+    {
+	BufferString str( sKeySlice(), idx );
+	int sliceid;
+	par.get( str, sliceid );
+	RefMan<visBase::DataObject> dataobj = visBase::DM().getObject(sliceid);
+	if ( !dataobj ) return 0;
+	mDynamicCastGet(visBase::OrthogonalSlice*,os,dataobj.ptr())
+	if ( !os ) return -1;
+	os->ref();
+	os->motion.notify( mCB(this,VolumeDisplay,sliceMoving) );
+	slices_ += os;
+	addChild( os->getInventorNode() );
+	// set correct dimensions ...
+	if ( !strcmp(os->name(),sKeyInline()) )
+	    os->setDim( cInLine() );
+	else if ( !strcmp(os->name(),sKeyCrossLine()) )
+	    os->setDim( cCrossLine() );
+	else if ( !strcmp(os->name(),sKeyTime()) )
+	    os->setDim( cTimeSlice() );
+    }
+
+    CubeSampling cs;
+    if ( cs.usePar(par) )
+    {
+	csfromsession_ = cs;
+	setCubeSampling( cs );
+    }
+
+    int nrisosurfaces;
+    if ( par.get( sKeyNrIsoSurfaces(), nrisosurfaces ) )
+    {
+	for ( int idx=0; idx<nrisosurfaces; idx++ )
+	{
+	    BufferString str( sKeyIsoValueStart() ); str += idx;
+	    float isovalue;
+	    if ( par.get( str, isovalue ) )
+	    {
+		addIsoSurface( 0, false );
+		isosurfsettings_[idx].isovalue_ = isovalue;
+	    }
+
+	    str = sKeyIsoOnStart(); str += idx;
+	    bool status = true;
+	    par.getYN( str, status );
+	    isosurfaces_[idx]->turnOn( status );
+	    
+	    str = sKeySurfMode(); str += idx;
+	    int smode;
+	    par.get( str, smode );
+	    isosurfsettings_[idx].mode_ = mCast( char, smode );
+	    
+	    str = sKeySeedsAboveIsov(); str += idx;
+	    int aboveisov;
+	    par.get( str, aboveisov );
+	    isosurfsettings_[idx].seedsaboveisoval_ = mCast( char, aboveisov );
+    
+	    str = sKeySeedsMid(); str += idx;
+	    MultiID mid;
+	    par.get( str, mid );
+	    isosurfsettings_[idx].seedsid_ = mid;
+	}
+    }
 
     return 1;
 }

@@ -76,7 +76,7 @@ uiSeisWvltGen::uiSeisWvltGen( uiParent* p )
     const float sisr = SI().zStep();
     float deffrq = 0.1f / sisr; int ideffr = mNINT32(deffrq);
     if ( ideffr > 0 && mIsZero(deffrq-ideffr,1e-4) )
-	deffrq = ideffr; // avoid awkward 99.999 display
+	deffrq = mCast( float, ideffr ); // avoid awkward 99.999 display
     BufferString txt( "Central " );
     txt += SI().zIsTime() ? "Frequency" : "Wavenumber";
     freqfld_ = new uiGenInput( this, txt, FloatInpSpec(deffrq) );
@@ -218,7 +218,7 @@ void uiSeisWvltMerge::makeStackedWvlt()
 	for ( int idx=0; idx<maxwvltsize_; idx++ )
 	{
 	    const int shift = maxwvltsize_%2 ? 1 : 0;
-	    const float coeff = 2*idx-maxwvltsize_ + shift;
+	    const float coeff = mCast( float, 2*idx-maxwvltsize_ + shift );
 	    const float val = func->getValue( coeff*5*SI().zStep());
 	    stackedwvlt_->samples()[idx] += val/selsize; 
 	}

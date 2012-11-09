@@ -128,12 +128,12 @@ WellDisplay::WellDisplay()
 WellDisplay::~WellDisplay()
 {
     setZAxisTransform( 0, 0 );
-    removeChild( well_->getInventorNode() );
+    removeChild( well_->osgNode() );
     well_->unRef(); well_ = 0;
     setSceneEventCatcher(0);
     if ( transformation_ ) transformation_->unRef();
     if ( group_ )
-	removeChild( group_->getInventorNode() );
+	removeChild( group_->osgNode() );
 
     wd_ = 0;
     mGetWD(return);
@@ -198,12 +198,12 @@ void WellDisplay::setWell( visBase::Well* well )
 {
     if ( well_ )
     {
-	removeChild( well_->getInventorNode() );
+	removeChild( well_->osgNode() );
 	well_->unRef();
     }
     well_ = well;
     well_->ref();
-    addChild( well_->getInventorNode() );
+    addChild( well_->osgNode() );
 }
 
 
@@ -865,7 +865,7 @@ void WellDisplay::setupPicking( bool yn )
     {
 	group_ = visBase::DataObjectGroup::create();
 	mTryAlloc( pseudotrack_, Well::Track() );
-	addChild( group_->getInventorNode() );
+	addChild( group_->osgNode() );
     }
 
     for ( int idx=0; idx<group_->size(); idx++ )

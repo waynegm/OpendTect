@@ -18,12 +18,9 @@ ________________________________________________________________________
 #include "position.h"
 #include "draw.h"
 
-class SoLineSet;
-class SoLineSet3D;
-class SoIndexedLineSet;
-class SoVertexShape;
+
 class LineStyle;
-class SoMFInt32;
+
 
 namespace osgGeo {
     class PolyLineNode;
@@ -39,36 +36,26 @@ class DrawStyle;
 
 */
 
-mClass(visBase) PolyLineBase : public VertexShape
+mClass(visBase) PolyLine : public VertexShape
 {
 public:
+    static PolyLine*	create()
+    			mCreateDataObj(PolyLine);
+    
     int 		size() const;
     void		addPoint( const Coord3& pos );
     Coord3		getPoint( int ) const;
     void		setPoint( int, const Coord3& );
     void		removePoint( int );
-    virtual void	setLineStyle(const LineStyle&) = 0;
-    virtual const LineStyle& lineStyle() const = 0;
-protected:
-    			PolyLineBase(SoVertexShape*);
-    SoMFInt32*		numvertices_;
-};
-
-
-
-mClass(visBase) PolyLine	: public PolyLineBase
-{
-public:
-    static PolyLine*	create()
-			mCreateDataObj(PolyLine);
-
     void		setLineStyle(const LineStyle&);
     const LineStyle&	lineStyle() const;
-
+    
 protected:
-    SoLineSet*		lineset_;
-    DrawStyle*		drawstyle_;
+    					~PolyLine();
+    DrawStyle*				drawstyle_;
+    Geometry::RangePrimitiveSet*	coordrange_;
 };
+
 
 
 mClass(visBase) PolyLine3D : public VertexShape

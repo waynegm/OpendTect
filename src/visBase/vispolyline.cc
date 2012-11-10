@@ -14,12 +14,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdrawstyle.h"
 #include "vismaterial.h"
 
-#include "SoIndexedLineSet3D.h"
-#include "SoLineSet3D.h"
-
-#include <Inventor/nodes/SoLineSet.h>
-#include <Inventor/nodes/SoIndexedLineSet.h>
-
 #include <osgGeo/PolyLine>
 #include <osg/Switch>
 #include <osg/Geode>
@@ -32,36 +26,43 @@ mCreateFactoryEntry( visBase::IndexedPolyLine3D );
 namespace visBase
 {
 
-PolyLineBase::PolyLineBase( SoVertexShape* node )
+PolyLine::PolyLine()
     : VertexShape( Geometry::PrimitiveSet::LineStrips, true )
-    , numvertices_( 0 )
-{ }
+    , coordrange_( Geometry::RangePrimitiveSet::create() )
+{
+    addPrimitiveSet( coordrange_ );
+    coordrange_->ref();
+}
 
 
-int PolyLineBase::size() const { return coords_->size(); }
+PolyLine::~PolyLine()
+{ coordrange_->unRef(); }
+    
+    
+int PolyLine::size() const { return coords_->size(); }
 
 
-void PolyLineBase::addPoint( const Coord3& pos )
+void PolyLine::addPoint( const Coord3& pos )
 {
     setPoint( size(), pos );
 }
 
 
-void PolyLineBase::setPoint(int idx, const Coord3& pos )
+void PolyLine::setPoint(int idx, const Coord3& pos )
 {
     if ( idx>size() ) return;
     coords_->setPos( idx, pos );
-    numvertices_->setValue( size() );
+    coordrange_->setRange( Interval<int>( 0, size()-1 ) );
 }
 
 
-Coord3 PolyLineBase::getPoint( int idx ) const 
+Coord3 PolyLine::getPoint( int idx ) const 
 { return coords_->getPos( idx ); }
 
 
-void PolyLineBase::removePoint( int idx )
+void PolyLine::removePoint( int idx )
 {
-    numvertices_->setValue( size()-1 );
+    coordrange_->setRange( Interval<int>( 0, size()-2 ) );
     for ( int idy=idx; idy<size()-1; idy++ )
     {
 	coords_->setPos( idy, coords_->getPos( idy+1 ) );
@@ -69,15 +70,6 @@ void PolyLineBase::removePoint( int idx )
 
     coords_->removePos( size()-1 );
 }
-
-
-PolyLine::PolyLine()
-    : PolyLineBase( new SoLineSet )
-    , drawstyle_(0)
-{
-    numvertices_ = &lineset_->numVertices;
-}
-
 
 
 void PolyLine::setLineStyle( const LineStyle& lst )
@@ -161,7 +153,6 @@ IndexedPolyLine3D::IndexedPolyLine3D()
 float IndexedPolyLine3D::getRadius() const
 {
     return 1;
-    //return ((SoIndexedLineSet3D*) shape_)->radius.getValue();
 }
 
 
@@ -172,12 +163,10 @@ void IndexedPolyLine3D::setRadius(float nv,bool fixedonscreen,float maxdisplaysi
 
 void IndexedPolyLine3D::setRightHandSystem( bool yn )
 {
-    //((SoIndexedLineSet3D*) shape_)->rightHandSystem.setValue( yn );
 }
 
 
 bool IndexedPolyLine3D::isRightHandSystem() const
-//{ return ((SoIndexedLineSet3D*) shape_)->rightHandSystem.getValue(); }
 { return true; }
 
 

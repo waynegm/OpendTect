@@ -15,6 +15,7 @@ SET(QT_MOC_HEADERS i_qaction.h
 		i_qlistbox.h
 		i_qmdiarea.h
 		i_qmenu.h
+		i_qobjectptr.h
 		i_qslider.h
 		i_qspinbox.h
 		i_qsystemtrayicon.h

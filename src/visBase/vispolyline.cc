@@ -29,6 +29,7 @@ namespace visBase
 PolyLine::PolyLine()
     : VertexShape( Geometry::PrimitiveSet::LineStrips, true )
     , coordrange_( Geometry::RangePrimitiveSet::create() )
+    , drawstyle_( 0 )
 {
     addPrimitiveSet( coordrange_ );
     coordrange_->ref();

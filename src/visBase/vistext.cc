@@ -33,6 +33,7 @@ namespace visBase
 
 Text::Text()
     : text_( new osgText::Text )
+    , displaytrans_( 0 )
 {
     text_->setAxisAlignment( osgText::TextBase::SCREEN );
     text_->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS );
@@ -42,6 +43,7 @@ Text::Text()
 
 Text::~Text()
 {
+    if ( displaytrans_ ) displaytrans_->unRef();
 }
     
     
@@ -61,14 +63,15 @@ void Text::setPosition( const osg::Vec3f& pos )
     
 void Text::setPosition( const Coord3& pos )
 {
-    setPosition( osg::Vec3((float) pos.x, (float) pos.y, (float) pos.y ) );
+    setPosition(
+	Conv::to<osg::Vec3f>( displaytrans_ ? displaytrans_->transform(pos) : pos ) );
 }
     
     
 Coord3 Text::getPosition() const
 {
-    const osg::Vec3 pos = text_->getPosition();
-    return Coord3( pos[0], pos[1], pos[2] );
+    Coord3 pos = Conv::to<Coord3>( text_->getPosition() );
+    return displaytrans_ ? displaytrans_->transformBack( pos ) : pos;
 }
     
     
@@ -119,22 +122,43 @@ Color Text::getColor() const
     return Conv::to<Color>( text_->getColor() );
 }
 
+
+void Text::setDisplayTransformation( const mVisTrans* newtrans )
+{
+    if ( displaytrans_ ) displaytrans_->unRef();
+    displaytrans_ = newtrans;
+    if ( displaytrans_ ) displaytrans_->ref();
+
+    const Coord3 oldpos = getPosition();
+    displaytrans_ = newtrans;
+    setPosition( oldpos );
+}
     
+
 Text2::Text2()
     : VisualObjectImpl( false )
     , texts_( false )
     , geode_( new osg::Geode )
+    , displaytransform_( 0 )
 {
     geode_->setNodeMask( ~visBase::BBoxTraversal );
     addChild( geode_ );
 }
     
 
+Text2::~Text2()
+{
+    if ( displaytransform_ ) displaytransform_->unRef();
+}
+
+
 int Text2::addText()
 {
     Text* newtext = new Text;
+    newtext->setDisplayTransformation( displaytransform_ );
     texts_ += newtext;
     geode_->addDrawable( &newtext->getDrawable() );
+    
     return texts_.size()-1;
 }
     
@@ -169,6 +193,17 @@ void Text2::setFontData( const FontData& fd )
 {
     for ( int idx=0; idx<texts_.size(); idx++ )
 	texts_[idx]->setFontData( fd );
+}
+
+
+void Text2::setDisplayTransformation( const mVisTrans* newtr )
+{
+    if ( displaytransform_ ) displaytransform_->unRef();
+    displaytransform_ = newtr;
+    if ( displaytransform_ ) displaytransform_->ref();
+
+    for ( int idx=0; idx<texts_.size(); idx++ )
+	texts_[idx]->setDisplayTransformation( newtr );
 }
     
     

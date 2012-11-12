@@ -50,9 +50,11 @@ public:
 
     osg::Drawable&		getDrawable();
     const osg::Drawable&	getDrawable() const;
+
+    void			setDisplayTransformation( const mVisTrans*);
     
 protected:
-
+    const mVisTrans*		displaytrans_;
     OsgRefMan<osgText::Text>	text_;
     
     FontData			fontdata_;
@@ -84,10 +86,14 @@ public:
     
     const Text*			text(int idx=0) const;
     Text*			text(int idx=0);
+
+    void			setDisplayTransformation(const mVisTrans*);
 	
 protected:
+				~Text2();
     OsgRefMan<osg::Geode>	geode_;
     ManagedObjectSet<Text>	texts_;
+    const mVisTrans*		displaytransform_;
 };
 
 

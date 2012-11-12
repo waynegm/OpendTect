@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id: uiobj.cc 26529 2012-09-30 11:26:40Z na
 #include <QEvent>
 #include <QWidget>
 #include <QWeakPointer>
+#include "i_qobjectptr.h"
 
 mUseQtnamespace
 
@@ -36,23 +37,22 @@ public:
     
     void				attachFilter(QObject* obj)
     {
-	if ( qobj_ )
+	if ( qobj_.get() )
 	    return;
 	
-	QSharedPointer<QObject> newobj( obj );
-	qobj_ = newobj;
-	obj->installEventFilter( this );
+	qobj_ = obj;
+	qobj_->installEventFilter( this );
     }
+    
     void				detachFilter()
     {
-	QSharedPointer<QObject> ptr = qobj_.toStrongRef();
-	if ( ptr )
-	    ptr->removeEventFilter( this );
-	qobj_.clear();
+	qobj_->removeEventFilter( this );
+	qobj_ = 0;
     }
     
 protected:
-    QWeakPointer<QObject>		qobj_;
+    
+    i_QObjectPtr			qobj_;
     uiEventFilter& 			uif_;
 };
 
@@ -124,13 +124,14 @@ void uiEventFilter::detach()
 
 bool uiEventFilterImpl::eventFilter(QObject* obj, QEvent* ev )
 {
-    if ( qobj_.isNull() )
+    if ( !qobj_ )
 	return false;
     
-    QSharedPointer<QObject> objptr( qobj_ );
-    
-    if ( objptr.data()!=obj )
+    if ( qobj_!=obj )
 	return false;
+    
+    if ( ev->type()==QEvent::DeferredDelete )
+	detachFilter();
     
     if ( !eventtypes_.isPresent( ev->type() ) )
 	return false;

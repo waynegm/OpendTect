@@ -115,7 +115,7 @@ public:
     void                        setSceneEventCatcher(visBase::EventCatcher*);
     void 			addPick(Coord3);
     				//only used for user-made wells
-
+    void			addKnownPos();
     void			getMousePosInfo(const visBase::EventInfo& ei,
 	    					IOPar& iop ) const
 				{ return SurveyObject::getMousePosInfo(ei,iop);}
@@ -148,7 +148,7 @@ protected:
     void			setWell(visBase::Well*);
     void			updateMarkers(CallBacker*);
     void			fullRedraw(CallBacker*);
-    TypeSet<Coord3>		getTrackPos(const Well::Data*);
+    void			getTrackPos(const Well::Data*,TypeSet<Coord3>&);
     void			displayLog(Well::LogDisplayPars*,int);
     void			setLogProperties(visBase::Well::LogParams&);
     void                        pickCB(CallBacker* cb=0);

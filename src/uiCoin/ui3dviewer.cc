@@ -111,6 +111,10 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     , viewport_( new osg::Viewport )
     , compositeviewer_( 0 )
 {
+    eventfilter_.addEventType( uiEventFilter::KeyPress );
+    eventfilter_.addEventType( uiEventFilter::Resize );
+    
+    mAttachCB( eventfilter_.eventhappened, uiDirectViewBody, qtEventCB );
 }
 
 
@@ -221,6 +225,7 @@ osgViewer::CompositeViewer* ui3DViewerBody::getCompositeViewer()
 	viewer = new osgViewer::CompositeViewer;
 	viewer->setThreadingModel( osgViewer::ViewerBase::SingleThreaded );
 	viewer->getEventVisitor()->setTraversalMask( visBase::EventTraversal );
+	viewer->setKeyEventSetsDone( 0 );
 	osgQt::setViewer( viewer.get() );
     }
     
@@ -271,59 +276,37 @@ void ui3DViewerBody::toggleViewMode(CallBacker* cb )
 }
 
 
-class ODDirectWidget : public osgQt::GLWidget, public CallBacker
-{
-public:
-    			ODDirectWidget(QWidget* p)
-			    : osgQt::GLWidget(p)
-			    , resize( this )
-			    , escPressed( this )
-			{}
-
-    bool		event(QEvent* ev)
-			{
-			    if ( ev->type()==QEvent::Resize )
-			    {
-				resize.trigger();
-			    }
-			    else if ( ev->type()==QEvent::KeyPress )
-			    {
-				QKeyEvent* keyevent = (QKeyEvent*) ev;
-				if ( keyevent->key()==Qt::Key_Escape )
-				{
-				    escPressed.trigger();
-				}
-				
-				return true;
-			    }
-			    else if ( ev->type()==QEvent::KeyRelease )
-				return true;
-
-			    return osgQt::GLWidget::event( ev );
-			}
-
-    Notifier<ODDirectWidget>	resize;
-    Notifier<ODDirectWidget>	escPressed;
-
-};
-
-
-
-
 uiDirectViewBody::uiDirectViewBody( ui3DViewer& hndl, uiParent* parnt )
     : ui3DViewerBody( hndl, parnt )
     , mousebutdown_(false)
     , zoomfactor_( 1 )
 {
     osg::ref_ptr<osg::DisplaySettings> ds = osg::DisplaySettings::instance();
-    ODDirectWidget* glw = new ODDirectWidget( parnt->pbody()->managewidg() );
-    mAttachCB( glw->resize, ui3DViewerBody, reSizeEvent );
-    mAttachCB( glw->escPressed, ui3DViewerBody, toggleViewMode );
+    osgQt::GLWidget* glw = new osgQt::GLWidget( parnt->pbody()->managewidg() );
 
+    eventfilter_.attachToQObj( glw );
+        
     graphicswin_ = new osgQt::GraphicsWindowQt( glw );
     setStretch(2,2);
     setupHUD();
     setupView();
+}
+
+
+void ui3DViewerBody::qtEventCB( CallBacker* )
+{
+    if ( eventfilter_.getCurrentEventType()==uiEventFilter::Resize )
+    {
+	reSizeEvent( 0 );
+    }
+    else
+    {
+	const QKeyEvent* keyevent = (const QKeyEvent*) eventfilter_.getCurrentEvent();
+	if ( keyevent->key()==Qt::Key_Escape )
+	{
+	    toggleViewMode( 0 );
+	}
+    }
 }
 
 

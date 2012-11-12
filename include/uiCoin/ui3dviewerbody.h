@@ -16,11 +16,13 @@ ________________________________________________________________________
 
 #include "refcount.h"
 #include "visosg.h"
+#include "uieventfilter.h"
 
 namespace visBase { class Camera; class Scene; class Transformation; }
 namespace osgGA { class GUIActionAdapter; }
 namespace osgViewer { class CompositeViewer; class View; }
 class ui3DViewer;
+
 namespace osg
 {
     class Group;
@@ -90,6 +92,7 @@ protected:
     
     void				setupHUD();
     void				setupView();
+    void				qtEventCB(CallBacker*);
     
     static osgViewer::CompositeViewer*	getCompositeViewer();
     virtual osgGA::GUIActionAdapter&	getActionAdapter()	= 0;
@@ -116,6 +119,8 @@ protected:
     
     visBase::OsgRefMan<osgViewer::View>			hudview_;
     RefMan<visBase::Transformation>			hudscene_;
+    
+    uiEventFilter					eventfilter_;
 };
 
 #endif

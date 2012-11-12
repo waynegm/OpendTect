@@ -141,7 +141,7 @@ Text2::Text2()
     , geode_( new osg::Geode )
     , displaytransform_( 0 )
 {
-    geode_->setNodeMask( ~visBase::BBoxTraversal );
+    geode_->setNodeMask( ~visBase::cBBoxTraversalMask() );
     addChild( geode_ );
 }
     

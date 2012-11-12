@@ -42,12 +42,9 @@ class DataObjectGroup;
 
 
 // OSG traversal bitmasks defined by OpendTect
-enum TraversalType
-{
-    EventTraversal		=	0x00000001,
-    IntersectionTraversal	=	0x00000002,
-    BBoxTraversal		= 	0x00000004
-}; 
+inline unsigned int cEventTraversalMask() 		{ return 0x00000001; }
+inline unsigned int cIntersectionTraversalMask()	{ return 0x00000002; }
+inline unsigned int cBBoxTraversalMask()		{ return 0x00000004; }
 
 
 /*!\brief
@@ -76,8 +73,8 @@ public:
 				    { return const_cast<DataObject*>(this)->
 							gtOsgNode(); }
 
-    void			enableTraversal(TraversalType,bool yn=true); 
-    bool			isTraversalEnabled(TraversalType) const;
+    void			enableTraversal(unsigned int mask,bool yn=true);
+    bool			isTraversalEnabled(unsigned int mask) const;
 
     inline SoNode*		getInventorNode()	{return 0;}
     inline const SoNode*	getInventorNode() const

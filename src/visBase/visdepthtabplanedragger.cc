@@ -211,7 +211,7 @@ void DepthTabPlaneDragger::initOsgDragger()
 
 #if OSG_MIN_VERSION_REQUIRED(3,1,3)
     osgdragger_ = new osgManipulator::TabPlaneDragger( 12.0 );
-    osgdragger_->setIntersectionMask( IntersectionTraversal );
+    osgdragger_->setIntersectionMask( cIntersectionTraversalMask() );
 //    osgdragger_->setActivationMouseButtonMask(
 //	    			osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
 #else

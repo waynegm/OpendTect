@@ -224,7 +224,8 @@ osgViewer::CompositeViewer* ui3DViewerBody::getCompositeViewer()
     {
 	viewer = new osgViewer::CompositeViewer;
 	viewer->setThreadingModel( osgViewer::ViewerBase::SingleThreaded );
-	viewer->getEventVisitor()->setTraversalMask( visBase::EventTraversal );
+	viewer->getEventVisitor()->setTraversalMask(
+					visBase::cEventTraversalMask() );
 	viewer->setKeyEventSetsDone( 0 );
 	osgQt::setViewer( viewer.get() );
     }
@@ -333,7 +334,8 @@ void uiDirectViewBody::updateActModeCursor()
 
 bool ui3DViewerBody::isViewMode() const
 {
-    return scene_ && !scene_->isTraversalEnabled( visBase::EventTraversal );
+    return scene_ &&
+           !scene_->isTraversalEnabled( visBase::cEventTraversalMask() );
 }
 
 
@@ -361,7 +363,7 @@ static unsigned char rotate_mask_bitmap[ROTATE_BYTES] = {
 void ui3DViewerBody::setViewMode( bool yn, bool trigger )
 {
     if ( scene_ )
-	scene_->enableTraversal( visBase::EventTraversal, !yn );
+	scene_->enableTraversal( visBase::cEventTraversalMask(), !yn );
     
     MouseCursor cursor;
     if ( yn )
@@ -511,7 +513,7 @@ void ui3DViewerBody::computeViewAllPosition()
 
     osg::ComputeBoundsVisitor visitor(
 			    osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN);
-    visitor.setNodeMaskOverride( visBase::BBoxTraversal );
+    visitor.setNodeMaskOverride( visBase::cBBoxTraversalMask() );
     node->accept(visitor);
     osg::BoundingBox &bb = visitor.getBoundingBox();
     

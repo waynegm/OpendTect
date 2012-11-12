@@ -78,11 +78,11 @@ osg::StateSet* VisualObject::getStateSet()
 
 
 void VisualObject::setPickable( bool yn )
-{ enableTraversal( visBase::IntersectionTraversal, yn ); }
+{ enableTraversal( visBase::cIntersectionTraversalMask(), yn ); }
 
 
 bool VisualObject::isPickable() const
-{ return isTraversalEnabled( visBase::IntersectionTraversal ); }
+{ return isTraversalEnabled( visBase::cIntersectionTraversalMask() ); }
 
 
 

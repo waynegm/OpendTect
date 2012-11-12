@@ -213,7 +213,7 @@ bool EventCatchHandler::handle( const osgGA::GUIEventAdapter& ea,
 
     if ( view )
     {
-	iv.setTraversalMask( IntersectionTraversal );
+	iv.setTraversalMask( cIntersectionTraversalMask() );
 	view->getCamera()->accept( iv );
 
 	if ( intersector->containsIntersections() )

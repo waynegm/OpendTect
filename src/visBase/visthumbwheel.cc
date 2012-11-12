@@ -34,7 +34,7 @@ ThumbWheel::ThumbWheel()
     
     thumbwheel_ =  new osgGeo::ThumbWheel;
     thumbwheel_->setName( "Thumbwheel");
-    thumbwheel_->setIntersectionMask( IntersectionTraversal );
+    thumbwheel_->setIntersectionMask( cIntersectionTraversalMask() );
     thumbwheel_->setActivationMouseButtonMask(
 			      osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
 

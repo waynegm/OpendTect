@@ -33,7 +33,7 @@ mExternC(visBase) void unrefOsgObj( void* obj )
 namespace visBase
 {
 
-void DataObject::enableTraversal( TraversalType tt, bool yn )
+void DataObject::enableTraversal( unsigned int tt, bool yn )
 {
     if ( osgNode() )
     {
@@ -43,7 +43,7 @@ void DataObject::enableTraversal( TraversalType tt, bool yn )
 }
 
 
-bool DataObject::isTraversalEnabled( TraversalType tt ) const
+bool DataObject::isTraversalEnabled( unsigned int tt ) const
 {
     return osgNode() && (osgNode()->getNodeMask() & tt);
 }

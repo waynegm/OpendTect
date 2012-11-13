@@ -77,7 +77,7 @@ public:
     bool			getBlockEvent() const;
 
     void			attachToQObj(QObject*);
-    void			attach(uiBaseObject*);
+    void			attach(uiBaseObject*,int widgetidx=0);
     void			detach();
     
 protected:

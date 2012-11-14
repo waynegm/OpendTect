@@ -295,8 +295,6 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 
     visBase::Lines* poly = sticks_;
     TypeSet<int> crdidx;
-    int cii = 0;
-    
     for ( int sidx=0; sidx<emfss_->nrSections(); sidx++ )
     {
 	const EM::SectionID sid = emfss_->sectionID( sidx );

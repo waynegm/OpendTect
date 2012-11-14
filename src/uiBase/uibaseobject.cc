@@ -19,6 +19,14 @@ uiBaseObject::uiBaseObject( const char* nm )
 {}
 
 
+uiBaseObject::uiBaseObject( uiGroup* p, const char* nm )
+    : NamedObject( nm )
+    , parent_( 0 )
+{
+    if ( p ) p->addChild( this );
+}
+
+
 #define mMaxNrRows  32
 #define mMaxNrCols  32
 
@@ -111,7 +119,7 @@ const uiGroup* uiBaseObject::parent() const
 
 void uiBaseObject::setParent( uiGroup* p )
 {
-    if ( parent_ )
+    if ( parent_ && p )
 	    pErrMsg("Parent already set");
 	
     parent_ = p;

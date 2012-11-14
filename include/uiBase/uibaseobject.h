@@ -61,6 +61,7 @@ protected:
     
     virtual bool		updateLayout()			{ return true; }
 				uiBaseObject(const char* nm);
+				uiBaseObject(uiGroup* parent, const char* nm);
     
     ObjectSet<uiBaseObject>	attachedsiblings_;
     uiGroup*			parent_;

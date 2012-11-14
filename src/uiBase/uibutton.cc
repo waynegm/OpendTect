@@ -9,25 +9,15 @@ ________________________________________________________________________
 -*/
 static const char* rcsID mUsedVar = "$Id$";
 
-#include "uitoolbutton.h"
+//#include "uitoolbutton.h"
+
+
+#include "uibutton.h"
+
 #include "i_qbutton.h"
 
-#include "uibuttongroup.h"
-#include "uiicons.h"
-#include "uimain.h"
-#include "uimenu.h"
-#include "uiobjbody.h"
-#include "uitoolbar.h"
-#include "pixmap.h"
-#include "settings.h"
-
-
-#include <QCheckBox>
-#include <QMenu>
 #include <QPushButton>
-#include <QRadioButton>
-#include <QResizeEvent>
-#include <QToolButton>
+
 
 mUseQtnamespace
 
@@ -37,6 +27,7 @@ mUseQtnamespace
     itself to the signals transmitted from Qt buttons.  Each signal is
     relayed to the notifyHandler of a uiButton handle object.
 */
+/*
 template< class T > class uiButtonTemplBody : public uiButtonBody,
     public uiObjectBody, public T { public:
 
@@ -203,52 +194,63 @@ protected:
 			{ if ( tp == uiButtonBody::clicked ) doNotify(); }
 };
 
+*/
 
-#define mqbut()         dynamic_cast<QAbstractButton*>( body() )
 
-uiButton::uiButton( uiParent* parnt, const char* nm, const CallBack* cb,
-		    uiObjectBody& b  )
-    : uiObject( parnt, nm, b )
+uiButton::uiButton( uiGroup* parnt, const char* nm, const CallBack* cb,
+		    mQtclass(QAbstractButton)* b  )
+    : uiBaseObject( parnt, nm )
     , activated( this )
+    , messenger_( new i_ButMessenger( b, this ) )
 {
     if ( cb ) activated.notify(*cb);
+}
 
-    mDynamicCastGet(uiButtonGroup*,butgrp,parnt)
-    if ( butgrp ) butgrp->addButton( this );
+
+uiButton::~uiButton()
+{
+    delete messenger_;
+}
+
+
+QWidget* uiButton::getWidget( int )
+{
+    return messenger_->getSender();
 }
 
 
 void uiButton::setText( const char* txt )
 {
-    mqbut()->setText( QString( txt ) );
+    messenger_->getSender()->setText( QString( txt ) );
 }
 
 
 const char* uiButton::text()
 {
     static BufferString buttxt;
-    buttxt = mQStringToConstChar( mqbut()->text() );
+    buttxt = mQStringToConstChar( messenger_->getSender()->text() );
     return buttxt.buf();
 }
 
 
-QAbstractButton* uiButton::qButton()
+#define mButtonText( nm, ia ) BufferString( nm, nm && !ia ? " ..." : "" )
+
+
+uiPushButton::uiPushButton( uiGroup* parnt, const char* nm, bool ia )
+    : uiButton( parnt, nm, 0, new QPushButton )
 {
-    return dynamic_cast<QAbstractButton*>( body() );
+    setText( mButtonText( nm, ia ));
 }
 
 
-uiPushButton::uiPushButton( uiParent* parnt, const char* nm, bool ia )
-    : uiButton( parnt, nm, 0, mkbody(parnt,0,nm,ia) )
-{}
-
-
-uiPushButton::uiPushButton( uiParent* parnt, const char* nm, const CallBack& cb,
+uiPushButton::uiPushButton( uiGroup* parnt, const char* nm, const CallBack& cb,
 			    bool ia )
-    : uiButton( parnt, nm, &cb, mkbody(parnt,0,nm,ia) )
-{}
+    : uiButton( parnt, nm, &cb, new QPushButton )
+{
+    setText( mButtonText( nm, ia ));
+}
 
-
+/*
 uiPushButton::uiPushButton( uiParent* parnt, const char* nm,
 			    const ioPixmap& pm, bool ia )
     : uiButton( parnt, nm, 0, mkbody(parnt,&pm,nm,ia) )
@@ -260,32 +262,23 @@ uiPushButton::uiPushButton( uiParent* parnt, const char* nm,
     : uiButton( parnt, nm, &cb, mkbody(parnt,&pm,nm,ia) )
 {}
 
-
+*/
 uiPushButton::~uiPushButton()
 {
 }
 
 
-uiPushButtonBody& uiPushButton::mkbody( uiParent* parnt, const ioPixmap* pm,
-					const char* txt, bool immact )
-{
-    BufferString buttxt( txt );
-    if ( !immact && txt && *txt )
-	buttxt += " ...";
-    if ( pm )	body_ = new uiPushButtonBody(*this,*pm,parnt,buttxt.buf()); 
-    else	body_ = new uiPushButtonBody(*this,parnt,buttxt.buf()); 
-
-    return *body_; 
-}
+QPushButton* uiPushButton::getButton()
+{ return (QPushButton*) getWidget(0); }
 
 
 void uiPushButton::setDefault( bool yn )
 {
-    body_->setDefault( yn );
-    setFocus();
+    getButton()->setDefault( yn );
+    //setFocus();
 }
 
-
+/*
 void uiPushButton::setPixmap( const char* pmnm )
 {
     setPixmap( ioPixmap(pmnm) );
@@ -300,11 +293,8 @@ void uiPushButton::setPixmap( const ioPixmap& pm )
     body_->setIconFrac( 0.7 );
     body_->setIcon( *pm.qpixmap() );
 }
-
-
-void uiPushButton::click()			{ activated.trigger(); }
-
-
+*/
+/*
 uiRadioButton::uiRadioButton( uiParent* p, const char* nm )
     : uiButton(p,nm,0,mkbody(p,nm))
 {}
@@ -347,11 +337,6 @@ uiCheckBox::uiCheckBox( uiParent* p, const char* nm, const CallBack& cb )
     : uiButton(p,nm,&cb,mkbody(p,nm))
 {}
 
-
-void uiCheckBox::setText( const char* txt )
-{
-    mqbut()->setText( QString( txt ) );
-}
 
 
 uiCheckBoxBody& uiCheckBox::mkbody( uiParent* parnt, const char* txt )
@@ -525,3 +510,5 @@ void uiToolButton::setMenu( uiPopupMenu* mnu )
     body_->setMenu( qmenu_ );
     body_->setPopupMode( QToolButton::MenuButtonPopup );
 }
+ 
+ */

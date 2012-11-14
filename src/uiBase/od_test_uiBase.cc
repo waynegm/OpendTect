@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uimain.h"
 
 #include "uidialog.h"
+#include "uibutton.h"
 #include "uilabel.h"
 
 #ifdef __msvc__
@@ -38,6 +39,8 @@ int main( int argc, char** argv )
     dlg.addChild( label2 );
     label2->attach(uiBaseObject::AlignedBelow, label1 );
     
+    uiPushButton* button = new uiPushButton( &dlg, "Button", true );
+    button->attach( uiBaseObject::AlignedBelow, label2 );
     dlg.go();
     
     

@@ -12,41 +12,47 @@ ________________________________________________________________________
 
 -*/
 
-#include "uibasemod.h"
-#include "uiobj.h"
 
-class uiButtonBody;
-class uiCheckBoxBody;
-class uiPushButtonBody;
-class uiRadioButtonBody;
-mFDQtclass(QAbstractButton)
+#include "uibaseobject.h"
 
-class uiPopupMenu;
-class ioPixmap;
-mFDQtclass(QEvent)
-mFDQtclass(QMenu)
+//class uiParent;
+//class uiButtonBody;
+//class uiCheckBoxBody;
+//class uiPushButtonBody;
+//class uiRadioButtonBody;
+//mFDQtclass(QAbstractButton)
 
+//class uiPopupMenu;
+//class ioPixmap;
+//mFDQtclass(QEvent)
+class i_ButMessenger;
+
+mFDQtclass(QPushButton);
+mFDQtclass(QAbstractButton);
 
 //!\brief Button Abstract Base class
-mClass(uiBase) uiButton : public uiObject
+mClass(uiBase) uiButton : public uiBaseObject
 {
 public:
-			uiButton(uiParent*,const char*,const CallBack*,
-				 uiObjectBody&);
-    virtual		~uiButton()		{}
-
+    mQtclass(QWidget)*	getWidget(int);
+    
+			~uiButton();
+			
     virtual void	setText(const char*);
     const char*		text();
 
-    virtual void	click()			{}
+    //irtual void	click()			{}
 
     Notifier<uiButton>	activated;
 
 protected:
-
-public:
-    			//! Not for casual use
-    mQtclass(QAbstractButton*)	qButton();
+			uiButton(uiGroup* parent, const char* nm,
+			    const CallBack* cb,mQtclass(QAbstractButton)*);
+    virtual void	toggled(bool)	{}
+    virtual void	clicked()	{ activated.trigger(); }
+    
+    friend		class i_ButMessenger;
+    i_ButMessenger*	messenger_;
 };
 
 
@@ -58,34 +64,32 @@ public:
 mClass(uiBase) uiPushButton : public uiButton
 {
 public:
-				uiPushButton(uiParent*,const char* nm,
+				uiPushButton(uiGroup*,const char* nm,
 					     bool immediate);
-				uiPushButton(uiParent*,const char* nm,
+				uiPushButton(uiGroup*,const char* nm,
 					     const CallBack&,
 					     bool immediate); 
-				uiPushButton(uiParent*,const char* nm,
+/*				uiPushButton(uiGroup*,const char* nm,
 					     const ioPixmap&,
 					     bool immediate);
-				uiPushButton(uiParent*,const char* nm,
+				uiPushButton(uiGroup*,const char* nm,
 					     const ioPixmap&,const CallBack&,
 					     bool immediate);
+ */
 				~uiPushButton();
 
     void			setDefault(bool yn=true);
-    void			setPixmap(const char*);
-    void			setPixmap(const ioPixmap&);
+    //    void			setPixmap(const char*);
+    //void			setPixmap(const ioPixmap&);
     				//! Size of pixmap is 1/2 the size of button
 
     void			click();
 
-private:
-
-    uiPushButtonBody*		body_;
-    uiPushButtonBody&		mkbody(uiParent*,const ioPixmap*,const char*,
-	    				bool);
+protected:
+    mQtclass(QPushButton)*	getButton();
 };
 
-
+/*
 mClass(uiBase) uiRadioButton : public uiButton
 {                        
 public:
@@ -147,7 +151,7 @@ protected:
     virtual void        notifyHandler(notifyTp)			=0;
 };
 
-
+*/
 
 
 #endif

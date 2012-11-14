@@ -7,9 +7,13 @@
 
 set( OD_MODULE_DEPS General)
 set( OD_USEQT Gui)
-set( QT_MOC_HEADERS i_qobjectptr.h )
+set( QT_MOC_HEADERS
+		i_qbutton.h
+		i_qobjectptr.h
+	)
 set( OD_MODULE_SOURCES  
 		uibaseobject.cc
+		uibutton.cc
 		uidialog.cc
 		uieventfilter.cc
 		uigroup.cc

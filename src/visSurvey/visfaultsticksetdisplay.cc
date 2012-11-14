@@ -325,7 +325,7 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 		    s2dd = Seis2DDisplay::getSeis2DDisplay( *lset, lnm );
 	    }
 
-	    const StepInterval<int> colrg = fss->colRange( rc.row );
+	      const StepInterval<int> colrg = fss->colRange( rc.row );
 	    if ( !colrg.width() )
 	    {
 		rc.col = colrg.start;
@@ -333,7 +333,7 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 		{
 		    Coord3 pos = fss->getKnot( rc );
 		    pos.x += inlcrlsystem_->inlDistance() * 0.5 * dir;
-		    const int ci = poly->getCoordinates()->addPos( pos );
+		    //const int ci = poly->getCoordinates()->addPos( pos );
 		    //poly->setCoordIndex( cii++, ci );
 		    //linergprimitiveset_->
 		}
@@ -343,7 +343,7 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 		{
 		    Coord3 pos = fss->getKnot( rc );
 		    pos.y += inlcrlsystem_->inlDistance() * 0.5 * dir;
-		    const int ci = poly->getCoordinates()->addPos( pos );
+		    //const int ci = poly->getCoordinates()->addPos( pos );
 		    //linergprimitiveset_->append( ci );
 		    //poly->setCoordIndex( cii++, ci );
 		}
@@ -353,7 +353,7 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 		{
 		    Coord3 pos = fss->getKnot( rc );
 		    pos.z += inlcrlsystem_->zStep() * 0.5 * dir;
-		    const int ci = poly->getCoordinates()->addPos( pos );
+		    //const int ci = poly->getCoordinates()->addPos( pos );
 		    //poly->setCoordIndex( cii++, ci );
 		}
 		//poly->setCoordIndex( cii++, -1 );

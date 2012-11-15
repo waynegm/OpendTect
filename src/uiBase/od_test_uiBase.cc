@@ -18,7 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uilabel.h"
 
 #ifdef __msvc__
-//#include "winmain.h"
+#include "winmain.h"
 #endif
 
 
@@ -39,8 +39,8 @@ int main( int argc, char** argv )
     dlg.addChild( label2 );
     label2->attach(uiBaseObject::AlignedBelow, label1 );
     
-    uiPushButton* button = new uiPushButton( &dlg, "Button", true );
-    button->attach( uiBaseObject::AlignedBelow, label2 );
+    uiPushButton* button = new uiPushButton( &dlg, "Button", false );
+    button->attach( uiBaseObject::AlignedRight, label2 );
     dlg.go();
     
     

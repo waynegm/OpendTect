@@ -29,7 +29,7 @@ mClass(uiBase) uiBaseObject : public NamedObject
 {
 public:
     enum Relationship	{ Below, Above, Left, Right, RowAligned, ColumnAligned,
-	AlignedBelow, AlignedAbove };
+	AlignedBelow, AlignedAbove, AlignedLeft, AlignedRight };
     
     void			attach(Relationship,uiBaseObject*);
     

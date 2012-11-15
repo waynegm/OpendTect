@@ -120,7 +120,7 @@ const uiGroup* uiBaseObject::parent() const
 void uiBaseObject::setParent( uiGroup* p )
 {
     if ( parent_ && p )
-	    pErrMsg("Parent already set");
+	pErrMsg("Parent already set");
 	
     parent_ = p;
 }

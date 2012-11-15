@@ -44,11 +44,13 @@ protected:
     
     struct LayoutRelationship
     {
-	LayoutRelationship(uiBaseObject*,uiBaseObject*,
-			   uiBaseObject::Relationship);
+				LayoutRelationship(uiBaseObject*,uiBaseObject*,
+						   uiBaseObject::Relationship);
 	
 	bool			relatesTo(const uiBaseObject* o) const;
 	const uiBaseObject*	getOther(const uiBaseObject*) const;
+	
+	bool			operator==(const LayoutRelationship&) const;
 	
 	uiBaseObject*			obj0_;
 	uiBaseObject*			obj1_;
@@ -58,12 +60,12 @@ protected:
     bool		getLayout(int chld,RowCol& origin,RowCol& span) const;
     
     
-    ManagedObjectSet<LayoutRelationship>    relationships_;
+    TypeSet<LayoutRelationship> relationships_;
     
-    mQtclass(QGridLayout)*		    gridlayout_;
+    mQtclass(QGridLayout)*	gridlayout_;
     
-    QWidget*				    widget_;
-    ObjectSet<uiBaseObject>		    children_;
+    QWidget*			widget_;
+    ObjectSet<uiBaseObject>	children_;
 };
 
 

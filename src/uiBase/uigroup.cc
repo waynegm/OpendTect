@@ -16,9 +16,21 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include <QWidget>
 #include <QGridLayout>
 
+
+bool uiGroup::LayoutRelationship::operator==(
+					const uiGroup::LayoutRelationship& b ) const
+{
+    if ( obj0_!=b.obj0_ && obj0_!=b.obj1_ )
+	return false;
+    
+    if ( obj1_!=b.obj0_ && obj1_!=b.obj1_ )
+	return false;
+    
+    return relationship_==b.relationship_;
+}
+
 #define mStandarInstantiations \
-relationships_( false ) \
-, gridlayout_( 0 )
+gridlayout_( 0 )
 
 uiGroup::uiGroup( const char* nm )
     : uiBaseObject( nm )
@@ -59,14 +71,20 @@ void uiGroup::attach(uiBaseObject* a,Relationship rel,uiBaseObject* b)
     const int prevrelsize = relationships_.size();
     if ( rel==AlignedBelow || rel==AlignedAbove )
     {
-	relationships_ += new LayoutRelationship( a, b, ColumnAligned );
+	relationships_ += LayoutRelationship( a, b, ColumnAligned );
 	rel = rel==AlignedBelow ? Below : Above;
     }
-    relationships_ += new LayoutRelationship( a, b, rel );
+    if ( rel==AlignedRight || rel==AlignedLeft )
+    {
+	relationships_ +=  LayoutRelationship( a, b, RowAligned );
+	rel = rel==AlignedRight ? Right : Left;
+    }
+    
+    relationships_ += LayoutRelationship( a, b, rel );
     if ( circularRelationships() )
     {
 	while ( relationships_.size()>prevrelsize )
-	    delete relationships_.pop();
+	    relationships_.removeSingle( prevrelsize );
 	
 	pErrMsg("Circular relationship detected.");
     }
@@ -153,10 +171,10 @@ bool uiGroup::getLayout( int chld, RowCol& origin,
     if ( !obj )
 	return false;
     
-    ObjectSet<const LayoutRelationship> relationships;
+    TypeSet<LayoutRelationship> relationships;
     for ( int idx=0; idx<relationships_.size(); idx++ )
     {
-	if ( relationships_[idx]->obj0_ == obj )
+	if ( relationships_[idx].obj0_ == obj )
 	    relationships += relationships_[idx];
     }
     
@@ -170,13 +188,13 @@ bool uiGroup::getLayout( int chld, RowCol& origin,
 	
 	for ( int idx=0; idx<relationships.size(); idx++ )
 	{
-	    const uiBaseObject* sibling = relationships[idx]->getOther( obj );
+	    const uiBaseObject* sibling = relationships[idx].getOther( obj );
 	    const int siblingidx = children_.indexOf( sibling );
 	    RowCol siblingorigin, siblingspan;
 	    if ( !getLayout( siblingidx, siblingorigin, siblingspan ))
 		return false;
 	    
-	    switch ( relationships[idx]->relationship_ )
+	    switch ( relationships[idx].relationship_ )
 	    {
 		case uiBaseObject::Above:
 		    origin.row = siblingorigin.row-span.row;

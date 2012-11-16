@@ -78,7 +78,7 @@ const mVisTrans*  Coordinates::getDisplayTransformation() const
 
 
 #define mArrSize \
-    mGetOsgVec3Arr(osgcoords_)->size()
+    ( (int) mGetOsgVec3Arr(osgcoords_)->size() ) \
 
 int Coordinates::size(bool includedeleted) const
 {

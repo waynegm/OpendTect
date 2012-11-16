@@ -49,7 +49,7 @@ bool DataObject::isTraversalEnabled( unsigned int tt ) const
 }
 
 
-const char* DataObject::name() const
+FixedString DataObject::name() const
 {
     osg::ref_ptr<const osg::Node> osgnode = osgNode();
     if ( osgnode ) return osgnode->getName().c_str();

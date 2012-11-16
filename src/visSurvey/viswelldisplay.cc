@@ -224,8 +224,6 @@ void WellDisplay::fillMarkerParams( visBase::Well::MarkerParams& mp )
     mp.col_ 		= mGetDispPar( markers_.color_  );
     mp.shapeint_ 	= mGetDispPar( markers_.shapeint_ );
     mp.cylinderheight_ 	= mGetDispPar( markers_.cylinderheight_ );
-    mp.issinglecol_ 	= mGetDispPar( markers_.issinglecol_ );
-    mp.issamenmcol_ 	= mGetDispPar( markers_.samenmcol_ );
     mp.font_ 		= mGetDispPar( markers_.font_ );
     mp.namecol_ 	= mGetDispPar( markers_.nmcol_ );
     mp.size_ 		= mGetDispPar( markers_.size_ );
@@ -272,7 +270,8 @@ void WellDisplay::fullRedraw( CallBacker* )
 
     const bool waslogconstsize = well_->logConstantSize();
 
-    TypeSet<Coord3> trackpos = getTrackPos( wd );
+    TypeSet<Coord3> trackpos;
+    getTrackPos( wd, trackpos );
     if ( trackpos.isEmpty() ) return;
 
     visBase::Well::TrackParams tp;
@@ -329,13 +328,16 @@ bool WellDisplay::setMultiID( const MultiID& multiid )
 }
 
 
-TypeSet<Coord3> WellDisplay::getTrackPos( const Well::Data* wd )
+void WellDisplay::getTrackPos( const Well::Data* wd,
+			       TypeSet<Coord3>& trackpos )
 {
-    TypeSet<Coord3> trackpos;
+    trackpos.erase();
     const Well::D2TModel* d2t = wd->d2TModel();
     setName( wd->name() );
 
-    if ( wd->track().size() < 1 ) return trackpos;
+    if ( wd->track().size() < 1 )
+	return;
+    
     PtrMan<Well::Track> ttrack = 0;
     if ( zistime_ )
     {
@@ -352,8 +354,6 @@ TypeSet<Coord3> WellDisplay::getTrackPos( const Well::Data* wd )
 	if ( !mIsUdf(pt.z) )
 	    trackpos += pt;
     }
-
-    return trackpos;
 }
 
 
@@ -364,8 +364,8 @@ void WellDisplay::updateMarkers( CallBacker* )
 
     visBase::Well::MarkerParams mp;
     fillMarkerParams( mp );
-
-    const BufferStringSet selnms( 
+    
+    const BufferStringSet selnms(
 	    	wd->displayProperties(false).markers_.selmarkernms_ );
     for ( int idx=0; idx<wd->markers().size(); idx++ )
     {
@@ -384,8 +384,9 @@ void WellDisplay::updateMarkers( CallBacker* )
 
 	mp.pos_ = &pos;	mp.name_ = wellmarker->name();	
 
-	if ( !mp.issinglecol_ ) mp.col_  = wellmarker->color();
-	if ( mp.issamenmcol_ ) mp.namecol_  = mp.col_;
+	if ( !mGetDispPar( markers_.issinglecol_ ) )
+	    mp.col_ = wellmarker->color();
+	if ( mGetDispPar( markers_.samenmcol_ ) ) mp.namecol_  = mp.col_;
 
 	well_->addMarker( mp );
     }

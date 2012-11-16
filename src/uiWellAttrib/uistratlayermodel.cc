@@ -244,7 +244,7 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
     if ( !seqdisp_ )
 	seqdisp_ = new uiBasicLayerSequenceGenDesc( gengrp, desc_ );
 
-    uiGroup* topgrp; uiGroup* botgrp; uiGroup* rightgrp;
+    uiGroup* topgrp; uiGroup* botgrp; uiGroup* rightgrp=0;
     if ( seqdisp_->separateDisplay() )
     {
 	rightgrp = new uiGroup( this, "Right group" );
@@ -714,7 +714,7 @@ void uiStratLayerModel::displayFRResult( SyntheticData* synthdata )
     lmp_.useed_ = (bool)synthdata;
     synthdisp_->displaySynthetic( synthdata ? synthdata
 				    : synthdisp_->getCurrentSyntheticData() );
-    levelChanged.trigger();	//no change in fact but a redraw is needed
+    levelChg( 0 );		//no change in fact but a redraw is needed
 
     moddisp_->modelChanged();
 }

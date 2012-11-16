@@ -310,7 +310,7 @@ float Well::Log::getValue( float dh, bool noudfs ) const
     if ( !noudfs || !mIsUdf(ret) )
 	return ret;
 
-    float dah1, val1, dah2, val2;
+    float dah1=mUdf(float),val1=mUdf(float),dah2=mUdf(float),val2=mUdf(float);
     bool found1 = false, found2 = false;
     if ( idx1 > 0 )
     {
@@ -497,7 +497,7 @@ int Well::MarkerSet::indexOf( const char* mname ) const
 {
     for ( int idx=0; idx<size(); idx++ )
     {
-	if ( !strcmp(mname,(*this)[idx]->name()) )
+	if ( (*this)[idx]->name()==mname )
 	    return idx;
     }
     return -1;

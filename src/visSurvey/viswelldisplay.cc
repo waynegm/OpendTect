@@ -549,7 +549,7 @@ void WellDisplay::setLogProperties( visBase::Well::LogParams& lp )
     well_->setLogLineDisplayed( lp.size_ > 0, lognr );
 
     setLogColor( lp.col_, lognr );
-    setLogLineWidth( lp.size_, lognr );
+    setLogLineWidth( mCast(float,lp.size_), lognr );
     setLogWidth( lp.logwidth_, lognr );
 
     if ( lp.cliprate_ && lp.logidx_ >= 0 )
@@ -881,7 +881,8 @@ void WellDisplay::showKnownPositions()
 {
     mGetWD(return);
 
-    TypeSet<Coord3> trackpos = getTrackPos( wd );
+    TypeSet<Coord3> trackpos;
+    getTrackPos( wd, trackpos );
     if ( trackpos.isEmpty() )
 	return;
 

@@ -357,16 +357,12 @@ bool DAGTriangleTree::insertPoint( int ci, int& dupid )
     }
     else if ( res==cIsDuplicate() )
 	return true;
-    else  
-    {
-	BufferString msg = "\nInsert point ";
-	msg += ci;
-	msg += " failed!";
-	pErrMsg( msg );
-	return false;
-    }
 
-    return true;
+    BufferString msg = "\nInsert point ";
+    msg += ci;
+    msg += " failed!";
+    pErrMsg( msg );
+    return false;
 }
 
 
@@ -639,7 +635,7 @@ void DAGTriangleTree::legalizeTriangles( TypeSet<char>& v0s, TypeSet<char>& v1s,
   	    start++;
 
 
-	int shared0, shared1, crdci;
+	int shared0=mUdf(int), shared1=mUdf(int), crdci=mUdf(int);
 	int checkti = cNoTriangle();
 	if ( (v0==0 && v1==1) || (v0==1 && v1==0) )
 	{

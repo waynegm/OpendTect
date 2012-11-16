@@ -132,7 +132,7 @@ void Seis2DDisplay::setLineInfo( const MultiID& lid, const char* lnm )
 
 
 const char* Seis2DDisplay::getLineName() const
-{ return geomid_.isOK() ? S2DPOS().getLineName( geomid_.lineid_ ) : name(); }
+{ return geomid_.isOK() ? S2DPOS().getLineName( geomid_.lineid_ ) : name().str(); }
 
 
 PosInfo::GeomID Seis2DDisplay::getGeomID() const
@@ -356,7 +356,7 @@ void Seis2DDisplay::setData( int attrib,
     slice2d.setDimMap( 0, 1 );
     slice2d.setDimMap( 1, 2 );
 
-    int sz0, sz1;
+    int sz0=mUdf(int), sz1=mUdf(int);
 
     MouseCursorChanger cursorlock( MouseCursor::Wait );
 
@@ -1040,8 +1040,9 @@ Color Seis2DDisplay::getAnnotColor() const
 
 
 Seis2DDisplay* Seis2DDisplay::getSeis2DDisplay( const MultiID& lineset,
-						const char* linenm )
+						const char* linenmptr )
 {
+    FixedString linenm = linenmptr;
     TypeSet<int> ids;
     visBase::DM().getIds( typeid(visSurvey::Seis2DDisplay), ids );
 
@@ -1050,7 +1051,7 @@ Seis2DDisplay* Seis2DDisplay::getSeis2DDisplay( const MultiID& lineset,
 	DataObject* dataobj = visBase::DM().getObject( ids[idx] );
 	mDynamicCastGet( Seis2DDisplay*, s2dd, dataobj );
 	if (s2dd && lineset==s2dd->lineSetID() && linenm &&
-	    !strcmp(linenm,s2dd->getLineName()) )
+	    linenm==s2dd->getLineName() )
 	    return s2dd;
     }
 

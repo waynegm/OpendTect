@@ -210,8 +210,9 @@ int PlaneFrom3DSpaceHoughTransform::getNrPointsAfterClip() const
 void PlaneFrom3DSpaceHoughTransform::incParamPos( int normalidx, double dist)
 {
     const int distid = mNINT32( dist/deltadist_ );
-    unsigned int memoffset = reinterpret_cast<const Array2DInfo&>
-			    (paramspace_->info()).getOffset(normalidx,distid);
+    unsigned int memoffset = mCast( unsigned int, 
+			    reinterpret_cast<const Array2DInfo&>
+			    (paramspace_->info()).getOffset(normalidx,distid) );
     unsigned int* dataptr = paramspace_->getData();
 
     paramspacemutex_.lock();
@@ -310,7 +311,7 @@ bool LineFrom2DSpaceHoughTransform::compute()
 		continue;
 
 	    result_->set( idx, idy, 1 );
-	    int lastidx;		
+	    int lastidx = mUdf(int);		
 	    for ( int tidx=0; tidx<mHalfThetaSize; tidx++ )
 	    {
 		const float radius = (idy-csz/2)*costable[tidx] + 

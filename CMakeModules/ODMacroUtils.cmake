@@ -348,7 +348,7 @@ foreach ( TEST_FILE ${OD_TEST_PROGS} )
 	    ${TEST_NAME}
 	    ${OD_EXEC_DEP_LIBS}
 	    ${OD_RUNTIMELIBS} )
-    add_test( ${TEST_NAME} ${OD_EXEC_OUTPUT_PATH}/${TEST_NAME} )
+    add_test( NAME ${TEST_NAME} WORKING_DIRECTORY ${OD_EXEC_OUTPUT_PATH} COMMAND ${TEST_NAME} )
     set_property( TEST ${TEST_NAME} PROPERTY ${OD_MODULE_TEST_LABEL} )
 endforeach()
 
@@ -447,6 +447,14 @@ macro ( OD_ADD_KEYWORD_TEST )
 	    endif()
 	    add_test( Keyword_${KW} ${CMD} )
 	endforeach()
+    endif()
+endmacro()
+
+macro ( OD_ADD_LINEEND_TEST )
+    if ( NOT DEFINED WIN32 )
+	set( CMD "${OpendTect_DIR}/dtect/FindDosEOL.sh" )
+	list( APPEND CMD "${OD_SOURCELIST_FILE}" )
+	add_test( LineEndTest ${CMD} )
     endif()
 endmacro()
 

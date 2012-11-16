@@ -138,7 +138,7 @@ SpecDecomp::SpecDecomp( Desc& desc )
 
     if ( transformtype_ == mTransformTypeFourier )
     {
-	int wtype;
+	int wtype = mUdf(int);
 	mGetEnum( wtype, windowStr() );
 	windowtype_ = (ArrayNDWindow::WindowType)wtype;
 	
@@ -148,13 +148,13 @@ SpecDecomp::SpecDecomp( Desc& desc )
     }
     else if ( transformtype_ == mTransformTypeDiscrete )
     {
-	int dwave;
+	int dwave = mUdf(int);
 	mGetEnum( dwave, dwtwaveletStr() );
 	dwtwavelet_ = (WaveletTransform::WaveletType) dwave;
     }
     else 
     {
-	int cwave;
+	int cwave = mUdf(int);
 	mGetEnum( cwave, cwtwaveletStr() );
 	cwtwavelet_ = (CWT::WaveletType) cwave;
     }
@@ -259,7 +259,7 @@ bool SpecDecomp::calcDFT(const DataHolder& output, int z0, int nrsamples ) const
 	    samp++;
 	}
 
-	removeBias( &signal );
+	removeBias<float_complex,float>( &signal );
 	window_->apply( &signal );
 
 	const int diff = (int)(fftsz_ - sz_)/2;
@@ -322,8 +322,8 @@ bool SpecDecomp::calcDWT(const DataHolder& output, int z0, int nrsamples ) const
     {
         for ( int scale=2; scale<nrscales; scale++ )
         {
-            int scalepos = mCast( char, intpow(2,scale-1) + 
-					  ((idx+off) >> (nrscales-scale)) );
+            int scalepos = intpow( 2,mCast(char,scale-1) ) + 
+					( (idx+off) >> (nrscales-scale) );
             spectrum[scale] = fabs(transformed.get(scalepos));
 
 	    if ( !outputinterest_[scale] ) continue;

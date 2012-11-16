@@ -1046,7 +1046,7 @@ visSurvey::SurveyObject* VolumeDisplay::duplicate( TaskRunner* tr ) const
 	vd->addIsoSurface();
 	vd->isosurfsettings_[idx] = isosurfsettings_[idx];
     }
-    
+
     vd->init();
     vd->showVolRen( isVolRenShown() );
 
@@ -1054,6 +1054,8 @@ visSurvey::SurveyObject* VolumeDisplay::duplicate( TaskRunner* tr ) const
 
     vd->setSelSpec( 0, as_ );
     vd->setDataVolume( 0, cache_, tr );
+    vd->setColTabMapperSetup( 0, scalarfield_->getColTabMapper().setup_, tr );
+    vd->setColTabSequence( 0, scalarfield_->getColTabSequence(), tr );
     return vd;
 }
 
@@ -1328,11 +1330,11 @@ int VolumeDisplay::usePar( const IOPar& par )
 	slices_ += os;
 	addChild( os->getInventorNode() );
 	// set correct dimensions ...
-	if ( !strcmp(os->name(),sKeyInline()) )
+	if ( os->name()==sKeyInline() )
 	    os->setDim( cInLine() );
-	else if ( !strcmp(os->name(),sKeyCrossLine()) )
+	else if ( os->name()==sKeyCrossLine() )
 	    os->setDim( cCrossLine() );
-	else if ( !strcmp(os->name(),sKeyTime()) )
+	else if ( os->name()==sKeyTime() )
 	    os->setDim( cTimeSlice() );
     }
 

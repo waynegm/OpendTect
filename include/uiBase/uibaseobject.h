@@ -19,12 +19,6 @@ ________________________________________________________________________
 mFDQtclass(QWidget);
 class uiGroup;
 
-mStruct(uiBase) uiLayout
-{
-    
-};
-
-
 mClass(uiBase) uiBaseObject : public NamedObject
 {
 public:

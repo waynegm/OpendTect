@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:	Ranojay Sen
  Date:		18-10-2012
- RCS:		$Id: vislines.h 26803 2012-10-16 13:01:04Z kristofer.tingdahl@dgbes.com $
+ RCS:		$Id$
 ________________________________________________________________________
 
 

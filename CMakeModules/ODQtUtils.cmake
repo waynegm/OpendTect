@@ -14,8 +14,8 @@ MACRO(OD_SETUP_QT)
 
     #Try to find Qt5
     list ( APPEND CMAKE_PREFIX_PATH ${QTDIR} )
-    find_package( Qt5Widgets )
-    if ( Qt5Widgets_FOUND QUIET )
+    find_package( Qt5Widgets QUIET )
+    if ( Qt5Widgets_FOUND )
 	cmake_minimum_required( VERSION 2.8.9 )
 	set( CMAKE_AUTOMOC ON )
     else()

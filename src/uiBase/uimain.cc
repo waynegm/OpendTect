@@ -18,6 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "debugmasks.h"
 
 #include <QApplication>
+#include <QIcon>
 
 mUseQtnamespace;
 
@@ -40,6 +41,9 @@ void uiMain::setXpmIconData( const char** xpmdata )
 #endif
 #ifdef __mac__
 # include <QMacStyle>
+#endif
+#ifdef __lux__
+# include <QCleanlookStype>
 #endif
 
 void myMessageOutput( QtMsgType type, const char *msg );

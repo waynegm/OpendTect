@@ -15,6 +15,7 @@ ________________________________________________________________________
 #include "namedobj.h"
 #include "geometry.h"
 #include "rowcol.h"
+#include "uibasemod.h"
 
 mFDQtclass(QWidget);
 class uiGroup;
@@ -23,7 +24,7 @@ mClass(uiBase) uiBaseObject : public NamedObject
 {
 public:
     enum Relationship	{ Below, Above, Left, Right, RowAligned, ColumnAligned,
-	AlignedBelow, AlignedAbove, AlignedLeft, AlignedRight };
+			AlignedBelow, AlignedAbove, AlignedLeft, AlignedRight };
     
     void			attach(Relationship,uiBaseObject*);
     

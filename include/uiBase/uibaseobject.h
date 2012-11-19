@@ -63,7 +63,7 @@ protected:
 };
 
 
-#define mQStringToConstChar( str )		str.toAscii().constData()
+#define mQStringToConstChar( str )		str.toLatin1().constData()
 
 
 #endif

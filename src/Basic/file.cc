@@ -81,7 +81,7 @@ void RecursiveCopier::makeFileList( const char* dir )
     {
 	BufferString curfile( files.fullPath(idx) );
 	BufferString relpath( srcdir.relativeFilePath(curfile.buf())
-						.toAscii().constData() );
+						.toLatin1().constData() );
 	filelist_.add( relpath );
     }
 
@@ -90,7 +90,7 @@ void RecursiveCopier::makeFileList( const char* dir )
     {
 	BufferString curdir( dirs.fullPath(idx) );
 	BufferString relpath( srcdir.relativeFilePath(curdir.buf())
-						.toAscii().constData() );
+						.toLatin1().constData() );
 	filelist_.add( relpath );
 	if ( !File::isLink(curdir) )
 	    makeFileList( curdir );
@@ -222,7 +222,7 @@ const char* getCanonicalPath( const char* dir )
     static StaticStringManager stm;
     BufferString& pathstr = stm.getString();
     QDir qdir( dir );
-    pathstr = qdir.canonicalPath().toAscii().constData();
+    pathstr = qdir.canonicalPath().toLatin1().constData();
     return pathstr;
 #else
     pFreeFnErrMsg(not_implemented_str,"getCanonicalPath");
@@ -239,7 +239,7 @@ const char* getRelativePath( const char* reltodir, const char* fnm )
     static StaticStringManager stm;
     BufferString& relpathstr = stm.getString();
     QDir qdir( reltopath.buf() );
-    relpathstr = qdir.relativeFilePath( path.buf() ).toAscii().constData();
+    relpathstr = qdir.relativeFilePath( path.buf() ).toLatin1().constData();
     return relpathstr.isEmpty() ? fnm : relpathstr.buf();
 #else
     pFreeFnErrMsg(not_implemented_str,"getRelativePath");
@@ -521,7 +521,7 @@ const char* timeCreated( const char* fnm, const char* fmt )
 #ifndef OD_NO_QT
     QFileInfo qfi( fnm );
     QString qstr = qfi.created().toString( fmt );
-    timestr = qstr.toAscii().constData();
+    timestr = qstr.toLatin1().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"timeCreated");
 #endif
@@ -536,7 +536,7 @@ const char* timeLastModified( const char* fnm, const char* fmt )
 #ifndef OD_NO_QT
     QFileInfo qfi( fnm );
     QString qstr = qfi.lastModified().toString( fmt );
-    timestr = qstr.toAscii().constData();
+    timestr = qstr.toLatin1().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"timeLastModified");
 #endif
@@ -583,7 +583,7 @@ const char* linkTarget( const char* linknm )
     static StaticStringManager stm;
     BufferString& linkstr = stm.getString();
     QFileInfo qfi( linknm );
-    linkstr = qfi.isSymLink() ? qfi.symLinkTarget().toAscii().constData()
+    linkstr = qfi.isSymLink() ? qfi.symLinkTarget().toLatin1().constData()
 			      : linknm;
     return linkstr.buf();
 #else
@@ -599,7 +599,7 @@ const char* getCurrentPath()
     BufferString& pathstr = stm.getString();
 
 #ifndef OD_NO_QT
-    pathstr = QDir::currentPath().toAscii().constData();
+    pathstr = QDir::currentPath().toLatin1().constData();
 #else
 # ifdef __win__
     _getcwd( pathstr.buf(), pathstr.minBufSize() );
@@ -616,7 +616,7 @@ const char* getHomePath()
     static StaticStringManager stm;
     BufferString& pathstr = stm.getString();
 #ifndef OD_NO_QT
-    pathstr = QDir::homePath().toAscii().constData();
+    pathstr = QDir::homePath().toLatin1().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"getHomePath");
 #endif
@@ -629,7 +629,7 @@ const char* getTempPath()
     static StaticStringManager stm;
     BufferString& pathstr = stm.getString();
 #ifndef OD_NO_QT
-    pathstr = QDir::tempPath().toAscii().constData();
+    pathstr = QDir::tempPath().toLatin1().constData();
 #ifdef __win__
     replaceCharacter( pathstr.buf(), '/', '\\' );
 #endif
@@ -645,7 +645,7 @@ const char* getRootPath( const char* path )
     static StaticStringManager stm;
     BufferString& pathstr = stm.getString();
     QDir qdir( path );
-    pathstr = qdir.rootPath().toAscii().constData();
+    pathstr = qdir.rootPath().toLatin1().constData();
     return pathstr.buf();
 }
 

@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUnusedVar = " ";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "odnetworkaccess.h"
 #include "odnetworkreply.h"
@@ -63,7 +63,10 @@ bool ODNetworkAccess::get( const char* url, const char* path, TaskRunner* tr )
     finished.notify( mCB(this,ODNetworkAccess,finish) );
     ODNetworkTask odnetworktask( this );
     odnr_->setODNetworkTask( odnetworktask );
-    tr ? tr->execute(odnetworktask) : startEventLoop();
+    if ( tr ) 
+	tr->execute(odnetworktask);
+    else
+	startEventLoop();
     finished.remove( mCB(this,ODNetworkAccess,finish) );
     delete odnr_;
     if ( errormsg_.size() != 0 )

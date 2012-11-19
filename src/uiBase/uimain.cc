@@ -42,8 +42,9 @@ void uiMain::setXpmIconData( const char** xpmdata )
 #ifdef __mac__
 # include <QMacStyle>
 #endif
+
 #ifdef __lux__
-# include <QCleanlookStype>
+# include <QCleanlookStyle>
 #endif
 
 void myMessageOutput( QtMsgType type, const char *msg );

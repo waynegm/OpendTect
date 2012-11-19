@@ -47,7 +47,11 @@ void uiMain::setXpmIconData( const char** xpmdata )
 # include <QCleanlooksStyle>
 #endif
 
+#if QT_VERSION >= 0x050000
+void myMessageOutput( QtMsgType, const QMessageLogContext &, const QString&);
+#else
 void myMessageOutput( QtMsgType type, const char *msg );
+#endif
 
 
 
@@ -86,7 +90,11 @@ uiMain::uiMain( int& argc, char **argv )
     if ( DBG::isOn(DBG_UI) )
 	DBG::message( "... done." );
     
+#if QT_VERSION >= 0x050000
+    qInstallMessageHandler( myMessageOutput );
+#else
     qInstallMsgHandler( myMessageOutput );
+#endif
 
     QStyle* styl = 0;
 #ifdef __win__
@@ -106,8 +114,8 @@ uiMain::uiMain( int& argc, char **argv )
     
     QApplication::setStyle( styl );
     
-
-    app_->setWindowIcon( (QIcon)(XpmIconData) );
+    QPixmap pixmap( XpmIconData );
+    app_->setWindowIcon( QIcon(pixmap) );
 }
 
 
@@ -133,20 +141,27 @@ uiMain& uiMain::theMain()
 }
 
 
+#if QT_VERSION >= 0x050000
+void myMessageOutput( QtMsgType type, const QMessageLogContext &,
+		      const QString& msg)
+#define mMsg msg.toLatin1().constData()
+#else
 void myMessageOutput( QtMsgType type, const char *msg )
+#define mMsg msg
+#endif
 {
     switch ( type ) {
 	case QtDebugMsg:
-	    ErrMsg( msg, true );
+	    ErrMsg( mMsg, true );
 	    break;
 	case QtWarningMsg:
-	    ErrMsg( msg, true );
+	    ErrMsg( mMsg, true );
 	    break;
 	case QtFatalMsg:
-	    ErrMsg( msg );
+	    ErrMsg( mMsg );
 	    break;
 	case QtCriticalMsg:
-	    ErrMsg( msg );
+	    ErrMsg( mMsg );
 	    break;
 	default:
 	    break;

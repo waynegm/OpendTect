@@ -12,10 +12,10 @@ ________________________________________________________________________
 
 -*/
 
-
 #include "bufstringset.h"
 #include "callback.h"
 #include "executor.h"
+#include "networkmod.h"
 
 class BufferStringSet;
 class QEventLoop;

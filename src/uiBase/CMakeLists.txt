@@ -6,7 +6,7 @@
 #_______________________________________________________________________________
 
 set( OD_MODULE_DEPS General)
-set( OD_USEQT Gui)
+set( OD_USEQT Widgets)
 set( QT_MOC_HEADERS
 		i_qbutton.h
 		i_qobjectptr.h

@@ -231,6 +231,12 @@ if ( OD_MODULE_HAS_LIBRARY )
 	    LIBRARY_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}"
 	    RUNTIME_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}")
 
+    if ( Qt5Widgets_FOUND )
+	if(OD_USEQT)
+	    qt5_use_modules( ${OD_MODULE_NAME} ${OD_USEQT} )
+	endif()
+    endif()
+
     install(TARGETS
 	    ${OD_MODULE_NAME}
 	    RUNTIME DESTINATION ${OD_EXEC_INSTALL_PATH} 

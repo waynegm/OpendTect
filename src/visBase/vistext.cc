@@ -63,8 +63,8 @@ void Text::setPosition( const osg::Vec3f& pos )
     
 void Text::setPosition( const Coord3& pos )
 {
-    setPosition(
-	Conv::to<osg::Vec3f>( displaytrans_ ? displaytrans_->transform(pos) : pos ) );
+    setPosition( Conv::to<osg::Vec3f>(
+	displaytrans_ ? displaytrans_->transform(pos) : pos ) );
 }
     
     
@@ -171,6 +171,13 @@ void Text2::removeText( const Text* txt )
     
     geode_->removeDrawable( &texts_[idx]->getDrawable() );
     texts_.removeSingle( idx );
+}
+
+
+void Text2::removeAll()
+{
+    geode_->removeDrawables( 0, geode_->getNumDrawables() );
+    texts_.erase();
 }
 
     

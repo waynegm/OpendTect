@@ -78,9 +78,10 @@ public:
     static Text2*		create()
 				mCreateDataObj(Text2);
 				    
-    int				nrTexts() const		{ return texts_.size();}
+    int				nrTexts() const		{return texts_.size();}
     int				addText();
     void			removeText(const Text*);
+    void			removeAll();
     
     void			setFontData(const FontData&);
     

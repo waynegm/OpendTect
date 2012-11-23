@@ -5,7 +5,7 @@
 #       SVN:		$Id$
 #_______________________________________________________________________________
 
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 2.8)
 
 SET (OpendTect_VERSION_MAJOR 4)
 SET (OpendTect_VERSION_MINOR 5)
@@ -92,7 +92,8 @@ OD_WRITE_FINDFILE()
 OD_WRITE_TEST_PROJECT_DESC( ${OD_BINARY_BASEDIR}/test )
 OD_WRITE_ALOFILES( ${OD_BINARY_BASEDIR}/plugins/${OD_PLFSUBDIR} )
 
-#OD_ADD_KEYWORD_TEST( strcmp )
+#OD_ADD_KEYWORD_TEST( strcmp strcmp )
+OD_ADD_KEYWORD_TEST( "sqrt(" sqrt )
 OD_ADD_LINEEND_TEST()
 
 IF( BUILD_DOCUMENTATION )

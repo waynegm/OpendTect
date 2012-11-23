@@ -147,7 +147,7 @@ const WildcardManager& Function::wildcardMan() const
 
 #define mGetNumArg( idx, num, args, res ) \
 \
-    double num; \
+    double num = mUdf(double); \
     if ( idx<args.size() && \
 	 !StringProcessor(args.get(idx)).convertToDouble(&num) ) \
     { \
@@ -158,7 +158,7 @@ const WildcardManager& Function::wildcardMan() const
 
 #define mGetIntArg( idx, num, args, res ) \
 \
-    int num; \
+    int num = mUdf(int); \
     if ( idx<args.size() && \
 	 !StringProcessor(args.get(idx)).convertToInt(&num) ) \
     { \
@@ -200,7 +200,7 @@ mDefMathFunc( Log,   num<=0, "positive argument", res=log10(num) );
 mDefMathFunc( Round, false, "", res=(num<0 ? ceil(num-0.5) : floor(num+0.5)) );
 mDefMathFunc( Sgn,   false, "", res=(!num ? 0 : (num<0 ? -1 : 1)) );
 mDefMathFunc( Sin,   false, "", res=sin(num) );
-mDefMathFunc( Sqrt,  num<0, "non-negative argument", res=sqrt(num) );
+mDefMathFunc( Sqrt,  num<0, "non-negative argument", res=Math::Sqrt(num) );
 mDefMathFunc( Tan,   false, "", res=tan(num) );
 mDefMathFunc( Trunc, false, "", res=(num<0 ? ceil(num) : floor(num)) );
 

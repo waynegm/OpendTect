@@ -560,7 +560,10 @@ bool CBVSSeisTrcTranslator::implRename( const IOObj* ioobj, const char* newnm,
 	StreamProvider spnew( CBVSIOMgr::getFileName(newnm,nr) );
 	spnew.addPathIfNecessary( pathnm );
 	if ( !sp.rename(spnew.fileName(),cb) )
+	{
 	    rv = false;
+	    break;
+	}
     }
 
     return rv;
@@ -577,7 +580,10 @@ bool CBVSSeisTrcTranslator::implSetReadOnly( const IOObj* ioobj, bool yn ) const
 	mImplLoopStart;
 
 	if ( !sp.setReadOnly(yn) )
+	{
 	    rv = false;
+	    break;
+	}
     }
 
     return rv;

@@ -345,7 +345,17 @@ foreach ( TEST_FILE ${OD_TEST_PROGS} )
 	    ${TEST_NAME}
 	    ${OD_EXEC_DEP_LIBS}
 	    ${OD_RUNTIMELIBS} )
-    add_test( ${TEST_NAME} ${OD_EXEC_OUTPUT_PATH}/${TEST_NAME} )
+    if ( WIN32 )
+        set ( TEST_COMMAND "${OpendTect_DIR}/dtect/run_test.cmd" )
+        set ( TEST_ARGS --command ${TEST_NAME}.exe
+			--wdir ${CMAKE_BINARY_DIR}
+			--config Debug --plf ${OD_PLFSUBDIR}
+			--qtdir ${QTDIR} )
+    else()
+        set ( TEST_COMMAND "${OD_EXEC_OUTPUT_PATH}/${TEST_NAME}" )
+    endif()
+
+    add_test( NAME ${TEST_NAME} WORKING_DIRECTORY ${OD_EXEC_OUTPUT_PATH} COMMAND ${TEST_COMMAND} ${TEST_ARGS} )
     set_property( TEST ${TEST_NAME} PROPERTY ${OD_MODULE_TEST_LABEL} )
 endforeach()
 
@@ -433,17 +443,15 @@ macro ( OD_ADD_PLUGIN_BATCHPROGS )
     endforeach()
 endmacro()
 
-macro ( OD_ADD_KEYWORD_TEST )
+macro ( OD_ADD_KEYWORD_TEST KW NM )
     if ( NOT DEFINED WIN32 )
-	foreach ( KW ${ARGV} )
-	    set( CMD "${CMAKE_SOURCE_DIR}/dtect/FindKeyword" )
-	    list( APPEND CMD "--keyword" "${KW}" "--listfile" "${OD_SOURCELIST_FILE}" )
-	    set ( EXCEPTIONFILE ${CMAKE_SOURCE_DIR}/CMakeModules/exceptions/${KW}_exceptions )
-	    if ( EXISTS ${EXCEPTIONFILE} )
-		list( APPEND CMD "--exceptionfile" "${EXCEPTIONFILE}" )
-	    endif()
-	    add_test( Keyword_${KW} ${CMD} )
-	endforeach()
+	set( CMD "${OpendTect_DIR}/dtect/FindKeyword" )
+	list( APPEND CMD "--keyword" "${KW}" "--listfile" "${OD_SOURCELIST_FILE}" )
+	set ( EXCEPTIONFILE ${CMAKE_SOURCE_DIR}/CMakeModules/exceptions/${KW}_exceptions )
+	if ( EXISTS ${EXCEPTIONFILE} )
+	    list( APPEND CMD "--exceptionfile" "${EXCEPTIONFILE}" )
+	endif()
+	add_test( "Keyword_${NM}" ${CMD} )
     endif()
 endmacro()
 

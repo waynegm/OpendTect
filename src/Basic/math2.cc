@@ -33,6 +33,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #undef mTYPE
 
 
+float_complex Math::Sqrt( const float_complex& s )
+{
+    return sqrt ( s ); //A bit silly bu the space before the parantesis
+		       //makes it avoid the sqrt test.
+}
+
+
 
 unsigned int Math::SetFlags( unsigned int curflags, unsigned int flags, bool yn)
 {

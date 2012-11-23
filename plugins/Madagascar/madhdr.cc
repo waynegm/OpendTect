@@ -20,7 +20,7 @@ using namespace ODMad;
 
 static const char* sKeyRSFEndOfHeader = "\014\014\004";
 static const char* sKeyIn = "in";
-//static const char* sKeyStdIn = "\"stdin\"";
+static const char* sKeyStdIn = "\"stdin\"";
 static const char* sKeyDataFormat = "data_format";
 static const char* sKeyNativeInt = "\"native_int\"";
 //static const char* sKeyAsciiInt = "\"ascii_int\"";
@@ -283,7 +283,6 @@ TrcHeader::TrcHeader( bool is2d, const TrcHdrDef& def )
 {
 }
 
-
 #define mGetFld( fld, val ) \
     if ( (*this)[trchdrdef_.StdIdx##fld()] ) val = \
 		(*this)[trchdrdef_.StdIdx##fld()]
@@ -318,7 +317,7 @@ bool TrcHeader::fillTrcInfo( SeisTrcInfo& ti ) const
 
 
 #define mPutFld( val, fld ) \
-        if ( val ) (*this)[trchdrdef_.StdIdx##fld()] = val
+        if ( val ) (*this)[trchdrdef_.StdIdx##fld()] = (int)val
 bool TrcHeader::useTrcInfo( const SeisTrcInfo& ti )
 {
     mPutFld( ti.coord.x, Xcdp );
@@ -338,14 +337,14 @@ bool TrcHeader::useTrcInfo( const SeisTrcInfo& ti )
     if ( xyscale )
     {
 	(*this)[trchdrdef_.StdIdxXcdp()] = (*this)[trchdrdef_.StdIdxXcdp()]
-	    * (xyscale > 0 ? 1./xyscale : -xyscale);
+	    * (xyscale > 0 ? (int)1./xyscale : -(int)xyscale);
 
 	(*this)[trchdrdef_.StdIdxYcdp()] = (*this)[trchdrdef_.StdIdxYcdp()]
-	    * (xyscale > 0 ? 1./xyscale : -xyscale);
+	    * (xyscale > 0 ? (int)1./xyscale : -(int)xyscale);
     }
     if ( spscale )
 	(*this)[trchdrdef_.StdIdxSP()] = (*this)[trchdrdef_.StdIdxSP()]
-	    * (spscale > 0 ? 1./spscale : -spscale);
+	    * (spscale > 0 ? (int)1./spscale : -(int)spscale);
 
     return true;
 }
@@ -399,7 +398,8 @@ bool TrcHdrStrm::initRead()
 	rsfheader_->getDataFormat() == (sKeyNativeFloat || sKeyNativeInt);
 
     const char* datasrc = rsfheader_->getDataSource();
-    sd_ = StreamProvider(datasrc).makeIStream();
+    if ( datasrc != sKeyStdIn )
+    	sd_ = StreamProvider(datasrc).makeIStream();
     return true;
 }
 
@@ -412,7 +412,7 @@ bool TrcHdrStrm::initWrite() const
 
 TrcHeader* TrcHdrStrm::readNextTrc()
 {
-    TrcHeader* trchdr;
+    TrcHeader* trchdr = new TrcHeader( is2d_, trchdrdef_ );
     while ( *sd_.istrm )
     {
 	trchdr->read( *sd_.istrm );

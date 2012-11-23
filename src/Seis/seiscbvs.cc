@@ -501,7 +501,7 @@ void CBVSSeisTrcTranslator::usePar( const IOPar& iopar )
 
 
 #define mImplStart(fn) \
-    if ( !ioobj || strcmp(ioobj->translator(),"CBVS") ) return false; \
+    if ( !ioobj || ioobj->translator()!="CBVS" ) return false; \
     mDynamicCastGet(const IOStream*,iostrm,ioobj) \
     if ( !iostrm ) return false; \
     if ( iostrm->isMulti() ) \
@@ -563,7 +563,7 @@ bool CBVSSeisTrcTranslator::implRename( const IOObj* ioobj, const char* newnm,
 	    rv = false;
     }
 
-    return rv;
+    //return rv;
 }
 
 
@@ -580,5 +580,5 @@ bool CBVSSeisTrcTranslator::implSetReadOnly( const IOObj* ioobj, bool yn ) const
 	    rv = false;
     }
 
-    return rv;
+    //return rv;
 }

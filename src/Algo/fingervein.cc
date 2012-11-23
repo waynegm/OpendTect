@@ -50,7 +50,7 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
 	                Array2DImpl<bool> (isz,csz) );
     const bool is_t_slic = true;
 
-    for ( od_int64 idz= start; idz<=stop && shouldContinue(); idz++ )
+    for ( int idz= mCast(int,start); idz<=stop && shouldContinue(); idz++ )
     {
 	for ( int idx=0; idx<isz; idx++ )
 	{
@@ -114,7 +114,7 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
     mDeclareAndTryAlloc( PtrMan<Array2DImpl<float> >, azimuth_sect,
 	    Array2DImpl<float> (isz,csz) );
 
-    for ( od_int64 idz= start; idz<=stop && shouldContinue(); idz++ )
+    for ( int idz= mCast(int,start); idz<=stop && shouldContinue(); idz++ )
     {
 	for ( int idx=0; idx<isz; idx++ )
 	{
@@ -2254,14 +2254,14 @@ bool FaultOrientation::computeMaxCurvature( const Array2D<float>& input,
     ystep->set(7,1,-1);
 
     TypeSet<float> wr_step;
-    wr_step += sqrt(float(2*2+0*0));
-    wr_step += sqrt(float(2*2+1*1));
-    wr_step += sqrt(float(2*2+2*2));
-    wr_step += sqrt(float(1*1+2*2));
-    wr_step += sqrt(float(0*0+2*2));
-    wr_step += sqrt(float(1*1+2*2));
-    wr_step += sqrt(float(2*2+2*2));
-    wr_step += sqrt(float(2*2+1*1));
+    wr_step += Math::Sqrt(float(2*2+0*0));
+    wr_step += Math::Sqrt(float(2*2+1*1));
+    wr_step += Math::Sqrt(float(2*2+2*2));
+    wr_step += Math::Sqrt(float(1*1+2*2));
+    wr_step += Math::Sqrt(float(0*0+2*2));
+    wr_step += Math::Sqrt(float(1*1+2*2));
+    wr_step += Math::Sqrt(float(2*2+2*2));
+    wr_step += Math::Sqrt(float(2*2+1*1));
 
     for ( int ai=0; ai<nrangles; ai++ )
     {

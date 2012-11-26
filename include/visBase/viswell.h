@@ -28,18 +28,23 @@ class LineStyle;
 class TaskRunner;
 class VisColorTab;
 class ZAxisTransform;
-class SoPlaneWellLog;
+
 template <class T> class Interval;
 
-class SoSwitch;
+namespace osgGeo
+{
+    class MarkerSet;
+}
 
 namespace visBase
 {
     
 class PolyLine3D;
+class PolyLine;
 class PolyLineBase;
 class DataObjectGroup;
 class Text2;
+class Text;
 class Transformation;
 
 /*! \brief 
@@ -94,6 +99,7 @@ public:
     };
 
     void			addMarker(const MarkerParams&);
+
     bool			canShowMarkers() const;
     void			showMarkers(bool);
     int				markerScreenSize() const;
@@ -195,26 +201,30 @@ public:
     static const char*		logwidthstr();
 
 protected:
-    				~Well();
+    					~Well();
 
-    PolyLine3D*			track_;
-    Text2*			welltoptxt_;
-    Text2*			wellbottxt_;
-    DataObjectGroup*		markergroup_;
-    SoSwitch*			markernmswitch_;
-    DataObjectGroup*		markernames_;
-    SoSwitch*			lognmswitch_;
-    Text2*			lognmleft_;
-    Text2*			lognmright_;
-    const mVisTrans*		transformation_;
+    PolyLine*				track_;
+    osgGeo::MarkerSet*			markerset_;
+    Text2*				welltoptxt_;
+    Text2*				wellbottxt_;
+    DataObjectGroup*			markergroup_;
+    Text2*				markernames_;
+    Text2*				lognmleft_;
+    Text2*				lognmright_;
+    const mVisTrans*			transformation_;
 
-    bool			showmarkers_;
-    bool			showlogs_;
-    float			constantlogsizefac_;
+    bool				showmarkers_;
+    bool				showlogs_;
+    float				constantlogsizefac_;
     
-    ObjectSet<SoPlaneWellLog>	log_;
-    ZAxisTransform*		zaxistransform_;
-    int				voiidx_;
+    ZAxisTransform*			zaxistransform_;
+    int					voiidx_;
+
+private:
+    void				setText(Text*, const char*, Coord3*, 
+						const FontData&);
+    void				setMarkerSet(const MarkerParams&);
+
 };
 
 } // namespace visBase

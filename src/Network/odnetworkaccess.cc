@@ -36,6 +36,7 @@ ODNetworkAccess::~ODNetworkAccess()
 {
     delete qeventloop_;
     delete qnamconn_;
+    delete qnam_;
 }
 
 
@@ -255,7 +256,7 @@ bool ODNetworkTask::errorOccured()
 	msg_ = "Something went wrong while downloading the file: ";
 	msg_.add( fp.fileName() );
 	msg_.add( " \nDetails: ");
-	msg_ = qPrintable( qnetworkreply_->errorString() );
+	msg_ += qPrintable( qnetworkreply_->errorString() );
 	return true;
     }
 

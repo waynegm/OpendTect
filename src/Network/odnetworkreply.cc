@@ -65,6 +65,9 @@ bool ODNetworkReply::errorOccurred(CallBacker*)
 
 bool ODNetworkReply::finish(CallBacker*)
 {
+    if ( status_ == Error )
+	return true;
+
     status_ = Finish;
     if ( isEventLoopRunning() )
 	stopEventLoop();

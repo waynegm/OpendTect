@@ -19,6 +19,7 @@ ________________________________________________________________________
 #include "strmprov.h"
 
 class MyNetworkReply;
+class QEventLoop;
 class QNetworkReply;
 class QNetworkReplyConn;
 class ODNetworkTask;
@@ -29,20 +30,31 @@ mClass(Network) ODNetworkReply : public CallBacker
     friend class QNetworkReplyConn;
     
 public:
+
+    enum ReplyStatus		{ NoReply, DataReady, Finish, Error };
+
+
 				ODNetworkReply(QNetworkReply*);
 				~ODNetworkReply();
 
-    const char*			errorMsg(){ return errormsg_.buf(); }
 
+    bool			downloaded(CallBacker*,od_int64);
     bool			errorOccurred(CallBacker*);
     bool			finish(CallBacker*);
     bool			readFromObj(CallBacker*);
+    bool			setRemoteFileSize(CallBacker*);
+    od_int64			RemoteFileSize(){return remotefilesize_;}
 
-    void			setDestPath(const char*);
-    void			setODNetworkTask(ODNetworkTask&);
-    ODNetworkTask*		getODNetworkTask(){return odnetworktask_;}
+    int				replyStatus(){return status_;}
 
-    Notifier<ODNetworkReply>	downloadProgress;
+    void			startEventLoop();
+    void			stopEventLoop();
+    bool			isEventLoopRunning();
+
+    od_int64			remoteFileSize(){return remotefilesize_;}
+
+
+    CNotifier<ODNetworkReply,od_int64>	downloadProgress;
     Notifier<ODNetworkReply>	finished;
     Notifier<ODNetworkReply>	metaDataChanged;
     Notifier<ODNetworkReply>	error;
@@ -53,11 +65,9 @@ public:
 
 protected:
 
-    BufferString		errormsg_;
-    BufferString		destpath_;
-    StreamData			osd_;
-
-    ODNetworkTask*		odnetworktask_;
+    od_int64			remotefilesize_;
+    int				status_;
+    QEventLoop*			qeventloop_;
     QNetworkReplyConn*		qnetworkreplyconn_;
     QNetworkReply*		qnetworkreply_;
 

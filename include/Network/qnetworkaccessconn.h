@@ -40,7 +40,8 @@ private slots:
 void finished( QNetworkReply* reply )
 {
     receiver_->finished.trigger();
-    receiver_->stopEventLoop();
+    if ( receiver_->isEventLoopRunning() )
+	receiver_->stopEventLoop();
 }
 
 
@@ -84,13 +85,7 @@ QNetworkReplyConn( QNetworkReply* sndr, ODNetworkReply* rec )
 private slots:
 
 void downloadProgress(qint64 nrdone,qint64 totalnr)
-{
-    if ( totalnr != -1 )
-    {
-	receiver_->getODNetworkTask()->setNrDone( nrdone );
-	receiver_->getODNetworkTask()->setTotalNr( totalnr );
-    }
-}
+{ }
 
 void error(QNetworkReply::NetworkError)
 { receiver_->error.trigger(); }
@@ -99,7 +94,7 @@ void finished()
 { receiver_->finished.trigger(); }
 
 void metaDataChanged()
-{}
+{ receiver_->metaDataChanged.trigger(); }
 
 void uploadProgress(qint64,qint64)
 {}

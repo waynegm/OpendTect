@@ -15,14 +15,10 @@ ________________________________________________________________________
 
 #include "networkmod.h"
 #include "callback.h"
-#include "bufstringset.h"
-#include "strmprov.h"
 
-class MyNetworkReply;
 class QEventLoop;
 class QNetworkReply;
 class QNetworkReplyConn;
-class ODNetworkTask;
 
 
 mClass(Network) ODNetworkReply : public CallBacker

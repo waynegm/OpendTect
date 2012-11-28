@@ -18,8 +18,6 @@ ________________________________________________________________________
 #include "networkmod.h"
 #include "strmprov.h"
 
-class BufferStringSet;
-class CallBacker;
 class QEventLoop;
 class QNetworkAccessManager;
 class QNAMConnector;

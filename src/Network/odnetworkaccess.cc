@@ -18,12 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "separstr.h"
 
 #include <QEventLoop>
-#include <QNetworkReply>
 #include <QNetworkProxy>
-#include <QNetworkRequest>
-#include <QUrl>
-#include <QString>
-#include <QByteArray>
 
 
 

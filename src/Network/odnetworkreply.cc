@@ -9,17 +9,11 @@ ________________________________________________________________________
 -*/
 static const char* rcsID mUsedVar = "$Id$";
 
-#include "file.h"
-#include "filepath.h"
 #include "odnetworkreply.h"
-#include "strmprov.h"
+
 #include "qnetworkaccessconn.h"
 
 #include <QEventLoop>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QString>
-#include <QUrl>
 
 
 ODNetworkReply::ODNetworkReply( QNetworkReply* qnr )
@@ -105,10 +99,3 @@ void ODNetworkReply::stopEventLoop()
 
 bool ODNetworkReply::isEventLoopRunning()
 { return qeventloop_->isRunning(); }
-
-//void ODNetworkReply::setDestPath( const char* path )
-//{ destpath_ = path; }
-//
-//
-//void ODNetworkReply::setODNetworkTask(ODNetworkTask& bar)
-//{ odnetworktask_ = &bar; }

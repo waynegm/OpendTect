@@ -39,7 +39,6 @@ private slots:
 
 void finished( QNetworkReply* reply )
 {
-    receiver_->finished.trigger();
     if ( receiver_->isEventLoopRunning() )
 	receiver_->stopEventLoop();
 }

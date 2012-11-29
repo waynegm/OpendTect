@@ -27,30 +27,23 @@ mClass(Network) ODNetworkReply : public CallBacker
     
 public:
 
-    enum ReplyStatus		{ NoReply, DataReady, Finish, Error };
-
+    enum Status			{ NoReply, DataReady, Finish, Error };
 
 				ODNetworkReply(QNetworkReply*);
 				~ODNetworkReply();
 
+    od_int64			RemoteFileSize() const {return remotefilesize_;}
 
-    bool			downloaded(CallBacker*,od_int64);
-    bool			errorOccurred(CallBacker*);
-    bool			finish(CallBacker*);
-    bool			readFromObj(CallBacker*);
-    bool			setRemoteFileSize(CallBacker*);
-    od_int64			RemoteFileSize(){return remotefilesize_;}
+    int				status() const	    {return status_;}
 
-    int				replyStatus(){return status_;}
+    void			startEventLoop() const;
+    void			stopEventLoop() const;
+    bool			isEventLoopRunning() const;
 
-    void			startEventLoop();
-    void			stopEventLoop();
-    bool			isEventLoopRunning();
-
-    od_int64			remoteFileSize(){return remotefilesize_;}
+    od_int64			remoteFileSize() const {return remotefilesize_;}
 
 
-    CNotifier<ODNetworkReply,od_int64>	downloadProgress;
+    Notifier<ODNetworkReply>	downloadProgress;
     Notifier<ODNetworkReply>	finished;
     Notifier<ODNetworkReply>	metaDataChanged;
     Notifier<ODNetworkReply>	error;
@@ -60,6 +53,11 @@ public:
     Notifier<ODNetworkReply>	readyRead;
 
 protected:
+
+    bool			errorOccurred(CallBacker*);
+    bool			finish(CallBacker*);
+    bool			readFromObj(CallBacker*);
+    bool			setRemoteFileSize(CallBacker*);
 
     od_int64			remotefilesize_;
     int				status_;

@@ -22,11 +22,55 @@ static const char* rcsID mUsedVar = "$Id$";
 
 
 
+mClass(Network) ODNetworkTask : public Executor
+{
+public:
+
+				ODNetworkTask(QNetworkAccessManager* qnam, 
+					       const char* url,const char* dest)
+				: Executor("Downloading Files")
+				, qnam_(qnam)
+				, outputdest_(dest)
+				, url_(url)
+				, nrdone_(0)
+				, totalnr_(0)
+				, init_(true)
+				, msg_(0)	    {}
+
+
+    const char*			message() const;
+    od_int64			nrDone() const;
+    const char*			nrDoneText() const;
+    od_int64			totalNr() const;
+
+    void			setTotalNr(const od_int64);
+
+    bool			readData();
+    bool			errorOccured();
+
+protected:
+
+    int				nextStep();
+    od_int64			nrdone_;
+    od_int64			totalnr_;
+    BufferString		msg_;
+
+    bool			init_;
+    StreamData			osd_;
+
+    ODNetworkReply*		odnr_;
+    QNetworkAccessManager*	qnam_;
+    QNetworkReply*		qnetworkreply_;
+
+    const BufferString		url_;
+    const BufferString		outputdest_;
+};
+
+
 ODNetworkAccess::ODNetworkAccess()
     : qnam_( new QNetworkAccessManager )
     , qeventloop_( new QEventLoop )
     , finished( this )
-    , odnr_( 0 )
 {
     qnamconn_ = new QNAMConnector( qnam_, this );
 }
@@ -56,7 +100,7 @@ void ODNetworkAccess::setHttpProxy( const char* hostname, int port, bool auth,
 
 
 bool ODNetworkAccess::getFile( const char* url, const char* path, 
-								TaskRunner* tr )
+				TaskRunner* tr ) const
 {
     if ( File::isDirectory(path) )
     {
@@ -102,7 +146,7 @@ bool ODNetworkAccess::getFile( const char* url, const char* path,
 
 
 bool ODNetworkAccess::getFiles( const BufferStringSet& urls, 
-				const char* outputdir, TaskRunner* tr)
+				const char* outputdir, TaskRunner* tr) const
 {
     ExecutorGroup egroup ( "Downloading Files" );
     ODNetworkTask* odnt = 0;
@@ -158,20 +202,26 @@ bool ODNetworkAccess::getFiles( const BufferStringSet& urls,
 }
 
 
-bool ODNetworkAccess::finish( CallBacker* )
-{ return true; }
-
-
-void ODNetworkAccess::startEventLoop()
+void ODNetworkAccess::startEventLoop() const
 { qeventloop_->exec(); }
 
 
-void ODNetworkAccess::stopEventLoop()
+void ODNetworkAccess::stopEventLoop() const
 { qeventloop_->exit(); }
 
 
-bool ODNetworkAccess::isEventLoopRunning()
+bool ODNetworkAccess::isEventLoopRunning() const
 { return qeventloop_->isRunning(); }
+
+
+ODNetworkAccess& ODNA()
+{
+    static ODNetworkAccess* odna = 0;
+    if ( !odna )
+	odna = new ODNetworkAccess();
+
+    return *odna;
+}
 
 
 int ODNetworkTask::nextStep()
@@ -184,7 +234,7 @@ int ODNetworkTask::nextStep()
     }
 
     odnr_->startEventLoop();
-    if ( odnr_->replyStatus() == 1 )
+    if ( odnr_->status() == odnr_->DataReady )
     {
 	if ( !readData() )
 	{
@@ -194,14 +244,14 @@ int ODNetworkTask::nextStep()
     }
 
 
-    if ( odnr_->replyStatus() == 2 )
+    if ( odnr_->status() == odnr_->Finish )
     {
 	osd_.close();
 	delete odnr_;
 	return Finished();
     }
 
-    if ( odnr_->replyStatus() == 3 )
+    if ( odnr_->status() == odnr_->Error )
     {
 	errorOccured();
 	osd_.close();

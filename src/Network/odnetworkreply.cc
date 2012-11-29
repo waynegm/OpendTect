@@ -31,7 +31,7 @@ ODNetworkReply::ODNetworkReply( QNetworkReply* qnr )
 {
     qnetworkreply_ = qnr;
     qnetworkreplyconn_ = new QNetworkReplyConn(qnetworkreply_, this);
-    downloadProgress.notify( mCB(this,ODNetworkReply,downloaded) );
+
     error.notify( mCB(this,ODNetworkReply,errorOccurred) );
     finished.notify( mCB(this,ODNetworkReply,finish) );
     readyRead.notify( mCB(this,ODNetworkReply,readFromObj) );
@@ -47,18 +47,12 @@ ODNetworkReply::~ODNetworkReply()
 }
 
 
-bool ODNetworkReply::downloaded( CallBacker* cb, od_int64 totalnr )
-{
-    remotefilesize_ = totalnr;
-    return true;
-}
-
-
 bool ODNetworkReply::errorOccurred(CallBacker*)
 {
     status_ = Error;
     if ( isEventLoopRunning() )
 	stopEventLoop();
+
     return true;
 }
 
@@ -71,6 +65,7 @@ bool ODNetworkReply::finish(CallBacker*)
     status_ = Finish;
     if ( isEventLoopRunning() )
 	stopEventLoop();
+
     return true;
 }
 
@@ -80,6 +75,7 @@ bool ODNetworkReply::readFromObj( CallBacker* )
     status_ = DataReady;
     if ( isEventLoopRunning() )
 	stopEventLoop();
+
     return true;
 }
 
@@ -92,13 +88,13 @@ bool ODNetworkReply::setRemoteFileSize( CallBacker* )
 }
 
 
-void ODNetworkReply::startEventLoop()
+void ODNetworkReply::startEventLoop() const
 { qeventloop_->exec(); }
 
 
-void ODNetworkReply::stopEventLoop()
+void ODNetworkReply::stopEventLoop() const
 { qeventloop_->exit(); }
 
 
-bool ODNetworkReply::isEventLoopRunning()
+bool ODNetworkReply::isEventLoopRunning() const
 { return qeventloop_->isRunning(); }

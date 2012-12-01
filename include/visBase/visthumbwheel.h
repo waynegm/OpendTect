@@ -12,7 +12,8 @@ ________________________________________________________________________
 
 -*/
 
-#include "visdragger.h"
+#include "visosg.h"
+#include "visdata.h"
 
 namespace osg { class Group; class MatrixTransform; }
 namespace osgGeo { class ThumbWheel; }
@@ -21,27 +22,31 @@ namespace osgGeo { class ThumbWheel; }
 namespace visBase
 {
 
-/*! \brief Class for simple draggers
-*/
-
-class Transformation;
+class ThumbWheelMess;
     
     
-mClass(visBase) ThumbWheel : public DraggerBase
+mClass(visBase) ThumbWheel : public DataObject
 {
 public:
     static ThumbWheel*		create()
-    				mCreateDataObj(ThumbWheel);
+				mCreateDataObj(ThumbWheel);
+    
+    void			setPosition(bool horizontal,
+					    float x, float y, float len,
+					    float width,float zval = 0);
 
-    void			getAngle() const;
+    float			getAngle() const;
+    void			setAngle(float);
+    CNotifier<ThumbWheel,float>	rotation;
+				//!<passes rotation since last notification
+    
 protected:
-    					~ThumbWheel();
+    				~ThumbWheel();
     
-    osg::Node*				gtOsgNode();
+    osg::Node*			gtOsgNode();
     
-    OsgRefMan<osg::Group>		onoff_;
     OsgRefMan<osgGeo::ThumbWheel>	thumbwheel_;
-    OsgRefMan<osg::MatrixTransform>	positiontransform_;
+    ThumbWheelMess*			messenger_;
 };
 
 } // namespace visBase

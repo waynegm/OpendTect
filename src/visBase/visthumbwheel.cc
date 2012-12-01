@@ -12,46 +12,83 @@ static const char* rcsID mUsedVar = "$Id: visdragger.cc 26837 2012-10-17 09:36:1
 
 #include "visthumbwheel.h"
 
-#include "visevent.h"
-#include "vistransform.h"
-
-#include <osg/Switch>
 #include <osgGeo/ThumbWheel>
-#include <osg/MatrixTransform>
-#include <osgGA/GUIEventAdapter>
 
 mCreateFactoryEntry( visBase::ThumbWheel );
 
 namespace visBase
 {
+    
+class ThumbWheelMess : public osg::NodeCallback
+{
+public:
+		ThumbWheelMess( ThumbWheel* t )
+		    : visthumbwheel_( t )
+		{}
+    void	operator() (osg::Node* node, osg::NodeVisitor* nv )
+		{
+		    if ( visthumbwheel_ && nv )
+		    {
+			osgGeo::ThumbWheelEventNodeVisitor* thnv =
+			    (osgGeo::ThumbWheelEventNodeVisitor*) nv;
+					
+			visthumbwheel_->rotation.trigger(
+				    thnv->getDeltaAngle(), visthumbwheel_ );
+		    }
+		}
+    void	detach() { visthumbwheel_ = 0; }
+    
+protected:
+		~ThumbWheelMess()
+		{
+		    
+		}
+    ThumbWheel*	visthumbwheel_;
+};
 
 ThumbWheel::ThumbWheel()
-    : positiontransform_( new osg::MatrixTransform )
-    , onoff_( new osg::Group )
+    : rotation( this )
+    , thumbwheel_( new osgGeo::ThumbWheel )
 {
-    onoff_->addChild( positiontransform_ );
-    positiontransform_->setName( "Wheel PosTransform");
-    
-    thumbwheel_ =  new osgGeo::ThumbWheel;
-    thumbwheel_->setName( "Thumbwheel");
-    thumbwheel_->setIntersectionMask( cIntersectionTraversalMask() );
-    thumbwheel_->setActivationMouseButtonMask(
-			      osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
-
-    initDragger( thumbwheel_ );
-    positiontransform_->addChild( thumbwheel_ );
+    messenger_ = new ThumbWheelMess( this );
+    messenger_->ref();
+    thumbwheel_->addRotateCallback( messenger_ );
 }
-
+    
 
 osg::Node* ThumbWheel::gtOsgNode()
 {
-    return onoff_;
+    return thumbwheel_;
 }
     
 
 ThumbWheel::~ThumbWheel()
 {
-    if ( displaytrans_ ) displaytrans_->unRef();
+    messenger_->detach();
+    messenger_->unref();
+}
+    
+    
+void ThumbWheel::setPosition(bool horizontal, float x, float y, float len,
+			     float width, float zval)
+{
+    const osg::Vec2 min( x, y );
+    const osg::Vec2 max( horizontal ? x+len : x+width,
+			 horizontal ? y+width : y+len );
+    
+    thumbwheel_->setShape( horizontal ? 0 : 1, min, max, zval );
+}
+    
+
+float ThumbWheel::getAngle() const
+{
+    return thumbwheel_->getAngle();
+}
+    
+    
+void ThumbWheel::setAngle( float a )
+{
+    thumbwheel_->setAngle( a );
 }
 
 

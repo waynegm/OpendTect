@@ -23,6 +23,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osgGA/TrackballManipulator>
 #include <osg/ComputeBoundsVisitor>
 #include <osg/MatrixTransform>
+#include <osgGeo/ThumbWheel>
 
 
 #include "envvars.h"
@@ -46,6 +47,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vissurvscene.h"
 #include "vistransform.h"
 #include "vistext.h"
+#include "visthumbwheel.h"
 
 #include <iostream>
 #include <math.h>
@@ -126,6 +128,7 @@ ui3DViewerBody::~ui3DViewerBody()
     {
 	compositeviewer_->removeView( view_ );
 	compositeviewer_->removeView( hudview_ );
+	compositeviewer_->unref();
     }
 }
 
@@ -145,7 +148,6 @@ void ui3DViewerBody::setupHUD()
     hudcamera->setClearMask(GL_DEPTH_BUFFER_BIT);
     hudcamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     hudcamera->setViewMatrix(osg::Matrix::identity());
-
     
     //draw subgraph after main camera view.
     hudcamera->setRenderOrder(osg::Camera::POST_RENDER, mHudCameraOrder );
@@ -153,24 +155,27 @@ void ui3DViewerBody::setupHUD()
     //we don't want the camera to grab event focus from the viewers main cam(s).
     hudcamera->setAllowEventFocus(false);
     
-    hudscene_ = visBase::Transformation::create();
+    hudscene_ = visBase::DataObjectGroup::create();
     
     hudview_ = new osgViewer::View;
     hudview_->setCamera( hudcamera );
     hudcamera->addChild( hudscene_->osgNode() );
     if ( !compositeviewer_ )
+    {
 	compositeviewer_ = getCompositeViewer();
+	compositeviewer_->ref();
+    }
     
     compositeviewer_->addView( hudview_ );
     
-    /* Example on how to add something to the HUD. */
-    visBase::Text2* hudtext = visBase::Text2::create();
+    horthumbwheel_ = visBase::ThumbWheel::create();
+    hudscene_->addObject( horthumbwheel_ );
+    mAttachCB( horthumbwheel_->rotation, ui3DViewerBody,thumbWheelRotationCB);
     
-    hudscene_->addObject( hudtext );
-    hudtext->addText();
-    
-    hudtext->text()->setPosition( osg::Vec3( 100,100, -1) );
-    hudtext->text()->setText( "HUD-Text" );
+    verthumbwheel_ = visBase::ThumbWheel::create();
+    hudscene_->addObject( verthumbwheel_ );
+    mAttachCB( verthumbwheel_->rotation, ui3DViewerBody,thumbWheelRotationCB);
+
 }
 
 
@@ -202,12 +207,21 @@ void ui3DViewerBody::setupView()
     view_->setCameraManipulator( manip.get() );
     
     if ( !compositeviewer_ )
+    {
 	compositeviewer_ = getCompositeViewer();
+	compositeviewer_->ref();
+    }
+    
     compositeviewer_->addView( view_ );
     
     // To put exaggerated bounding sphere radius offside
     manip->setMinimumDistance( 0 );
     
+    osgGeo::ThumbWheelEventHandler* handler= new osgGeo::ThumbWheelEventHandler;
+    handler->addThumbWheel( (osgGeo::ThumbWheel*) horthumbwheel_->osgNode() );
+    handler->addThumbWheel( (osgGeo::ThumbWheel*) verthumbwheel_->osgNode() );
+    osgcamera->addEventCallback( handler );
+
     // Camera projection must be initialized before computing home position
     reSizeEvent( 0 );
 }
@@ -267,9 +281,24 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
 						  1.0f, 10000.0f );
     hudview_->getCamera()->setProjectionMatrix(
 	osg::Matrix::ortho2D(0,widget->width(),0,widget->height() ));
+    
+    horthumbwheel_->setPosition( true, 20, 10, 100, 15, -1 );
+    verthumbwheel_->setPosition( false, 10, 20, 100, 15, -1 );
 }
 
 
+void ui3DViewerBody::thumbWheelRotationCB(CallBacker* cb )
+{
+    mCBCapsuleUnpackWithCaller(float, deltaangle, caller, cb );
+    if ( caller==horthumbwheel_ )
+    {
+	uiRotate( deltaangle, true );
+    }
+    else if ( caller==verthumbwheel_ )
+    {
+	uiRotate( deltaangle, false );
+    }
+}
 
 void ui3DViewerBody::toggleViewMode(CallBacker* cb )
 {
@@ -289,6 +318,7 @@ uiDirectViewBody::uiDirectViewBody( ui3DViewer& hndl, uiParent* parnt )
         
     graphicswin_ = new osgQt::GraphicsWindowQt( glw );
     setStretch(2,2);
+    
     setupHUD();
     setupView();
 }

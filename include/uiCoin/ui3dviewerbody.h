@@ -18,7 +18,15 @@ ________________________________________________________________________
 #include "visosg.h"
 #include "uieventfilter.h"
 
-namespace visBase { class Camera; class Scene; class Transformation; }
+namespace visBase
+{
+    class Camera;
+    class Scene;
+    class Transformation;
+    class ThumbWheel;
+    class DataObjectGroup;
+}
+    
 namespace osgGA { class GUIActionAdapter; }
 namespace osgViewer { class CompositeViewer; class View; }
 class ui3DViewer;
@@ -105,6 +113,7 @@ protected:
     void				setCameraPos(const osg::Vec3f&,
 						     const osg::Vec3f&, bool);
     void				computeViewAllPosition();
+    void				thumbWheelRotationCB(CallBacker*);
 
 
     ui3DViewer&						handle_;
@@ -112,13 +121,15 @@ protected:
 
     RefMan<visBase::Camera>				camera_;
     RefMan<visBase::Scene>				scene_;
+    RefMan<visBase::ThumbWheel>				horthumbwheel_;
+    RefMan<visBase::ThumbWheel>				verthumbwheel_;
     visBase::OsgRefMan<osg::Group>			sceneroot_;
-    visBase::OsgRefMan<osgViewer::CompositeViewer>	compositeviewer_;
-    visBase::OsgRefMan<osgViewer::View>			view_;
+    osgViewer::CompositeViewer*				compositeviewer_;
+    osgViewer::View*					view_;
     visBase::OsgRefMan<osg::Viewport>			viewport_;
     
-    visBase::OsgRefMan<osgViewer::View>			hudview_;
-    RefMan<visBase::Transformation>			hudscene_;
+    osgViewer::View*					hudview_;
+    RefMan<visBase::DataObjectGroup>			hudscene_;
     
     uiEventFilter					eventfilter_;
 };

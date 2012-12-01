@@ -20,7 +20,7 @@ ________________________________________________________________________
 
 class Coord3;
 
-namespace osg { class Vec3f; class Array; }
+namespace osg { class Vec3f; class Array; class Referenced; }
     
 
 #define mGetOsgArrPtr(tp,ptr) ((tp) ptr->getDataPointer() )
@@ -33,12 +33,13 @@ namespace  visBase
 {
 
 //!Calls obj->ref(). obj must inherit osg::Referenced
-mExternC(visBase) void refOsgObj(void* obj);
+mExternC(visBase) void refOsgObj(osg::Referenced* obj);
 
 //!Calls obj->unref(). obj must inherit osg::Referenced
-mExternC(visBase) void unrefOsgObj(void*);
+mExternC(visBase) void unrefOsgObj(osg::Referenced*);
 
-mDefRefMan( OsgRefMan, refOsgObj(ptr_), unrefOsgObj(ptr_) )
+mDefRefMan( OsgRefMan, osg::Referenced, refOsgObj(ptr_), unrefOsgObj(ptr_) )
+    
 } //Namespace
 
 #if defined(visBase_EXPORTS) || defined(VISBASE_EXPORTS)

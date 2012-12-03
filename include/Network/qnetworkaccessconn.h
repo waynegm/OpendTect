@@ -21,32 +21,6 @@ ________________________________________________________________________
 
 QT_BEGIN_NAMESPACE
 
-class QNAMConnector : public QObject
-{
-    Q_OBJECT
-    friend class ODNetworkAccess;
-
-protected:
-
-QNAMConnector( QNetworkAccessManager* sndr, ODNetworkAccess* receiver )
-    : sender_(sndr), receiver_(receiver)
-{
-    connect( sender_, SIGNAL(finished(QNetworkReply*)),
-	     this, SLOT(finished(QNetworkReply*)) );
-}
-
-private slots:
-
-void finished( QNetworkReply* reply )
-{}
-
-
-private:
-
-    QNetworkAccessManager*	sender_;
-    ODNetworkAccess*		receiver_;
-};
-
 
 class QNetworkReplyConn : public QObject
 {

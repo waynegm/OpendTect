@@ -38,10 +38,7 @@ QNAMConnector( QNetworkAccessManager* sndr, ODNetworkAccess* receiver )
 private slots:
 
 void finished( QNetworkReply* reply )
-{
-    if ( receiver_->isEventLoopRunning() )
-	receiver_->stopEventLoop();
-}
+{}
 
 
 private:

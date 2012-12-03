@@ -21,242 +21,99 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <QNetworkProxy>
 
 
-
-mClass(Network) ODNetworkTask : public Executor
+FileDownloader::FileDownloader(const char* url,const char* path)
+    : qeventloop_(new QEventLoop())
+    , odnr_(0)
+    , init_(true)
+    , msg_(0)
+    , nrdone_(0)
+    , nrfilesdownloaded_(0)
+    , totalnr_(0)
 {
-public:
-
-				ODNetworkTask(QNetworkAccessManager* qnam, 
-					       const char* url,const char* dest)
-				: Executor("Downloading Files")
-				, qnam_(qnam)
-				, outputdest_(dest)
-				, url_(url)
-				, nrdone_(0)
-				, totalnr_(0)
-				, init_(true)
-				, msg_(0)	    {}
-
-
-    const char*			message() const;
-    od_int64			nrDone() const;
-    const char*			nrDoneText() const;
-    od_int64			totalNr() const;
-
-    void			setTotalNr(const od_int64);
-
-    bool			readData();
-    bool			errorOccured();
-
-protected:
-
-    int				nextStep();
-    od_int64			nrdone_;
-    od_int64			totalnr_;
-    BufferString		msg_;
-
-    bool			init_;
-    StreamData			osd_;
-
-    ODNetworkReply*		odnr_;
-    QNetworkAccessManager*	qnam_;
-    QNetworkReply*		qnetworkreply_;
-
-    const BufferString		url_;
-    const BufferString		outputdest_;
-};
-
-
-ODNetworkAccess::ODNetworkAccess()
-    : qnam_( new QNetworkAccessManager )
-    , qeventloop_( new QEventLoop )
-    , finished( this )
-{
-    qnamconn_ = new QNAMConnector( qnam_, this );
-}
-
-
-ODNetworkAccess::~ODNetworkAccess()
-{
-    delete qeventloop_;
-    delete qnamconn_;
-    delete qnam_;
-}
-
-
-void ODNetworkAccess::setHttpProxy( const char* hostname, int port, bool auth, 
-				    const char* username, const char* password )
-{
-    QNetworkProxy proxy;
-    proxy.setType( QNetworkProxy::HttpProxy );
-    proxy.setHostName( hostname );
-    proxy.setPort( port );
-    if ( auth )
-    {
-	proxy.setUser( username );
-	proxy.setPassword( password );
-    }
-}
-
-
-bool ODNetworkAccess::getFile( const char* url, const char* path, 
-				TaskRunner* tr ) const
-{
-    if ( File::isDirectory(path) )
-    {
-	BufferStringSet bss;
-	bss.add( url );
-	return getFiles ( bss, path, tr );
-    }
-
-    QNetworkReply* qnr = qnam_->head( QNetworkRequest(QUrl(url)) );
-    ODNetworkReply* odnr = new ODNetworkReply( qnr );
-    startEventLoop();
-    od_int64 filesize = odnr->RemoteFileSize();
-    if ( filesize == 0 )
-    {
-	FilePath fp(path);
-	errormsg_.add( "Something went wrong while downloading the file: ");
-	errormsg_.add( fp.fileName() );
-	errormsg_.add( " \nPlease check if you are connected to internet.");
-    }
-
-    delete odnr;
-    ODNetworkTask odnetworktask( qnam_, url, path );
-    odnetworktask.setTotalNr( filesize );
-    if ( tr )
-    {
-	if ( !tr->execute(odnetworktask) )
-	{
-	    errormsg_ = odnetworktask.message();
-	    return false;
-	}
-    }
+    SeparString str( url, '/' );
+    FilePath destpath( path );
+    if ( str[str.size()-1].isEmpty() )
+	destpath.add( str[str.size() - 2] );
     else
-    {
-	if ( !odnetworktask.execute() )
-	{
-	    errormsg_ = odnetworktask.message();
-	    return false;
-	}
-    }
-    
-    return  true;
+	destpath.add( str[str.size() - 1] );
+
+    files_.add( url );
+    outputpath_.add( destpath.fullPath() );
 }
 
 
-bool ODNetworkAccess::getFiles( const BufferStringSet& urls, 
-				const char* outputdir, TaskRunner* tr) const
+FileDownloader::FileDownloader( const BufferStringSet& urls, 
+				const char* path )
+    : qeventloop_(new QEventLoop())
+    , odnr_(0)
+    , files_( urls )
+    , init_(true)
+    , msg_(0)
+    , nrdone_(0)
+    , nrfilesdownloaded_(0)
+    , totalnr_(0)
 {
-    ExecutorGroup egroup ( "Downloading Files" );
-    ODNetworkTask* odnt = 0;
-    for ( int idx=0; idx<urls.size(); idx++ )
+    for ( int idx=0; idx<files_.size(); idx++ )
     {
 	SeparString str( urls.get(idx).buf(), '/' );
-	if ( str.size() < 3 )
-	    return false;
-
-	FilePath destpath( outputdir );
+	FilePath destpath( path );
 	if ( str[str.size()-1].isEmpty() )
 	    destpath.add( str[str.size() - 2] );
 	else
 	    destpath.add( str[str.size() - 1] );
 
-	QNetworkReply* qnr = qnam_->head( QNetworkRequest(QUrl
-						    (urls.get(idx).buf())) );
-	ODNetworkReply* odnr = new ODNetworkReply( qnr );
-	startEventLoop();
-	od_int64 filesize = odnr->RemoteFileSize();
-	if ( filesize == 0 )
-	{
-	    errormsg_.add( "Something went wrong while downloading the file: ");
-	    errormsg_.add( destpath.fileName() );
-	    errormsg_.add( " \nPlease check if you are connected to internet.");
-	}
-
-	delete odnr;
-	odnt = new ODNetworkTask( qnam_, urls.get(idx).buf(), 
-						destpath.fullPath() );
-	odnt->setTotalNr( filesize );
-	egroup.add( odnt );
+	files_.add( urls.get(idx) );
+	outputpath_.add( destpath.fullPath() );
     }
-
-    if ( tr )
-    {
-	if ( !tr->execute(egroup) )
-	{
-	    errormsg_ = egroup.message();
-	    return false;
-	}
-    }
-    else
-    {
-	if ( !egroup.execute() )
-	{
-	    errormsg_ = egroup.message();
-	    return false;
-	}
-    }
-
-    return true;
 }
 
 
-void ODNetworkAccess::startEventLoop() const
-{ qeventloop_->exec(); }
+FileDownloader::~FileDownloader()
+{ delete qeventloop_; }
 
 
-void ODNetworkAccess::stopEventLoop() const
-{ qeventloop_->exit(); }
-
-
-bool ODNetworkAccess::isEventLoopRunning() const
-{ return qeventloop_->isRunning(); }
-
-
-ODNetworkAccess& ODNA()
+int FileDownloader::nextStep()
 {
-    static ODNetworkAccess* odna = 0;
-    if ( !odna )
-	odna = new ODNetworkAccess();
+    if ( totalnr_ == 0 )
+    {
+	getFileSize();
+	if ( totalnr_ == 0 )
+	    return -1;
+	return MoreToDo();
+    }
 
-    return *odna;
-}
-
-
-int ODNetworkTask::nextStep()
-{
     if ( init_ )
     { 
 	init_ = false;
-	qnetworkreply_ = qnam_->get( QNetworkRequest(QUrl(url_.buf())) );
-	odnr_ = new ODNetworkReply( qnetworkreply_ );
+	if ( !files_.validIdx( nrfilesdownloaded_ ) )
+	    return Finished();
+	
+	odnr_ = new ODNetworkReply( ODNA().get(QNetworkRequest(QUrl(files_.get
+				(nrfilesdownloaded_).buf()))), qeventloop_ );
     }
 
-    odnr_->startEventLoop();
-    if ( odnr_->status() == odnr_->DataReady )
+    qeventloop_->exec();
+    if ( odnr_->qNetworkReply()->isFinished() )
+    {
+	osd_.close();
+	init_ = true;
+	nrfilesdownloaded_++;
+	delete odnr_;
+    }
+    else if ( odnr_->qNetworkReply()->error() )
+    {
+	errorOccured();
+	osd_.close();
+	delete odnr_;
+	return ErrorOccurred();
+    }
+    else if ( odnr_->qNetworkReply()->bytesAvailable() )
     {
 	if ( !readData() )
 	{
 	    delete odnr_;
 	    return ErrorOccurred();
 	}
-    }
-
-
-    if ( odnr_->status() == odnr_->Finish )
-    {
-	osd_.close();
-	delete odnr_;
-	return Finished();
-    }
-
-    if ( odnr_->status() == odnr_->Error )
-    {
-	errorOccured();
-	osd_.close();
-	delete odnr_;
-	return ErrorOccurred();
     }
     
     if ( nrdone_ < totalnr_ )
@@ -270,21 +127,36 @@ int ODNetworkTask::nextStep()
 }
 
 
-bool ODNetworkTask::readData()
+void FileDownloader::getFileSize()
 {
-    FilePath fp = outputdest_.buf();
-    if ( nrdone_ == 0 )
-	msg_ = fp.fileName();
+    totalnr_ = 0;
+    for ( int idx=0; idx<files_.size(); idx++ )
+    {
+	QNetworkReply* qnr = ODNA().head( QNetworkRequest
+						(QUrl(files_.get(idx).buf())) );
+	ODNetworkReply* odnr = new ODNetworkReply( qnr, qeventloop_ );
+	qeventloop_->exec();
+	od_int64 filesize = odnr->qNetworkReply()->header
+			       ( QNetworkRequest::ContentLengthHeader ).toInt();
+	totalnr_ += filesize;
+	delete odnr;
+    }
+}
 
-    od_int64 bytes = qnetworkreply_->bytesAvailable();
+
+bool FileDownloader::readData()
+{
+    FilePath fp = outputpath_.get(nrfilesdownloaded_).buf();
+    od_int64 bytes = odnr_->qNetworkReply()->bytesAvailable();
     char* buffer = new char[bytes];
-    qnetworkreply_->read( buffer, bytes );
+    odnr_->qNetworkReply()->read( buffer, bytes );
     if ( !osd_.usable() )
     {
 	if ( !File::exists(fp.pathOnly()) )
 	    File::createDir( fp.pathOnly() );
 
-	osd_ = StreamProvider( outputdest_ ).makeOStream();
+	osd_ = StreamProvider( outputpath_.get(nrfilesdownloaded_) ).
+								  makeOStream();
 	if ( !osd_.usable() )
 	{
 	    msg_.add( " Didn't have permission to write" );
@@ -298,15 +170,15 @@ bool ODNetworkTask::readData()
 }
 
 
-bool ODNetworkTask::errorOccured()
+bool FileDownloader::errorOccured()
 {
-    if( qnetworkreply_->error() > 0 )
+    if( odnr_->qNetworkReply()->error() > 0 )
     {
-	FilePath fp( outputdest_ );
+	FilePath fp( outputpath_.get(nrfilesdownloaded_) );
 	msg_ = "Something went wrong while downloading the file: ";
 	msg_.add( fp.fileName() );
 	msg_.add( " \nDetails: ");
-	msg_ += qPrintable( qnetworkreply_->errorString() );
+	msg_ += qPrintable( odnr_->qNetworkReply()->errorString() );
 	return true;
     }
 
@@ -314,22 +186,68 @@ bool ODNetworkTask::errorOccured()
 }
 
 
-const char* ODNetworkTask::message() const
+const char* FileDownloader::message() const
 { return msg_; }
 
 
-od_int64 ODNetworkTask::nrDone() const
+od_int64 FileDownloader::nrDone() const
 {return nrdone_/1024;}
 
 
-const char* ODNetworkTask::nrDoneText() const
+const char* FileDownloader::nrDoneText() const
 {return "KBytes downloaded";}
 
 
-od_int64 ODNetworkTask::totalNr() const
+od_int64 FileDownloader::totalNr() const
 { return totalnr_/1024; }
 
 
-void ODNetworkTask::setTotalNr( const od_int64 totalnr )
-{ totalnr_ = totalnr; }
+bool getFile( const char* url, const char* path, BufferString& errmsg, 
+								TaskRunner* tr)
+{
+    FileDownloader dl( url, path );
+    const bool res = tr ? tr->execute( dl ) : dl.execute();
+    if ( !res ) errmsg = dl.message();
+    return res;
+}
 
+
+bool getFiles( BufferStringSet& urls, const char* path, BufferString& errmsg, 
+								TaskRunner* tr)
+{
+    FileDownloader dl( urls, path );
+    const bool res = tr ? tr->execute( dl ) : dl.execute();
+    if ( !res ) errmsg = dl.message();
+    return res;
+}
+
+
+void setHttpProxy( const char* hostname, int port, bool auth, 
+		   const char* username, const char* password )
+{
+    QNetworkProxy proxy;
+    proxy.setType( QNetworkProxy::HttpProxy );
+    proxy.setHostName( hostname );
+    proxy.setPort( port );
+    if ( auth )
+    {
+	proxy.setUser( username );
+	proxy.setPassword( password );
+    }
+
+    QNetworkProxy::setApplicationProxy(proxy);
+}
+
+
+QNetworkAccessManager& ODNA()
+{
+    static Threads::Mutex lock;
+    lock.lock();
+
+    static QNetworkAccessManager* odna = 0;
+    if ( !odna )
+	odna = new QNetworkAccessManager();
+
+    lock.unLock();
+    return *odna;
+}

@@ -23,25 +23,13 @@ class QNetworkReplyConn;
 
 mClass(Network) ODNetworkReply : public CallBacker
 {
-    friend class QNetworkReplyConn;
-    
 public:
 
-    enum Status			{ NoReply, DataReady, Finish, Error };
-
-				ODNetworkReply(QNetworkReply*);
+				ODNetworkReply(QNetworkReply*,QEventLoop*);
+				//!<QNetworkReply becomes mine.
 				~ODNetworkReply();
 
-    od_int64			RemoteFileSize() const {return remotefilesize_;}
-
-    int				status() const	    {return status_;}
-
-    void			startEventLoop() const;
-    void			stopEventLoop() const;
-    bool			isEventLoopRunning() const;
-
-    od_int64			remoteFileSize() const {return remotefilesize_;}
-
+    QNetworkReply*		qNetworkReply()	      { return qnetworkreply_; }
 
     Notifier<ODNetworkReply>	downloadProgress;
     Notifier<ODNetworkReply>	finished;
@@ -54,13 +42,12 @@ public:
 
 protected:
 
+    friend class QNetworkReplyConn;
+
     bool			errorOccurred(CallBacker*);
     bool			finish(CallBacker*);
-    bool			readFromObj(CallBacker*);
-    bool			setRemoteFileSize(CallBacker*);
+    bool			dataAvailable(CallBacker*);
 
-    od_int64			remotefilesize_;
-    int				status_;
     QEventLoop*			qeventloop_;
     QNetworkReplyConn*		qnetworkreplyconn_;
     QNetworkReply*		qnetworkreply_;

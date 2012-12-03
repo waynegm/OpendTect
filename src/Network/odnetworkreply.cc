@@ -16,7 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <QEventLoop>
 
 
-ODNetworkReply::ODNetworkReply( QNetworkReply* qnr )
+ODNetworkReply::ODNetworkReply( QNetworkReply* qnr, QEventLoop* qel )
     : downloadProgress( this )
     , finished( this )
     , metaDataChanged( this )
@@ -25,17 +25,13 @@ ODNetworkReply::ODNetworkReply( QNetworkReply* qnr )
     , aboutToClose( this )
     , bytesWritten( this )
     , readyRead( this )
-    , remotefilesize_( 0 )
-    , qeventloop_( new QEventLoop )
-    , status_( NoReply )
+    , qeventloop_( qel )
 {
     qnetworkreply_ = qnr;
     qnetworkreplyconn_ = new QNetworkReplyConn(qnetworkreply_, this);
-
     error.notify( mCB(this,ODNetworkReply,errorOccurred) );
     finished.notify( mCB(this,ODNetworkReply,finish) );
-    readyRead.notify( mCB(this,ODNetworkReply,readFromObj) );
-    metaDataChanged.notify( mCB(this,ODNetworkReply,setRemoteFileSize) );
+    readyRead.notify( mCB(this,ODNetworkReply,dataAvailable) );
 }
 
 
@@ -43,15 +39,13 @@ ODNetworkReply::~ODNetworkReply()
 { 
     delete qnetworkreply_;
     delete qnetworkreplyconn_;
-    delete qeventloop_;
 }
 
 
 bool ODNetworkReply::errorOccurred(CallBacker*)
 {
-    status_ = Error;
-    if ( isEventLoopRunning() )
-	stopEventLoop();
+    if ( qeventloop_->isRunning() )
+	qeventloop_->exit();
 
     return true;
 }
@@ -59,42 +53,17 @@ bool ODNetworkReply::errorOccurred(CallBacker*)
 
 bool ODNetworkReply::finish(CallBacker*)
 {
-    if ( status_ == Error )
-	return true;
-
-    status_ = Finish;
-    if ( isEventLoopRunning() )
-	stopEventLoop();
+    if ( qeventloop_->isRunning() )
+	qeventloop_->exit();
 
     return true;
 }
 
 
-bool ODNetworkReply::readFromObj( CallBacker* )
+bool ODNetworkReply::dataAvailable( CallBacker* )
 {
-    status_ = DataReady;
-    if ( isEventLoopRunning() )
-	stopEventLoop();
+    if ( qeventloop_->isRunning() )
+	qeventloop_->exit();
 
     return true;
 }
-
-
-bool ODNetworkReply::setRemoteFileSize( CallBacker* )
-{
-    remotefilesize_ = qnetworkreply_->header
-			    ( QNetworkRequest::ContentLengthHeader ).toInt();
-    return true;
-}
-
-
-void ODNetworkReply::startEventLoop() const
-{ qeventloop_->exec(); }
-
-
-void ODNetworkReply::stopEventLoop() const
-{ qeventloop_->exit(); }
-
-
-bool ODNetworkReply::isEventLoopRunning() const
-{ return qeventloop_->isRunning(); }

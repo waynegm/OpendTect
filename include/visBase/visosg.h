@@ -63,6 +63,14 @@ namespace Conv
     { _to.set( (float) v.x, (float) v.y, (float) v.z ); }
     
     template <>
+    inline void set( Coord& _to, const osg::Vec2f& v )
+    { _to.x = v[0]; _to.y=v[1]; }
+    
+    template <>
+    inline void set( osg::Vec2f& _to, const Coord& v )
+    { _to.set( (float) v.x, (float) v.y ); }
+    
+    template <>
     inline void set( Coord3& _to, const osg::Vec3d& v )
     { _to.x = v[0]; _to.y=v[1]; _to.z=v[2]; }
     
@@ -112,6 +120,21 @@ namespace Values
     public:
 	static void		setUdf( osg::Vec3d& i )	{}
     };
+    
+    template<>
+    class Undef<osg::Vec2f>
+    {
+    public:
+	static void		setUdf( osg::Vec2f& i )	{}
+    };
+    
+    template<>
+    class Undef<osg::Vec2d>
+    {
+    public:
+	static void		setUdf( osg::Vec2d& i )	{}
+    };
+
 
     template<>
     class Undef<osg::Vec4f>

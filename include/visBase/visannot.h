@@ -44,7 +44,6 @@ namespace visBase
 {
 class Text2;
 class DataObjectGroup;
-class PickStyle;
 
 /*!\brief
     Annotation is a simple wireframe box with text on its
@@ -89,7 +88,6 @@ protected:
     
     int				annotscale_[3];
 
-    PickStyle*			pickstyle_;
     OsgRefMan<osg::Geometry>	box_;
     
     OsgRefMan<osg::Array>	gridlinecoords_;

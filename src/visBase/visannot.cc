@@ -9,7 +9,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visannot.h"
 #include "vistext.h"
 #include "visdatagroup.h"
-#include "vispickstyle.h"
 #include "vismaterial.h"
 #include "ranges.h"
 #include "visosg.h"
@@ -37,7 +36,6 @@ const char* Annotation::showscalestr()	    { return "Show Scale"; }
 
 Annotation::Annotation()
     : VisualObjectImpl( false )
-    , pickstyle_(PickStyle::create())
     , geode_( new osg::Geode )
     , axisnames_( Text2::create() )
     , axisannot_( Text2::create() )
@@ -51,10 +49,6 @@ Annotation::Annotation()
 
     annotcolor_ = Color::White();
     
-    pickstyle_->ref();
-    addChild( pickstyle_->getInventorNode() );
-    pickstyle_->setStyle( PickStyle::Unpickable );
-
     setPickable( false );
 
     float pos[8][3] =
@@ -103,7 +97,6 @@ Annotation::Annotation()
 
 Annotation::~Annotation()
 {
-    pickstyle_->unRef();
     getMaterial()->change.remove( mCB(this,Annotation,updateTextColor) );
 }
 

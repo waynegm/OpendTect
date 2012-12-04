@@ -16,7 +16,7 @@ ________________________________________________________________________
 #include "visdatagroup.h"
 #include "position.h"
 
-namespace osg { class MatrixTransform; class Vec3d; }
+namespace osg { class MatrixTransform; class Vec3d; class Vec3f; }
 
 class SoMatrixTransform;
 class SbMatrix;
@@ -72,6 +72,7 @@ public:
     Coord3		transform( const Coord3& ) const;
     Coord3		transformBack(  const Coord3& ) const;
     void		transform( SbVec3f& ) const;
+    void		transform( const Coord3&, osg::Vec3f& ) const;
     void		transformBack( SbVec3f& ) const;
     void		transform(osg::Vec3d&) const;
     void		transformBack(osg::Vec3d&) const;

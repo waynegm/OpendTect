@@ -162,6 +162,17 @@ Coord3 Transformation::transform( const Coord3& pos ) const
     transform( res );
     return Conv::to<Coord3>( res );
 }
+    
+    
+void Transformation::transform( const Coord3& pos, osg::Vec3f& resf ) const
+{
+    osg::Vec3d res( Conv::to<osg::Vec3d>( pos ) );
+    transform( res );
+    
+    resf[0] = (float) res[0];
+    resf[1] = (float) res[1];
+    resf[2] = (float) res[2];
+}
 
 
 void Transformation::transform( osg::Vec3d& res ) const

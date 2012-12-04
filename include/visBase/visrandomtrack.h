@@ -17,9 +17,13 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "position.h"
 #include "ranges.h"
+#include "visosg.h"
 
-class SoRandomTrackLineDragger;
-class SoSwitch;
+namespace osgGeo
+{
+    class RandomLineNode;
+}
+
 template <class T> class Array2D;
 class IOPar;
 
@@ -29,6 +33,7 @@ class EventCatcher;
 class Material;
 class TriangleStripSet;
 class VisColorTab;
+class TextureChannels;
 
 /*!\brief
 
@@ -81,13 +86,10 @@ public:
     void			setResolution(int);
     int				getResolution() const;
 
-    void			setMaterial( Material* );
-    Material*			getMaterial();
-
     void			useTexture(bool);
     bool			usesTexture() const;
 
-    int				getSectionIdx() const { return sectionidx; }
+    int				getSectionIdx() const { return sectionidx_; }
 
     void			setData(int sectn,const Array2D<float>*,int tp);
     				/*!< section ranges from 0 to nrKnots-2 */
@@ -106,19 +108,16 @@ protected:
     				~RandomTrack();
     void			rebuild();
     void			createDragger();
+    
+    OsgRefMan<osgGeo::RandomLineNode>	node_;
+    
+    RefMan<TextureChannels>	channels_;
 
-    static void			motionCB(void*,SoRandomTrackLineDragger*);
-    static void			startCB(void*,SoRandomTrackLineDragger*);
-    void			triggerRightClick(const EventInfo*);
+    Interval<float>		depthrg_;
+    TypeSet<Coord>		knots_;
+    int				sectionidx_;
 
-    Interval<float>		depthrg;
-    TypeSet<Coord>		knots;
-    int				sectionidx;
-
-    ObjectSet<TriangleStripSet>	sections;
-    const mVisTrans*		transformation;
-    SoRandomTrackLineDragger*	dragger;
-    SoSwitch*			draggerswitch;
+    RefMan<const mVisTrans>	transformation_;
 };
 
 };

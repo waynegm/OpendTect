@@ -14,23 +14,18 @@ ________________________________________________________________________
 -*/
 
 #include "visbasemod.h"
-#include "visdata.h"
+#include "visnodestate.h"
 
-class SoPolygonOffset;
+namespace osg { class PolygonOffset; }
 
 namespace visBase
 {
 /*!Class that manipulates the zbuffer. See coin for details. */
 
-mClass(visBase) PolygonOffset : public DataObject
+mClass(visBase) PolygonOffset : public NodeState
 {
 public:
-    static PolygonOffset*	create()
-				mCreateDataObj(PolygonOffset);
-
-    enum Style			{ Filled, Lines, Points };
-    void			setStyle(Style);
-    Style			getStyle() const;
+				PolygonOffset();
 
     void			setFactor(float);
     float			getFactor() const;
@@ -41,10 +36,7 @@ public:
 protected:
     				~PolygonOffset();
 
-    SoPolygonOffset*		offset_;
-
-    virtual SoNode*		gtInvntrNode();
-
+    osg::PolygonOffset*		offset_;
 };
 
 };

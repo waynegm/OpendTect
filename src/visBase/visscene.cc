@@ -21,13 +21,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismarker.h"
 #include "vispolygonoffset.h"
 #include "vislight.h"
-#include "SoOD.h"
-
-#include <Inventor/actions/SoGLRenderAction.h>
-#include <Inventor/nodes/SoEnvironment.h>
-#include <Inventor/nodes/SoSeparator.h>
-#include <Inventor/nodes/SoTextureMatrixTransform.h>
-#include <Inventor/nodes/SoCallback.h>
 
 #include <osg/Group>
 #include <osg/Light>
@@ -42,15 +35,12 @@ namespace visBase
 {
 
 Scene::Scene()
-    : selroot_( new SoGroup )
-    , environment_( new SoEnvironment )
-    , polygonoffset_( PolygonOffset::create() )
+    : polygonoffset_( new PolygonOffset )
     , light_( new Light )
     , events_( *EventCatcher::create() )
     , mousedownid_( -1 )
     , blockmousesel_( false )
     , nameChanged(this)
-    , callback_( 0 )
     , osgsceneroot_( 0 )
 {
     light_->ref();
@@ -60,17 +50,7 @@ Scene::Scene()
     osg::ref_ptr<osg::StateSet> stateset = osggroup_->getOrCreateStateSet();
     stateset->setAttributeAndModes(light_->osgLight() );
     
-    selroot_->ref();
-
-    if ( !SoOD::getAllParams() )
-    {
-	callback_ = new SoCallback;
-	selroot_->addChild( callback_ );
-	callback_->setCallback( firstRender, this );
-    }
-
     polygonoffset_->ref();
-    polygonoffset_->setStyle( PolygonOffset::Filled );
 
     float units = mDefaultUnits;
     float factor = mDefaultFactor;
@@ -93,6 +73,7 @@ Scene::Scene()
     osgsceneroot_->addChild( DataObjectGroup::gtOsgNode() );
     osgsceneroot_->addChild( events_.osgNode() );
     osgsceneroot_->ref();
+    polygonoffset_->attachStateSet( osgsceneroot_->getOrCreateStateSet() );
 }
 
 
@@ -112,15 +93,12 @@ Scene::~Scene()
     events_.nothandled.remove( mCB(this,Scene,mousePickCB) );
     events_.unRef();
 
-    polygonoffset_->unRef();
-    selroot_->unref();
     light_->unRef();
 }
 
 
 void Scene::addObject( DataObject* dataobj )
 {
-    removeCallback();
     mDynamicCastGet( VisualObject*, vo, dataobj );
     if ( vo ) vo->setSceneEventCatcher( &events_ );
     DataObjectGroup::addObject( dataobj );
@@ -129,13 +107,14 @@ void Scene::addObject( DataObject* dataobj )
 
 void Scene::setAmbientLight( float n )
 {
-    environment_->ambientIntensity.setValue( n );
+    //environment_->ambientIntensity.setValue( n );
 }
 
 
 float Scene::ambientLight() const
 {
-    return environment_->ambientIntensity.getValue();
+    return 0;
+    //return environment_->ambientIntensity.getValue();
 }
 
     
@@ -287,27 +266,6 @@ void Scene::fillOffsetPar( IOPar& par ) const
     offsetpar.set( sKeyUnits(), polygonoffset_->getUnits() );
     par.mergeComp( offsetpar, sKeyOffset() );
 }
-
-
-void Scene::firstRender( void*, SoAction* action )
-{
-    if ( action->isOfType( SoGLRenderAction::getClassTypeId()) )
-	SoOD::getAllParams();
-}
-
-
-void Scene::removeCallback()
-{
-    if ( !callback_ )
-	return;
-
-    if ( SoOD::getAllParams() )
-    {
-	selroot_->removeChild( callback_ );
-	callback_ = 0;
-    }
-}
-
 
 
 

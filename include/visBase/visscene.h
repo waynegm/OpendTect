@@ -18,10 +18,6 @@ ________________________________________________________________________
 #include "sets.h"
 #include "visdatagroup.h"
 
-class SoEnvironment;
-class SoAction;
-class SoCallback;
-
 namespace osg { class Group; }
 
 namespace visBase
@@ -76,19 +72,14 @@ protected:
 
     virtual osg::Node*	gtOsgNode();
 
-    static void		firstRender(void*,SoAction*);
-
 private:
     int			mousedownid_;
 
     void		mousePickCB(CallBacker*);
-    void		removeCallback();
 
-    SoEnvironment*	environment_;
     PolygonOffset*	polygonoffset_;
     Light*		light_;
-    SoGroup*		selroot_;
-    SoCallback*		callback_;
+    
     bool		blockmousesel_;
     osg::Group*		osgsceneroot_;
 };

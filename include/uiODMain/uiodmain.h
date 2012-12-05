@@ -20,7 +20,7 @@ class IOObj;
 class IOPar;
 class ODSession;
 class Timer;
-class uicMain;
+class uiMain;
 class uiDockWin;
 class uiODApplMgr;
 class uiODMain;
@@ -40,7 +40,7 @@ mClass(uiODMain) uiODMain : public uiMainWin
 {
 public:
 
-			uiODMain(uicMain&);
+			uiODMain(uiMain&);
 			~uiODMain();
 
     bool		go();
@@ -80,7 +80,7 @@ protected:
     uiODSceneMgr*	scenemgr_;
     uiODViewer2DMgr*	viewer2dmgr_;
     uiVisColTabEd*	ctabed_;
-    uicMain&		uiapp_;
+    uiMain&		uiapp_;
     ODSession*		cursession_;
     ODSession&		lastsession_;
     bool		restoringsess_;

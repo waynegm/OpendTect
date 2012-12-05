@@ -12,7 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uiodmain.h"
 
 #include "uiattribpartserv.h"
-#include "uicmain.h"
+#include "uimain.h"
 #include "uidockwin.h"
 #include "uigeninput.h"
 #include "uiioobjsel.h"
@@ -88,7 +88,7 @@ int ODMain( int argc, char** argv )
 
     uiDialog::setTitlePos( -1 );
 
-    uiODMain* odmain = new uiODMain( *new uicMain(argc,argv) );
+    uiODMain* odmain = new uiODMain( *new uiMain(argc,argv) );
     ioPixmap pm( mGetSetupFileName("splash") );
   //  uiSplashScreen splash( pm );
   //  splash.show();
@@ -123,7 +123,7 @@ int ODMain( int argc, char** argv )
 #define mMemStatusFld 4
 static BufferString cputxt_;
 
-uiODMain::uiODMain( uicMain& a )
+uiODMain::uiODMain( uiMain& a )
     : uiMainWin(0,"OpendTect Main Window",5,true)
     , uiapp_(a)
     , failed_(true)

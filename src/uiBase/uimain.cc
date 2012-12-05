@@ -470,7 +470,6 @@ void uiMain::setTopLevel( uiMainWin* obj )
     obj->setExitAppOnClose( true );
 
     mainobj_ = obj;
-    init( mainobj_->body()->qwidget() ); // inits SoQt if uicMain
 }
 
 

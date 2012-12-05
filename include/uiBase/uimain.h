@@ -78,9 +78,6 @@ protected:
     static KeyboardEventHandler* keyhandler_;
     static KeyboardEventFilter*  keyfilter_;
     static mQtclass(QtTabletEventFilter*)  tabletfilter_;
-
-			//! necessary for uicMain coin inialisation
-    virtual void	init( mQtclass(QWidget*) mainwidget )             {}
 };
 
 

@@ -27,7 +27,6 @@ namespace visBase
     class FaceSet;
     class FlatViewer;
     class ForegroundLifter;
-    class PickStyle;
 }
 
 namespace visSurvey 
@@ -130,7 +129,6 @@ protected:
     visBase::FaceSet*		draggerrect_;
     visBase::FlatViewer*	flatviewer_;
     visBase::Material*		draggermaterial_;
-    visBase::PickStyle*		pickstyle_;
     PreStack::ProcessManager*	preprocmgr_;
     visBase::ForegroundLifter*	lifter_;
     

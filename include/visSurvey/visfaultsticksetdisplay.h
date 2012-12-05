@@ -24,7 +24,6 @@ namespace visBase
 { 
     class Transformation;
     class Lines;
-    class PickStyle;
 }
 
 namespace Geometry { class FaultStickSet; class IndexedPrimitiveSet; } 
@@ -145,9 +144,6 @@ protected:
 
     visBase::Lines*		sticks_;
     visBase::Lines*		activestick_;
-
-    visBase::PickStyle*		stickspickstyle_;
-    visBase::PickStyle*		activestickpickstyle_;
 
     bool			displayonlyatsections_;
     bool			stickselectmode_;

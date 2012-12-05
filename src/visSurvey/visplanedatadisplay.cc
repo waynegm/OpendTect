@@ -35,8 +35,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "vismultitexture2.h"
 #include "vistexturechannels.h"
-#include "vispickstyle.h"
-#include "vissplittexture2rectangle.h"
 #include "vistexturecoords.h"
 #include "vistexturerect.h"
 #include "vistransform.h"
@@ -124,8 +122,6 @@ DefineEnumNames(PlaneDataDisplay,Orientation,1,"Orientation")
 
 PlaneDataDisplay::PlaneDataDisplay()
     : MultiTextureSurveyObject( true )
-    , rectangle_( visBase::SplitTexture2Rectangle::create() )
-    , rectanglepickstyle_( visBase::PickStyle::create() )
     , dragger_( visBase::DepthTabPlaneDragger::create() )
     , gridlines_( visBase::GridLines::create() )
     , curicstep_(inlcrlsystem_->inlStep(),inlcrlsystem_->crlStep())
@@ -171,13 +167,6 @@ PlaneDataDisplay::PlaneDataDisplay()
     if ( (int) orientation_ )
 	dragger_->setDim( (int) orientation_ );
 
-    rectanglepickstyle_->ref();
-    addChild( rectanglepickstyle_->getInventorNode() );
-
-    rectangle_->ref();
-    rectangle_->removeSwitch();
-    rectangle_->setMaterial( 0 );
-    addChild( rectangle_->getInventorNode() );
     material_->setColor( Color::White() );
     material_->setAmbience( 0.8 );
     material_->setDiffIntensity( 0.2 );
@@ -219,9 +208,7 @@ PlaneDataDisplay::~PlaneDataDisplay()
 
     deepErase( displaycache_ );
 
-    rectangle_->unRef();
     dragger_->unRef();
-    rectanglepickstyle_->unRef();
     gridlines_->unRef();
     draggermaterial_->unRef();
 
@@ -519,9 +506,6 @@ void PlaneDataDisplay::coltabChanged( CallBacker* )
 void PlaneDataDisplay::showManipulator( bool yn )
 {
     dragger_->turnOn( yn );
-    rectanglepickstyle_->setStyle( yn ? visBase::PickStyle::Unpickable
-				      : visBase::PickStyle::Shape );
-
     texturerect_->setPickable( !yn );
 }
 
@@ -735,31 +719,11 @@ void PlaneDataDisplay::setCubeSampling( const CubeSampling& wantedcs )
     CubeSampling cs = snapPosition( wantedcs );
     const HorSampling& hrg = cs.hrg;
 
-    if ( orientation_==Inline || orientation_==Crossline )
-    {
-	rectangle_->setPosition(
-		Coord3( hrg.start.inl, hrg.start.crl, cs.zrg.start ),
-		Coord3( hrg.start.inl,  hrg.start.crl,  cs.zrg.stop ),
-		Coord3( hrg.stop.inl, hrg.stop.crl, cs.zrg.start ),
-		Coord3( hrg.stop.inl,  hrg.stop.crl,  cs.zrg.stop ) );
-    }
-    else 
-    {
-	rectangle_->setPosition(
-		Coord3( hrg.start.inl, hrg.start.crl, cs.zrg.stop ),
-		Coord3( hrg.start.inl, hrg.stop.crl,  cs.zrg.start ),
-		Coord3( hrg.stop.inl,  hrg.start.crl, cs.zrg.start ),
-		Coord3( hrg.stop.inl,  hrg.stop.crl,  cs.zrg.stop ) );
-    }
-
-    if ( texturerect_ )
-    {
-	mDefineCenterAndWidth( cs );
-	width[(int)orientation_] = 0;
-	texturerect_->setCenter( center );
-	texturerect_->setWidth( width );
-	texturerect_->swapTextureAxes();
-    }
+    mDefineCenterAndWidth( cs );
+    width[(int)orientation_] = 0;
+    texturerect_->setCenter( center );
+    texturerect_->setWidth( width );
+    texturerect_->swapTextureAxes();
 
     setDraggerPos( cs );
     if ( gridlines_ ) gridlines_->setPlaneCubeSampling( cs );
@@ -791,22 +755,14 @@ CubeSampling PlaneDataDisplay::getCubeSampling( bool manippos,
     }
     else
     {
-	if ( texturerect_ ) 
-	{
-	    const Coord3 center = texturerect_->getCenter();
-	    Coord3 halfsize = texturerect_->getWidth()/2;
-	    halfsize[orientation_] = 0;
+	const Coord3 center = texturerect_->getCenter();
+	Coord3 halfsize = texturerect_->getWidth()/2;
+	halfsize[orientation_] = 0;
 
-	    c0 = center + halfsize;
-	    c1 = center - halfsize;
-	}
-	else
-	{
-	    c0 = rectangle_->getPosition( false, false );
-	    c1 = rectangle_->getPosition( true, true );
-	}
+	c0 = center + halfsize;
+	c1 = center - halfsize;
     }
-
+	
     res.hrg.start = res.hrg.stop = BinID(mNINT32(c0.x),mNINT32(c0.y) );
     res.zrg.start = res.zrg.stop = (float) c0.z;
     res.hrg.include( BinID(mNINT32(c1.x),mNINT32(c1.y)) );
@@ -1162,7 +1118,6 @@ void PlaneDataDisplay::updateFromDisplayIDs( int attrib, TaskRunner* tr )
 	channels_->setSize( 1, sz0, sz1 );
 	channels_->setUnMappedData( attrib, idx, arr, cp, tr );
 
-	rectangle_->setOriginalTextureSize( sz0, sz1 );
 	DPM(DataPackMgr::FlatID()).release( dpid );
     }
    

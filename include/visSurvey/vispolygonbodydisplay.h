@@ -27,7 +27,6 @@ namespace visBase
     class DrawStyle;
     class GeomIndexedShape;
     class IndexedPolyLine3D;
-    class PickStyle;
     class ShapeHints;
     class Transformation;
     class TriangleStripSet;
@@ -139,7 +138,6 @@ protected:
     ObjectSet<const SurveyObject>	intersectionobjs_;
     TypeSet<int>			planeids_;
 
-    visBase::PickStyle*			nearestpolygonmarkerpickstyle_;
     visBase::IndexedPolyLine3D*		nearestpolygonmarker_;
     int					nearestpolygon_;
 

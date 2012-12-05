@@ -26,7 +26,6 @@ namespace visBase
 {
     class GeomIndexedShape;
     class Transformation;
-    class PickStyle;
     class ShapeHints;
     class IndexedPolyLine3D;
     class DrawStyle;
@@ -229,7 +228,6 @@ protected:
     bool				displayintersections_;
     bool				displayhorintersections_;
     
-    visBase::PickStyle*			activestickmarkerpickstyle_;
     visBase::IndexedPolyLine3D*		activestickmarker_;
     int					activestick_;
 

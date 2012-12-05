@@ -27,7 +27,6 @@ namespace visBase
     class DataObjectGroup;
     class DrawStyle;
     class EventCatcher;
-    class PickStyle;
     class PolyLine;
     class Transformation;
 };
@@ -123,7 +122,6 @@ protected:
     Coord3			display2World(const Coord3&) const;
     Coord3			world2Display(const Coord3&) const;
     bool			transformPos(Pick::Location&) const;
-    void			setUnpickable(bool yn);
 
     void			pickCB(CallBacker* cb);
     virtual void		locChg(CallBacker* cb);
@@ -144,7 +142,6 @@ protected:
     int				pickedsobjid_; //!< Picked SurveyObject ID
     int				voiidx_;
 
-    visBase::PickStyle*		pickstyle_;
     visBase::DataObjectGroup*	group_;
     visBase::EventCatcher*	eventcatcher_;
     visBase::PolyLine*          polyline_;

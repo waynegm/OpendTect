@@ -33,7 +33,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visflatviewer.h"
 #include "visforegroundlifter.h"
 #include "vismaterial.h"
-#include "vispickstyle.h"
 #include "visplanedatadisplay.h"
 #include "visseis2ddisplay.h"
 #include <math.h>
@@ -51,7 +50,6 @@ namespace visSurvey
 PreStackDisplay::PreStackDisplay()
     : VisualObjectImpl( true )
     //, draggerrect_( visBase::FaceSet::create() )
-    , pickstyle_( visBase::PickStyle::create() )
     , planedragger_( visBase::DepthTabPlaneDragger::create() )	
     , flatviewer_( visBase::FlatViewer::create() )
     , draggermoving( this )
@@ -121,9 +119,6 @@ PreStackDisplay::PreStackDisplay()
     planedragger_->setOwnShape( draggerrect_->getInventorNode() );
     
     */
-     pickstyle_->ref();
-    addChild( pickstyle_->getInventorNode() );
-    pickstyle_->setStyle( visBase::PickStyle::Shape );
 }
 
 
@@ -131,7 +126,6 @@ PreStackDisplay::~PreStackDisplay()
 {
     lifter_->unRef();
 
-    pickstyle_->unRef();
     //draggerrect_->unRef();
     draggermaterial_->unRef();
 
@@ -754,7 +748,6 @@ bool PreStackDisplay::setSeis2DDisplay( Seis2DDisplay* s2d, int trcnr )
     	planedragger_->unRef();
     }
 
-    pickstyle_->setStyle( visBase::PickStyle::Shape );
     if ( seis2d_ ) 
     {
 	if ( seis2d_->getMovementNotifier() )

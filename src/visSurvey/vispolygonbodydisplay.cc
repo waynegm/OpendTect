@@ -25,7 +25,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "vismpeeditor.h"
 #include "visnormals.h"
-#include "vispickstyle.h"
 #include "visplanedatadisplay.h"
 #include "vispolyline.h"
 #include "visshapehints.h"
@@ -53,16 +52,12 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     , displaytransform_( 0 )
     , nearestpolygon_( mUdf(int) )
     , nearestpolygonmarker_( visBase::IndexedPolyLine3D::create() )
-    , nearestpolygonmarkerpickstyle_( visBase::PickStyle::create() )
     , shapehints_( visBase::ShapeHints::create() )
     , showmanipulator_( false )
     , displaypolygons_( false )
     , drawstyle_( new visBase::DrawStyle )
     , intsurf_( visBase::TriangleStripSet::create() )
 {
-    nearestpolygonmarkerpickstyle_->ref();
-    nearestpolygonmarkerpickstyle_->setStyle( visBase::PickStyle::Unpickable );
-
     nearestpolygonmarker_->ref();
     if ( !nearestpolygonmarker_->getMaterial() )
 	nearestpolygonmarker_->setMaterial( new visBase::Material );
@@ -123,7 +118,6 @@ PolygonBodyDisplay::~PolygonBodyDisplay()
 
     shapehints_->unRef();
     nearestpolygonmarker_->unRef();
-    nearestpolygonmarkerpickstyle_->unRef();
 
     //removeChild( drawstyle_->getInventorNode() );
     drawstyle_->unRef(); drawstyle_ = 0;

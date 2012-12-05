@@ -21,7 +21,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismarker.h"
 #include "vismaterial.h"
 #include "vismpeeditor.h"
-#include "vispickstyle.h"
 #include "visplanedatadisplay.h"
 #include "vispolygonselection.h"
 #include "vispolyline.h"
@@ -41,7 +40,6 @@ Sower::Sower( const visBase::VisualObjectImpl* editobj )
     , transformation_(0)
     , mode_(Idle)
     , sowingline_(visBase::PolyLine::create())
-    , pickstyle_(visBase::PickStyle::create())
     , linelost_(false)
     , singleseeded_(true)
     , curpid_(EM::PosID::udf())
@@ -49,9 +47,6 @@ Sower::Sower( const visBase::VisualObjectImpl* editobj )
     , workrange_(0)
     , underlyingobjid_(-1)
 {
-    pickstyle_->ref();
-    pickstyle_->setStyle( visBase::PickStyle::Unpickable );
-
     sowingline_->ref();
     addChild( sowingline_->getInventorNode() );
     sowingline_->setMaterial( new visBase::Material );
@@ -64,7 +59,6 @@ Sower::~Sower()
 {
     removeChild( sowingline_->getInventorNode() );
     sowingline_->unRef();
-    pickstyle_->unRef();
     deepErase( eventlist_ );
 
     if ( workrange_ )

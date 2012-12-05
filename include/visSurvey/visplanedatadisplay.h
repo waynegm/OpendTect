@@ -29,8 +29,6 @@ namespace visBase
     class DrawStyle;
     class FaceSet;
     class GridLines;
-    class PickStyle;
-    class SplitTexture2Rectangle;
     class TextureRectangle;
 };
 
@@ -201,9 +199,7 @@ protected:
     MouseCursor				mousecursor_;
     visBase::DepthTabPlaneDragger*	dragger_;
     visBase::Material*			draggermaterial_;
-    visBase::PickStyle*			rectanglepickstyle_;
-    visBase::SplitTexture2Rectangle*	rectangle_;
-
+    
     visBase::GridLines*			gridlines_;
     Orientation				orientation_;
     visBase::FaceSet*			draggerrect_;

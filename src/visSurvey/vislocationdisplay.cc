@@ -21,7 +21,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visevent.h"
 #include "visdataman.h"
 #include "vismaterial.h"
-#include "vispickstyle.h"
 #include "vispolyline.h"
 #include "vissower.h"
 #include "vistransform.h"
@@ -67,7 +66,6 @@ LocationDisplay::LocationDisplay()
     , waitsfordirectionid_( -1 )
     , waitsforpositionid_( -1 )
     , datatransform_( 0 )
-    , pickstyle_( 0 )
     , polyline_(0)
     , needline_(false)
     , pickedsobjid_(-1)
@@ -97,8 +95,6 @@ LocationDisplay::~LocationDisplay()
 
     if ( transformation_ ) transformation_->unRef();
     setSetMgr( 0 );
-
-    if ( pickstyle_ ) pickstyle_->unRef();
 
     if ( datatransform_ )
     {
@@ -353,7 +349,7 @@ void LocationDisplay::pickCB( CallBacker* cb )
 
     if ( waitsforpositionid_!=-1 || waitsfordirectionid_!=-1 )
     {
-	setUnpickable( false );
+	setPickable( true );
 	waitsforpositionid_ = -1;
 	waitsfordirectionid_ = -1;
 	mousepressid_ = -1;
@@ -368,13 +364,13 @@ void LocationDisplay::pickCB( CallBacker* cb )
 	    const int selfpickidx = isMarkerClick( eventinfo.pickedobjids );
 	    if ( selfpickidx!=-1 )
 	    {
-		setUnpickable( true );
+		setPickable( false );
 		waitsforpositionid_ = selfpickidx;
 	    }
 	    const int selfdirpickidx = isDirMarkerClick(eventinfo.pickedobjids);
 	    if ( selfdirpickidx!=-1 )
 	    {
-		setUnpickable( true );
+		setPickable( false );
 		waitsfordirectionid_ = selfpickidx;
 	    }
 
@@ -424,7 +420,7 @@ void LocationDisplay::pickCB( CallBacker* cb )
 		    {
 			if ( hasDirection() )
 			{
-			    setUnpickable( true );
+			    setPickable( false );
 			    waitsfordirectionid_ = set_->size()-1;
 			}
 
@@ -520,21 +516,6 @@ bool LocationDisplay::transformPos( Pick::Location& loc ) const
 	pErrMsg("Direction not impl");
 
     return true;
-}
-
-
-void LocationDisplay::setUnpickable( bool yn )
-{
-    if ( yn && !pickstyle_ )
-    {
-	pickstyle_ = visBase::PickStyle::create();
-	insertChild( 0, pickstyle_->getInventorNode() );
-	pickstyle_->ref();
-    }
-
-    if ( pickstyle_ )
-	pickstyle_->setStyle( yn ? visBase::PickStyle::Unpickable
-				 : visBase::PickStyle::Shape );
 }
 
 
@@ -920,7 +901,7 @@ int LocationDisplay::isDirMarkerClick(const TypeSet<int>&) const
 
 void LocationDisplay::triggerDeSel()
 {
-    setUnpickable( false );
+    setPickable( true );
     waitsfordirectionid_ = -1;
     waitsforpositionid_ = -1;
     VisualObject::triggerDeSel();

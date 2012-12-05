@@ -128,14 +128,14 @@ void Scene::setup()
     addInlCrlZObject( annot_ );
     updateAnnotationText();
 
-    polyselector_ = visBase::PolygonSelection::create();
-    addUTMObject( polyselector_ );
-    polyselector_->getMaterial()->setColor( Color(255,0,0) );
-    mTryAlloc( coordselector_, visBase::PolygonCoord3Selector(*polyselector_) );
+    //polyselector_ = visBase::PolygonSelection::create();
+    //addUTMObject( polyselector_ );
+    //polyselector_->getMaterial()->setColor( Color(255,0,0) );
+    //mTryAlloc( coordselector_, visBase::PolygonCoord3Selector(*polyselector_) );
 
-    scenecoltab_ = visBase::SceneColTab::create();
-    addUTMObject( scenecoltab_ );
-    scenecoltab_->turnOn( false );
+    //scenecoltab_ = visBase::SceneColTab::create();
+    //addUTMObject( scenecoltab_ );
+    //scenecoltab_->turnOn( false );
     
     topimg_ = visBase::TopBotImage::create();
     topimg_->setName( "TopImage");

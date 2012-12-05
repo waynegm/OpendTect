@@ -27,7 +27,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismarker.h"
 #include "vismaterial.h"
 #include "vismpeeditor.h"
-#include "vispickstyle.h"
 #include "visplanedatadisplay.h"
 #include "vispolygonselection.h"
 #include "vispolyline.h"
@@ -53,8 +52,6 @@ FaultStickSetDisplay::FaultStickSetDisplay()
     , sticks_(visBase::Lines::create())
     , activestick_(visBase::Lines::create())
     , showmanipulator_(false)
-    , activestickpickstyle_(visBase::PickStyle::create())
-    , stickspickstyle_(visBase::PickStyle::create())
     , displayonlyatsections_(false)
     , stickselectmode_(false)
 {
@@ -101,9 +98,7 @@ FaultStickSetDisplay::~FaultStickSetDisplay()
 
     sticks_->unRef();
     activestick_->unRef();
-    stickspickstyle_->unRef();
-    activestickpickstyle_->unRef();
-
+    
     for ( int idx=knotmarkers_.size()-1; idx>=0; idx-- )
     {
 	removeChild( knotmarkers_[idx]->getInventorNode() );

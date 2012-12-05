@@ -24,7 +24,7 @@ class Color;
 class Coord;
 class HorSampling;
 
-namespace visBase { class PolyLine; class PickStyle; };
+namespace visBase { class PolyLine; };
 
 namespace visSurvey
 {
@@ -91,7 +91,6 @@ protected:
     visBase::EventCatcher*		eventcatcher_;
     const mVisTrans*			transformation_;
     visBase::PolyLine*			sowingline_;
-    visBase::PickStyle*			pickstyle_;
     bool				linelost_;
     SowingMode				mode_;
     ObjectSet<visBase::EventInfo>	eventlist_;

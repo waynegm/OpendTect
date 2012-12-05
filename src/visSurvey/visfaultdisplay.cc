@@ -38,7 +38,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismarker.h"
 #include "vismultitexture2.h"
 #include "vismpeeditor.h"
-#include "vispickstyle.h"
 #include "visplanedatadisplay.h"
 #include "vispolyline.h"
 #include "vispolygonselection.h"
@@ -68,7 +67,6 @@ FaultDisplay::FaultDisplay()
     , displaytransform_( 0 )
     , activestick_( mUdf(int) )
     , shapehints_( visBase::ShapeHints::create() )
-    , activestickmarkerpickstyle_( visBase::PickStyle::create() )
     , showmanipulator_( false )
     , colorchange( this )
     , displaymodechange( this )
@@ -80,10 +78,8 @@ FaultDisplay::FaultDisplay()
     , displayhorintersections_( false )
     , drawstyle_( new visBase::DrawStyle )
 {
-    activestickmarkerpickstyle_->ref();
-    activestickmarkerpickstyle_->setStyle( visBase::PickStyle::Unpickable );
-
     activestickmarker_->ref();
+    activestickmarker_->setPickable( false );
     if ( !activestickmarker_->getMaterial() )
 	activestickmarker_->setMaterial( new visBase::Material );
     //activestickmarker_->insertNode(
@@ -161,8 +157,6 @@ FaultDisplay::~FaultDisplay()
     shapehints_->unRef();
 
     activestickmarker_->unRef();
-    activestickmarkerpickstyle_->unRef();
-
     for ( int idx=knotmarkers_.size()-1; idx>=0; idx-- )
     {
 	removeChild( knotmarkers_[idx]->getInventorNode() );

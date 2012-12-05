@@ -33,7 +33,6 @@ SET(OD_MODULE_SOURCES
 	   visellipsoid.cc
 	   visevent.cc
 	   visflatviewer.cc
-	   visforegroundlifter.cc
 	   visgridlines.cc
 	   visimage.cc
 	   visinvisiblelinedragger.cc
@@ -50,7 +49,6 @@ SET(OD_MODULE_SOURCES
 	   visnormals.cc
 	   visnodestate.cc
 	   visobject.cc
-	   vispickstyle.cc
 	   visrandompos2body.cc
 	   vispointset.cc
 	   vispolygonoffset.cc

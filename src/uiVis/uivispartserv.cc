@@ -1054,7 +1054,7 @@ void uiVisPartServer::setSelectionMode( uiVisPartServer::SelectionMode mode )
 
     for ( int sceneidx=0; sceneidx<scenes_.size(); sceneidx++ )
     {
-	visSurvey::Scene* scene = scenes_[sceneidx];
+	//visSurvey::Scene* scene = scenes_[sceneidx];
 	//scene->getPolySelection()->setSelectionType(
 	//	    (visBase::PolygonSelection::SelectionType) seltype_ );
     }

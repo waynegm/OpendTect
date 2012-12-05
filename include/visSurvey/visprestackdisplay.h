@@ -26,7 +26,6 @@ namespace visBase
     class DepthTabPlaneDragger;
     class FaceSet;
     class FlatViewer;
-    class ForegroundLifter;
 }
 
 namespace visSurvey 
@@ -130,7 +129,6 @@ protected:
     visBase::FlatViewer*	flatviewer_;
     visBase::Material*		draggermaterial_;
     PreStack::ProcessManager*	preprocmgr_;
-    visBase::ForegroundLifter*	lifter_;
     
     MultiID			mid_;
     PlaneDataDisplay*		section_;

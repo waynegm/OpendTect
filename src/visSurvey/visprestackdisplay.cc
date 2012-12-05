@@ -31,7 +31,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdataman.h"
 #include "visdepthtabplanedragger.h"
 #include "visflatviewer.h"
-#include "visforegroundlifter.h"
 #include "vismaterial.h"
 #include "visplanedatadisplay.h"
 #include "visseis2ddisplay.h"
@@ -71,7 +70,6 @@ PreStackDisplay::PreStackDisplay()
     , reader_( 0 )
     , ioobj_( 0 )
     , movefinished_(this)
-    , lifter_( visBase::ForegroundLifter::create() )  
 {
     setMaterial( 0 );
     
@@ -84,11 +82,7 @@ PreStackDisplay::PreStackDisplay()
     flatviewer_->appearance().ddpars_.vd_.mappersetup_.symmidval_ = 0;
     flatviewer_->dataChange.notify( mCB(this,PreStackDisplay,dataChangedCB) );
     addChild( flatviewer_->getInventorNode() );
-    
-    lifter_->ref();
-    lifter_->setLift(0.8);
-    addChild( lifter_->getInventorNode() );
-    
+      
     planedragger_->ref();
     planedragger_->removeScaleTabs();
     planedragger_->motion.notify( mCB(this,PreStackDisplay,draggerMotion) );
@@ -124,8 +118,6 @@ PreStackDisplay::PreStackDisplay()
 
 PreStackDisplay::~PreStackDisplay()
 {
-    lifter_->unRef();
-
     //draggerrect_->unRef();
     draggermaterial_->unRef();
 

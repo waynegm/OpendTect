@@ -21,7 +21,7 @@ class SoOrthoSlice;
 
 namespace visBase
 {
-class DepthTabPlaneDragger; class PickStyle;
+class DepthTabPlaneDragger;
 
 /*!\brief
 Slice that cuts orthogonal through a VolumeData.
@@ -62,7 +62,6 @@ protected:
     void			draggerMovementCB(CallBacker*);
     
     visBase::DepthTabPlaneDragger* dragger_;
-    visBase::PickStyle*		pickstyle_;
     SoOrthoSlice*		slice_;
     int				xdatasz_, ydatasz_, zdatasz_;
 

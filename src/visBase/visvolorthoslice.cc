@@ -11,7 +11,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "iopar.h"
 #include "visdepthtabplanedragger.h"
-#include "vispickstyle.h"
+
 
 #include "VolumeViz/nodes/SoOrthoSlice.h"
 
@@ -24,7 +24,6 @@ OrthogonalSlice::OrthogonalSlice()
     : VisualObjectImpl( false )
     , slice_(new SoOrthoSlice)
     , dragger_(DepthTabPlaneDragger::create())
-    , pickstyle_(PickStyle::create())
     , motion(this)
     , xdatasz_(0), ydatasz_(0), zdatasz_(0)
 {
@@ -34,10 +33,6 @@ OrthogonalSlice::OrthogonalSlice()
     dragger_->motion.notify( mCB(this,OrthogonalSlice,draggerMovementCB) );
     addChild( dragger_->getInventorNode() );
     
-    pickstyle_->ref();
-    pickstyle_->setStyle( PickStyle::Unpickable );
-    addChild( pickstyle_->getInventorNode() );
-
     slice_->alphaUse = SoOrthoSlice::ALPHA_AS_IS;
     
     addChild( slice_ );
@@ -48,8 +43,6 @@ OrthogonalSlice::~OrthogonalSlice()
 {
     dragger_->motion.remove( mCB(this, OrthogonalSlice, draggerMovementCB ));
     dragger_->unRef();
-
-    pickstyle_->unRef();
 }
 
 

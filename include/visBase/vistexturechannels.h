@@ -101,8 +101,7 @@ protected:
     				~TextureChannels();
 
     ObjectSet<ChannelInfo>	channelinfo_;
-    MappedTextureDataSet*	tc_;
-
+    
     TextureChannel2RGBA*	tc2rgba_;
     osgGeo::LayeredTexture*	osgtexture_;
 };

@@ -158,9 +158,7 @@ protected:
     mutable ObjectSet<osgGeo::ColorSequence>	osgcolsequences_;
     mutable ObjectSet<TypeSet<unsigned char> >	osgcolseqarrays_;
 
-    SoSwitch*				shaderswitch_;
-
-    					//Shading stuff
+       					//Shading stuff
     void				setShadingVars();
     void				createFragShadingProgram(int nrchannesl,
 	    					BufferString&) const;
@@ -179,12 +177,9 @@ protected:
 					//Non shading
     void				doFill(
 	    				    SoColTabTextureChannel2RGBA*) const;
-    SoGroup*				noneshadinggroup_;
+
     SoColTabTextureChannel2RGBA*	converter_;
     SoComplexity*			nonshadingcomplexity_;
-
-    virtual SoNode*			gtInvntrNode();
-
 };
 
 } //namespace

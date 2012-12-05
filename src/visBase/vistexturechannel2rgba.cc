@@ -263,9 +263,7 @@ bool ColTabTextureChannel2RGBA::canUseShading() const
 
 
 ColTabTextureChannel2RGBA::ColTabTextureChannel2RGBA()
-    : shaderswitch_( new SoSwitch )
-    , noneshadinggroup_( new SoGroup )
-    , converter_( 0 )
+    : converter_( 0 )
     , shadinggroup_( 0 )
     , shaderctab_( 0 )
     , fragmentshader_( 0 )
@@ -275,8 +273,6 @@ ColTabTextureChannel2RGBA::ColTabTextureChannel2RGBA()
     , shadingcomplexity_( 0 )
     , nonshadingcomplexity_( 0 )
 {
-    shaderswitch_->ref();
-    shaderswitch_->addChild( noneshadinggroup_ );
 }
 
 
@@ -286,7 +282,6 @@ int ColTabTextureChannel2RGBA::maxNrChannels() const
 
 ColTabTextureChannel2RGBA::~ColTabTextureChannel2RGBA()
 {
-    shaderswitch_->unref();
     deepErase( coltabs_ );
     deepErase( osgcolsequences_ );
     deepErase( osgcolseqarrays_ );
@@ -554,7 +549,8 @@ void ColTabTextureChannel2RGBA::allowShading( bool yn )
 
 bool ColTabTextureChannel2RGBA::usesShading() const
 {
-    return shaderswitch_->whichChild.getValue()==1;
+    pErrMsg("Todo or remove");
+    return true;
 }
 
 
@@ -612,19 +608,10 @@ void ColTabTextureChannel2RGBA::update()
     {
     	if ( !converter_ )
     	{
-	    nonshadingcomplexity_ = new SoComplexity;
-    	    nonshadingcomplexity_->textureQuality.setValue(
-    		    enableinterpolation_ ? 0.9 : 0.1 );
-	    noneshadinggroup_->addChild( nonshadingcomplexity_ );
-
-    	    converter_ = new SoColTabTextureChannel2RGBA;
-	    noneshadinggroup_->addChild( converter_ );
-    	}
+	}
     
 	doFill( converter_ );
     }
-
-    shaderswitch_->whichChild = doshading ? 1 : 0;
 }
 
 
@@ -635,7 +622,7 @@ void ColTabTextureChannel2RGBA::setShadingVars()
     if ( douseshading && !shadinggroup_ )
     {
 	shadinggroup_ = new SoGroup;
-	shaderswitch_->addChild( shadinggroup_ );
+	//shaderswitch_->addChild( shadinggroup_ );
 
 	tci_ = new SoTextureComposerInfo;
 	shadinggroup_->addChild( tci_ );
@@ -1007,10 +994,6 @@ char ColTabTextureChannel2RGBA::getTextureTransparency( int channelidx ) const
 
     return trspcheck.getTransparency();  // cases e, f, g
 }
-
-
-SoNode* ColTabTextureChannel2RGBA::gtInvntrNode()
-{ return shaderswitch_; }
 
 
 const char* ColTabTextureChannel2RGBA::sVertexShaderProgram()

@@ -51,17 +51,8 @@ GeomIndexedShape::GeomIndexedShape()
     , lineconstantonscreen_( false )
     , linemaxsize_( -1 )
     , hints_( new SoShapeHints )			
-    , ctab_( 0 )
-    , lifter_( ForegroundLifter::create() )	
-    , lifterswitch_( new SoSwitch )						
+    , ctab_( 0 )						
 {
-    lifter_->ref();
-    lifter_->setLift(0.8);
-    lifterswitch_->ref();
-    lifterswitch_->addChild( lifter_->getInventorNode() );
-    lifterswitch_->whichChild = SO_SWITCH_NONE;
-    addChild( lifterswitch_ );
-
     addChild( hints_ );
 
     setLockable();
@@ -83,7 +74,6 @@ GeomIndexedShape::GeomIndexedShape()
 
 GeomIndexedShape::~GeomIndexedShape()
 {
-    lifter_->unRef();
     coords_->unRef();
     normals_->unRef();
     texturecoords_->unRef();
@@ -129,10 +119,6 @@ void GeomIndexedShape::ColTabMaterial::updatePropertiesFrom( const Material* m )
     coltab_->setEmmIntensity( m->getEmmIntensity() );
     coltab_->setShininess( m->getShininess() );
 }
-
-
-void GeomIndexedShape::turnOnForegroundLifter( bool yn )
-{ lifterswitch_->whichChild = yn ? 0 : SO_SWITCH_NONE; }
 
 
 void GeomIndexedShape::renderOneSide( int side )

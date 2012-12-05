@@ -34,7 +34,6 @@ namespace visBase
 class Coordinates;
 class Normals;
 class TextureCoords;
-class ForegroundLifter;
 
 /*!Visualisation for Geometry::IndexedShape. */
 
@@ -82,8 +81,6 @@ public:
     void			setMaterial(Material*);
     void			updateMaterialFrom(const Material*);
 
-    void			turnOnForegroundLifter(bool);
-
 protected:
 				~GeomIndexedShape();
     void			reClip();
@@ -126,9 +123,6 @@ protected:
     ObjectSet<const Geometry::IndexedGeometry>	fangeoms_;
 
     Geometry::IndexedShape*			shape_;
-    
-    ForegroundLifter*				lifter_;
-    SoSwitch*					lifterswitch_;   
 };
 
 };

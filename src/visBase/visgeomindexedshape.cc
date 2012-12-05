@@ -16,7 +16,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "posvecdataset.h"
 #include "indexedshape.h"
 #include "viscoord.h"
-#include "visforegroundlifter.h"
 #include "vismaterial.h"
 #include "visnormals.h"
 #include "vistexturecoords.h"

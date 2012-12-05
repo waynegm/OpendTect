@@ -60,7 +60,10 @@ extern "C" void od_SoOD_initStdClasses()
     static bool have_inited = false;
     if ( have_inited ) return;
     have_inited = true;
+    
+    return;
 
+    SoDB::init();
     SoVolumeRendering::init();
 
     //Elements first 

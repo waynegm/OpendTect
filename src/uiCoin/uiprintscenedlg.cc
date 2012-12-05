@@ -207,45 +207,6 @@ bool uiPrintSceneDlg::acceptOK( CallBacker* )
 
     MouseCursorChanger cursorchanger( MouseCursor::Wait );
 
-    if ( dovrmlfld_ && dovrmlfld_->getBoolValue() )
-    {
-	if ( !uiMSG().askContinue("The VRML output in in pre apha testing "
-		    	      "status,\nis not officially supported and is \n"
-			      "known to be very unstable.\n\n"
-			      "Do you want to continue?") )
-	{
-	    return false;
-	}
-
-	SoToVRML2Action tovrml2;
-	SoNode* root = vwr->getSceneGraph();
-	root->ref();
-	tovrml2.apply( root );
-	SoVRMLGroup* newroot = tovrml2.getVRML2SceneGraph();
-	newroot->ref();
-	root->unref();
-
-	SoOutput out;
-	if ( !out.openFile( filepath.fullPath().buf() ) )
-	{
-	    BufferString msg =  "Cannot open file ";
-	    msg += filepath.fullPath();
-	    msg += ".";
-	    
-	    uiMSG().error( msg );
-	    return false;
-	}
-
-	out.setHeaderString("#VRML V2.0 utf8");
-	SoWriteAction wra(&out);
-	wra.apply(newroot);
-        out.closeFile();
-
-	newroot->unref();
-	return true;
-    }
-
-
     if ( !widthfld_ ) return true;
 
     SbViewportRegion viewport;

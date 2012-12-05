@@ -30,7 +30,6 @@ class uiMdiAreaWindow;
 class uiODTreeTop;
 class uiSliderExtra;
 class ui3DViewer;
-class uiThumbWheel;
 class uiTreeFactorySet;
 class uiTreeItem;
 class uiWindowGrabber;
@@ -97,14 +96,6 @@ public:
     void			soloMode(CallBacker*);
     void			doDirectionalLight(CallBacker*);
 
-    void			setZoomValue(float);
-    void			zoomChanged(CallBacker*);
-    void			anyWheelStart(CallBacker*);
-    void			anyWheelStop(CallBacker*);
-    void			hWheelMoved(CallBacker*);
-    void			vWheelMoved(CallBacker*);
-    void			dWheelMoved(CallBacker*);
-
     int				askSelectScene() const; // returns sceneid
     const ui3DViewer*		getSoViewer(int sceneid) const;
     ui3DViewer*			getSoViewer(int sceneid);
@@ -154,14 +145,6 @@ protected:
 				uiODSceneMgr(uiODMain*);
 				~uiODSceneMgr();
     void			initMenuMgrDepObjs();
-
-    void			afterFinalise(CallBacker*);
-    uiThumbWheel*		dollywheel;
-    uiThumbWheel*		hwheel;
-    uiThumbWheel*		vwheel;
-    uiLabel*			dollylbl;
-    uiLabel*			dummylbl;
-    uiLabel*			rotlbl;
 
     uiODMain&			appl_;
     uiMdiArea*			mdiarea_;

@@ -994,15 +994,6 @@ const Coord3 ui3DViewer::getCameraPosition() const
 }
 
 
-void ui3DViewer::anyWheelStart()
-{
-}
-
-void ui3DViewer::anyWheelStop()
-{
-}
-
-
 void ui3DViewer::align()
 {
     osgbody_->align();

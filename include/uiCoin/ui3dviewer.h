@@ -22,8 +22,6 @@ ________________________________________________________________________
 class uiSoViewerBody;
 class ui3DViewerBody;
 class BufferStringSet;
-class SbVec2s;
-class SoNode;
 
 namespace visBase { class Scene; };
 
@@ -39,7 +37,6 @@ public:
 				const char* nm="ui3DViewer");
 			~ui3DViewer();
 
-    SoNode*		getSceneGraph() const { return 0; }
     void		setSceneID(int);
     visBase::Scene*	getScene();
     const visBase::Scene* getScene() const;
@@ -50,8 +47,7 @@ public:
 
     void		enableAnimation(bool);
     bool		isAnimationEnabled() const;
-    void		anyWheelStart();
-    void		anyWheelStop();
+
     void		rotateH(float angle);
     void		rotateV(float angle);
     void		dolly(float rel); // relative size

@@ -97,11 +97,6 @@ uiODSceneMgr::uiODSceneMgr( uiODMain* a )
     , treeToBeAdded(this)
     , viewModeChanged(this)
     , zoomslider_( 0 )
-    , dollywheel( 0 )
-    , dummylbl( 0 )
-    , vwheel( 0 )
-    , rotlbl( 0 )
-    , hwheel( 0 )
     , scenetimer_(new Timer)
 {
     tifs_->addFactory( new uiODInlineTreeItemFactory, 1000,
@@ -134,45 +129,7 @@ uiODSceneMgr::uiODSceneMgr( uiODMain* a )
     mdiarea_->setPrefWidth( cWSWidth );
     mdiarea_->setPrefHeight( cWSHeight );
 
-    uiGroup* leftgrp = new uiGroup( &appl_, "Left group" );
-
-    dollywheel = new uiThumbWheel( leftgrp, "Dolly", false );
-    dollywheel->wheelMoved.notify( mWSMCB(dWheelMoved) );
-    dollywheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
-    dollywheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
-    dollylbl = new uiLabel( leftgrp, "Mov" );
-    dollylbl->attach( centeredBelow, dollywheel );
-
-    dummylbl = new uiLabel( leftgrp, "" );
-    dummylbl->attach( centeredBelow, dollylbl );
-    dummylbl->setStretch( 0, 2 );
-    vwheel = new uiThumbWheel( leftgrp, "vRotate", false );
-    vwheel->wheelMoved.notify( mWSMCB(vWheelMoved) );
-    vwheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
-    vwheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
-    vwheel->attach( centeredBelow, dummylbl );
-
-    rotlbl = new uiLabel( &appl_, "Rot" );
-    rotlbl->attach( centeredBelow, leftgrp );
-
-    hwheel = new uiThumbWheel( &appl_, "hRotate", true );
-    hwheel->wheelMoved.notify( mWSMCB(hWheelMoved) );
-    hwheel->wheelPressed.notify( mWSMCB(anyWheelStart) );
-    hwheel->wheelReleased.notify( mWSMCB(anyWheelStop) );
-    hwheel->attach( leftAlignedBelow, mdiarea_ );
-
-	zoomslider_ = new uiSliderExtra( &appl_, "Zoom", "Zoom Slider" );
-	zoomslider_->sldr()->valueChanged.notify( mWSMCB(zoomChanged) );
-	zoomslider_->sldr()->setInterval( cMinZoom, cMaxZoom );
-	zoomslider_->setStretch( 0, 0 );
-	zoomslider_->attach( rightAlignedBelow, mdiarea_ );
-
-    leftgrp->attach( leftOf, mdiarea_ );
-    appl_.postFinalise().notify( mCB(this,uiODSceneMgr,afterFinalise) );
-    
     scenetimer_->tick.notify( mCB(this,uiODSceneMgr,sceneTimerCB) );
-
-
 }
 
 
@@ -232,7 +189,6 @@ int uiODSceneMgr::addScene( bool maximized, ZAxisTransform* zt,
     scn.sovwr_->pageupdown.notify( mCB(this,uiODSceneMgr,pageUpDownPressed) );
     scn.mdiwin_->display( true, false, maximized );
     actMode(0);
-    setZoomValue( scn.sovwr_->getCameraZoom() );
     treeToBeAdded.trigger( sceneid );
     initTree( scn, vwridx_ );
 
@@ -269,22 +225,6 @@ void uiODSceneMgr::sceneTimerCB( CallBacker* )
     if ( scenes_.size() > 1 )
 	tile();
 }
-
-
-void uiODSceneMgr::afterFinalise( CallBacker* )
-{
-    bool showwheels = true;
-    Settings::common().getYN( "dTect.Show wheels", showwheels );
-
-    dollywheel->display( showwheels, true );
-    vwheel->display( showwheels, true );
-    hwheel->display( showwheels, true );
-    dollylbl->display( showwheels, true );
-    dummylbl->display( showwheels, true );
-    rotlbl->display( showwheels, true );
-    zoomslider_->display( showwheels, true );
-}
-
 
 void uiODSceneMgr::removeScene( CallBacker* cb )
 {
@@ -370,7 +310,7 @@ void uiODSceneMgr::useScenePars( const IOPar& sessionpar )
 	scn.sovwr_->viewmodechanged.notify( mWSMCB(viewModeChg) );
 	scn.sovwr_->pageupdown.notify(mCB(this,uiODSceneMgr,pageUpDownPressed));
 	scn.mdiwin_->display( true, false );
-	setZoomValue( scn.sovwr_->getCameraZoom() );
+	
 	treeToBeAdded.trigger( scn.sovwr_->sceneID() );
 	initTree( scn, vwridx_ );
     }
@@ -657,6 +597,7 @@ void uiODSceneMgr::mkSnapshot( CallBacker* )
 
     if ( snapdlg.getSnapshotType() == uiSnapshotDlg::Scene )
     {
+	/*
 	ObjectSet<ui3DViewer> viewers;
 	getSoViewers( viewers );
 	if ( viewers.size() == 0 ) return;
@@ -664,6 +605,8 @@ void uiODSceneMgr::mkSnapshot( CallBacker* )
 	uiPrintSceneDlg printdlg( &appl_, viewers );
 	printdlg.go();
 	// TODO: save settings in iopar
+	 */
+	pErrMsg("Print screen not implemented with osg.");
     }
     else 
     {
@@ -686,59 +629,6 @@ void uiODSceneMgr::soloMode( CallBacker* )
     visServ().setSoloMode( issolomodeon, dispids, selectedid );
     updateSelectedTreeItem();
 }
-
-
-void uiODSceneMgr::setZoomValue( float val )
-{
-    if ( zoomslider_ )
-	zoomslider_->sldr()->setValue( val );
-}
-
-
-void uiODSceneMgr::zoomChanged( CallBacker* )
-{
-    const float zmval = zoomslider_->sldr()->getValue();
-    mDoAllScenes(sovwr_,setCameraZoom,zmval);
-}
-
-
-void uiODSceneMgr::anyWheelStart( CallBacker* )
-{ mDoAllScenes(sovwr_,anyWheelStart,); }
-void uiODSceneMgr::anyWheelStop( CallBacker* )
-{ mDoAllScenes(sovwr_,anyWheelStop,); }
-
-
-void uiODSceneMgr::wheelMoved( CallBacker* cb, int wh, float& lastval )
-{
-    mDynamicCastGet(uiThumbWheel*,wheel,cb)
-    if ( !wheel ) { pErrMsg("huh") ; return; }
-
-    const float whlval = wheel->lastMoveVal();
-    const float diff = lastval - whlval;
-
-    if ( diff )
-    {
-	for ( int idx=0; idx<scenes_.size(); idx++ )
-	{
-	    if ( wh == 1 )
-		scenes_[idx]->sovwr_->rotateH( diff );
-	    else if ( wh == 2 )
-		scenes_[idx]->sovwr_->rotateV( -diff );
-	    else
-		scenes_[idx]->sovwr_->dolly( diff );
-	}
-    }
-
-    lastval = whlval;
-}
-
-
-void uiODSceneMgr::hWheelMoved( CallBacker* cb )
-{ wheelMoved(cb,1,lasthrot_); }
-void uiODSceneMgr::vWheelMoved( CallBacker* cb )
-{ wheelMoved(cb,2,lastvrot_); }
-void uiODSceneMgr::dWheelMoved( CallBacker* cb )
-{ wheelMoved(cb,0,lastdval_); }
 
 
 void uiODSceneMgr::switchCameraType( CallBacker* )

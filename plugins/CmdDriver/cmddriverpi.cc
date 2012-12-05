@@ -33,8 +33,8 @@ mDefODPluginInfo(CmdDriver)
 
 static void initExtraCommands()
 {
-    WheelCmd::initClass();
-    GetWheelCmd::initClass();
+    //WheelCmd::initClass();
+    //GetWheelCmd::initClass();
 }
 
 static void initExtraFunctions()
@@ -42,7 +42,7 @@ static void initExtraFunctions()
 
 static void initExtraComposers()
 {
-    WheelCmdComposer::initClass();
+    //WheelCmdComposer::initClass();
 }
 
 

@@ -26,7 +26,6 @@ public:
 protected:
 
     uiLabeledComboBox*	scenefld_;
-    uiGenInput*		dovrmlfld_;
     uiGenInput*		selfld_;
 
     const char*		getExtension();

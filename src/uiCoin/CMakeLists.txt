@@ -10,17 +10,14 @@ SET(OD_USEQT OpenGL)
 SET(OD_USEOSG 1)
 SET(OD_USECOIN 1)
 
-SET(QT_MOC_HEADERS i_qthumbwhl.h)
 SET(OD_MODULE_SOURCES
 		inituicoin.cc
-		keybindings.cc
-		uicmain.cc
 		uiosgfont.cc
-		uiprintscenedlg.cc 
+		#uiprintscenedlg.cc 
 		ui3dviewer.cc 
 		ui3dindirectviewer.cc 
 		uistereodlg.cc 
-		uithumbwheel.cc
+		#uithumbwheel.cc
 )
 
 SET(OD_MODULE_PROGS od_osgfileviewer.cc )

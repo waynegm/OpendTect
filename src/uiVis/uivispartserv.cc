@@ -222,8 +222,8 @@ int uiVisPartServer::addScene( visSurvey::Scene* newscene )
     newscene->mouseposchange.notify( mCB(this,uiVisPartServer,mouseMoveCB) );
     newscene->ref();
     scenes_ += newscene;
-    newscene->getPolySelection()->setSelectionType(
-	    (visBase::PolygonSelection::SelectionType) seltype_ );
+    //newscene->getPolySelection()->setSelectionType(
+	//    (visBase::PolygonSelection::SelectionType) seltype_ );
     pickretriever_->addScene( newscene );
     nrsceneschange_.trigger();
     return newscene->id();
@@ -464,6 +464,7 @@ void uiVisPartServer::setSelObjectId( int id, int attrib )
     mDynamicCastGet(visSurvey::SurveyObject*,so,visBase::DM().getObject(id));
     if ( so && so->getScene() )
     {
+	return;
 	const ColTab::Sequence* seq = so->getColTabSequence( selattrib_ );
 	const ColTab::MapperSetup* ms = so->getColTabMapperSetup( selattrib_ );
 	if ( seq )
@@ -838,8 +839,8 @@ void uiVisPartServer::setColTabMapperSetup( int id, int attrib,
     if ( !so ) return;
 
     so->setColTabMapperSetup( attrib, ms, 0 );
-    if ( so->getScene() )
-	so->getScene()->getSceneColTab()->setColTabMapperSetup( ms );
+    //if ( so->getScene() )
+	//so->getScene()->getSceneColTab()->setColTabMapperSetup( ms );
 
     if ( multirgeditwin_ && id==mapperrgeditordisplayid_ )
     {
@@ -880,8 +881,8 @@ void uiVisPartServer::setColTabSequence( int id, int attrib,
     if ( !so ) return;
 
     so->setColTabSequence( attrib, seq, 0 );
-    if ( so->getScene() )
-	so->getScene()->getSceneColTab()->setColTabSequence( seq );
+    //if ( so->getScene() )
+	//so->getScene()->getSceneColTab()->setColTabSequence( seq );
 
     if ( multirgeditwin_ && id == mapperrgeditordisplayid_ )
 	multirgeditwin_->setColTabSeq( attrib, seq );
@@ -1054,8 +1055,8 @@ void uiVisPartServer::setSelectionMode( uiVisPartServer::SelectionMode mode )
     for ( int sceneidx=0; sceneidx<scenes_.size(); sceneidx++ )
     {
 	visSurvey::Scene* scene = scenes_[sceneidx];
-	scene->getPolySelection()->setSelectionType(
-		    (visBase::PolygonSelection::SelectionType) seltype_ );
+	//scene->getPolySelection()->setSelectionType(
+	//	    (visBase::PolygonSelection::SelectionType) seltype_ );
     }
 
     selectionmode_ = mode;

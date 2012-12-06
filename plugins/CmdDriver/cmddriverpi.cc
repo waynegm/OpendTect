@@ -14,8 +14,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uiodmenumgr.h"
 #include "uicmddrivermgr.h"
 #include "odplugin.h"
-#include "coincommands.h"
-
+#include "cmddrivermod.h"
+// #include "coincommands.h"
 
 namespace CmdDrive
 {

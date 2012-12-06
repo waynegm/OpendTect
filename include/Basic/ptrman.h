@@ -41,9 +41,9 @@ public: \
 #define mDefPtrMan2(Clss, PtrType, PostSet, EraseFunc) \
     inline bool			operator !() const { return !ptr_; } \
 \
-    void			erase() \
+    inline void			erase() \
 				{ EraseFunc; ptr_ = 0; } \
-    void			set( T* p, bool doerase=true ) \
+    inline void			set( T* p, bool doerase=true ) \
 				{ \
 				    if ( doerase ) \
 					erase(); \

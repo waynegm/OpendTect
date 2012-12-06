@@ -44,7 +44,12 @@ public: \
     void			erase() \
 				{ EraseFunc; ptr_ = 0; } \
     void			set( T* p, bool doerase=true ) \
-				{ if ( doerase ) erase(); ptr_=p; PostSet; }
+				{ \
+				    if ( doerase ) \
+					erase(); \
+				    ptr_=(PtrType*) p; \
+				    PostSet; \
+				}
 
 #define mDefPtrMan3(Clss, PtrType, PostSet, EraseFunc) \
 private: \

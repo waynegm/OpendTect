@@ -19,6 +19,7 @@ ________________________________________________________________________
 class LegendKit;
 class Color;
 namespace ColTab { class MapperSetup; }
+namespace osg { class Geode; }
 
 namespace visBase
 {
@@ -48,7 +49,7 @@ protected:
 				~SceneColTab();
     void			updateVis();			
 
-    LegendKit*			legendkit_;
+    osg::Geode*			geode_;
     ColTab::Sequence		sequence_;
     Interval<float>		rg_;
     Pos				pos_;

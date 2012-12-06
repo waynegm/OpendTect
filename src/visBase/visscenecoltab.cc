@@ -18,6 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "scaler.h"
 
 #include <osg/Geode>
+#include <osg/Geometry>
 
 mCreateFactoryEntry( visBase::SceneColTab );
 
@@ -30,6 +31,15 @@ SceneColTab::SceneColTab()
     , flipseq_( false )
 {
     addChild( geode_ );
+    osg::Geometry* geom = new osg::Geometry;
+    geode_->addDrawable( geom );
+    osg::Vec3Array* coords = new osg::Vec3Array;
+    geom->setVertexArray( coords );
+    coords->push_back( osg::Vec3(0,0,0));
+    coords->push_back( osg::Vec3(0,1,0));
+    coords->push_back( osg::Vec3(1,0,0));
+    coords->push_back( osg::Vec3(1,1,0));
+
     setLegendColor( Color(170,170,170) );
     setColTabSequence( ColTab::Sequence("") );
 }

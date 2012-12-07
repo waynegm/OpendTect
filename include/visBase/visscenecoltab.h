@@ -40,10 +40,15 @@ public:
     void			turnOn(bool);
     void			setSize(int w,int h);
     Geom::Size2D<int>		getSize();
+    
+    void			setOrientation(bool horizontal);
+    bool			getOrientation() const { return horizontal_; }
 
     enum Pos			{ BottomLeft, BottomRight, TopLeft, TopRight };
     void			setPos( Pos pos ); 
     Pos				getPos() const	    { return pos_; }
+    
+    void			setPos(float x, float y);
 
 protected:
 				~SceneColTab();
@@ -54,6 +59,7 @@ protected:
     Interval<float>		rg_;
     Pos				pos_;
     bool			flipseq_;
+    bool			horizontal_;
 };
 
 } // class visBase

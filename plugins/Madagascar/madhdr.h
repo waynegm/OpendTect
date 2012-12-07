@@ -88,7 +88,6 @@ public:
 
 
     static int  StdSize();    
-
     static int  StdIdxTrcNr();
     static int  StdIdxOffset();
     static int  StdIdxScalco();
@@ -121,6 +120,10 @@ protected:
 
     bool		is2d_;
     const TrcHdrDef&    trchdrdef_;
+
+    template <class T>
+    void		getFld(int idx, T val) const
+    			{ if ( (*this)[idx] ) val = (T)(*this)[idx]; }
 };
 
 

@@ -1032,7 +1032,14 @@ bool Well::LogSampler::doPrepare( int thread )
 	    zstep_ = 2000 * zstep_;
     }
     if ( mIsUdf(zrg_.start) || mIsUdf(zstep_) )
-	{errmsg_ ="No valid range specified"; return false;}
+	{errmsg_ = "No valid range specified"; return false;}
+
+    if ( zrg_.start < mCast( float, track_.value(0) ) )
+	{errmsg_ = "Cannot extract data above well head"; return false;}
+
+    const int ns = track_.size();
+    if ( zrg_.stop > mCast( float, track_.value( ns-1 ) ) )
+	{errmsg_ = "Cannot extract data below TD"; return false;}
 
     if ( ( extrintime_ || zrgisintime_ ) && !d2t_ )
     { 
@@ -1040,14 +1047,21 @@ bool Well::LogSampler::doPrepare( int thread )
 	return false;
     }	
 
-    TypeSet<float> dahs; Interval<float> dahrg; 
-    dahrg.start = zrgisintime_ ? d2t_->getDah(zrg_.start) : zrg_.start;
-    dahrg.stop = zrgisintime_ ? d2t_->getDah(zrg_.stop) : zrg_.stop;
+    TypeSet<float> dahs; Interval<float> dahrg;
+    const float dahstart = track_.getDahForTVD( zrg_.start, mUdf(float) );
+    const float dahstop = track_.getDahForTVD( zrg_.stop, mUdf(float) );
+    dahrg.start = zrgisintime_ ? d2t_->getDah(zrg_.start) : dahstart;
+    dahrg.stop = zrgisintime_ ? d2t_->getDah(zrg_.stop) : dahstop;
+
+    if ( mIsUdf(dahrg.start) || mIsUdf(dahrg.stop) )
+	{errmsg_ = "Could not determine extraction boundaries"; return false;}
+
     float dah = dahrg.start;
     float time = mUdf(float);
     if ( extrintime_ )
     {
-	time = zrgisintime_ ? zrg_.start : d2t_->getTime( dah, track_ );
+	time = zrgisintime_ ? track_.getDahForTVD( zrg_.start, mUdf(float) ) :
+	   		      d2t_->getTime( dah, track_ );
 	time -= zstep_;
     }
     else
@@ -1094,7 +1108,6 @@ bool Well::LogSampler::doWork( od_int64 start, od_int64 stop, int nrthreads )
 }
 
 
-#define mWinSz extrintime_ ? log->dahStep(true)*20 : SI().zStep()
 bool Well::LogSampler::doLog( int logidx )
 {
     const Well::Log* log = logset_.validIdx( logidx ) ? logset_[logidx] : 0;
@@ -1102,11 +1115,30 @@ bool Well::LogSampler::doLog( int logidx )
 
     for ( int idz=0; idz<data_->info().getSize(1); idz++ ) 
     {
-	const float dah = data_->get( 0, idz );
-	const float winsz = mWinSz;
-	const float lval = samppol_ == Stats::TakeNearest ? 
-	    	  log->getValue(dah,true) 
-		: LogDataExtracter::calcVal(*log,dah,winsz,samppol_);
+	float dah = data_->get( 0, idz );
+	float lval = mUdf(float);
+
+	if ( samppol_ == Stats::TakeNearest )
+	    lval = log->getValue(dah,true);
+	else
+	{
+	    float winsz = SI().zStep();
+	    if ( extrintime_ )
+	    {
+		const float startdahwin = idz == 0 ? dah :
+		    ( data_->get(0,idz)+data_->get(0,idz-1) ) / 2;
+		const float stopdahwin = idz < data_->info().getSize(1) ?
+		    ( data_->get(0,idz)+data_->get(0,idz+1) ) / 2 : dah;
+		const float starttime = d2t_->getTime(startdahwin, track_ );
+		const float stoptime = d2t_->getTime( stopdahwin, track_ );
+		winsz = stoptime - starttime;
+		dah = d2t_->getDah( ( stoptime + starttime ) / 2 );
+	    }
+	    else if ( !mIsUdf(zstep_) )
+		winsz = zstep_;
+
+	    lval = LogDataExtracter::calcVal(*log,dah,winsz,samppol_);
+	}
 	data_->set( logidx+1, idz, lval );
     }
 

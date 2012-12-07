@@ -465,6 +465,7 @@ Well::Marker::Marker( const Well::Marker& mrk )
     color_ = mrk.color();
 }
 
+
 const BufferString& Well::Marker::name() const
 {
     return NamedObject::name();
@@ -785,23 +786,23 @@ float Well::Track::getDahForTVD( float z, float prevdah ) const
 	{ pErrMsg("getDahForTVD called for time well");
 	    return haveprevdah ? prevdah : dah_[0]; }
 
-    static const float eps = 1e-4;
+    static const float eps = 1e-3; // do not use lower for float
     if ( sz == 1 )
 	return mIsEqual(z,pos_[0].z,eps) ? dah_[0] : mUdf(float);
-    if ( z < dah_[0]-eps )
+    if ( z < value(0)-eps || z > value( sz-1 )+eps )
 	return mUdf(float);
 
 #define mZInRg() \
     (zrg.start-eps < z  && zrg.stop+eps  > z) \
  || (zrg.stop-eps  < z  && zrg.start+eps > z)
 
-    Interval<double> zrg( pos_[0].z, 0 );
+    Interval<double> zrg( value(0), 0 );
     int idxafter = -1;
     for ( int idx=1; idx<pos_.size(); idx++ )
     {
 	if ( !haveprevdah || prevdah+eps < dah_[idx] )
 	{
-	    zrg.stop = pos_[idx].z;
+	    zrg.stop = value(idx);
 	    if ( mZInRg() )
 		{ idxafter = idx; break; }
 	}
@@ -811,8 +812,10 @@ float Well::Track::getDahForTVD( float z, float prevdah ) const
 	return mUdf(float);
 
     const int idx1 = idxafter - 1; const int idx2 = idxafter;
-    const float z1 = (float) pos_[idx1].z; const float z2 = (float) pos_[idx2].z;
-    const float dah1 = dah_[idx1]; const float dah2 = dah_[idx2];
+    const float z1 = (float) value(idx1);
+    const float z2 = (float) value(idx2);
+    const float dah1 = dah_[idx1];
+    const float dah2 = dah_[idx2];
     const float zdiff = z2 - z1;
     return mIsZero(zdiff,eps) ? dah2 : ((z-z1) * dah2 + (z2-z) * dah1) / zdiff;
 }
@@ -950,11 +953,11 @@ Well::D2TModel& Well::D2TModel::operator =( const Well::D2TModel& d2t )
 float Well::D2TModel::getTime( float dh, const Track& track ) const
 {
     const int dtsize = size();
-   if ( track.nrPoints() < 2 || dtsize < 2 )
-       return TimeDepthModel::getTime( dah_.arr(), t_.arr(), dtsize, dh );
-   else
+    if ( track.nrPoints() < 2 || dtsize < 2 )
+	return TimeDepthModel::getTime( dah_.arr(), t_.arr(), dtsize, dh );
+    else
     {
-	float reqdh, dhtop, dhbase;
+	double reqdh, dhtop, dhbase;
 	int idahtop = 0;
 	idahtop = IdxAble::getLowIdx(dah_,dtsize,dh);
 	if ( idahtop < 0 )
@@ -962,16 +965,15 @@ float Well::D2TModel::getTime( float dh, const Track& track ) const
 
 	if ( track.getPos(dah_[idahtop]).z > track.getPos(dh).z )
 	{
-	    od_int64 reqz = mCast( od_int64, track.getPos( dh ).z );
+	    double reqz = track.getPos( dh ).z;
 	    for ( int idx=0; idx<track.nrPoints(); idx++ )
 	    {
 		if ( track.pos(idx).z > reqz )
 		{
-		    dhtop = track.dah( idx-1 );
-		    dhbase = track.dah( idx );
-		    reqdh = dhtop + mCast( float, 
-				    ( (dhbase-dhtop)*(reqz-track.pos(idx-1).z)/
-				    (track.pos(idx).z-track.pos(idx-1).z) ) );
+		    dhtop = mCast( double, track.dah( idx-1 ) );
+		    dhbase = mCast( double, track.dah( idx ) );
+		    reqdh = dhtop + ( (dhbase-dhtop)*(reqz-track.pos(idx-1).z)/
+				    (track.pos(idx).z-track.pos(idx-1).z) );
 
 		    idahtop = IdxAble::getLowIdx( dah_, dtsize, reqdh );
 		    break;
@@ -985,11 +987,12 @@ float Well::D2TModel::getTime( float dh, const Track& track ) const
 	if ( idahtop >= (dtsize-1) )
 	    idahtop = dtsize-2;
 
-       const float ztop = mCast( float, track.getPos(dah_[idahtop]).z );
-       const float zbase= mCast( float, track.getPos(dah_[idahtop+1]).z );
-       const float curvel = ( zbase - ztop ) / ( t_[idahtop+1] - t_[idahtop] );
-       return mCast( float, t_[idahtop] + (track.getPos(dh).z-ztop)/curvel );
-   }
+       const double ztop = track.getPos(dah_[idahtop]).z;
+       const double zbase= track.getPos(dah_[idahtop+1]).z;
+       const double curvel = ( zbase - ztop ) / mCast( double,
+	       		     ( t_[idahtop+1] - t_[idahtop] ) );
+       return t_[idahtop] + mCast( float, (track.getPos(dh).z-ztop)/curvel );
+    }
 }
 
 

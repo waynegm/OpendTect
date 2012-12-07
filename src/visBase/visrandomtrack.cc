@@ -33,12 +33,14 @@ namespace visBase
 
 RandomTrack::RandomTrack()
     : VisualObjectImpl(false)
+    , node_(new osgGeo::RandomLineNode)
     , depthrg_(0,1)
     , knotmovement(this)
     , knotnrchange(this)
     , sectionidx_(-1)
     , transformation_(0)
 {
+    node_->ref();
     addKnot( Coord( 0, 0 ) );
     addKnot( Coord( 1, 0 ) );
 }
@@ -46,6 +48,7 @@ RandomTrack::RandomTrack()
 
 RandomTrack::~RandomTrack()
 {
+    node_->unref();
 }
 
 

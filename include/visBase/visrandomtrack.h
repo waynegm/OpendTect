@@ -109,7 +109,7 @@ protected:
     void			rebuild();
     void			createDragger();
     
-    OsgRefMan<osgGeo::RandomLineNode>	node_;
+    osgGeo::RandomLineNode*	node_;
     
     RefMan<TextureChannels>	channels_;
 

@@ -114,7 +114,7 @@ protected:
 
     virtual osg::Node*		gtOsgNode();
 
-    OsgRefMan<osg::Node>	osgnode_;
+    osg::Node*			osgnode_;
     EventCatchHandler*		eventcatchhandler_;
 };
 

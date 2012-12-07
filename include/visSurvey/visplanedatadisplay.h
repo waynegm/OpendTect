@@ -202,7 +202,6 @@ protected:
     
     visBase::GridLines*			gridlines_;
     Orientation				orientation_;
-    visBase::FaceSet*			draggerrect_;
     
     ObjectSet< TypeSet<DataPack::ID> >	displaycache_;
     ObjectSet<BinIDValueSet>		rposcache_;

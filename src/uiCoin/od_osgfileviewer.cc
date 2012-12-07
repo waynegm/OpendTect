@@ -10,6 +10,10 @@ static const char* rcsID mUnusedVar = "$Id$";
 #include "bufstring.h"
 #include "file.h"
 
+# ifdef __msvc__
+#  include "winmain.h"
+# endif
+
 #include <QtGui/QApplication>
 
 #include <osgViewer/Viewer>

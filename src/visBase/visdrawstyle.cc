@@ -28,6 +28,9 @@ const char* DrawStyle::drawstylestr()  { return "Draw Style"; }
 const char* DrawStyle::pointsizestr()  { return "Point Size"; }
 
 DrawStyle::DrawStyle()
+    : pointsize_(0)
+    , linestipple_(0)
+    , linewidth_(0)
 {}
 
 

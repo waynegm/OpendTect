@@ -45,8 +45,8 @@ protected:
     
     osg::Node*			gtOsgNode();
     
-    OsgRefMan<osgGeo::ThumbWheel>	thumbwheel_;
-    ThumbWheelMess*			messenger_;
+    osgGeo::ThumbWheel*	    	thumbwheel_;
+    ThumbWheelMess*		messenger_;
 };
 
 } // namespace visBase

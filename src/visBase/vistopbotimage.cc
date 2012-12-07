@@ -38,6 +38,8 @@ TopBotImage::TopBotImage()
     , laytex_( new osgGeo::LayeredTexture )
     , texplane_( new osgGeo::TexturePlaneNode )
 {
+    laytex_->ref();
+    texplane_->ref();
     layerid_ = laytex_->addDataLayer();
     laytex_->addProcess( new osgGeo::IdentityLayerProcess(*laytex_, layerid_) );
     texplane_->setLayeredTexture( laytex_ );
@@ -50,6 +52,8 @@ TopBotImage::TopBotImage()
 TopBotImage::~TopBotImage()
 {
     if ( trans_ ) trans_->unRef();
+    laytex_->unref();
+    texplane_->unref();
 }
 
 

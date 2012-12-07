@@ -92,12 +92,14 @@ VisualObjectImpl::VisualObjectImpl( bool issel )
     , material_( 0 )
     , righthandsystem_( true )
 {
+    osgroot_->ref();
 }
 
 
 VisualObjectImpl::~VisualObjectImpl()
 {
     if ( material_ ) material_->unRef();
+    osgroot_->unref();
 }
 
 

@@ -140,7 +140,7 @@ protected:
 
 private:
     
-    OsgRefMan<osg::Switch>	osgroot_;
+    osg::Switch*	osgroot_;
 };
 
 mLockerClassImpl( visBase, VisualReadLockLocker, VisualObjectImpl,

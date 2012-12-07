@@ -138,8 +138,10 @@ Dragger::Dragger()
     , rightclickeventinfo_( 0 )
     , onoff_( new osg::Switch )
 {
+    onoff_->ref();
     onoff_->addChild( positiontransform_ );
     setDefaultRotation();
+    positiontransform_->ref();
 }
 
 
@@ -157,6 +159,8 @@ osg::Node* Dragger::osgNode()
 
 Dragger::~Dragger()
 {
+    onoff_->unref();
+    positiontransform_->unref();
 }
 
 
@@ -179,7 +183,7 @@ void Dragger::setDraggerType( Type tp )
 	case Scale3D:
 	    pErrMsg("Not impl");
     };
-
+    dragger_->ref();
     positiontransform_->addChild( dragger_ );
     pErrMsg("Setup callbacks");
 }

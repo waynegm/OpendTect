@@ -61,6 +61,13 @@ VolumeRenderScalarField::VolumeRenderScalarField()
     , osgvoldata_( new osg::Image() )
     , osgtransfunc_( new osg::TransferFunction1D() )
 {
+    osgvolroot_->ref();
+    osgvoltile_->ref();
+    osgvolume_->ref();
+    osgimagelayer_->ref();
+    osgvoldata_->ref();
+    osgtransfunc_->ref();
+
     osgimagelayer_->setImage( osgvoldata_ );
     osgvolume_->addChild( osgvoltile_ );
     osgvoltile_->setLayer( osgimagelayer_ );
@@ -103,6 +110,13 @@ VolumeRenderScalarField::~VolumeRenderScalarField()
     if ( ownsindexcache_ ) delete [] indexcache_;
     if ( ownsdatacache_ ) delete datacache_;
     root_->unref();
+
+    osgvolroot_->unref();
+    osgvoltile_->unref();
+    osgvolume_->unref();
+    osgimagelayer_->unref();
+    osgvoldata_->unref();
+    osgtransfunc_->unref();
 }
 
 

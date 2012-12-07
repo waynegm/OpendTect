@@ -123,10 +123,10 @@ protected:
     RefMan<visBase::Scene>				scene_;
     RefMan<visBase::ThumbWheel>				horthumbwheel_;
     RefMan<visBase::ThumbWheel>				verthumbwheel_;
-    visBase::OsgRefMan<osg::Group>			sceneroot_;
+    osg::Group*						sceneroot_;
     osgViewer::CompositeViewer*				compositeviewer_;
     osgViewer::View*					view_;
-    visBase::OsgRefMan<osg::Viewport>			viewport_;
+    osg::Viewport*					viewport_;
     
     osgViewer::View*					hudview_;
     RefMan<visBase::DataObjectGroup>			hudscene_;

@@ -55,7 +55,7 @@ public:
     
 protected:
     const mVisTrans*		displaytrans_;
-    OsgRefMan<osgText::Text>	text_;
+    osgText::Text*		text_;
     
     FontData			fontdata_;
 };
@@ -92,7 +92,7 @@ public:
 	
 protected:
 				~Text2();
-    OsgRefMan<osg::Geode>	geode_;
+    osg::Geode*			geode_;
     ManagedObjectSet<Text>	texts_;
     const mVisTrans*		displaytransform_;
 };

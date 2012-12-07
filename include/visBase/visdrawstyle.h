@@ -60,9 +60,9 @@ protected:
     
     LineStyle			linestyle_;
     
-    OsgRefMan<osg::Point>	pointsize_;
-    OsgRefMan<osg::LineStipple>	linestipple_;
-    OsgRefMan<osg::LineWidth>	linewidth_;
+    osg::Point*			pointsize_;
+    osg::LineStipple*		linestipple_;
+    osg::LineWidth*		linewidth_;
     
     static const char*	linestylestr();
     static const char*	drawstylestr();

@@ -69,7 +69,7 @@ protected:
     bool			ison_;
     float			ambient_;
     float			diffuse_;
-    OsgRefMan<osg::Light>	light_;
+    osg::Light*			light_;
     
     static const char*	sKeyIsOn();
     static const char*	sKeyAmbient();

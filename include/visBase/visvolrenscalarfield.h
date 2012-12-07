@@ -101,12 +101,12 @@ protected:
     virtual SoNode*		gtInvntrNode();
     virtual osg::Node*		gtOsgNode();
 
-    OsgRefMan<osgVolume::VolumeTile>	osgvoltile_;
-    OsgRefMan<osg::Switch>		osgvolroot_;
-    OsgRefMan<osgVolume::Volume>	osgvolume_;
-    OsgRefMan<osgVolume::ImageLayer>	osgimagelayer_;
-    OsgRefMan<osg::Image>		osgvoldata_;
-    OsgRefMan<osg::TransferFunction1D>	osgtransfunc_;
+    osgVolume::VolumeTile*	osgvoltile_;
+    osg::Switch*		osgvolroot_;
+    osgVolume::Volume*		osgvolume_;
+    osgVolume::ImageLayer*	osgimagelayer_;
+    osg::Image*			osgvoldata_;
+    osg::TransferFunction1D*	osgtransfunc_;
 
 
 };

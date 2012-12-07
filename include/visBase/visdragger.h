@@ -100,9 +100,9 @@ protected:
     Notifier<Dragger>		rightclicknotifier_;
     const EventInfo*		rightclickeventinfo_;
 
-    OsgRefMan<osg::Switch>		onoff_;
-    OsgRefMan<osgManipulator::Dragger>	dragger_;
-    OsgRefMan<osg::MatrixTransform>	positiontransform_;
+    osg::Switch*		onoff_;
+    osgManipulator::Dragger*	dragger_;
+    osg::MatrixTransform*	positiontransform_;
 };
 
 } // namespace visBase

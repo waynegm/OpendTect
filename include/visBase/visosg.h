@@ -37,8 +37,6 @@ mExternC(visBase) void refOsgObj(osg::Referenced* obj);
 
 //!Calls obj->unref(). obj must inherit osg::Referenced
 mExternC(visBase) void unrefOsgObj(osg::Referenced*);
-
-mDefRefMan( OsgRefMan, osg::Referenced, refOsgObj(ptr_), unrefOsgObj(ptr_) )
     
 } //Namespace
 

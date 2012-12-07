@@ -43,8 +43,9 @@ Annotation::Annotation()
 {
     osgNode()->getOrCreateStateSet()->setMode( GL_LIGHTING,
 					       osg::StateAttribute::OFF );
+    geode_->ref();
     addChild( geode_ );
-    
+    gridlines_->ref();
     annotscale_[0] = annotscale_[1] = annotscale_[2] = 1;
 
     annotcolor_ = Color::White();
@@ -60,6 +61,7 @@ Annotation::Annotation()
     const osg::Vec3* ptr = (osg::Vec3*) pos;
     osg::ref_ptr<osg::Vec3Array> coords = new osg::Vec3Array( 8, ptr );
     box_ = new osg::Geometry;
+    box_->ref();
     box_->setName( "Box" );
 
     box_->setVertexArray( coords );
@@ -87,7 +89,7 @@ Annotation::Annotation()
     Text* text = 0; mAddText mAddText mAddText
     
     gridlinecoords_ = new osg::Vec3Array;
-
+    gridlinecoords_->ref();
     updateTextPos();
 
     getMaterial()->change.notify( mCB(this,Annotation,updateTextColor) );
@@ -98,6 +100,10 @@ Annotation::Annotation()
 Annotation::~Annotation()
 {
     getMaterial()->change.remove( mCB(this,Annotation,updateTextColor) );
+    box_->unref();
+    gridlinecoords_->unref();
+    geode_->unref();
+    gridlines_->unref();
 }
 
 
@@ -177,13 +183,13 @@ void Annotation::setText( int dim, const char* string )
     
 void Annotation::updateGridLines()
 {
-    osg::Vec3Array* coords = mGetOsgVec3Arr( gridlinecoords_.ptr() );
+    osg::Vec3Array* coords = mGetOsgVec3Arr( gridlinecoords_ );
     
     for ( int idx=gridlines_->getNumDrawables(); idx<6; idx++ )
     {
 	osg::Geometry* geometry = new osg::Geometry;
 	gridlines_->addDrawable( geometry );
-	geometry->setVertexArray( mGetOsgVec3Arr(gridlinecoords_.ptr()) );
+	geometry->setVertexArray( mGetOsgVec3Arr(gridlinecoords_) );
 	geometry->addPrimitiveSet(
 		    new osg::DrawElementsUByte( osg::PrimitiveSet::LINES) );
     }

@@ -60,8 +60,8 @@ protected:
     static const char*		sKeyFileNameStr();
 
     int					layerid_;
-    OsgRefMan<osgGeo::LayeredTexture>	laytex_; 
-    OsgRefMan<osgGeo::TexturePlaneNode>	texplane_; 
+    osgGeo::LayeredTexture*		laytex_; 
+    osgGeo::TexturePlaneNode*		texplane_; 
 };
 
 } // namespace visBase

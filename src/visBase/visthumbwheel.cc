@@ -50,6 +50,7 @@ ThumbWheel::ThumbWheel()
     : rotation( this )
     , thumbwheel_( new osgGeo::ThumbWheel )
 {
+    thumbwheel_->ref();
     messenger_ = new ThumbWheelMess( this );
     messenger_->ref();
     thumbwheel_->addRotateCallback( messenger_ );
@@ -66,6 +67,7 @@ ThumbWheel::~ThumbWheel()
 {
     messenger_->detach();
     messenger_->unref();
+    thumbwheel_->unref();
 }
     
     

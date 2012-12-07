@@ -34,6 +34,7 @@ Text::Text()
     : text_( new osgText::Text )
     , displaytrans_( 0 )
 {
+    text_->ref();
     text_->setAxisAlignment( osgText::TextBase::SCREEN );
     text_->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS );
     setFontData( fontdata_ ); //trigger update of font_
@@ -43,6 +44,7 @@ Text::Text()
 Text::~Text()
 {
     if ( displaytrans_ ) displaytrans_->unRef();
+    text_->unref();
 }
     
     
@@ -140,6 +142,7 @@ Text2::Text2()
     , geode_( new osg::Geode )
     , displaytransform_( 0 )
 {
+    geode_->ref();
     geode_->setNodeMask( ~visBase::cBBoxTraversalMask() );
     addChild( geode_ );
 }
@@ -148,6 +151,7 @@ Text2::Text2()
 Text2::~Text2()
 {
     if ( displaytransform_ ) displaytransform_->unRef();
+    geode_->unref();
 }
 
 

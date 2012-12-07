@@ -113,6 +113,8 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     , viewport_( new osg::Viewport )
     , compositeviewer_( 0 )
 {
+    sceneroot_->ref();
+    viewport_->ref();
     eventfilter_.addEventType( uiEventFilter::KeyPress );
     eventfilter_.addEventType( uiEventFilter::Resize );
     
@@ -130,6 +132,8 @@ ui3DViewerBody::~ui3DViewerBody()
 	compositeviewer_->removeView( hudview_ );
 	compositeviewer_->unref();
     }
+    viewport_->unref();
+    sceneroot_->unref();
 }
 
 #define mMainCameraOrder    0

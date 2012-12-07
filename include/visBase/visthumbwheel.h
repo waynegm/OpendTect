@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        Kristofer Tingdahl
  Date:          October 2012
- RCS:           $Id: visdragger.h 26837 2012-10-17 09:36:11Z kristofer.tingdahl@dgbes.com $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/

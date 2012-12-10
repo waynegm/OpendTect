@@ -288,14 +288,16 @@ void VolumeDisplay::updateRanges( bool updateic, bool updatez )
     const CubeSampling& csin = scene_ ? scene_->getCubeSampling()
 				      : getCubeSampling( 0 );
 
-    const Interval<float> inlrg( csin.hrg.start.inl, csin.hrg.stop.inl );
-    const Interval<float> crlrg( csin.hrg.start.crl, csin.hrg.stop.crl );
+    const Interval<float> inlrg( float(csin.hrg.start.inl),
+				 float(csin.hrg.stop.inl) );
+    const Interval<float> crlrg( float(csin.hrg.start.crl),
+				 float(csin.hrg.stop.crl) );
 
     boxdragger_->setSpaceLimits( inlrg, crlrg, csin.zrg );
     boxdragger_->setWidthLimits(
-			Interval<float>( 4*csin.hrg.step.inl, mUdf(float) ),
-			Interval<float>( 4*csin.hrg.step.crl, mUdf(float) ),
-			Interval<float>( 4*csin.zrg.step, mUdf(float) ) );
+		    Interval<float>( float(4*csin.hrg.step.inl), mUdf(float) ),
+		    Interval<float>( float(4*csin.hrg.step.crl), mUdf(float) ),
+		    Interval<float>( 4*csin.zrg.step, mUdf(float) ) );
 
     if ( !datatransform_ ) return;
 

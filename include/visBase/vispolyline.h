@@ -66,7 +66,8 @@ public:
 
     void		setLineStyle(const LineStyle&);
     const LineStyle&	lineStyle() const;
-    
+    void		setResolution(int);
+    int			getResolution() const;
     void		addPrimitiveSetToScene(osg::PrimitiveSet*);
     void		removePrimitiveSetFromScene(const osg::PrimitiveSet*);
     void		touchPrimitiveSet(int);

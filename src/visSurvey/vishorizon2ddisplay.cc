@@ -56,7 +56,7 @@ void Horizon2DDisplay::setDisplayTransformation( const mVisTrans* nt )
     EMObjectDisplay::setDisplayTransformation( nt );
 
     for ( int idx=0; idx<lines_.size(); idx++ )
-	lines_[idx]->setDisplayTransformation(transformation_);
+	lines_[idx]->setDisplayTransformation( transformation_ );
 
     for ( int idx=0; idx<points_.size(); idx++ )
     {
@@ -114,7 +114,7 @@ EM::SectionID Horizon2DDisplay::getSectionID(int visid) const
 }
 
 
-const visBase::IndexedPolyLine3D* Horizon2DDisplay::getLine( 
+const visBase::PolyLine3D* Horizon2DDisplay::getLine( 
 	const EM::SectionID& sid ) const
 {
     for ( int idx=0; idx<sids_.size(); idx++ )
@@ -141,18 +141,18 @@ void Horizon2DDisplay::setLineStyle( const LineStyle& lst )
 
     EMObjectDisplay::setLineStyle( lst );
     for ( int idx=0; idx<lines_.size(); idx++ )
-	lines_[idx]->setRadius( (float)lst.width_/2 );
+	lines_[idx]->setLineStyle( lst );
 }
 
 
 bool Horizon2DDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
 {
-    visBase::IndexedPolyLine3D* pl = visBase::IndexedPolyLine3D::create();
+    visBase::PolyLine3D* pl = visBase::PolyLine3D::create();
     pl->ref();
     pl->setDisplayTransformation( transformation_ );
-    pl->setMaterial( 0 );
-    pl->setRadius( mCast(float,drawstyle_->lineStyle().width_/2) );
-    addChild( pl->getInventorNode() );
+    pl->setName( "PolyLine3D" );
+    pl->setLineStyle( drawstyle_->lineStyle() );
+    addChild( pl->osgNode() );
     lines_ += pl;
     points_ += 0;
     sids_ += sid;
@@ -204,14 +204,13 @@ class Horizon2DDisplayUpdater : public ParallelTask
 public:
 Horizon2DDisplayUpdater( const Geometry::RowColSurface* rcs,
 		const Horizon2DDisplay::LineRanges* lr,
-		visBase::IndexedShape* shape, visBase::PointSet* points,
+		visBase::VertexShape* shape, visBase::PointSet* points,
        		ZAxisTransform*& zaxt )
     : surf_( rcs )
     , lines_( shape )
     , points_( points )
     , lineranges_( lr )
     , lineci_( 0 )
-    , linecii_( 0 )
     , scale_( 1, 1, SI().zScale() )
     , zaxt_( zaxt )
 {
@@ -220,6 +219,7 @@ Horizon2DDisplayUpdater( const Geometry::RowColSurface* rcs,
 
     rowrg_ = surf_->rowRange();
     nriter_ = rowrg_.isRev() ? 0 : rowrg_.nrSteps()+1;
+    removePrimitiveSets();
 }
 
 
@@ -241,17 +241,14 @@ bool doPrepare( int nrthreads )
 {
     curidx_ = 0;
     nrthreads_ = nrthreads;
-
     points_->getCoordinates()->removeAfter( -1 );
+    removePrimitiveSets();
     return true;
 }
 
 
 bool doFinish( bool res )
 {
-    lines_->removeCoordIndexAfter( linecii_-1 );
-    lines_->getCoordinates()->removeAfter( lineci_-1 );
-
     return res;
 }
 
@@ -318,25 +315,21 @@ void sendPositions( TypeSet<Coord3>& positions )
 	const int nrbendpoints = bendpoints.size();
 	if ( nrbendpoints )
 	{
-	    ArrPtrMan<Coord3> usedpos = new Coord3[nrbendpoints];
-
-	    for ( int idy=0; idy<nrbendpoints; idy++ )
-		usedpos[idy] = positions[bendpoints[idy]];
-
-	    ArrPtrMan<int> idxs = new int[nrbendpoints+1];
-
+	    TypeSet<int> indices;
 	    lock_.lock();
-
 	    for ( int idy=0; idy<nrbendpoints; idy++ )
-		idxs[idy] = idy+lineci_;
+	    {
+		const Coord3& pos = positions[ bendpoints[idy] ];
+		lineci_ = lines_->getCoordinates()->addPos( pos );
+		indices += lineci_;
+	    }
 
-	    idxs[nrbendpoints] = -1;
-	    lines_->getCoordinates()->setPositions( usedpos.ptr(), nrbendpoints,
-						    lineci_ );
-	    lines_->setCoordIndices( idxs.ptr(), nrbendpoints+1, linecii_ );
-	    lineci_ += nrbendpoints;
-	    linecii_ += nrbendpoints+1;
-
+	    Geometry::IndexedPrimitiveSet* lineprimitiveset = 
+				  Geometry::IndexedPrimitiveSet::create( true );
+	    lineprimitiveset->ref();
+	    lineprimitiveset->append( indices.arr(), indices.size() );
+	    lines_->addPrimitiveSet( lineprimitiveset );
+	   
 	    lock_.unLock();
 	}
     }
@@ -344,18 +337,23 @@ void sendPositions( TypeSet<Coord3>& positions )
     positions.erase();
 }
 
+void removePrimitiveSets()
+{
+    lock_.lock();
+    for ( int idx=0; idx<lines_->nrPrimitiveSets(); idx++ )
+	lines_->removePrimitiveSet( lines_->getPrimitiveSet(idx) );
+    lock_.unLock();
+}
+
 protected:
     const Geometry::RowColSurface*	surf_;
     const Horizon2DDisplay::LineRanges*	lineranges_;
-    visBase::IndexedShape*		lines_;
+    visBase::VertexShape*		lines_;
     visBase::PointSet*			points_;
     ZAxisTransform*			zaxt_;
     Threads::Mutex			lock_;
     int					nrthreads_;
-
     int					lineci_;
-    int					linecii_;
-
     const Coord3			scale_;
     float				eps_;
     StepInterval<int>			rowrg_;
@@ -371,7 +369,7 @@ void Horizon2DDisplay::updateSection( int idx, const LineRanges* lineranges )
     mDynamicCastGet(const Geometry::RowColSurface*,rcs,
 	    	    emobject_->sectionGeometry(sid));
 
-    visBase::IndexedPolyLine3D* pl = lines_[idx];
+    visBase::PolyLine3D* pl = lines_[idx];
     visBase::PointSet* ps = points_[idx];
    
     if ( !ps ) 
@@ -381,7 +379,7 @@ void Horizon2DDisplay::updateSection( int idx, const LineRanges* lineranges )
 	ps->getCoordinates()->removeAfter(-1);
 	ps->setDisplayTransformation( transformation_ );
 	points_.replace( idx, ps );
-	addChild( ps->getInventorNode() );
+	addChild( ps->osgNode() );
     }
 
     Horizon2DDisplayUpdater updater( rcs, lineranges, pl, ps, zaxistransform_ );
@@ -500,7 +498,7 @@ void Horizon2DDisplay::otherObjectsMoved(
     }
 
     if ( !refresh ) return;
-    
+
     updateLinesOnSections( seis2dlist );
     updateSeedsOnSections( seis2dlist );
 }

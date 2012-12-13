@@ -100,7 +100,6 @@ PolyLine3D::PolyLine3D()
 {
     node_ = osgpoly_ = new osgGeo::PolyLineNode;
     osgpoly_->ref();
-    
     osgswitch_->addChild( node_ );
     osgpoly_->setVertexArray( coords_->osgArray() );
 }
@@ -111,8 +110,18 @@ void PolyLine3D::setLineStyle( const LineStyle& lst )
 {
     lst_ = lst_;
     osgpoly_->setRadius( lst.width_*0.5f );
-    //divided by 2 just like evry other radius in visBase
-    getMaterial()->setColor( lst.color_ );
+}
+
+
+void PolyLine3D::setResolution( int res )
+{
+    osgpoly_->setResolution( res );
+}
+
+
+int PolyLine3D::getResolution() const
+{
+    return osgpoly_->getResolution();
 }
 
 

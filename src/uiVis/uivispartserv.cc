@@ -465,12 +465,14 @@ void uiVisPartServer::setSelObjectId( int id, int attrib )
     if ( so && so->getScene() )
     {
 	return;
+	/*
 	const ColTab::Sequence* seq = so->getColTabSequence( selattrib_ );
 	const ColTab::MapperSetup* ms = so->getColTabMapperSetup( selattrib_ );
 	if ( seq )
 	    so->getScene()->getSceneColTab()->setColTabSequence( *seq );
 	if ( ms )
 	    so->getScene()->getSceneColTab()->setColTabMapperSetup( *ms );
+	 */
     }
 }
 

@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "axislayout.h"
 #include "iopar.h"
 #include "survinfo.h"
+#include "vistransform.h"
 
 #include <osg/Geode>
 #include <osg/Geometry>
@@ -40,6 +41,7 @@ Annotation::Annotation()
     , axisnames_( Text2::create() )
     , axisannot_( Text2::create() )
     , gridlines_( new osgGeo::OneSideRenderNode )
+    , displaytrans_( 0 )
 {
     osgNode()->getOrCreateStateSet()->setMode( GL_LIGHTING,
 					       osg::StateAttribute::OFF );
@@ -104,6 +106,18 @@ Annotation::~Annotation()
     gridlinecoords_->unref();
     geode_->unref();
     gridlines_->unref();
+    
+    if ( displaytrans_ ) displaytrans_->unRef();
+}
+    
+    
+void Annotation::setDisplayTransformation(const visBase::Transformation* tr)
+{
+    if ( displaytrans_ ) displaytrans_->unRef();
+    displaytrans_ = tr;
+    if ( displaytrans_ ) displaytrans_->ref();
+    
+    setCubeSampling( cs_ );
 }
 
 
@@ -147,6 +161,7 @@ void Annotation::setFont( const FontData& fd )
 
 void Annotation::setCubeSampling( const CubeSampling& cs )
 {
+    cs_ = cs;
     const Interval<int> inlrg = cs.hrg.inlRange();
     const Interval<int> crlrg = cs.hrg.crlRange();
     const Interval<float>& zrg = cs.zrg;
@@ -168,10 +183,10 @@ void Annotation::setCubeSampling( const CubeSampling& cs )
 
 void Annotation::setCorner( int idx, float x, float y, float z )
 {
-     osg::Vec3& coord =
+    osg::Vec3& coord =
 	 ((osg::Vec3*) box_->getVertexArray()->getDataPointer())[idx];
 
-     coord = osg::Vec3f( x, y, z );
+    mVisTrans::transform( displaytrans_, osg::Vec3(x,y,z), coord );
 }
 
 

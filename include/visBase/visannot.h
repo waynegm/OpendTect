@@ -76,6 +76,8 @@ public:
     void			setText( int dim, const char * );
     void			fillPar( IOPar& ) const;
     int				usePar( const IOPar& );
+    
+    void			setDisplayTransformation(const mVisTrans*);
 
 protected:
     				~Annotation();
@@ -88,6 +90,8 @@ protected:
     
     int				annotscale_[3];
 
+    CubeSampling		cs_;
+    
     osg::Geometry*		box_;
     
     osg::Array*			gridlinecoords_;
@@ -96,6 +100,8 @@ protected:
     osgGeo::OneSideRenderNode*	gridlines_;
     RefMan<Text2>		axisnames_;
     RefMan<Text2>		axisannot_;
+    
+    const mVisTrans*		displaytrans_;
         
     Color			annotcolor_;
 

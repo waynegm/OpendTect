@@ -80,7 +80,6 @@ protected:
     void			makeIndices(bool doset,TaskRunner*);
     void			clipData(TaskRunner*);
 
-    SoGroup*			root_;
     SoTransferFunction*		transferfunc_;
     So2DTransferFunction*	transferfunc2d_;
     SoVolumeData*		voldata_;
@@ -98,7 +97,6 @@ protected:
     Color			blendcolor_;
     bool			useshading_;
 
-    virtual SoNode*		gtInvntrNode();
     virtual osg::Node*		gtOsgNode();
 
     osgVolume::VolumeTile*	osgvoltile_;

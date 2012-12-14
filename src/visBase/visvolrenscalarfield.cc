@@ -42,7 +42,6 @@ VolumeRenderScalarField::VolumeRenderScalarField()
     : transferfunc_( 0 )
     , transferfunc2d_( 0 ) //Not used.
     , voldata_( 0 )
-    , root_( new SoGroup )
     , dummytexture_( 255 )
     , indexcache_( 0 )
     , ownsindexcache_( true )
@@ -88,8 +87,6 @@ VolumeRenderScalarField::VolumeRenderScalarField()
     osgimagelayer_->addProperty( tfp );
 
 
-    root_->ref();
-
     useshading_ = Settings::common().isTrue( "dTect.Use VolRen shading" );
     if ( !useshading_ )
 	SetEnvVar( "CVR_DISABLE_PALETTED_FRAGPROG", "1" );
@@ -109,7 +106,6 @@ VolumeRenderScalarField::~VolumeRenderScalarField()
 {
     if ( ownsindexcache_ ) delete [] indexcache_;
     if ( ownsdatacache_ ) delete datacache_;
-    root_->unref();
 
     osgvolroot_->unref();
     osgvoltile_->unref();
@@ -284,7 +280,7 @@ Interval<float> VolumeRenderScalarField::getVolumeSize( int dim ) const
     return Interval<float>( size.getMin()[dim], size.getMax()[dim] );
 }
 
-
+/*
 SoNode* VolumeRenderScalarField::gtInvntrNode()
 {
     if ( !voldata_ )
@@ -307,7 +303,7 @@ SoNode* VolumeRenderScalarField::gtInvntrNode()
 
     return root_;
 }
-
+*/
 
 osg::Node* VolumeRenderScalarField::gtOsgNode()
 {

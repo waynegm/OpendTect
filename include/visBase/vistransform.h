@@ -76,9 +76,17 @@ public:
     void		transformBack( SbVec3f& ) const;
     void		transform(osg::Vec3d&) const;
     void		transformBack(osg::Vec3d&) const;
+    void		transform(osg::Vec3f&) const;
+    void		transformBack(osg::Vec3f&) const;
 
     Coord3		transformDir(const Coord3&) const;
     Coord3		transformDirBack(const Coord3&) const;
+    
+    static void		transform( const Transformation*, const Coord3&,
+				   osg::Vec3f&);
+    static void		transform( const Transformation*, const osg::Vec3f&,
+				   osg::Vec3f&);
+
 private:
 
     virtual		~Transformation();

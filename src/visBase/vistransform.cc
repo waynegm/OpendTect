@@ -182,9 +182,24 @@ void Transformation::transform( osg::Vec3d& res ) const
 } 
 
 
+
 void Transformation::transformBack( osg::Vec3d& res ) const
 {
 //TODO Check that we should use preMult, the inverse or postMult
+    res = osg::Matrixd::inverse(node_->getMatrix()).preMult( res );
+}
+    
+    
+void Transformation::transform( osg::Vec3f& res ) const
+{
+    //TODO Check that we should use preMult
+    res = node_->getMatrix().preMult( res );
+}
+
+    
+void Transformation::transformBack( osg::Vec3f& res ) const
+{
+    //TODO Check that we should use preMult, the inverse or postMult
     res = osg::Matrixd::inverse(node_->getMatrix()).preMult( res );
 }
 
@@ -195,6 +210,27 @@ Coord3 Transformation::transformBack( const Coord3& pos ) const
     transformBack( res );
     return Conv::to<Coord3>( res );
 }
+
+    
+void Transformation::transform( const visBase::Transformation* trans,
+			       	const Coord3& crd,
+			        osg::Vec3f& res )
+{
+
+    if ( trans )
+	trans->transform( crd, res );
+    else
+	res = Conv::to<osg::Vec3f>( crd );
+}
+    
+void Transformation::transform( const visBase::Transformation* trans,
+			       const osg::Vec3f& crd,
+			       osg::Vec3f& res )
+{
+    res = crd;
+    if ( trans )
+	trans->transform( res );
+    }
 
 
 }; // namespace visBase

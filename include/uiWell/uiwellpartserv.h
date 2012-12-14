@@ -28,7 +28,10 @@ class uiWellDispPropDlg;
 class uiD2TModelGen;
 class uiD2TMLogSelDlg;
 
-/*! \brief Part Server for Wells */
+/*!
+\ingroup uiWell
+\brief Part Server for Wells
+*/
 
 mClass(uiWell) uiWellPartServer : public uiApplPartServer
 {
@@ -111,12 +114,6 @@ protected:
     void			applyAll(CallBacker*);
     void			simpImp(CallBacker*);
 };
-
-/*!\mainpage Well User Interface
-
-  Apart from nice visualisation, import and management of well data must be
-  done. The uiWellPartServer delivers the services needed.
-*/
 
 #endif
 

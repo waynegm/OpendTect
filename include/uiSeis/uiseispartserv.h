@@ -31,7 +31,10 @@ class uiFlatViewWin;
 namespace PosInfo { class Line2DData; }
 namespace Geometry { class RandomLine; }
 
-/*! \brief Seismic User Interface Part Server */
+/*!
+\ingroup uiSeis
+\brief Seismic User Interface Part Server
+*/
 
 mClass(uiSeis) uiSeisPartServer : public uiApplPartServer
 {
@@ -77,18 +80,6 @@ protected:
 
     bool		ioSeis(int,bool);
 };
-
-
-/*!\mainpage Seismics User Interface
-
-  Most of the tools in this module enable import and export of seismic
-  data into/from the OpendTect data store. The merge and manage tools manipulate
-  seismic data already in the data store.
-
-  A standalone 'application' is the uiSeisMMProc class, which handles the
-  distribution of processing on multiple machines.
-
-*/
 
 #endif
 

@@ -31,6 +31,8 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <math.h>
 
+static float cDipFactor() { return SI().zIsTime() ? 1e-6f : 1e-3f; }
+
 mCreateFactoryEntry( visBase::Marker );
 
 namespace visBase
@@ -296,8 +298,8 @@ void Marker::setDip( float inldip, float crldip )
     inldip_ = inldip;
     crldip_ = crldip;
     
-    const float inldepth = (inldip/1000000) * zstretch_;
-    const float crldepth = (crldip/1000000) * zstretch_;
+    const float inldepth = (inldip*cDipFactor()) * zstretch_;
+    const float crldepth = (crldip*cDipFactor()) * zstretch_;
     const float inlangle = atan( 2 * (SI().isClockWise() ? -inldepth : inldepth) );
     const float crlangle = atan( 2 * crldepth ); 
 
@@ -321,6 +323,29 @@ void Marker::setDisplayTransformation( const mVisTrans* nt )
 
 const mVisTrans* Marker::getDisplayTransformation() const
 { return transformation; }
+
+
+int Marker::usePar( const IOPar& iopar )
+{
+    int res = VisualObjectImpl::usePar( iopar );
+    if ( res != 1 ) return res;
+
+    Coord3 pos;
+    if ( !iopar.get( centerposstr, pos.x, pos.y, pos.z ) )
+        return -1;
+    setCenterPos( pos );
+
+    return 1;
+}
+
+
+void Marker::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
+{
+    //VisualObjectImpl::fillPar( iopar, saveids ); // will be merged later 
+
+    Coord3 pos = centerPos();
+    iopar.set( centerposstr, pos.x, pos.y, pos.z );
+}
 
 
 void Marker::setZStretch( float stretch )

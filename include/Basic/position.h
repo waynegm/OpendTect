@@ -237,7 +237,7 @@ public:
 				    , trcnr_(trcnr)
 				{}
     
-    static int			std3DGeomID() { return -1; }
+    static int			std3DGeomID();
     
     static const TraceID&	udf();
     

@@ -88,7 +88,7 @@ public:
     void		setZStretch(float);
 
     int			usePar(const IOPar&);
-    void		fillPar(IOPar&,TypeSet<int>&) const;
+    void		fillPar(IOPar&) const;
 
 protected:
 			~Marker();

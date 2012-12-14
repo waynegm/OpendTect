@@ -339,10 +339,9 @@ int Marker::usePar( const IOPar& iopar )
 }
 
 
-void Marker::fillPar( IOPar& iopar, TypeSet<int>& saveids ) const
+void Marker::fillPar( IOPar& iopar ) const
 {
-    //VisualObjectImpl::fillPar( iopar, saveids ); // will be merged later 
-
+    VisualObjectImpl::fillPar( iopar );
     Coord3 pos = centerPos();
     iopar.set( centerposstr, pos.x, pos.y, pos.z );
 }

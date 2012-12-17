@@ -219,7 +219,6 @@ Horizon2DDisplayUpdater( const Geometry::RowColSurface* rcs,
 
     rowrg_ = surf_->rowRange();
     nriter_ = rowrg_.isRev() ? 0 : rowrg_.nrSteps()+1;
-    removePrimitiveSets();
 }
 
 
@@ -242,7 +241,6 @@ bool doPrepare( int nrthreads )
     curidx_ = 0;
     nrthreads_ = nrthreads;
     points_->getCoordinates()->removeAfter( -1 );
-    removePrimitiveSets();
     return true;
 }
 
@@ -320,29 +318,32 @@ void sendPositions( TypeSet<Coord3>& positions )
 	    for ( int idy=0; idy<nrbendpoints; idy++ )
 	    {
 		const Coord3& pos = positions[ bendpoints[idy] ];
-		lineci_ = lines_->getCoordinates()->addPos( pos );
-		indices += lineci_;
+		indices += lines_->getCoordinates()->addPos( pos );
 	    }
 
-	    Geometry::IndexedPrimitiveSet* lineprimitiveset = 
+	    if ( lineci_ < lines_->nrPrimitiveSets() )
+	    {
+		mDynamicCastGet(Geometry::IndexedPrimitiveSet*,
+					   ps,lines_->getPrimitiveSet(lineci_));
+		if ( ps )
+		    ps->set( indices.arr(), indices.size() );
+		
+	    }
+	    else
+	    {
+		Geometry::IndexedPrimitiveSet* lineprimitiveset = 
 				  Geometry::IndexedPrimitiveSet::create( true );
-	    lineprimitiveset->ref();
-	    lineprimitiveset->append( indices.arr(), indices.size() );
-	    lines_->addPrimitiveSet( lineprimitiveset );
-	   
+		lineprimitiveset->ref();
+		lineprimitiveset->set( indices.arr(), indices.size() );
+		lines_->addPrimitiveSet( lineprimitiveset );
+	    }
+	    
+	    lineci_++;
 	    lock_.unLock();
 	}
     }
 
     positions.erase();
-}
-
-void removePrimitiveSets()
-{
-    lock_.lock();
-    for ( int idx=0; idx<lines_->nrPrimitiveSets(); idx++ )
-	lines_->removePrimitiveSet( lines_->getPrimitiveSet(idx) );
-    lock_.unLock();
 }
 
 protected:

@@ -47,7 +47,7 @@ public:
 
     void		convertFromRGBArray(const uiRGBArray&);
 
-    mQtclass(QPixmap*)	qpixmap()		{ return qpixmap_; }
+    mQtclass(QPixmap*)		qpixmap()		{ return qpixmap_; }
     const mQtclass(QPixmap*)	qpixmap() const		{ return qpixmap_; }
 
     void		fill(const Color&);

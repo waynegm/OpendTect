@@ -18,6 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "debugmasks.h"
 
 #include <QApplication>
+#include <QStyleFactory>
 #include <QIcon>
 
 mUseQtnamespace;
@@ -75,27 +76,14 @@ uiMain::uiMain( int& argc, char **argv )
     QCoreApplication::setApplicationName( "OpendTect" );
 #ifdef __mac__    
     QCoreApplication::setAttribute( Qt::AA_MacDontSwapCtrlAndMeta, true );
+
 #endif
-    
+        
 #ifndef __win__
     QCoreApplication::addLibraryPath( GetBinPlfDir() );
     // Qt plugin libraries
 #endif
-
-    if ( DBG::isOn(DBG_UI) )
-	DBG::message( "Constructing QApplication ..." );
     
-    app_ = new QApplication( argc, argv );
-    
-    if ( DBG::isOn(DBG_UI) )
-	DBG::message( "... done." );
-    
-#if QT_VERSION >= 0x050000
-    qInstallMessageHandler( myMessageOutput );
-#else
-    qInstallMsgHandler( myMessageOutput );
-#endif
-
     QStyle* styl = 0;
 #ifdef __win__
     if ( !styl )
@@ -113,6 +101,25 @@ uiMain::uiMain( int& argc, char **argv )
 #endif
     
     QApplication::setStyle( styl );
+    
+    
+    //QStringList styles = QStyleFactory::keys();
+    //QApplication::setStyle( QStyleFactory::create( styles.at(0) ));
+
+    if ( DBG::isOn(DBG_UI) )
+	DBG::message( "Constructing QApplication ..." );
+    
+    app_ = new QApplication( argc, argv );
+    
+    if ( DBG::isOn(DBG_UI) )
+	DBG::message( "... done." );
+    
+#if QT_VERSION >= 0x050000
+    qInstallMessageHandler( myMessageOutput );
+#else
+    qInstallMsgHandler( myMessageOutput );
+#endif
+
     
     QPixmap pixmap( XpmIconData );
     app_->setWindowIcon( QIcon(pixmap) );

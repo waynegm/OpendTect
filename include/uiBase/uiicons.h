@@ -19,16 +19,14 @@ class ioPixmap;
 
 namespace uiIcon
 {
+    mGlobal(uiBase) const char*		save()		{ return "save"; }
+    mGlobal(uiBase) const char*		saveAs()	{ return "saveas"; }
+    mGlobal(uiBase) const char*		openObject()	{ return "openstorage";}
+    mGlobal(uiBase) const char*		newObject()	{ return "newstorage"; }
+    mGlobal(uiBase) const char*		removeObject()	{ return "trashcan"; }
 
-    mGlobal(uiBase) const char*		save();
-    mGlobal(uiBase) const char*		saveAs();
-    mGlobal(uiBase) const char*		openObject();
-    mGlobal(uiBase) const char*		newObject();
-    mGlobal(uiBase) const char*		removeObject();
-
-    mGlobal(uiBase) const char*		None();
-    				//!< Avoids pErrMsg
-
+    mGlobal(uiBase) const char*		None()		{ return "-"; }
+					//!< Avoids pErrMsg
 };
 
 

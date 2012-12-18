@@ -18,7 +18,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "debugmasks.h"
 
 #include <QApplication>
-#include <QStyleFactory>
 #include <QIcon>
 
 mUseQtnamespace;
@@ -36,21 +35,6 @@ void uiMain::setXpmIconData( const char** xpmdata )
 { 
     XpmIconData = xpmdata;
 }
-
-#ifdef __win__
-# include <QWindowsVistaStyle> 
-#endif
-#ifdef __mac__
-# include <QMacStyle>
-#endif
-
-#ifdef __lux__
-# if QT_VERSION >= 0x050000
-#  include <QFusionStyle>
-# else
-#  include <QCleanlooksStyle>
-# endif
-#endif
 
 #if QT_VERSION >= 0x050000
 void myMessageOutput( QtMsgType, const QMessageLogContext &, const QString&);
@@ -87,32 +71,6 @@ uiMain::uiMain( int& argc, char **argv )
     QCoreApplication::addLibraryPath( GetBinPlfDir() );
     // Qt plugin libraries
 #endif
-    
-    QStyle* styl = 0;
-#ifdef __win__
-    if ( !styl )
-	styl = QSysInfo)::WindowsVersion == QSysInfo::WV_VISTA
-	? new QWindowsVistaStyle
-	: new QWindowsXPStyle;
-#else
-# ifdef __mac__
-    if ( !styl )
-	styl = new QMacStyle;
-# else
-    if ( !styl )
-#  if QT_VERSION >= 0x050000
-	styl = new QFusionStyle;
-#  else
-	styl = new QCleanlooksStyle;
-#  endif
-# endif
-#endif
-    
-    QApplication::setStyle( styl );
-    
-    
-    //QStringList styles = QStyleFactory::keys();
-    //QApplication::setStyle( QStyleFactory::create( styles.at(0) ));
 
     if ( DBG::isOn(DBG_UI) )
 	DBG::message( "Constructing QApplication ..." );
@@ -127,7 +85,6 @@ uiMain::uiMain( int& argc, char **argv )
 #else
     qInstallMsgHandler( myMessageOutput );
 #endif
-
     
     QPixmap pixmap( XpmIconData );
     app_->setWindowIcon( QIcon(pixmap) );

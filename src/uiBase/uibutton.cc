@@ -14,6 +14,9 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uibutton.h"
 
+#include "pixmap.h"
+#include "uimain.h"
+
 #include "i_qbutton.h"
 
 #include <QPushButton>
@@ -250,19 +253,23 @@ uiPushButton::uiPushButton( uiGroup* parnt, const char* nm, const CallBack& cb,
     setText( mButtonText( nm, ia ));
 }
 
-/*
-uiPushButton::uiPushButton( uiParent* parnt, const char* nm,
+
+uiPushButton::uiPushButton( uiGroup* parnt, const char* nm,
 			    const ioPixmap& pm, bool ia )
-    : uiButton( parnt, nm, 0, mkbody(parnt,&pm,nm,ia) )
-{}
+    : uiButton( parnt, nm, 0, new QPushButton )
+{
+    setText( mButtonText( nm, ia ) );
+}
 
 
-uiPushButton::uiPushButton( uiParent* parnt, const char* nm,
+uiPushButton::uiPushButton( uiGroup* parnt, const char* nm,
 			    const ioPixmap& pm, const CallBack& cb, bool ia )
-    : uiButton( parnt, nm, &cb, mkbody(parnt,&pm,nm,ia) )
-{}
+    : uiButton( parnt, nm, &cb, new QPushButton )
+{
+    setText( mButtonText( nm, ia ) );
+}
 
-*/
+
 uiPushButton::~uiPushButton()
 {
 }
@@ -278,7 +285,7 @@ void uiPushButton::setDefault( bool yn )
     //setFocus();
 }
 
-/*
+
 void uiPushButton::setPixmap( const char* pmnm )
 {
     setPixmap( ioPixmap(pmnm) );
@@ -290,10 +297,10 @@ void uiPushButton::setPixmap( const ioPixmap& pm )
     if ( !isMainThreadCurrent() )
 	return;
 
-    body_->setIconFrac( 0.7 );
-    body_->setIcon( *pm.qpixmap() );
+    //getButton()->setIconFrac( 0.7 );
+    getButton()->setIcon( *pm.qpixmap() );
 }
-*/
+
 /*
 uiRadioButton::uiRadioButton( uiParent* p, const char* nm )
     : uiButton(p,nm,0,mkbody(p,nm))

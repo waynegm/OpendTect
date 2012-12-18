@@ -15,16 +15,7 @@ ________________________________________________________________________
 
 #include "uibaseobject.h"
 
-//class uiParent;
-//class uiButtonBody;
-//class uiCheckBoxBody;
-//class uiPushButtonBody;
-//class uiRadioButtonBody;
-//mFDQtclass(QAbstractButton)
-
-//class uiPopupMenu;
-//class ioPixmap;
-//mFDQtclass(QEvent)
+class ioPixmap;
 class i_ButMessenger;
 
 mFDQtclass(QPushButton);
@@ -41,7 +32,7 @@ public:
     virtual void	setText(const char*);
     const char*		text();
 
-    //irtual void	click()			{}
+    //virtual void	click()			{}
 
     Notifier<uiButton>	activated;
 
@@ -69,18 +60,18 @@ public:
 				uiPushButton(uiGroup*,const char* nm,
 					     const CallBack&,
 					     bool immediate); 
-/*				uiPushButton(uiGroup*,const char* nm,
+				uiPushButton(uiGroup*,const char* nm,
 					     const ioPixmap&,
 					     bool immediate);
 				uiPushButton(uiGroup*,const char* nm,
 					     const ioPixmap&,const CallBack&,
 					     bool immediate);
- */
+
 				~uiPushButton();
 
     void			setDefault(bool yn=true);
-    //    void			setPixmap(const char*);
-    //void			setPixmap(const ioPixmap&);
+    void			setPixmap(const char*);
+    void			setPixmap(const ioPixmap&);
     				//! Size of pixmap is 1/2 the size of button
 
     void			click();

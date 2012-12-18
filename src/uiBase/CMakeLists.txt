@@ -11,7 +11,8 @@ set( QT_MOC_HEADERS
 		i_qbutton.h
 		i_qobjectptr.h
 	)
-set( OD_MODULE_SOURCES  
+set( OD_MODULE_SOURCES
+		pixmap.cc
 		uibaseobject.cc
 		uibutton.cc
 		uidialog.cc
@@ -19,7 +20,9 @@ set( OD_MODULE_SOURCES
 		uigroup.cc
 		uilabel.cc
 		uimain.cc
+		uirgbarray.cc
 		uiwindowbase.cc
+		
 	)
 set( OD_MODULE_GUI_PROGS od_test_uiBase.cc )
 OD_INIT_MODULE()

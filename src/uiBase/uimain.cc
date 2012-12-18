@@ -38,14 +38,18 @@ void uiMain::setXpmIconData( const char** xpmdata )
 }
 
 #ifdef __win__
-# include <QWindowsVistaStyle>
+# include <QWindowsVistaStyle> 
 #endif
 #ifdef __mac__
 # include <QMacStyle>
 #endif
 
 #ifdef __lux__
-# include <QFusionStyle>
+# if QT_VERSION >= 0x050000
+#  include <QFusionStyle>
+# else
+#  include <QCleanlooksStyle>
+# endif
 #endif
 
 #if QT_VERSION >= 0x050000
@@ -96,7 +100,11 @@ uiMain::uiMain( int& argc, char **argv )
 	styl = new QMacStyle;
 # else
     if ( !styl )
+#  if QT_VERSION >= 0x050000
 	styl = new QFusionStyle;
+#  else
+	styl = new QCleanlooksStyle;
+#  endif
 # endif
 #endif
     

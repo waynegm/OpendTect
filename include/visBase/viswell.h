@@ -34,7 +34,9 @@ template <class T> class Interval;
 namespace osgGeo
 {
     class MarkerSet;
+    class PlaneWellLog;
 }
+
 
 namespace visBase
 {
@@ -57,6 +59,8 @@ public:
 
     static Well*		create()
     				mCreateDataObj(Well);
+
+    enum			Side { Left, Right };
 
     mStruct(visBase) BasicParams
     {
@@ -128,7 +132,7 @@ public:
 	bool			isblock_;
 	int                 	logwidth_;
 	int                 	logidx_;
-	int                 	lognr_;
+	Well::Side              side_;
 	Interval<float> 	range_;
 	Interval<float> 	valrange_;
 	bool 			sclog_; 
@@ -149,43 +153,42 @@ public:
     void			setLineStyle(const LineStyle&);
 
     void 			initializeData(const LogParams&,int);
-    void			setLogData(const TypeSet<Coord3Value>&, 
-					   const LogParams&);
-    void			setFilledLogData(const TypeSet<Coord3Value>&, 
-					   	 const LogParams&);
     float 			getValue(const TypeSet<Coord3Value>&,int,bool,
 	    				 const LinScaler&) const;
     Coord3 			getPos(const TypeSet<Coord3Value>&,int) const;
-    void			setLogColor(const Color&,int);
-    const Color&		logColor(int) const;
+    void			setLogColor(const Color&,Side);
+    const Color&		logColor(Side) const;
     const Color&		logFillColor(int) const;
-    void			clearLog(int);
-    void			setLogLineDisplayed(bool,int);
-    bool			logLineDisplayed(int) const;
-    void			setLogLineWidth(float,int);
-    float			logLineWidth(int) const;
-    void			setLogWidth(int,int);
+    void			clearLog(Side);
+
+    void			setLogLineDisplayed(bool,Side);
+    bool			logLineDisplayed(Side) const;
+    void			setLogLineWidth(float,Side);
+    float			logLineWidth(Side) const;
+    void			setLogWidth(int,Side);
     int				logWidth() const;
     void			showLogs(bool);
-    void			showLog(bool,int);
+    void			showLog(bool,Side);
     bool			logsShown() const;
     void			showLogName(bool);
     bool			logNameShown() const; 
-    void			setLogStyle(bool,int);
-    void			setLogFill(bool,int);
+    void			setLogStyle(bool,Side);
+    void			setLogFill(bool,Side);
     void			setLogBlock(bool,int);
-    void			setOverlapp(float,int);
-    void			setRepeat(int);
+    void			setOverlapp(float,Side);
+    void			setRepeat( int,Side );
     void			removeLogs();
-    void			hideUnwantedLogs(int,int);
-    void			showOneLog(bool,int,int);
     void 			setTrackProperties(Color&,int);
-    void			setLogFillColorTab(const LogParams&,int);
+    void			setLogFillColorTab(const LogParams&,Side);
 
     void			setDisplayTransformation(const mVisTrans*);
     const mVisTrans*		getDisplayTransformation() const;
     void			setZAxisTransform(ZAxisTransform*,TaskRunner*);
 
+    void			setLogData(const TypeSet<Coord3Value>& crdvals,
+					 const TypeSet<Coord3Value>& crdvalsF, 
+					const LogParams& lp, bool isFilled );
+    
     void			fillPar(IOPar&) const;
     int				usePar(const IOPar& par);
     int				markersize_;
@@ -205,6 +208,9 @@ protected:
 
     PolyLine*				track_;
     osgGeo::MarkerSet*			markerset_;
+    osgGeo::PlaneWellLog*		leftlog_;
+    osgGeo::PlaneWellLog*		rightlog_;
+
     Text2*				welltoptxt_;
     Text2*				wellbottxt_;
     DataObjectGroup*			markergroup_;
@@ -225,10 +231,14 @@ private:
 						const FontData&);
     void				setMarkerSet(const MarkerParams&);
 
+    void				getLinScale(const LogParams&,
+						    LinScaler&,
+						    bool isFill = true);
+    void				getLinScaleRange( const LinScaler&, Interval<float>&, 
+					float&, float&, bool);
+
 };
 
 } // namespace visBase
 
 #endif
-
-

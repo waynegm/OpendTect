@@ -1,8 +1,9 @@
+
 /*+
 ________________________________________________________________________
 
- (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
- Author:        Nanne Hemstra
+ (C) dGB B eheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
+ Author:        Nanne Hemstra 
  Date:          October 2003
 ________________________________________________________________________
 
@@ -33,7 +34,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Material>
 #include <osg/Node>
 #include <osgGeo/MarkerSet>
+#include <osgGeo/PlaneWellLog>
 #include <osgText/Text>
+
 
 mCreateFactoryEntry( visBase::Well );
 
@@ -59,10 +62,12 @@ Well::Well()
     , transformation_(0)
     , zaxistransform_(0)
     , voiidx_(-1)
-    , markerset_( new osgGeo::MarkerSet() )
+    , markerset_( new osgGeo::MarkerSet )
+    , leftlog_( new osgGeo::PlaneWellLog )
+    , rightlog_( new osgGeo::PlaneWellLog )
 {
     markerset_->ref();
-    addChild( markerset_);
+    addChild( markerset_ );
 
     track_ = PolyLine::create();
     track_->ref();  
@@ -84,17 +89,17 @@ Well::Well()
     markernames_->ref();
     addChild( markernames_->osgNode() );
 
-    //lognmswitch_ = new SoSwitch;
-    ////lognmleft_ = Text2::create();
-    ////lognmswitch_->addChild( lognmleft_->osgNode()() );
-    ////lognmright_ = Text2::create();
-    ////lognmswitch_->addChild( lognmright_->osgNode()() );
-    //lognmswitch_->whichChild = 0;
+    constantlogsizefac_ = constantLogSizeFactor();
 
-    //constantlogsizefac_ = constantLogSizeFactor();
+    leftlog_->ref();
+    leftlog_->setLogConstantSizeFactor(constantlogsizefac_);
+    addChild( leftlog_ );
 
-    //setRepeat(0);
+    rightlog_->ref();
+    rightlog_->setLogConstantSizeFactor(constantlogsizefac_);
+    addChild( rightlog_ );
 }
+
 
 Well::~Well()
 {
@@ -103,9 +108,13 @@ Well::~Well()
     removeChild( track_->osgNode() );
     track_->unRef();
 
-    removeLogs();
     markerset_->unref();
+
+    removeLogs();
+    leftlog_->unref();
+    rightlog_->unref();
 }
+
 
 void Well::setZAxisTransform( ZAxisTransform* zat, TaskRunner* )
 {
@@ -123,6 +132,7 @@ void Well::setZAxisTransform( ZAxisTransform* zat, TaskRunner* )
 	zaxistransform_->ref();
     }
 }
+
 
 void Well::setTrack( const TypeSet<Coord3>& pts )
 {
@@ -146,6 +156,7 @@ void Well::setTrack( const TypeSet<Coord3>& pts )
 	    continue;
 
 	track_->getCoordinates()->setPos( ptidx, pts[idx] );
+	Coord3 crd = track_->getPoint(idx);
 	ptidx++;
     }
     
@@ -164,6 +175,7 @@ void Well::setTrack( const TypeSet<Coord3>& pts )
     rps->setRange( Interval<int>( 0, ptidx-1 ) );
 }
 
+
 void Well::setTrackProperties( Color& col, int width)
 {
     LineStyle lst;
@@ -171,6 +183,7 @@ void Well::setTrackProperties( Color& col, int width)
     lst.width_ = width;
     setLineStyle( lst );
 }
+
 
 void Well::setLineStyle( const LineStyle& lst )
 {
@@ -183,6 +196,7 @@ const LineStyle& Well::lineStyle() const
     return track_->lineStyle();
 }
 
+
 void Well::setText( Text* tx, const char* chr, Coord3* pos,
 		    const FontData& fnt )
 {
@@ -193,6 +207,7 @@ void Well::setText( Text* tx, const char* chr, Coord3* pos,
     tx->setPosition( *pos );
     tx->setJustification( Text::Left );
 }
+
 
 void Well::setWellName( const TrackParams& tp )
 {
@@ -212,25 +227,30 @@ void Well::setWellName( const TrackParams& tp )
 
 }
 
+
 void Well::showWellTopName( bool yn )
 {
     welltoptxt_->turnOn( yn );
 }
+
 
 void Well::showWellBotName( bool yn )
 {
     wellbottxt_->turnOn( yn );
 }
 
+
 bool Well::wellTopNameShown() const
 {
     return welltoptxt_->isOn();
 }
 
+
 bool Well::wellBotNameShown() const
 {
    return wellbottxt_->isOn();
 }
+
 
 void Well::setMarkerSet(const MarkerParams& mp)
 {
@@ -263,6 +283,7 @@ void Well::setMarkerSet(const MarkerParams& mp)
     markerset_->setAutoTransformRotateMode(osg::AutoTransform::NO_ROTATION);
 }
 
+
 void Well::addMarker( const MarkerParams& mp )
 {
     setMarkerSet( mp );
@@ -288,6 +309,7 @@ void Well::addMarker( const MarkerParams& mp )
     return;
 }
 
+
 void Well::removeAllMarkers() 
 {
     markerset_->getVertexArray()->clear();
@@ -295,6 +317,7 @@ void Well::removeAllMarkers()
     markerset_->getVertexArray()->dirty();
     markernames_->removeAll();
 }
+
 
 void Well::setMarkerScreenSize( int size )
 {
@@ -306,16 +329,19 @@ void Well::setMarkerScreenSize( int size )
     }
 }
 
+
 int Well::markerScreenSize() const
 {
     mDynamicCastGet(Marker*,marker,markergroup_->getObject(0))
     return marker ? mNINT32(marker->getScreenSize()) : markersize_;
 }
 
+
 bool Well::canShowMarkers() const
 {
     return markerset_->getVertexArray()->size(); 
 }
+
 
 void Well::showMarkers( bool yn )
 {
@@ -328,6 +354,7 @@ void Well::showMarkers( bool yn )
 	removeChild( markerset_ );
 }
 
+
 bool Well::markersShown() const
 {
     return childIndex( markerset_ )!=-1;
@@ -337,6 +364,7 @@ void Well::showMarkerName( bool yn )
 { 
     markernames_->turnOn(yn);
 }
+
 
 bool Well::markerNameShown() const
 { 
@@ -352,94 +380,138 @@ bool Well::markerNameShown() const
     }\
 }
 
-void Well::setLogData( const TypeSet<Coord3Value>& crdvals, 
-		       const LogParams& lp )
-{
-    /*
-    const bool rev = lp.range_.start > lp.range_.stop;
-
-    Interval<float> rg = lp.valrange_; 
-    const bool isfullfilled = lp.isleftfilled_ && lp.isrightfilled_; 
-    const bool fillrev = !isfullfilled &&  
-		      ( ( lp.lognr_ == 1 && lp.isleftfilled_ && !rev )
-		     || ( lp.lognr_ == 1 && lp.isrightfilled_ && rev )
-		     || ( lp.lognr_ == 2 && lp.isrightfilled_ && !rev )
-		     || ( lp.lognr_ == 2 && lp.isleftfilled_ && rev ) );
-
-    for ( int idx=0; idx<log_.size(); idx++ )
-    {
-	log_[idx]->setRevScale( rev, lp.lognr_ );
-	log_[idx]->setFillRevScale( fillrev, lp.lognr_ );
-    }
-    rg.sort();
-    LinScaler scaler( rg.start, 0, rg.stop, 100 );
-    
-    int nrsamp = crdvals.size();
-    float step = 1;
-    mGetLoopSize( nrsamp, step );
-    int validx = 0;
-    for ( int idx=0; idx<nrsamp; idx++ )
-    {
-	const int index = mNINT32(idx*step);
-	const float val = isfullfilled ? 100 : 
-	    		getValue( crdvals, index, lp.islogarithmic_, scaler );
-	const Coord3& pos = getPos( crdvals, index );
-	if ( mIsUdf( pos.z ) || mIsUdf( val ) )
-	    continue;   
-	
-	for ( int lidx=0; lidx<log_.size(); lidx++ )
-	    log_[lidx]->setLogValue( validx, 
-			    SbVec3f((float) pos.x,(float) pos.y,(float) pos.z), 
-			    val, lp.lognr_ );
-	validx++;
-    }
-    showLog( showlogs_, lp.lognr_ );
-    */
-}
 
 #define mSclogval(val)\
 {\
     val += 1;\
     val = ::log( val );\
 }
-void Well::setFilledLogData( const TypeSet<Coord3Value>& crdvals, 
-			     const LogParams& lp )
-{
-  /*  Interval<float> rg = lp.valfillrange_;
-    rg.sort();
-    float minval = rg.start;
-    float maxval = rg.stop;
 
-    LinScaler scaler( minval, 0, maxval, 100 );
-    int nrsamp = crdvals.size();
-    float step = 1;
-    mGetLoopSize( nrsamp, step );
-    for ( int idx=0; idx<nrsamp; idx++ )
+
+#define FULLFILLVALUE 100
+
+void Well::setLogData(const TypeSet<Coord3Value>& crdvals,
+		    const TypeSet<Coord3Value>& crdvalsF, 
+		    const LogParams& lp, bool isFilled )
+{
+    float rgStartF(.0);
+    float rgStopF(.0);
+    LinScaler scalerF;
+    LinScaler scaler;
+
+    float rgStart(.0);
+    float rgStop(.0);
+    
+    getLinScale(lp,scaler,false);
+    Interval<float> selrg = lp.range_;
+    getLinScaleRange( scaler,selrg,rgStart,rgStop,lp.islogarithmic_ );
+
+    if(isFilled)
     {
-	const int index = mNINT32(idx*step);
-	const float val = getValue( crdvals, index, lp.islogarithmic_, scaler );
-	const Coord3& pos = getPos( crdvals, index );
-	if ( mIsUdf( pos.z ) || mIsUdf( val ) )
-	    continue;   
-	for ( int lidx=0; lidx<log_.size(); lidx++ )
-	    log_[lidx]->setFillLogValue( idx, val, lp.lognr_ );
+	getLinScale(lp,scalerF);
+	Interval<float> selrgF = lp.fillrange_;
+	getLinScaleRange( scalerF,selrgF,rgStartF,rgStopF,lp.islogarithmic_ );
     }
 
-    Interval<float> selrg = lp.fillrange_;
+    const bool rev = lp.range_.start > lp.range_.stop;
+    const bool isfullfilled = lp.isleftfilled_ && lp.isrightfilled_;
+    const bool fillrev = !isfullfilled &&  
+	(  ( lp.side_ == Left  && lp.isleftfilled_  && !rev )
+	|| ( lp.side_ == Left  && lp.isrightfilled_ &&  rev )
+	|| ( lp.side_ == Right && lp.isrightfilled_ && !rev )
+	|| ( lp.side_ == Right && lp.isleftfilled_  &&  rev ) );
+
+    osgGeo::PlaneWellLog* logdisplay = (lp.side_==Left) ? leftlog_ : rightlog_;
+    logdisplay->setRevScale( rev );
+    logdisplay->setFillRevScale( fillrev );
+    logdisplay->setFullFilled( isfullfilled );
+
+    const int nrsamp  = crdvals.size();
+    const int nrsampF = crdvalsF.size();
+    int longsmp = nrsamp >= nrsampF ? nrsamp : nrsampF;
+
+    float step = 1;
+    mGetLoopSize( longsmp, step );
+
+    for ( int idx=0; idx<longsmp; idx++ )
+    {
+	const int index = mNINT32(idx*step);
+	if( idx < nrsamp )
+	{
+	    const float val = isfullfilled ? FULLFILLVALUE : 
+		getValue( crdvals, index, lp.islogarithmic_, scaler );
+	    const Coord3& pos = getPos( crdvals, index );
+
+	    if ( mIsUdf( pos.z ) || mIsUdf( val ) )
+		continue;  
+
+	    osg::Vec3Array* logPath = logdisplay->getPath();
+	    osg::FloatArray* shapeLog = logdisplay->getShapeLog();
+
+	    if(!logPath || !shapeLog)
+		continue;
+
+	    logPath->push_back( 
+		osg::Vec3d((float) pos.x,(float) pos.y,(float) pos.z) );
+	    shapeLog->push_back(val);
+
+	}
+
+	if ( isFilled && nrsampF != 0 && index < nrsampF )
+	{
+	    const float val = getValue( crdvalsF, 
+		  index, lp.islogarithmic_, scalerF );
+	    const Coord3& pos = getPos( crdvalsF, index );
+
+	    if ( mIsUdf( pos.z ) || mIsUdf( val ) )
+		continue;   
+	    osg::FloatArray* fillLog = logdisplay->getFillLogValues();
+	    if( !fillLog ) 
+	        continue;
+	    fillLog->push_back( val );
+	    osg::FloatArray* fillLogDepths = logdisplay->getFillLogDepths();
+	    fillLogDepths->push_back(pos.z);
+	  }
+
+    }
+
+    logdisplay->setMaxFillValue( rgStopF );
+    logdisplay->setMinFillValue( rgStartF );
+    logdisplay->setMaxShapeValue( rgStop );
+    logdisplay->setMinShapeValue( rgStart );
+  
+    showLog( showlogs_, lp.side_ );
+
+}
+
+
+void Well::getLinScaleRange( const LinScaler& scaler,Interval<float>& selrg, 
+    float& rgstart, float& rgstop, bool islogarithmic_ )
+{
     selrg.sort();
-    float rgstop = (float) scaler.scale( selrg.stop );
-    float rgstart = (float) scaler.scale( selrg.start );
-    if ( lp.islogarithmic_ )
+    rgstop = scaler.scale( selrg.stop );
+    rgstart = scaler.scale( selrg.start );
+    if ( islogarithmic_ )
     {
 	mSclogval( rgstop ); 
 	mSclogval( rgstart ); 
     }
-    
-    for ( int logidx=0; logidx<log_.size(); logidx++ )
-	log_[logidx]->setFillExtrValue( rgstop, rgstart, lp.lognr_ );
-
-    showLog( showlogs_, lp.lognr_ );*/
 }
+
+
+void Well::getLinScale( const LogParams& lp,LinScaler& scaler, bool isFill )
+{
+    Interval<float> rg;
+    if( isFill )
+	rg = lp.valfillrange_;
+    else
+	rg = lp.valrange_;
+    rg.sort();
+    float minval = rg.start;
+    float maxval = rg.stop;
+    scaler.set( minval, 0, maxval, 100 );
+}
+
 
 Coord3 Well::getPos( const TypeSet<Coord3Value>& crdv, int idx ) const 
 {
@@ -456,6 +528,7 @@ Coord3 Well::getPos( const TypeSet<Coord3Value>& crdv, int idx ) const
     return pos;
 }
 
+
 float Well::getValue( const TypeSet<Coord3Value>& crdvals, int idx, 
 		      bool sclog, const LinScaler& scaler ) const
 {
@@ -468,207 +541,240 @@ float Well::getValue( const TypeSet<Coord3Value>& crdvals, int idx,
     return val;
 }
 
-void Well::clearLog( int lognr )
+
+void Well::clearLog( Side side )
 {
- /*   for ( int idx=0; idx<log_.size(); idx++ )
-        log_[idx]->clearLog( lognr );*/
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    logdisplay->clearLog();
 }
 
-void Well::hideUnwantedLogs( int lognr, int rpt )
-{ 
-  /*  for ( int idx=rpt; idx<log_.size(); idx++)
-	showOneLog(false, lognr, idx);	*/
-}
 
 void Well::removeLogs()
 {
-  /*  for ( int idx=log_.size()-1; idx>=0; idx-- )
-    {
-	log_[idx]->unrefNoDelete();
-	removeChild( log_[idx]  );
-	log_.removeSingle( idx );
-    }*/
+   leftlog_->clearLog();
+   rightlog_->clearLog();
 }
 
-void Well::setRepeat( int rpt )
+
+void Well::setRepeat( int rpt, Side side )
 {
- //   if ( rpt < 0 || mIsUdf(rpt) ) rpt = 0; 
- //   const int lsz = log_.size();
-
- //   for ( int idx=lsz; idx<rpt; idx++ )
- //   {
-	//log_ += new SoPlaneWellLog;
-	//log_[idx]->setLogConstantSize( log_[0]->logConstantSize() );
-	//log_[idx]->setLogConstantSizeFactor( constantlogsizefac_ );
-	//addChild( log_[idx] );
- //   }
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    logdisplay->setRepeatNumber( rpt );
 }
+
 
 float Well::constantLogSizeFactor() const
 {
-   return .0;
-    //const int inlnr = SI().inlRange( true ).nrSteps();
-    //const int crlnr = SI().crlRange( true ).nrSteps();
-    //const float survfac = Math::Sqrt( (float)(crlnr*crlnr + inlnr*inlnr) );
-    //return survfac * 43; //hack 43 best factor based on F3_Demo
+   const int inlnr = SI().inlRange( true ).nrSteps();
+   const int crlnr = SI().crlRange( true ).nrSteps();
+   const float survfac = Math::Sqrt( (float)(crlnr*crlnr + inlnr*inlnr) );
+   return survfac * 43; //hack 43 best factor based on F3_Demo
 }
 
-void Well::setOverlapp( float ovlap, int lognr )
+
+void Well::setOverlapp( float ovlap, Side side )
 {
- /*   ovlap = 100 - ovlap;
+    ovlap = 100 - ovlap;
     if ( ovlap < 0.0 || mIsUdf(ovlap)  ) ovlap = 0.0;
     if ( ovlap > 100.0 ) ovlap = 100.0;
-    for ( int idx=0; idx<log_.size(); idx++ )
-        log_[idx]->setShift( idx*ovlap, lognr );*/
+
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+
+    logdisplay->setRepeatGap( ovlap );
 }
 
 
-void Well::setLogFill( bool fill, int lognr )
+void Well::setLogFill( bool fill, Side side )
 {
- /*   if ( log_.size() > 0 )
-	log_[0]->setLogFill( fill, lognr );*/
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+
+    logdisplay->setLogFill( fill );
 }
 
 
-void Well::setLogStyle( bool style, int lognr )
+void Well::setLogStyle( bool style, Side side )
 {
- /*   for ( int idx=0; idx<log_.size(); idx++ )
-	log_[idx]->setLogStyle( (1-style), lognr );*/
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+        logdisplay->setSeisLogStyle( (1-style) );
 }
 
-void Well::setLogColor( const Color& col, int lognr )
+
+void Well::setLogColor( const Color& col, Side side )
 {
-//#define col2f(rgb) float(col.rgb())/255
-//    for ( int idx=0; idx<log_.size(); idx++ )
-//        log_[idx]->setLineColor( SbVec3f(col2f(r),col2f(g),col2f(b)), lognr );
+#define col2f(rgb) float(col.rgb())/255
+
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+	osg::Vec4 osgCol = Conv::to<osg::Vec4>(col);
+	logdisplay->setLineColor( osgCol );
+
 }
 
-const Color& Well::logColor( int lognr ) const
+
+const Color& Well::logColor( Side side  ) const
 {
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
     static Color color;
- /*   const SbVec3f& col = log_[0]->lineColor( lognr );
+    const osg::Vec4d& col = logdisplay->getLineColor();
     const int r = mNINT32(col[0]*255);
     const int g = mNINT32(col[1]*255);
     const int b = mNINT32(col[2]*255);
-    color.set( (unsigned char)r, (unsigned char)g, (unsigned char)b );*/
+    color.set( (unsigned char)r, (unsigned char)g, (unsigned char)b );
     return color;
 }
 
+
 #define scolors2f(rgb) float(lp.seiscolor_.rgb())/255
 #define colors2f(rgb) float(col.rgb())/255
-void Well::setLogFillColorTab( const LogParams& lp, int lognr )
+void Well::setLogFillColorTab( const LogParams& lp,  Side side  )
 {
-  /*  int seqidx = ColTab::SM().indexOf( lp.seqname_ );
+    int seqidx = ColTab::SM().indexOf( lp.seqname_ );
     if ( seqidx<0 || mIsUdf(seqidx) ) seqidx = 0;
     const ColTab::Sequence* seq = ColTab::SM().get( seqidx );
 
-    float colors[256][3];
+    osg::ref_ptr<osg::Vec4Array> clrTable = new osg::Vec4Array;
     for ( int idx=0; idx<256; idx++ )
     {
 	const bool issinglecol = ( !lp.iswelllog_ || 
 	    		(lp.iswelllog_ && lp.issinglcol_ ) );
 	float colstep = lp.iscoltabflipped_ ? 1-(float)idx/255 : (float)idx/255;
 	Color col = seq->color( colstep );
-	colors[idx][0] = issinglecol ? scolors2f(r) : colors2f(r);
-	colors[idx][1] = issinglecol ? scolors2f(g) : colors2f(g);
-	colors[idx][2] = issinglecol ? scolors2f(b) : colors2f(b);
+	float r = issinglecol ? scolors2f(r) : colors2f(r);
+	float g = issinglecol ? scolors2f(g) : colors2f(g);
+	float b = issinglecol ? scolors2f(b) : colors2f(b);
+	clrTable->push_back(osg::Vec4(r,g,b,1.0));
     }
 
-    for ( int idx=0; idx<log_.size(); idx++ )
-	log_[idx]->setFilledLogColorTab( colors, lognr );*/
-}
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+	logdisplay->setFillLogColorTab( clrTable );
 
-void Well::setLogLineDisplayed( bool isdisp, int lognr )
-{
- /*   for ( int idx=0; idx<log_.size(); idx++ )
-        log_[idx]->setLineDisplayed( isdisp, lognr );*/
-}
-
-bool Well::logLineDisplayed( int lognr ) const 
-{
-    return true;
- //   return log_.size() ? log_[0]->lineWidth( lognr ) : 0 ;
 }
 
 
-void Well::setLogLineWidth( float width, int lognr )
+void Well::setLogLineDisplayed( bool isdisp, Side side )
 {
- /*   for ( int idx=0; idx<log_.size(); idx++ )
-        log_[idx]->setLineWidth( width, lognr );*/
+    osgGeo::PlaneWellLog::DisplaySide dispside = side==Left
+	? osgGeo::PlaneWellLog::Left
+	: osgGeo::PlaneWellLog::Right;
+
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+
+    logdisplay->setDisplaySide( dispside );
 }
 
-float Well::logLineWidth( int lognr ) const
+
+bool Well::logLineDisplayed( Side side ) const 
 {
-   return .0;
-    // return log_.size() ? log_[0]->lineWidth( lognr ) : 0 ;
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    return logdisplay->getDisplayStatus();
 }
 
-void Well::setLogWidth( int width, int lognr )
+
+void Well::setLogLineWidth( float width, Side side )
 {
-   /* if (lognr == 1)
-    {
-	for ( int i=0; i<log_.size(); i++ )
-	    log_[i]->screenWidth1.setValue( (float)width );
-    }
-    else
-    {
-	for ( int i=0; i<log_.size(); i++ )
-	    log_[i]->screenWidth2.setValue( (float)width );
-    }*/
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    logdisplay->setLineWidth( width );
+}
+
+
+float Well::logLineWidth( Side side ) const
+{
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    return logdisplay->getLineWidth();
+}
+
+
+void Well::setLogWidth( int width, Side side )
+{
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    logdisplay ->setScreenWidth( width );
 }
 
 
 int Well::logWidth() const
 {
-   return .0;
-    //return log_.size() ? mNINT32(log_[0]->screenWidth1.getValue()) 
-		  //    || mNINT32(log_[0]->screenWidth2.getValue()) : false;
+    return mNINT32( leftlog_->getScreenWidth() );
 }
+
 
 void Well::showLogs( bool yn )
 {
-    //showlogs_ = yn;
-    //for ( int idx=0; idx<log_.size(); idx++ )
-    //{
-    //    log_[idx]->showLog( yn, 1 );
-    //    log_[idx]->showLog( yn, 2 );
-    //}
+    if( yn == logsShown() )
+	return;
+
+    if( yn )
+    {
+	addChild( leftlog_ );
+	addChild( rightlog_ );
+    }
+    else
+    {
+	removeChild( leftlog_ );
+	removeChild( rightlog_ );
+    }
 }
 
-void Well::showLog( bool yn, int lognr )
+
+void Well::showLog( bool yn, Side side )
 {
-  /*  for ( int idx=0; idx<log_.size(); idx++ )
-        log_[idx]->showLog( yn, lognr );*/
+    osgGeo::PlaneWellLog* logdisplay = side==Left 
+	? leftlog_
+	: rightlog_;
+    logdisplay->setShowLog( yn );
 }
 
-void Well::showOneLog( bool yn, int lognr, int idx )
-{
-  //  log_[idx]->showLog( yn, lognr );
-}
 
 bool Well::logsShown() const
 {
-    return .0;
-    //  return log_.size() ? log_[0]->logShown(1) || log_[0]->logShown(2) : false;
+   return ( childIndex( leftlog_ )!= -1 || childIndex( rightlog_ ) != -1 ) ?
+       true : false ;
 }
+
 
 void Well::setLogConstantSize( bool yn )
 {
- /*   for ( int idx=0; idx<log_.size(); idx++ )
-	log_[idx]->setLogConstantSize( yn );*/
+    leftlog_->setLogConstantSize( yn );
+    rightlog_->setLogConstantSize( yn );
 }
+
 
 bool Well::logConstantSize() const
 {
-  return .0;
-    //  return log_.size() ? log_[0]->logConstantSize() : true;
+   return  leftlog_->getDisplayStatus() ? leftlog_->logConstantSize() : true;
 }
 
 void Well::showLogName( bool yn )
 {} 
 
+
 bool Well::logNameShown() const
 { return false; }
+
 
 void Well::setDisplayTransformation( const mVisTrans* nt )
 {
@@ -685,8 +791,10 @@ void Well::setDisplayTransformation( const mVisTrans* nt )
     markernames_->setDisplayTransformation( transformation_ );
 }
 
+
 const mVisTrans* Well::getDisplayTransformation() const
 { return transformation_; }
+
 
 void Well::fillPar( IOPar& par ) const
 {
@@ -703,6 +811,7 @@ void Well::fillPar( IOPar& par ) const
     par.set( markerszstr(), markersize_ );
     par.set( logwidthstr(), logWidth() );
 }
+
 
 int Well::usePar( const IOPar& par )
 {

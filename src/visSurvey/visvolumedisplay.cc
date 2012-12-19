@@ -479,18 +479,9 @@ void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
 				    mCast(float,cs.hrg.stop.crl) );
     const Interval<float> zintv( cs.zrg.start, cs.zrg.stop );
 
-    voltrans_->setTranslation( 
-	    	Coord3(xintv.center(),yintv.center(),zintv.center()) );
-    voltrans_->setRotation( Coord3( 0, 1, 0 ), M_PI_2 );
-    voltrans_->setScale( Coord3(-zintv.width(),yintv.width(),xintv.width()) );
-    scalarfield_->setVolumeSize( Interval<float>(-0.5,0.5),
-	    		    Interval<float>(-0.5,0.5),
-			    Interval<float>(-0.5,0.5) );
-
-    voltrans_->setTransRotScale(
-			Coord3(xintv.start,yintv.start,zintv.start),
-			Coord3( 0, 1, 0 ), M_PI_2,
-			Coord3(-zintv.width(),yintv.width(),xintv.width()) );
+    voltrans_->setMatrix( Coord3(xintv.start,yintv.start,zintv.start),
+			  Coord3( 0, 1, 0 ), M_PI_2,
+			  Coord3(-zintv.width(),yintv.width(),xintv.width()) );
 
     for ( int idx=0; idx<slices_.size(); idx++ )
 	slices_[idx]->setSpaceLimits( Interval<float>(-0.5,0.5), 
@@ -972,34 +963,32 @@ CubeSampling VolumeDisplay::getCubeSampling( bool manippos, bool displayspace,
     CubeSampling res;
     if ( manippos )
     {
-	Coord3 center_ = boxdragger_->center();
-	Coord3 width_ = boxdragger_->width();
+	Coord3 center = boxdragger_->center();
+	Coord3 width = boxdragger_->width();
 
-	res.hrg.start = BinID( mNINT32( center_.x - width_.x / 2 ),
-			      mNINT32( center_.y - width_.y / 2 ) );
+	res.hrg.start = BinID( mNINT32( center.x - width.x/2 ),
+			      mNINT32( center.y - width.y/2 ) );
 
-	res.hrg.stop = BinID( mNINT32( center_.x + width_.x / 2 ),
-			     mNINT32( center_.y + width_.y / 2 ) );
+	res.hrg.stop = BinID( mNINT32( center.x + width.x/2 ),
+			     mNINT32( center.y + width.y/2 ) );
 
 	res.hrg.step = BinID( SI().inlStep(), SI().crlStep() );
 
-	res.zrg.start = (float) ( center_.z - width_.z / 2. );
-	res.zrg.stop = (float) ( center_.z + width_.z / 2. );
+	res.zrg.start = (float) ( center.z - width.z/2 );
+	res.zrg.stop = (float) ( center.z + width.z/2 );
     }
     else
     {
 	const Coord3 transl = voltrans_->getTranslation();
 	Coord3 scale = voltrans_->getScale();
-	double dummy = scale.x; scale.x=scale.z; scale.z = dummy;
+	double dummy = -scale.x; scale.x=scale.z; scale.z = dummy;
 
-	res.hrg.start = BinID( mNINT32(transl.x+scale.x/2),
-			       mNINT32(transl.y+scale.y/2) );
-	res.hrg.stop = BinID( mNINT32(transl.x-scale.x/2),
-			       mNINT32(transl.y-scale.y/2) );
+	res.hrg.start = BinID( mNINT32(transl.x), mNINT32(transl.y) );
+	res.hrg.stop = BinID( mNINT32(transl.x+scale.x),
+			      mNINT32(transl.y+scale.y) );
 	res.hrg.step = BinID( SI().inlStep(), SI().crlStep() );
-
-	res.zrg.start = (float) ( transl.z+scale.z/2. );
-	res.zrg.stop = (float) ( transl.z-scale.z/2. );
+	res.zrg.start = float( transl.z );
+	res.zrg.stop = float( transl.z+scale.z );
     }
 
     const bool alreadytf = alreadyTransformed( attrib );

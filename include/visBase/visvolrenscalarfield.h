@@ -65,11 +65,6 @@ public:
 //    const Color&		getBlendColor() const;
     const TypeSet<float>&	getHistogram() const;
 
-    void			setVolumeSize(const Interval<float>& x,
-					      const Interval<float>& y,
-					      const Interval<float>& z);
-    Interval<float>		getVolumeSize(int dim) const;
-
     const char*			writeVolumeFile(std::ostream&) const;
 				//!<\returns 0 on success, otherwise errmsg
 

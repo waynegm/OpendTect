@@ -24,90 +24,35 @@ namespace visBase
 
 Transformation::Transformation()
     : node_( 0 )
+    , curtrans_( *new osg::Vec3d )
+    , currot_( *new osg::Quat )
+    , curscale_( *new osg::Vec3d )
+    , curso_( *new osg::Quat )
 {
     if ( osggroup_ ) osggroup_->unref();
     
     osggroup_ = node_ = new osg::MatrixTransform;
     osggroup_->ref();
+
+    reset();
 }
 
 
 Transformation::~Transformation()
 {
     //node is unreffed in visBase::DataObjectGroup
-}
-
-    
-#define mUpdateOsgMatrix( statement ) \
-    osg::Vec3d trans, scale; \
-    osg::Quat rot, so; \
-    node_->getMatrix().decompose( trans, rot, scale, so ); \
-    statement; \
-    osg::Matrix mat = osg::Matrix::inverse( osg::Matrix::rotate(so) ); \
-    mat *= osg::Matrix::scale( scale ); \
-    mat *= osg::Matrix::rotate( so ); \
-    mat *= osg::Matrix::rotate( rot ); \
-    mat *= osg::Matrix::translate( trans ); \
-    node_->setMatrix( mat );
-
-
-void Transformation::setRotation( const Coord3& vec, double angle )
-{
-    mUpdateOsgMatrix( rot = osg::Quat(angle,Conv::to<osg::Vec3d>(vec)) );
-}
-
-
-void Transformation::setTranslation( const Coord3& vec )
-{
-    osg::Matrix osgmatrix = node_->getMatrix();
-    osgmatrix.setTrans( vec.x, vec.y, vec.z );
-    node_->setMatrix( osgmatrix );
-}
-
-
-Coord3 Transformation::getTranslation() const
-{
-    const osg::Matrix matrix = node_->getMatrix();
-    const osg::Vec3d vec = matrix.getTrans();
-    return Conv::to<Coord3>( vec );
-}
-
-
-void Transformation::setScale( const Coord3& vec )
-{
-    mUpdateOsgMatrix( scale = Conv::to<osg::Vec3d>(vec) );
-    updateNormalizationMode();
-}
-
-
-Coord3 Transformation::getScale() const
-{
-    const osg::Matrix matrix = node_->getMatrix();
-    const osg::Vec3d vec = matrix.getScale();
-    return Conv::to<Coord3>( vec );
-}
-
-
-void Transformation::setTransRotScale( const Coord3& trans,                   
-				       const Coord3& rot,double angle,  
-				       const Coord3& scale ) 
-{
-    osg::Matrix mat = osg::Matrix::scale( Conv::to<osg::Vec3d>(scale) ); 
-    mat *= osg::Matrix::rotate( osg::Quat(angle,Conv::to<osg::Vec3d>(rot)) );
-    mat *= osg::Matrix::translate( Conv::to<osg::Vec3d>(trans) );
-    node_->setMatrix( mat );
-    updateNormalizationMode();
-}
-
-
-void Transformation::setAbsoluteReferenceFrame()
-{
-    node_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    delete &curtrans_;
+    delete &currot_;
+    delete &curscale_;
+    delete &curso_;
 }
 
 
 void Transformation::reset()
 {
+    curtrans_ = osg::Vec3d( 0.0, 0.0, 0.0 );
+    currot_ = curso_ = osg::Quat( 0.0, 0.0, 0.0, 1.0 );
+    curscale_ = osg::Vec3d( 1.0, 1.0, 1.0 );
     node_->setMatrix( osg::Matrix::identity() );
     return;
 }
@@ -124,7 +69,23 @@ void Transformation::setA( double a11, double a12, double a13, double a14,
 			a13, a23, a33, a43,
 			a14, a24, a34, a44 ) );
 
+    node_->getMatrix().decompose( curtrans_, currot_, curscale_, curso_ );
+
     updateNormalizationMode();
+}
+
+
+void Transformation::updateMatrix()
+{
+    osg::Matrix mat = osg::Matrix::scale( curscale_ );
+    if ( !curso_.zeroRotation() )
+    {
+	mat.preMult( osg::Matrix::inverse(osg::Matrix::rotate(curso_)) );
+	mat *= osg::Matrix::rotate( curso_ );
+    }
+    mat *= osg::Matrix::rotate( currot_ );
+    mat *= osg::Matrix::translate( curtrans_ );
+    node_->setMatrix( mat );
 }
 
 
@@ -153,6 +114,66 @@ void Transformation::updateNormalizationMode()
 	node_->getOrCreateStateSet()->setMode( GL_RESCALE_NORMAL,
 					       osg::StateAttribute::ON );
     }
+}
+
+
+void Transformation::setMatrix( const Coord3& trans,
+				const Coord3& rotvec,double rotangle,
+				const Coord3& scale )
+{
+    curtrans_ = Conv::to<osg::Vec3d>( trans );
+    currot_ = osg::Quat( rotangle, Conv::to<osg::Vec3d>(rotvec) );
+    curscale_ = Conv::to<osg::Vec3d>( scale );
+    curso_ = osg::Quat( 0.0, 0.0, 0.0, 1.0 );
+    updateMatrix();
+    updateNormalizationMode();
+}
+
+
+void Transformation::setTranslation( const Coord3& vec )
+{
+    curtrans_ = Conv::to<osg::Vec3d>( vec );
+    updateMatrix();
+}
+
+
+void Transformation::setRotation( const Coord3& vec, double angle )
+{
+    currot_ = osg::Quat( angle, Conv::to<osg::Vec3d>(vec) );
+    updateMatrix();
+}
+
+
+void Transformation::setScale( const Coord3& vec )
+{
+    curscale_ = Conv::to<osg::Vec3d>( vec );
+    updateMatrix();
+    updateNormalizationMode();
+}
+
+
+void Transformation::setScaleOrientation( const Coord3& vec, double angle )
+{
+    curso_ = osg::Quat( angle, Conv::to<osg::Vec3d>(vec) );
+    updateMatrix();
+}
+
+
+Coord3 Transformation::getTranslation() const
+{
+    return Conv::to<Coord3>( curtrans_ );
+}
+
+
+Coord3 Transformation::getScale() const
+{
+    return Conv::to<Coord3>( curscale_ );
+}
+
+
+void Transformation::setAbsoluteReferenceFrame()
+{
+    node_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 }
 
 

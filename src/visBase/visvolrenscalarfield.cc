@@ -260,26 +260,6 @@ const TypeSet<float>& VolumeRenderScalarField::getHistogram() const
 { return histogram_; }
 
 
-void VolumeRenderScalarField::setVolumeSize( const Interval<float>& x,
-					     const Interval<float>& y,
-					     const Interval<float>& z )
-{
-    if ( !voldata_ )
-	return;
-
-    const SbBox3f size( x.start, y.start, z.start, x.stop, y.stop, z.stop );
-    voldata_->setVolumeSize( size );
-}
-
-
-Interval<float> VolumeRenderScalarField::getVolumeSize( int dim ) const
-{
-    if ( !voldata_ ) return Interval<float>();
-
-    const SbBox3f size = voldata_->getVolumeSize();
-    return Interval<float>( size.getMin()[dim], size.getMax()[dim] );
-}
-
 /*
 SoNode* VolumeRenderScalarField::gtInvntrNode()
 {

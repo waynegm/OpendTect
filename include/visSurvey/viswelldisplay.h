@@ -82,24 +82,25 @@ public:
     void			setMarkerScreenSize(int);
     
     //logs
-    void 			fillLogParams(visBase::Well::LogParams&,int);
+    void 			fillLogParams(visBase::Well::LogParams&,
+						visBase::Well::Side side);
 
     const LineStyle*		lineStyle() const;
     void			setLineStyle(const LineStyle&);
     bool			hasColor() const	{ return true; }
     Color			getColor() const;
     void 			setLogData(visBase::Well::LogParams&,bool);
-    void			setLogDisplay(int);
+    void			setLogDisplay(visBase::Well::Side);
     void			calcClippedRange(float,Interval<float>&,int);
     void			displayRightLog();
     void			displayLeftLog();
     void			setOneLogDisplayed(bool);
-    const Color&		logColor(int) const;
-    void			setLogColor(const Color&,int);
-    float			logLineWidth(int) const;
-    void			setLogLineWidth(float,int);
+    const Color&		logColor(visBase::Well::Side) const;
+    void			setLogColor(const Color&,visBase::Well::Side);
+    float			logLineWidth(visBase::Well::Side) const;
+    void			setLogLineWidth(float,visBase::Well::Side);
     int				logWidth() const;
-    void			setLogWidth(int,int);
+    void			setLogWidth(int,visBase::Well::Side);
     bool			logsShown() const;
     void			showLogs(bool);
     bool			logNameShown() const;

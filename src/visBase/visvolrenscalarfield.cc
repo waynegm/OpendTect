@@ -25,11 +25,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osgVolume/RayTracedTechnique>
 #include <osg/TransferFunction>
 
-#include <Inventor/nodes/SoGroup.h>
-
-#include <VolumeViz/nodes/SoTransferFunction.h>
-#include <VolumeViz/nodes/SoVolumeData.h>
-
 mCreateFactoryEntry( visBase::VolumeRenderScalarField );
 
 namespace visBase
@@ -39,11 +34,8 @@ namespace visBase
 
 
 VolumeRenderScalarField::VolumeRenderScalarField()
-    : transferfunc_( 0 )
-    , transferfunc2d_( 0 ) //Not used.
-    , voldata_( 0 )
-    , dummytexture_( 255 )
-    , indexcache_( 0 )
+//    : dummytexture_( 255 )
+    : indexcache_( 0 )
     , ownsindexcache_( true )
     , datacache_( 0 )
     , ownsdatacache_( true )
@@ -87,18 +79,11 @@ VolumeRenderScalarField::VolumeRenderScalarField()
     osgimagelayer_->addProperty( tfp );
 
 
-    useshading_ = Settings::common().isTrue( "dTect.Use VolRen shading" );
-    if ( !useshading_ )
-	SetEnvVar( "CVR_DISABLE_PALETTED_FRAGPROG", "1" );
+    useShading( Settings::common().isTrue("dTect.Use VolRen shading") );
 
-    if ( useshading_ )
-	osgvoltile_->setVolumeTechnique(new osgVolume::RayTracedTechnique);
-    else
-	osgvoltile_->setVolumeTechnique(new osgVolume::FixedFunctionTechnique);
-
-//    Not (yet) used by OSG because of mipmap problems:
-//    osgimagelayer_->setMinFilter( osg::Texture::LINEAR_MIPMAP_LINEAR );
-//    osgimagelayer_->setMagFilter( osg::Texture::LINEAR );
+    // Relies on edits in OSG trunk! Mipmap is said not to do a good job!
+    osgimagelayer_->setMinFilter( osg::Texture::LINEAR_MIPMAP_LINEAR );
+    osgimagelayer_->setMagFilter( osg::Texture::LINEAR );
 }
 
 
@@ -113,6 +98,24 @@ VolumeRenderScalarField::~VolumeRenderScalarField()
     osgimagelayer_->unref();
     osgvoldata_->unref();
     osgtransfunc_->unref();
+}
+
+
+void VolumeRenderScalarField::useShading( bool yn )
+{
+    if ( useshading_==yn && osgvoltile_->getVolumeTechnique() )
+	return;
+
+    if ( yn )
+	osgvoltile_->setVolumeTechnique(new osgVolume::RayTracedTechnique);
+    else
+	osgvoltile_->setVolumeTechnique(new osgVolume::FixedFunctionTechnique);
+
+    useshading_ = yn;
+
+//    Does this have an equivalent in OSG?
+//    if ( !useshading_ )
+//	SetEnvVar( "CVR_DISABLE_PALETTED_FRAGPROG", "1" );
 }
 
 
@@ -314,6 +317,9 @@ void VolumeRenderScalarField::makeColorTables()
     colmap[ 1.0 ] = Conv::to<osg::Vec4>( sequence_.undefColor() );
     osgtransfunc_->assign( colmap );
 
+    if ( !useshading_ )
+	makeIndices( false, 0 );
+
 /*
     if ( !transferfunc_ )
 	return;
@@ -375,7 +381,7 @@ void VolumeRenderScalarField::makeIndices( bool doset, TaskRunner* tr )
     ColTab::MapperTask<unsigned char> indexer( mapper_, totalsz,
 	mNrColors-1, *datacache_, indexcache_ );
 
-    if ( (tr&&!tr->execute( indexer ) ) || !indexer.execute() )
+    if ( tr ? !tr->execute(indexer) : !indexer.execute() )
 	return;
 
     int max = 0;
@@ -393,17 +399,41 @@ void VolumeRenderScalarField::makeIndices( bool doset, TaskRunner* tr )
 	    histogram_[idx] = (float) histogram[idx]/max;
     }
 
-    if ( doset )
+    if ( !useshading_ )
     {
-//	voldata_->setVolumeData( SbVec3s(sz2_,sz1_,sz0_),
-//			         indexcache_, SoVolumeData::UNSIGNED_BYTE );
+	if ( sz2_!=osgvoldata_->s() || sz1_!=osgvoldata_->t() ||
+	     sz0_!=osgvoldata_->r() )                    
+	{
+	    osgvoldata_->allocateImage( sz2_, sz1_, sz0_, GL_RGBA,
+		    			GL_UNSIGNED_BYTE );
+	}  
 
+	unsigned char coltab[1024];
+	for ( int idx=0; idx<=255; idx++ )
+	{
+	    const Color col = Conv::to<Color>( osgtransfunc_->getColor(float(idx)/255) );
+	    coltab[4*idx+0] = col.r();
+	    coltab[4*idx+1] = col.g();
+	    coltab[4*idx+2] = col.b();
+	    coltab[4*idx+3] = 255-col.t();
+	}
+
+	unsigned char* ptr = osgvoldata_->data();
+	const int nrvoxels = sz2_ * sz1_ * sz0_;
+
+	for ( int idx=0; idx<nrvoxels; idx++ )
+	{ 
+	    memcpy( ptr , coltab+4*indexcache_[idx], 4 );
+	    ptr += 4;
+	}
+    }
+    else if ( doset )
+    {
 	osgvoldata_->setImage( sz2_, sz1_, sz0_, GL_LUMINANCE, GL_LUMINANCE,
 		GL_UNSIGNED_BYTE, indexcache_, osg::Image::NO_DELETE, 1 );
     }
     else
     {
-//	voldata_->touch();
 	osgvoldata_->dirty();
     }
 

@@ -21,10 +21,6 @@ ________________________________________________________________________
 #include "visosg.h"
 
 class TaskRunner;
-class SoGroup;
-class SoTransferFunction;
-class So2DTransferFunction;
-class SoVolumeData;
 class IOPar;
 template <class T> class Array3D;
 template <class T> class ValueSeries;
@@ -44,8 +40,7 @@ public:
     static VolumeRenderScalarField*	create()
 	                        	mCreateDataObj(VolumeRenderScalarField);
 
-    void			useShading(bool yn) { useshading_=yn; }
-    				//!<\note must be called before getInventorNode
+    void			useShading(bool yn);
 
     bool			turnOn(bool);
     bool			isOn() const;
@@ -75,10 +70,7 @@ protected:
     void			makeIndices(bool doset,TaskRunner*);
     void			clipData(TaskRunner*);
 
-    SoTransferFunction*		transferfunc_;
-    So2DTransferFunction*	transferfunc2d_;
-    SoVolumeData*		voldata_;
-    unsigned char		dummytexture_;
+//    unsigned char		dummytexture_;
 
     ColTab::Sequence		sequence_;
     ColTab::Mapper		mapper_;
@@ -89,7 +81,7 @@ protected:
     const ValueSeries<float>*	datacache_;
     bool			ownsdatacache_;
     TypeSet<float>		histogram_;
-    Color			blendcolor_;
+//    Color			blendcolor_;
     bool			useshading_;
 
     virtual osg::Node*		gtOsgNode();

@@ -414,7 +414,8 @@ void Well::setLogData(const TypeSet<Coord3Value>& crdvals,
     }
 
     const bool rev = lp.range_.start > lp.range_.stop;
-    const bool isfullfilled = lp.isleftfilled_ && lp.isrightfilled_;
+    const bool isfullfilled = lp.isleftfilled_ && lp.isrightfilled_ && 
+			      lp.iswelllog_;
     const bool fillrev = !isfullfilled &&  
 	(  ( lp.side_ == Left  && lp.isleftfilled_  && !rev )
 	|| ( lp.side_ == Left  && lp.isrightfilled_ &&  rev )

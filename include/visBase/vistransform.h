@@ -26,8 +26,7 @@ namespace visBase
     void func( const tp& f, tp& t ) const; \
     static void func( const Transformation* tr, tp& v ) \
     { if ( tr ) tr->func( v ); } \
-    static void func( const Transformation* tr, const tp& f, tp& t ) \
-    { if ( tr ) tr->func( f, t ); }
+    static void func( const Transformation* tr, const tp& f, tp& t );
     
 #define mDefTrans( tp ) \
 mDefTransType( transform, tp ); \
@@ -38,9 +37,7 @@ mDefTransType( transformBackDir, tp );
     
 #define mDefConvTransType( func, frtp, totp ) \
 void func( const frtp&, totp& ) const; \
-static void func( const Transformation* tr, const frtp& f, totp& t) \
-{ if ( tr ) tr->func( f, t ); } \
-
+static void func( const Transformation* tr, const frtp& f, totp& t);
 
 #define mDefConvTrans( frtp, totp ) \
 mDefConvTransType( transform, frtp, totp ); \

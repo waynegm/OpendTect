@@ -183,14 +183,20 @@ void Transformation::setAbsoluteReferenceFrame()
 void Transformation::func( tp& inp ) const \
 { inp = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); } \
 void Transformation::func( const tp& inp, tp& to ) const \
-{ to = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); }
+{ to = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); } \
+void Transformation::func( const Transformation* tr, const tp& inp, tp& to ) \
+{ \
+    if ( tr ) tr->func( inp, to ); \
+    else to = inp; \
+}
 
 
 #define mDeclTrans( tp ) \
 mDeclTransType( transform, tp, getMatrix, ) \
 mDeclTransType( transformBack, tp, getInverseMatrix, ) \
 mDeclTransType( transformDir, tp, getMatrix, -node_->getMatrix().getTrans() ) \
-mDeclTransType( transformBackDir, tp, getInverseMatrix, -node_->getInverseMatrix().getTrans() )
+mDeclTransType( transformBackDir, tp, getInverseMatrix, \
+		-node_->getInverseMatrix().getTrans() )
 
 #define mToOsgVec( inp ) inp
 #define mFromOsgVec( inp ) inp
@@ -211,14 +217,22 @@ mDeclTrans( Coord3 )
 
 #define mDeclConvTransType( func, frtp, totp, mat, post ) \
 void Transformation::func( const frtp& inp, totp& to ) const \
-{ to = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); }
+{ to = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); } \
+void Transformation::func( const Transformation* tr, const frtp& inp, \
+			   totp& to ) \
+{ \
+    if ( tr ) { tr->func( inp, to ); } \
+    else { to = Conv::to<totp>( inp ); } \
+}
 
 
 #define mDeclConvTrans( frtp, totp ) \
 mDeclConvTransType( transform, frtp, totp, getMatrix, ) \
 mDeclConvTransType( transformBack, frtp, totp, getInverseMatrix, ) \
-mDeclConvTransType( transformDir, frtp, totp, getMatrix, -node_->getMatrix().getTrans() ) \
-mDeclConvTransType( transformBackDir, frtp, totp, getInverseMatrix, -node_->getInverseMatrix().getTrans() )
+mDeclConvTransType( transformDir, frtp, totp, getMatrix, \
+		    -node_->getMatrix().getTrans() ) \
+mDeclConvTransType( transformBackDir, frtp, totp, getInverseMatrix, \
+		    -node_->getInverseMatrix().getTrans() )
 
 #define mToOsgVec( inp ) inp
 #define mFromOsgVec( inp ) Conv::to<Coord3>( inp )
@@ -243,6 +257,4 @@ mDeclConvTrans( Coord3, osg::Vec3f )
 mDeclConvTrans( osg::Vec3f, Coord3 )
 #undef mToOsgVec
 #undef mFromOsgVec
-
-
 

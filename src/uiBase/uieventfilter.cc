@@ -10,8 +10,8 @@ ________________________________________________________________________
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "uieventfilter.h"
-#include "uiobj.h"
 #include "i_qptr.h"
+#include "uibaseobject.h"
 
 #include <QEvent>
 #include <QWidget>
@@ -86,12 +86,12 @@ const QEvent* uiEventFilter::getCurrentEvent() const
 { return impl_->currentevent_; }
 
 
-void uiEventFilter::attach( uiBaseObject* obj )
+void uiEventFilter::attach( uiBaseObject* obj, int idx )
 {
-    if ( !obj->getWidget() )
+    if ( !obj->getWidget( idx ) )
 	return;
 
-    attachToQObj( obj->getWidget() );
+    attachToQObj( obj->getWidget( idx ) );
 }
 
 
@@ -157,9 +157,6 @@ bool uiEventFilterImpl::eventFilter( QObject* obj, QEvent* ev )
     switch (tp) \
     { \
 	mImplCase( fromnmspace, tonmspace, None ); \
-	mImplCase( fromnmspace, tonmspace, AccessibilityDescription ); \
-	mImplCase( fromnmspace, tonmspace, AccessibilityHelp ); \
-	mImplCase( fromnmspace, tonmspace, AccessibilityPrepare ); \
 	mImplCase( fromnmspace, tonmspace, ActionAdded ); \
 	mImplCase( fromnmspace, tonmspace, ActionChanged ); \
 	mImplCase( fromnmspace, tonmspace, ActionRemoved ); \
@@ -229,7 +226,6 @@ bool uiEventFilterImpl::eventFilter( QObject* obj, QEvent* ev )
 	mImplCase( fromnmspace, tonmspace, NonClientAreaMouseButtonRelease ); \
 	mImplCase( fromnmspace, tonmspace, NonClientAreaMouseMove ); \
 	mImplCase( fromnmspace, tonmspace, MacSizeChange ); \
-	mImplCase( fromnmspace, tonmspace, MenubarUpdated ); \
 	mImplCase( fromnmspace, tonmspace, MetaCall ); \
 	mImplCase( fromnmspace, tonmspace, ModifiedChange ); \
 	mImplCase( fromnmspace, tonmspace, MouseButtonDblClick ); \

@@ -55,7 +55,6 @@ mClass(visSurvey) PlaneDataDisplay :  public visSurvey::MultiTextureSurveyObject
 public:
 
     bool			isInlCrl() const { return true; }
-    				//!<I do my rotation myself
 
     enum Orientation		{ Inline=0, Crossline=1, Zslice=2 };
     				DeclareEnumUtils(Orientation);

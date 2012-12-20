@@ -239,9 +239,10 @@ void HorizonDisplay::setSceneEventCatcher(visBase::EventCatcher* ec)
 EM::PosID HorizonDisplay::findClosestNode( const Coord3& pickedpos ) const
 {
     const mVisTrans* ztrans = scene_->getZScaleTransform();
-    Coord3 newpos = ztrans->transformBack( pickedpos );
+    Coord3 newpos;
+    ztrans->transformBack( pickedpos, newpos );
     if ( transformation_ )
-	newpos = transformation_->transformBack( newpos );
+	transformation_->transformBack( newpos );
 
     const BinID pickedbid = SI().transform( newpos );
     const EM::SubID pickedsubid = pickedbid.toInt64();
@@ -260,9 +261,10 @@ EM::PosID HorizonDisplay::findClosestNode( const Coord3& pickedpos ) const
     for ( int idx=0; idx<closestnodes.size(); idx++ )
     {
 	const Coord3 coord = emobject_->getPos( closestnodes[idx] );
-	const Coord3 displaypos = ztrans->transform(
-		transformation_ ? transformation_->transform(coord) : coord );
-
+	Coord3 displaypos;
+	mVisTrans::transform( transformation_, coord, displaypos );
+	mVisTrans::transform( ztrans, displaypos );
+	
 	const float dist = (float) displaypos.distTo( pickedpos );
 	if ( !idx || dist<mindist )
 	{
@@ -1185,7 +1187,8 @@ float HorizonDisplay::calcDist( const Coord3& pickpos ) const
     if ( !emobject_ ) return mUdf(float);
 
     const mVisTrans* utm2display = scene_->getUTM2DisplayTransform();
-    const Coord3 xytpos = utm2display->transformBack( pickpos );
+    Coord3 xytpos;
+    utm2display->transformBack( pickpos, xytpos );
     mDynamicCastGet(const EM::Horizon3D*,hor,emobject_)
     if ( hor )
     {
@@ -1908,7 +1911,7 @@ void HorizonDisplay::updateSectionSeeds(
 	    marker->turnOn( !displayonlyatsections_ );
 	    Coord3 pos = marker->centerPos();
 	    if ( transformation_ )
-		pos = transformation_->transform( pos );
+		transformation_->transform( pos );
 
 	    for ( int idz=0; idz<planelist.size(); idz++ )
 	    {

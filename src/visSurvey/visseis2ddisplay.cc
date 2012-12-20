@@ -606,8 +606,9 @@ SurveyObject* Seis2DDisplay::duplicate( TaskRunner* tr ) const
 
 float Seis2DDisplay::calcDist( const Coord3& pos ) const
 {
-    Coord3 xytpos = scene_ ?
-	scene_->getUTM2DisplayTransform()->transformBack( pos ) : pos;
+    Coord3 xytpos;
+    mVisTrans::transform( scene_ ? scene_->getUTM2DisplayTransform() : 0,
+			 pos, xytpos );
     
     int trcidx; float mindist;
     getNearestTrace( xytpos, trcidx, mindist );

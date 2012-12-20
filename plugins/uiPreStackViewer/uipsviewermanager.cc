@@ -377,8 +377,9 @@ bool uiViewer3DMgr::add3DViewer( const uiMenuHandler* menu,
     //set viewer angle.
     const ui3DViewer*  sovwr = ODMainWin()->sceneMgr().getSoViewer( sceneid );
     const Coord3 campos = sovwr->getCameraPosition();
-    const Coord3 displaycampos = 
-	viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos );
+    Coord3 displaycampos;
+    viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos,
+								displaycampos );
     const BinID dir0 = SI().transform(displaycampos)-SI().transform(pickedpos);
     const Coord dir( dir0.inl, dir0.crl );
     viewer->displaysOnPositiveSide( viewer->getBaseDirection().dot(dir)>0 );

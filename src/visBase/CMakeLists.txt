@@ -13,7 +13,6 @@ SET(OD_MODULE_SOURCES
 	   initvisbase.cc
 	   visanchor.cc
 	   visannot.cc
-	   visbeachball.cc
 	   visboxdragger.cc
 	   viscamera.cc
 	   viscamerainfo.cc
@@ -22,7 +21,6 @@ SET(OD_MODULE_SOURCES
 	   viscolortabindexer.cc
 	   viscoltabmod.cc
 	   viscoord.cc
-	   viscube.cc
 	   visdata.cc
 	   visdatagroup.cc
 	   visdataman.cc
@@ -30,12 +28,10 @@ SET(OD_MODULE_SOURCES
 	   visdetail.cc
 	   visdragger.cc
 	   visdrawstyle.cc
-	   visellipsoid.cc
 	   visevent.cc
 	   visflatviewer.cc
 	   visgridlines.cc
 	   visimage.cc
-	   visinvisiblelinedragger.cc
 	   visgeomindexedshape.cc
 	   vishorizonsection.cc
 	   vislevelofdetail.cc

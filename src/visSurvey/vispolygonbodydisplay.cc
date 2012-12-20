@@ -506,10 +506,11 @@ Coord3 PolygonBodyDisplay::disp2world( const Coord3& displaypos ) const
     if ( pos.isDefined() )
     {
 	if ( scene_ )
-	    pos = scene_->getZScaleTransform()->transformBack( pos );
+	    scene_->getZScaleTransform()->transformBack( pos );
 	if ( displaytransform_ )
-	    pos = displaytransform_->transformBack( pos );
+	    displaytransform_->transformBack( pos );
     }
+    
     return pos;
 }
 

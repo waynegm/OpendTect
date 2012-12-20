@@ -196,13 +196,13 @@ bool MPEDisplay::getPlanePosition( CubeSampling& planebox ) const
     
     if ( voltrans_ )
     {
-	center = voltrans_->transform( center );
+	voltrans_->transform( center );
 	Coord3 spacelim( sx.start, sy.start, sz.start );
-	spacelim = voltrans_->transform( spacelim );
+	voltrans_->transform( spacelim );
 	sx.start = (float) spacelim.x; 
 	sy.start = (float) spacelim.y; 
 	sz.start = (float) spacelim.z;
-	spacelim = voltrans_->transform( Coord3( sx.stop, sy.stop, sz.stop ) ); 
+	voltrans_->transform( Coord3( sx.stop, sy.stop, sz.stop ), spacelim );
 	sx.stop = (float) spacelim.x; 
 	sy.stop = (float) spacelim.y; 
 	sz.stop = (float) spacelim.z;
@@ -321,13 +321,13 @@ void MPEDisplay::moveMPEPlane( int nr )
     
     if ( voltrans_ )
     {
-	center = voltrans_->transform( center );
+	voltrans_->transform( center );
 	Coord3 spacelim( sx.start, sy.start, sz.start );
-	spacelim = voltrans_->transform( spacelim );
+	voltrans_->transform( spacelim );
 	sx.start = (float) spacelim.x;	
 	sy.start = (float) spacelim.y;	
 	sz.start = (float) spacelim.z;
-	spacelim = voltrans_->transform( Coord3( sx.stop, sy.stop, sz.stop ) ); 
+	voltrans_->transform( Coord3( sx.stop, sy.stop, sz.stop ), spacelim );
 	sx.stop = (float) spacelim.x;	
 	sy.stop = (float) spacelim.y;	
 	sz.stop = (float) spacelim.z;
@@ -362,9 +362,8 @@ void MPEDisplay::moveMPEPlane( int nr )
 	     !sz.includes(center.z,false) )
 	    return;
 	
-	Coord3 newcenter( center );
-	if ( voltrans_ )
-	    newcenter = voltrans_->transformBack( center );
+	Coord3 newcenter;
+	mVisTrans::transform( voltrans_, center, newcenter );
 	slices_[dim_]->setCenter( newcenter, false );
     }
 
@@ -668,7 +667,8 @@ void MPEDisplay::updateBoxSpace()
 float MPEDisplay::calcDist( const Coord3& pos ) const
 {
     const mVisTrans* utm2display = scene_->getUTM2DisplayTransform();
-    const Coord3 xytpos = utm2display->transformBack( pos );
+    Coord3 xytpos;
+    utm2display->transformBack( pos, xytpos );
     const BinID binid = SI().transform( Coord(xytpos.x,xytpos.y) );
 
     CubeSampling cs; 
@@ -791,7 +791,7 @@ void MPEDisplay::alignSliceToSurvey( visBase::OrthogonalSlice& slice )
     Coord3 center = slice.getDragger()->center();
 
     if ( voltrans_ )
-	center = voltrans_->transform( center );
+	voltrans_->transform( center );
 
     if ( slice.getDim() == cInLine() )
 	center.x = SI().inlRange(true).snap( center.x );
@@ -801,7 +801,7 @@ void MPEDisplay::alignSliceToSurvey( visBase::OrthogonalSlice& slice )
 	center.z = SI().zRange(true).snap( center.z );
 
     if ( voltrans_ )
-	center = voltrans_->transformBack( center );
+	voltrans_->transformBack( center );
 
     slice.setCenter( center, false );
 }

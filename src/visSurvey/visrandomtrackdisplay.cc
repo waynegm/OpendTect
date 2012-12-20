@@ -859,7 +859,8 @@ SurveyObject::AttribFormat RandomTrackDisplay::getAttributeFormat( int ) const
 Coord3 RandomTrackDisplay::getNormal( const Coord3& pos ) const
 {
     const mVisTrans* utm2display = scene_->getUTM2DisplayTransform();
-    Coord3 xytpos = utm2display->transformBack( pos );
+    Coord3 xytpos;
+    utm2display->transformBack( pos, xytpos );
     BinID binid = SI().transform( Coord(xytpos.x,xytpos.y) );
 
     TypeSet<BinID> bids;
@@ -900,7 +901,8 @@ Coord3 RandomTrackDisplay::getNormal( const Coord3& pos ) const
 float RandomTrackDisplay::calcDist( const Coord3& pos ) const
 {
     const mVisTrans* utm2display = scene_->getUTM2DisplayTransform();
-    Coord3 xytpos = utm2display->transformBack( pos );
+    Coord3 xytpos;
+    utm2display->transformBack( pos, xytpos );
     BinID binid = SI().transform( Coord(xytpos.x,xytpos.y) );
 
     TypeSet<BinID> bids;

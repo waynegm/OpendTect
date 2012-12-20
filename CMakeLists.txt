@@ -50,7 +50,6 @@ SET(OD_MODULES
 )
 
 SET( OD_PLUGINS
-	Bouncy
 	ExpAttribs
 	GapDecon
 	GoogleTranslate
@@ -61,7 +60,6 @@ SET( OD_PLUGINS
 	MadagascarAttribs
 	VoxelConnectivityFilter
 	TextureAttrib
-	uiBouncy
 	uiDPSDemo
 	uiExpAttribs
 	uiGapDecon

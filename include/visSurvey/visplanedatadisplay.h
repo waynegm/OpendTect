@@ -54,15 +54,14 @@ mClass(visSurvey) PlaneDataDisplay :  public visSurvey::MultiTextureSurveyObject
 {
 public:
 
-    bool			isInlCrl() const { return !inl2displaytrans_; }
+    bool			isInlCrl() const { return true; }
+    				//!<I do my rotation myself
 
     enum Orientation		{ Inline=0, Crossline=1, Zslice=2 };
     				DeclareEnumUtils(Orientation);
 
     static PlaneDataDisplay*	create()
 				mCreateDataObj(PlaneDataDisplay);
-
-    void			setInlCrlSystem(const InlCrlSystem*);
 
     void			setOrientation(Orientation);
     Orientation			getOrientation() const { return orientation_; }
@@ -150,7 +149,7 @@ public:
     virtual void		fillPar(IOPar&) const;
     virtual int			usePar(const IOPar&);
 
-    void			setDisplayTransformation(const mVisTrans*) {}
+    void			setDisplayTransformation(const mVisTrans*);
 
 protected:
 
@@ -194,10 +193,12 @@ protected:
     void			triggerDeSel();
 
     CubeSampling		snapPosition(const CubeSampling&) const;
+    
+    void			setDisplayTransform(mVisTrans*);
 
     visBase::EventCatcher*		eventcatcher_;
     MouseCursor				mousecursor_;
-    visBase::DepthTabPlaneDragger*	dragger_;
+    RefMan<visBase::DepthTabPlaneDragger> dragger_;
     visBase::Material*			draggermaterial_;
     
     visBase::GridLines*			gridlines_;
@@ -217,8 +218,8 @@ protected:
     ZAxisTransform*			datatransform_;
     mutable int				voiidx_;
 
-    mVisTrans*				inl2displaytrans_;
-    visBase::TextureRectangle*		texturerect_;
+    RefMan<const mVisTrans>		displaytrans_;
+    RefMan<visBase::TextureRectangle>	texturerect_;
 
     static const char*		sKeyOrientation() { return "Orientation"; }
     static const char*		sKeyResolution()  { return "Resolution"; }

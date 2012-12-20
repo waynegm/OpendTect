@@ -21,6 +21,34 @@ namespace osg { class MatrixTransform; class Vec3d; class Vec3f; class Quat; }
 
 namespace visBase
 {
+#define mDefTransType( func, tp ) \
+    void func( tp& ) const; \
+    void func( const tp& f, tp& t ) const; \
+    static void func( const Transformation* tr, tp& v ) \
+    { if ( tr ) tr->func( v ); } \
+    static void func( const Transformation* tr, const tp& f, tp& t ) \
+    { if ( tr ) tr->func( f, t ); }
+    
+#define mDefTrans( tp ) \
+mDefTransType( transform, tp ); \
+mDefTransType( transformBack, tp ); \
+mDefTransType( transformDir, tp ); \
+mDefTransType( transformBackDir, tp );
+
+    
+#define mDefConvTransType( func, frtp, totp ) \
+void func( const frtp&, totp& ) const; \
+static void func( const Transformation* tr, const frtp& f, totp& t) \
+{ if ( tr ) tr->func( f, t ); } \
+
+
+#define mDefConvTrans( frtp, totp ) \
+mDefConvTransType( transform, frtp, totp ); \
+mDefConvTransType( transformBack, frtp, totp ); \
+mDefConvTransType( transformDir, frtp, totp ); \
+mDefConvTransType( transformBackDir, frtp, totp );
+
+
 /*! \brief
 The Transformation is an object that transforms everything following the
 node.
@@ -64,23 +92,15 @@ public:
     Coord3		getScale() const;
 
     void		setAbsoluteReferenceFrame();
-
-    Coord3		transform(const Coord3&) const;
-    Coord3		transformBack(const Coord3&) const;
-    void		transform(const Coord3&, osg::Vec3f&) const;
-    void		transform(osg::Vec3d&) const;
-    void		transformBack(osg::Vec3d&) const;
-    void		transform(osg::Vec3f&) const;
-    void		transformBack(osg::Vec3f&) const;
-
-    Coord3		transformDir(const Coord3&) const;
-    Coord3		transformDirBack(const Coord3&) const;
     
-    static void		transform(const Transformation*,const Coord3&,
-				  osg::Vec3f&);
-    static void		transform(const Transformation*,const osg::Vec3f&,
-				  osg::Vec3f&);
-
+			mDefTrans( Coord3 );
+			mDefTrans( osg::Vec3d );
+			mDefTrans( osg::Vec3f );
+    			mDefConvTrans( Coord3, osg::Vec3d );
+    			mDefConvTrans( Coord3, osg::Vec3f );
+    			mDefConvTrans( osg::Vec3d, Coord3 );
+    			mDefConvTrans( osg::Vec3f, Coord3 );
+    
 private:
 
     virtual		~Transformation();

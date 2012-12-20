@@ -14,12 +14,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "cubesampling.h"
 #include "vistexturechannels.h"
 
+
 #include <osgGeo/TexturePlane>
 
 mCreateFactoryEntry( visBase::TextureRectangle );
 
-namespace visBase
-{
+using namespace visBase;
+
 
 TextureRectangle::TextureRectangle()
     : VisualObjectImpl( false )
@@ -45,27 +46,33 @@ void TextureRectangle::setTextureChannels( visBase::TextureChannels* channels )
 
 void TextureRectangle::setCenter( const Coord3& center )
 {
-    textureplane_->setCenter( osg::Vec3f(center.x, center.y, center.z ) );
+    osg::Vec3 osgcenter;
+    mVisTrans::transform( displaytrans_, center, osgcenter );
+    textureplane_->setCenter( osgcenter );
 }
 
 
 Coord3 TextureRectangle::getCenter() const
 {
-    const osg::Vec3f center = textureplane_->getCenter();
-    return Coord3( center.x(), center.y(), center.z() );
+    Coord3 res;
+    mVisTrans::transformBack( displaytrans_, textureplane_->getCenter(), res );
+    return res;
 }
 
 
 void TextureRectangle::setWidth( const Coord3& width )
 {
-    textureplane_->setWidth( osg::Vec3f(width.x, width.y, width.z ) );
+    osg::Vec3f osgwidth;
+    mVisTrans::transformDir( displaytrans_, width, osgwidth );
+    textureplane_->setWidth( osgwidth );
 }
 
 
 Coord3 TextureRectangle::getWidth() const
 {
-    const osg::Vec3f width = textureplane_->getWidth();
-    return Coord3( width.x(), width.y(), width.z() );
+    Coord3 res;
+    mVisTrans::transformBackDir( displaytrans_, textureplane_->getWidth(), res);
+    return res;
 }
 
 
@@ -79,6 +86,13 @@ bool TextureRectangle::areTextureAxesSwapped() const
 {
     return textureplane_->areTextureAxesSwapped();
 }
+    
 
-
-}; // namespace visBase
+void TextureRectangle::setDisplayTransformation( const mVisTrans* tr )
+{
+    const Coord3 center = getCenter();
+    const Coord3 width = getWidth();
+    displaytrans_ = tr;
+    setCenter( center );
+    setWidth( width );
+}

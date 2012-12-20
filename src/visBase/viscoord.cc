@@ -123,9 +123,7 @@ int Coordinates::addPos( const Coord3& pos )
     Coord3 postoset = pos;
     if ( postoset.isDefined() )
     {
-	if ( transformation_ )
-	    postoset = transformation_->transform( postoset );
-
+	Transformation::transform( transformation_, postoset );
     }
 
     mGetOsgVec3Arr(osgcoords_)->push_back( Conv::to<osg::Vec3>(postoset) );
@@ -161,7 +159,7 @@ Coord3 Coordinates::getPos( int idx, bool scenespace ) const
     if ( res.isDefined() )
     {
 	if ( transformation_ && !scenespace )
-	    res = transformation_->transformBack( res );
+	    transformation_->transformBack( res );
     }
 
     return res;
@@ -195,7 +193,7 @@ void Coordinates::setPosWithoutLock( int idx, const Coord3& pos )
 
     Coord3 postoset = pos;
     if ( postoset.isDefined() && transformation_ )
-	postoset = transformation_->transform( postoset );
+	transformation_->transform( postoset );
     
     if ( idx>=mGetOsgVec3Arr(osgcoords_)->size() )
 	mGetOsgVec3Arr(osgcoords_)->resize( idx+1 );

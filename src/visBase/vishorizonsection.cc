@@ -2432,7 +2432,7 @@ void HorizonSectionTile::setPositions( const TypeSet<Coord3>& pos )
 	{
 	    Coord3 crd = pos[idx];
 	    if ( trans )
-		crd = trans->transform( crd );
+		trans->transform( crd );
 
 	    coords_[idx] = SbVec3f( crd[0], crd[1], crd[2] );
 	    bbox_.extendBy( coords_[idx] );
@@ -2483,9 +2483,8 @@ void HorizonSectionTile::setPos( int row, int col, const Coord3& pos )
 	    coords_[posidx][2] = 1e30;
 	else
 	{
-	    Coord3 crd = section_.transformation_
-		? section_.transformation_->transform( pos )
-		: pos;
+	    Coord3 crd;
+	    mVisTrans::transform( section_.transformation_, pos, crd );
 
 	    coords_[posidx] = SbVec3f( crd[0], crd[1], crd[2] );
 	    if ( !needsupdatebbox_ )

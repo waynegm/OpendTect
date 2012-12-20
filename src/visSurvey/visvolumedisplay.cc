@@ -102,14 +102,8 @@ VolumeDisplay::VolumeDisplay()
     , csfromsession_(true)
     , eventcatcher_( 0 )
     , onoffstatus_( true )
-    , inl2displaytrans_( 0 )
 {
-
-    inl2displaytrans_ = mVisTrans::create();
-    inl2displaytrans_->ref();
-    addChild( inl2displaytrans_->osgNode() );
-
-    inl2displaytrans_->addObject( boxdragger_ );
+    addChild( boxdragger_->osgNode() );
 
     boxdragger_->ref();
     boxdragger_->setBoxTransparency( 0.7 );
@@ -121,7 +115,7 @@ VolumeDisplay::VolumeDisplay()
     getMaterial()->change.notify(mCB(this,VolumeDisplay,materialChange) );
     voltrans_->ref();
 
-    inl2displaytrans_->addObject( voltrans_ );
+    addChild( voltrans_->osgNode() );
 
     scalarfield_ = visBase::VolumeRenderScalarField::create();
     scalarfield_->ref(); //Don't add it here, do that in getInventorNode
@@ -156,19 +150,6 @@ VolumeDisplay::~VolumeDisplay()
     scalarfield_->unRef();
 
     setZAxisTransform( 0,0 );
-
-    if ( inl2displaytrans_ ) inl2displaytrans_->unRef();
-}
-
-
-void VolumeDisplay::setInlCrlSystem(const InlCrlSystem* ics )
-{
-    SurveyObject::setInlCrlSystem( ics );
-    if ( inl2displaytrans_ )
-    {
-	STM().setIC2DispayTransform(inlcrlsystem_->sampling().hrg,
-				    inl2displaytrans_);
-    }
 }
 
 

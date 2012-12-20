@@ -486,18 +486,19 @@ Coord3 LocationDisplay::display2World( const Coord3& pos ) const
 {
     Coord3 res = pos;
     if ( scene_ )
-	res = scene_->getZScaleTransform()->transformBack( pos );
+	scene_->getZScaleTransform()->transformBack( res );
     if ( transformation_ )
-	res = transformation_->transformBack( res );
+	transformation_->transformBack( res );
     return res;
 }
 
 
 Coord3 LocationDisplay::world2Display( const Coord3& pos ) const
 {
-    Coord3 res = transformation_ ? transformation_->transform( pos ) : pos;
+    Coord3 res;
+    mVisTrans::transform( transformation_, pos, res );
     if ( scene_ )
-	res = scene_->getZScaleTransform()->transform( res );
+	scene_->getZScaleTransform()->transform( res );
     return res;
 }
 
@@ -742,7 +743,7 @@ void LocationDisplay::otherObjectsMoved(
 	if ( datatransform_ ) pos.z = datatransform_->transform( pos );
 
 	if ( scene_ )
-	    pos = scene_->getUTM2DisplayTransform()->transform( pos );
+	    scene_->getUTM2DisplayTransform()->transform( pos );
 
 	bool newstatus;
 	if ( !pos.isDefined() )

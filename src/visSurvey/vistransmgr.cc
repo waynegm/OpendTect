@@ -28,18 +28,10 @@ SceneTransformManager& STM()
     if ( !tm ) mTryAlloc( tm, SceneTransformManager );
     return *tm;
 }
-
-
-mVisTrans* SceneTransformManager::createZScaleTransform() const
-{
-    mVisTrans* tf = mVisTrans::create();
-    setZScale( tf, defZStretch() );
-    return tf;
-}
-
+    
 
 void SceneTransformManager::setZScale( mVisTrans* tf,
-				       float zscale ) const
+				       float zscale )
 {
     if ( !tf ) return;
 
@@ -60,24 +52,27 @@ SceneTransformManager::createUTM2DisplayTransform( const HorSampling& hs ) const
 
     tf->setA(	1,	0,	0,	-startpos.x,
 	    	0,	1,	0,	-startpos.y,
-		0,	0,	-1,	0,
+		0,	0,	-curzscale_,	0,
 		0,	0,	0,	1 );
     return tf;
 }
 
 
 mVisTrans*
-SceneTransformManager::createIC2DisplayTransform( const HorSampling& hs ) const
+SceneTransformManager::createICRotationTransform( const HorSampling& hs ) const
 {
     mVisTrans* tf = mVisTrans::create();
-    setIC2DispayTransform( hs, tf );
+    computeICRotationTransform( *SI().get3DGeometry( true ), tf, 0 );
     return tf;
 }
 
 
-void SceneTransformManager::setIC2DispayTransform(const HorSampling& hs,
-						  mVisTrans* tf ) const
+void SceneTransformManager::computeICRotationTransform( const InlCrlSystem& ics,
+		visBase::Transformation* rotation,
+		visBase::Transformation* disptrans ) const
 {
+    const HorSampling hs = ics.sampling().hrg;
+    
     const BinID startbid = hs.start;
     const BinID stopbid = hs.stop;
     const BinID extrabid( startbid.inl, stopbid.crl );
@@ -85,18 +80,21 @@ void SceneTransformManager::setIC2DispayTransform(const HorSampling& hs,
     const Coord startpos = SI().transform( startbid );
     const Coord stoppos = SI().transform( stopbid );
     const Coord extrapos = SI().transform( extrabid );
+    
+    const float inldist = ics.inlDistance();
+    const float crldist = ics.crlDistance();
 
     Array2DImpl<double> A(3,3);
-    A.set( 0, 0, startbid.inl );
-    A.set( 0, 1, startbid.crl );
+    A.set( 0, 0, startbid.inl*inldist );
+    A.set( 0, 1, startbid.crl*crldist );
     A.set( 0, 2, 1);
 
-    A.set( 1, 0, stopbid.inl );
-    A.set( 1, 1, stopbid.crl );
+    A.set( 1, 0, stopbid.inl*inldist );
+    A.set( 1, 1, stopbid.crl*crldist );
     A.set( 1, 2, 1);
 
-    A.set( 2, 0, extrabid.inl );
-    A.set( 2, 1, extrabid.crl );
+    A.set( 2, 0, extrabid.inl*inldist );
+    A.set( 2, 1, extrabid.crl*crldist );
     A.set( 2, 2, 1);
 
     double b[] = { 0, stoppos.x-startpos.x, extrapos.x-startpos.x };
@@ -106,17 +104,18 @@ void SceneTransformManager::setIC2DispayTransform(const HorSampling& hs,
     
     const int inlwidth = hs.inlRange().width();
     const int crlwidth = hs.crlRange().width();
+    
     if ( !inlwidth )
     {
 	if ( !crlwidth )
 	{
-	    tf->reset();
+	    rotation->reset();
 	    return;
 	}
 	
 	x[0] = 1;
-	x[1] = b[1] / crlwidth;
-	x[2] = -startbid.inl - x[1] * startbid.crl;
+	x[1] = b[1] / (crlwidth*crldist);
+	x[2] = -startbid.inl*inldist - x[1] * startbid.crl*crldist;
     }
     else
 	linsolver.apply( b, x );
@@ -131,9 +130,9 @@ void SceneTransformManager::setIC2DispayTransform(const HorSampling& hs,
 
     if ( !crlwidth )
     {
-	x[0] = b[1] / inlwidth;
+	x[0] = b[1] / (inlwidth*inldist);
 	x[1] = 1;
-	x[2] = -x[0] * startbid.inl - startbid.crl;
+	x[2] = -x[0] * startbid.inl*inldist - startbid.crl*crldist;
     }
     else
     	linsolver.apply( b, x );
@@ -142,10 +141,16 @@ void SceneTransformManager::setIC2DispayTransform(const HorSampling& hs,
     const double mat22 = x[1];
     const double mat24 = x[2];
 
-    tf->setA(	mat11,	mat12,	0,	mat14,
+    rotation->setA(	mat11,	mat12,	0,	mat14,
 		mat21,	mat22,	0,	mat24,
 		0,	0,	-1,	0,
 		0,	0,	0,	1 );
+    
+    if ( disptrans )
+	disptrans->setA( inldist,	0,		0,		0,
+			 0,		crldist,	0,		0,
+			 0,		0,		-curzscale_,	0,
+			 0,		0,		0,		1 );
 }
 
 } // namespace visSurvey

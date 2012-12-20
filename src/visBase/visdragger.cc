@@ -252,7 +252,8 @@ void Dragger::setRotation( const Coord3& vec, float angle )
 
 void Dragger::setPos( const Coord3& pos )
 {
-    Coord3 newpos = displaytrans_ ? displaytrans_->transform( pos ) : pos;
+    Coord3 newpos;
+    mVisTrans::transform( displaytrans_, pos, newpos );
     
     osg::Matrix osgmatrix = positiontransform_->getMatrix();
     osgmatrix.makeTranslate( newpos.x, newpos.y, newpos.z );
@@ -266,9 +267,9 @@ Coord3 Dragger::getPos() const
 {
     osg::Vec3d pos = dragger_->getMatrix().getTrans();
     pos = positiontransform_->getMatrix().preMult( pos );
-    const Coord3 coord = Conv::to<Coord3>( pos );
-        
-    return displaytrans_ ? displaytrans_->transformBack( coord ) : coord;
+    Coord3 coord;
+    mVisTrans::transformBack( displaytrans_, pos, coord );
+    return coord;
 }
 
 

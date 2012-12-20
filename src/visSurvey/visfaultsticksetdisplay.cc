@@ -467,9 +467,9 @@ Coord3 FaultStickSetDisplay::disp2world( const Coord3& displaypos ) const
     if ( pos.isDefined() )
     {
 	if ( scene_ )
-	    pos = scene_->getZScaleTransform()->transformBack( pos ); 
+	    scene_->getZScaleTransform()->transformBack( pos ); 
 	if ( displaytransform_ )
-	    pos = displaytransform_->transformBack( pos ); 
+	    displaytransform_->transformBack( pos );
     }
     return pos;
 }
@@ -771,7 +771,7 @@ void FaultStickSetDisplay::emChangeCB( CallBacker* cber )
 	    if ( hordisp )
 	    {
 		if ( displaytransform_ )
-		    pos = displaytransform_->transform( pos );
+		    displaytransform_->transform( pos );
 
 		const float dist = hordisp->calcDist( pos );
 		if ( mIsUdf(dist) )
@@ -785,7 +785,7 @@ void FaultStickSetDisplay::emChangeCB( CallBacker* cber )
 		    pos.z -= hordisp->calcDist( pos );
 
 		    if ( displaytransform_ )
-			pos = displaytransform_->transformBack( pos );
+			displaytransform_->transformBack( pos );
 		    if ( nm )
 			pos.z += atof(nm) / scene_->zDomainInfo().userFactor();
 
@@ -867,7 +867,7 @@ bool FaultStickSetDisplay::coincidesWith2DLine(
 	{
 	    Coord3 pos = fss.getKnot(rc);
 	    if ( displaytransform_ )
-		pos = displaytransform_->transform( pos ); 
+		displaytransform_->transform( pos ); 
 
 	    if ( s2dd->calcDist( pos ) <= 0.5*onestepdist )
 		return true;
@@ -911,7 +911,7 @@ bool FaultStickSetDisplay::coincidesWithPlane(
 	{
 	    Coord3 curpos = fss.getKnot(rc);
 	    if ( displaytransform_ )
-		curpos = displaytransform_->transform( curpos ); 
+		displaytransform_->transform( curpos ); 
 
 	    const float curdist = plane->calcDist( curpos );
 	    if ( curdist <= 0.5*onestepdist )
@@ -995,7 +995,7 @@ void FaultStickSetDisplay::displayOnlyAtSectionsUpdate()
 		sip->sticknr_ = rc.row;
 		sip->pos_ = intersectpoints[idx];
 		if ( displaytransform_ )
-		    sip->pos_ = displaytransform_->transformBack( sip->pos_ ); 
+		    displaytransform_->transformBack( sip->pos_ ); 
 
 		stickintersectpoints_ += sip;
 	    }

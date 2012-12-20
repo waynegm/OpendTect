@@ -125,7 +125,7 @@ Coord RandomTrackDragger::getKnot( int idx ) const
 {
     const SbVec2f sbvec = dragger_->knots[idx];
     Coord3 res( sbvec[0], sbvec[1], 0 );
-    if ( displaytrans_ ) res = displaytrans_->transformBack( res );
+    if ( displaytrans_ ) displaytrans_->transformBack( res );
     return res;
 }
 
@@ -184,8 +184,8 @@ void RandomTrackDragger::setDepthRange( const Interval<float>& rg )
 
     if ( displaytrans_ )
     {
-	start = displaytrans_->transform( start );
-	stop = displaytrans_->transform( stop );
+	displaytrans_->transform( start );
+	displaytrans_->transform( stop );
     }
 
     dragger_->z0 = (float) start.z;
@@ -200,8 +200,8 @@ Interval<float> RandomTrackDragger::getDepthRange() const
 
     if ( displaytrans_ )
     {
-	start = displaytrans_->transformBack( start );
-	stop = displaytrans_->transformBack( stop );
+	displaytrans_->transformBack( start );
+	displaytrans_->transformBack( stop );
     }
 
     return Interval<float>( (float) start.z, (float) stop.z );

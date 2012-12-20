@@ -51,8 +51,7 @@ mClass(visSurvey) VolumeDisplay : public visBase::VisualObjectImpl,
 public:
     static VolumeDisplay*	create()
 				mCreateDataObj(VolumeDisplay);
-    bool			isInlCrl() const { return !inl2displaytrans_; }
-    void			setInlCrlSystem(const InlCrlSystem*);
+    bool			isInlCrl() const { return true; }
 
     static int			cInLine() 		{ return 2; }
     static int			cCrossLine() 		{ return 1; }
@@ -242,7 +241,7 @@ protected:
     bool			isinited_;
     bool                        onoffstatus_;
 
-    mVisTrans*			inl2displaytrans_;
+    mVisTrans*			displaytrans_;
 
     static const char*		sKeyVolumeID();
     static const char*		sKeyInline();

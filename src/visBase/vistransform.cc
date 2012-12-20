@@ -16,11 +16,13 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <osg/MatrixTransform>
 
+#include <osg/Vec3f>
+#include <osg/Vec3d>
+
 mCreateFactoryEntry( visBase::Transformation );
 
 
-namespace visBase
-{
+using namespace visBase;
 
 Transformation::Transformation()
     : node_( 0 )
@@ -175,83 +177,72 @@ void Transformation::setAbsoluteReferenceFrame()
 {
     node_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 }
-
-
-Coord3 Transformation::transform( const Coord3& pos ) const
-{
-    osg::Vec3d res( Conv::to<osg::Vec3d>( pos ) );
-    transform( res );
-    return Conv::to<Coord3>( res );
-}
     
-    
-void Transformation::transform( const Coord3& pos, osg::Vec3f& resf ) const
-{
-    osg::Vec3d res( Conv::to<osg::Vec3d>( pos ) );
-    transform( res );
-    
-    resf[0] = (float) res[0];
-    resf[1] = (float) res[1];
-    resf[2] = (float) res[2];
-}
+
+#define mDeclTransType( func, tp, mat, post ) \
+void Transformation::func( tp& inp ) const \
+{ inp = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); } \
+void Transformation::func( const tp& inp, tp& to ) const \
+{ to = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); }
 
 
-void Transformation::transform( osg::Vec3d& res ) const
-{
-//TODO Check that we should use preMult
-    res = node_->getMatrix().preMult( res );
-} 
+#define mDeclTrans( tp ) \
+mDeclTransType( transform, tp, getMatrix, ) \
+mDeclTransType( transformBack, tp, getInverseMatrix, ) \
+mDeclTransType( transformDir, tp, getMatrix, -node_->getMatrix().getTrans() ) \
+mDeclTransType( transformBackDir, tp, getInverseMatrix, -node_->getInverseMatrix().getTrans() )
+
+#define mToOsgVec( inp ) inp
+#define mFromOsgVec( inp ) inp
+
+mDeclTrans( osg::Vec3f )
+mDeclTrans( osg::Vec3d )
+
+#undef mToOsgVec
+#undef mFromOsgVec
+
+#define mToOsgVec( inp ) Conv::to<osg::Vec3d>( inp )
+#define mFromOsgVec( inp ) Conv::to<Coord3>( inp )
+
+mDeclTrans( Coord3 )
+
+#undef mToOsgVec
+#undef mFromOsgVec
+
+#define mDeclConvTransType( func, frtp, totp, mat, post ) \
+void Transformation::func( const frtp& inp, totp& to ) const \
+{ to = mFromOsgVec( node_->mat().preMult( mToOsgVec(inp) ) post ); }
+
+
+#define mDeclConvTrans( frtp, totp ) \
+mDeclConvTransType( transform, frtp, totp, getMatrix, ) \
+mDeclConvTransType( transformBack, frtp, totp, getInverseMatrix, ) \
+mDeclConvTransType( transformDir, frtp, totp, getMatrix, -node_->getMatrix().getTrans() ) \
+mDeclConvTransType( transformBackDir, frtp, totp, getInverseMatrix, -node_->getInverseMatrix().getTrans() )
+
+#define mToOsgVec( inp ) inp
+#define mFromOsgVec( inp ) Conv::to<Coord3>( inp )
+mDeclConvTrans( osg::Vec3d, Coord3 )
+#undef mToOsgVec
+#undef mFromOsgVec
+
+#define mToOsgVec( inp ) Conv::to<osg::Vec3d>( inp )
+#define mFromOsgVec( inp ) inp 
+mDeclConvTrans( Coord3, osg::Vec3d )
+#undef mToOsgVec
+#undef mFromOsgVec
+
+#define mToOsgVec( inp ) Conv::to<osg::Vec3d>( inp )
+#define mFromOsgVec( inp ) inp
+mDeclConvTrans( Coord3, osg::Vec3f )
+#undef mToOsgVec
+#undef mFromOsgVec
+
+#define mToOsgVec( inp ) osg::Vec3d(inp)
+#define mFromOsgVec( inp ) Conv::to<Coord3>( inp )
+mDeclConvTrans( osg::Vec3f, Coord3 )
+#undef mToOsgVec
+#undef mFromOsgVec
 
 
 
-void Transformation::transformBack( osg::Vec3d& res ) const
-{
-//TODO Check that we should use preMult, the inverse or postMult
-    res = osg::Matrixd::inverse(node_->getMatrix()).preMult( res );
-}
-    
-    
-void Transformation::transform( osg::Vec3f& res ) const
-{
-    //TODO Check that we should use preMult
-    res = node_->getMatrix().preMult( res );
-}
-
-    
-void Transformation::transformBack( osg::Vec3f& res ) const
-{
-    //TODO Check that we should use preMult, the inverse or postMult
-    res = osg::Matrixd::inverse(node_->getMatrix()).preMult( res );
-}
-
-
-Coord3 Transformation::transformBack( const Coord3& pos ) const
-{
-    osg::Vec3d res = Conv::to<osg::Vec3d>( pos );
-    transformBack( res );
-    return Conv::to<Coord3>( res );
-}
-
-    
-void Transformation::transform( const visBase::Transformation* trans,
-			       	const Coord3& crd,
-			        osg::Vec3f& res )
-{
-
-    if ( trans )
-	trans->transform( crd, res );
-    else
-	res = Conv::to<osg::Vec3f>( crd );
-}
-    
-void Transformation::transform( const visBase::Transformation* trans,
-			       const osg::Vec3f& crd,
-			       osg::Vec3f& res )
-{
-    res = crd;
-    if ( trans )
-	trans->transform( res );
-    }
-
-
-}; // namespace visBase

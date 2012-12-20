@@ -64,15 +64,17 @@ void Text::setPosition( const osg::Vec3f& pos )
     
 void Text::setPosition( const Coord3& pos )
 {
-    setPosition( Conv::to<osg::Vec3f>(
-	displaytrans_ ? displaytrans_->transform(pos) : pos ) );
+    osg::Vec3 osgpos;
+    mVisTrans::transform( displaytrans_, pos, osgpos );
+    setPosition( osgpos );
 }
     
     
 Coord3 Text::getPosition() const
 {
-    Coord3 pos = Conv::to<Coord3>( text_->getPosition() );
-    return displaytrans_ ? displaytrans_->transformBack( pos ) : pos;
+    Coord3 pos;
+    Transformation::transformBack( displaytrans_, text_->getPosition(), pos );
+    return pos;
 }
     
     

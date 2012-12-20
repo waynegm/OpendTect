@@ -56,9 +56,7 @@ static const char* sKeydTectScene()	{ return "dTect.Scene."; }
 
 
 Scene::Scene()
-    : inlcrl2disptransform_(0)
-    , utm2disptransform_(0)
-    , zscaletransform_(0)
+    : zscaletransform_(0)
     , annot_(0)
     , marker_(0)
     , mouseposchange(this)
@@ -208,16 +206,17 @@ void Scene::createTransforms( const HorSampling& hs )
 {
     if ( !zscaletransform_ )
     {
-	mVisTrans* trans = STM().createZScaleTransform();
-	zscaletransform_ = trans;
-	visBase::DataObjectGroup::addObject( trans );
+	zscaletransform_ = mVisTrans::create();
+	visBase::DataObjectGroup::addObject( zscaletransform_ );
     }
 
-    if ( !inlcrl2disptransform_ )
+    if ( !inlcrlrotation_ )
     {
-	mVisTrans* trans = STM().createIC2DisplayTransform( hs );
-	inlcrl2disptransform_ = trans;
-	zscaletransform_->addObject(  trans );
+	inlcrlrotation_ = mVisTrans::create();
+	inlcrlscale_ = mVisTrans::create();
+	STM().computeICRotationTransform( *SI().get3DGeometry(true),
+					  inlcrlrotation_, inlcrlscale_);
+	zscaletransform_->addObject( inlcrlrotation_ );
     }
 
     if ( !utm2disptransform_ )
@@ -286,7 +285,7 @@ void Scene::setCubeSampling( const CubeSampling& cs )
 
 int Scene::size() const
 {
-    return zscaletransform_->size()+inlcrl2disptransform_->size();
+    return zscaletransform_->size()+inlcrlrotation_->size();
 }
 
 
@@ -307,7 +306,7 @@ visBase::DataObject* Scene::getObject( int idx )
     if ( idx<zscaletransform_->size() )
 	return zscaletransform_->getObject( idx );
 
-    return inlcrl2disptransform_->getObject( idx-zscaletransform_->size() );
+    return inlcrlrotation_->getObject( idx-zscaletransform_->size() );
 }
 
 
@@ -332,7 +331,8 @@ void Scene::addInlCrlZObject( visBase::DataObject* obj )
 	so->setInlCrlSystem( SI().get3DGeometry(true) );
     }
 
-    inlcrl2disptransform_->addObject( obj );
+    obj->setDisplayTransformation( inlcrlscale_ );
+    inlcrlrotation_->addObject( obj );
 }
 
 
@@ -379,7 +379,7 @@ void Scene::removeObject( int idx )
     if ( idx<zscaletransform_->size() )
 	zscaletransform_->removeObject( idx );
     else
-	inlcrl2disptransform_->removeObject( idx-zscaletransform_->size() );
+	inlcrlrotation_->removeObject( idx-zscaletransform_->size() );
 
     if ( so )
 	objectMoved(0);
@@ -419,7 +419,7 @@ const mVisTrans* Scene::getZScaleTransform() const
 
 
 const mVisTrans* Scene::getInlCrl2DisplayTransform() const
-{ return inlcrl2disptransform_; }
+{ return inlcrlrotation_; }
 
 
 const mVisTrans* Scene::getUTM2DisplayTransform() const
@@ -882,7 +882,7 @@ void Scene::removeAll()
     if ( idx!=-1 )
 	visBase::DataObjectGroup::removeObject( idx );
 
-    zscaletransform_ = 0; inlcrl2disptransform_ = 0; annot_ = 0;
+    zscaletransform_ = 0; inlcrlrotation_ = 0; annot_ = 0;
     polyselector_= 0;
     delete coordselector_; coordselector_ = 0;
     curzstretch_ = -1;

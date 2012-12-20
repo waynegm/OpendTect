@@ -239,7 +239,7 @@ bool EventCatchHandler::handle( const osgGA::GUIEventAdapter& ea,
 	    Coord3& pos( eventinfo.worldpickedpos );
 	    pos = eventinfo.displaypickedpos;
 	    for ( int idx=eventcatcher_.utm2display_.size()-1; idx>=0; idx-- )
-		pos = eventcatcher_.utm2display_[idx]->transformBack( pos );
+		eventcatcher_.utm2display_[idx]->transformBack( pos );
 	}
     }
 

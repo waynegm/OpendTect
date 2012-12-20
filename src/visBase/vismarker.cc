@@ -13,7 +13,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "iopar.h"
 #include "survinfo.h"
-#include "viscube.h"
 #include "vistransform.h"
 
 #include "SoShapeScale.h"
@@ -70,11 +69,11 @@ Marker::~Marker()
 }
 
 
-void Marker::setCenterPos( const Coord3& pos_ )
+void Marker::setCenterPos( const Coord3& p )
 {
-    Coord3 pos( pos_ );
+    Coord3 pos( p );
 
-    if ( transformation ) pos = transformation->transform( pos );
+    if ( transformation ) transformation->transform( pos );
 
     if ( !xytranslation && (fabs(pos.x)>1e5 || fabs(pos.y)>1e5) )
     {
@@ -113,7 +112,7 @@ Coord3 Marker::centerPos(bool displayspace) const
     res.z = pos[2];
 
     if ( !displayspace && transformation )
-	res = transformation->transformBack( res );
+	transformation->transformBack( res );
 
     return res;
 }
@@ -190,11 +189,11 @@ void Marker::setType( MarkerStyle3D::Type type )
 	setRotation( Coord3(0,0,1), 0 );
 	}break;
     case MarkerStyle3D::Plane: {
-	Cube* plane = visBase::Cube::create();
+	/*Cube* plane = visBase::Cube::create();
 	plane->setWidth( Coord3(6,5,1) );
 	setMarkerShape( plane->getInventorNode() ); 
-	setDip( inldip_, crldip_ );
-	} break;
+	setDip( inldip_, crldip_ ); */
+	} break; 
     case MarkerStyle3D::None:
     default:{
 	    removeChild(shape);

@@ -462,7 +462,7 @@ void Horizon2DDisplay::updateSeedsOnSections(
 	    marker->turnOn( !displayonlyatsections_ );
 	    Coord3 pos = marker->centerPos();
 	    if ( transformation_ ) 
-		pos = transformation_->transform( pos );
+		transformation_->transform( pos );
 	    if ( zaxistransform_ )
 		pos.z = zaxistransform_->transform( pos );
 	    for ( int idz=0; idz<seis2dlist.size(); idz++ )

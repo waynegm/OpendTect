@@ -16,6 +16,7 @@ ________________________________________________________________________
 
 #include "visbasemod.h"
 #include "visobject.h"
+#include "vistransform.h"
 
 class CubeSampling;
 
@@ -45,9 +46,13 @@ public:
 
     void			swapTextureAxes(bool yn=true);
     bool			areTextureAxesSwapped() const;
+    
+    void			setDisplayTransformation(const mVisTrans*);
 
 protected:
     				~TextureRectangle();
+    
+    RefMan<const mVisTrans>	displaytrans_;
 
     osgGeo::TexturePlaneNode*	textureplane_;
     RefMan<TextureChannels>	channels_;

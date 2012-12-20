@@ -201,8 +201,11 @@ protected:
     static const Color&		cDefaultMarkerColor();
     
     RefMan<visBase::Transformation>	zscaletransform_;
-    RefMan<visBase::Transformation>	inlcrl2disptransform_;
+    
+    RefMan<visBase::Transformation>	inlcrlrotation_;
+    RefMan<visBase::Transformation>	inlcrlscale_;
     RefMan<visBase::Transformation>	utm2disptransform_;
+    
     ZAxisTransform*			datatransform_;
 
     BaseMap*			basemap_;

@@ -230,9 +230,9 @@ void Normals::transformNormal( const Transformation* t, Coord3& n,
     if ( !t || !n.isDefined() ) return;
 
     if ( todisplay )
-	n = t->transformBack( n ) - t->transformBack( Coord3(0,0,0) );
+	t->transformBackDir( n );
     else
-	n = t->transform( n ) - t->transform( Coord3(0,0,0) );
+	t->transformDir( n );
 }
 
 

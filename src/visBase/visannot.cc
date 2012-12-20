@@ -240,11 +240,18 @@ void Annotation::updateGridLines()
 	osg::Vec3 p0;
 	osg::Vec3 p1;
 	getAxisCoords( dim, p0, p1 );
+	
 	osg::Vec3 dir(0,0,0);
 	dir[dim] = 1;
+	mVisTrans::transformDir( displaytrans_, dir );
+	dir.normalize();
 	
-	gridlines_->setLine( dim*2, osgGeo::Line3(p0, dir) );
-	gridlines_->setLine( dim*2+1, osgGeo::Line3(p1, -dir) );
+	osg::Vec3 lstart0, lstart1;
+	
+	mVisTrans::transform( displaytrans_, p0, lstart0 );
+	mVisTrans::transform( displaytrans_, p1, lstart1 );
+	gridlines_->setLine( dim*2, osgGeo::Line3(lstart0, dir) );
+	gridlines_->setLine( dim*2+1, osgGeo::Line3(lstart1, -dir) );
 	
 	Interval<float> range( p0[dim], p1[dim] );
 	const SamplingData<float> sd = AxisLayout<float>( range ).sd_;
@@ -259,6 +266,14 @@ void Annotation::updateGridLines()
 		    cornercoords[cornerarr[2]],
 		    cornercoords[cornerarr[3]] };
 	
+	if ( displaytrans_ )
+	{
+	    displaytrans_->transformBack( corners[0] );
+	    displaytrans_->transformBack( corners[1] );
+	    displaytrans_->transformBack( corners[2] );
+	    displaytrans_->transformBack( corners[3] );
+	}
+	
 	for ( int idx=0; ; idx++ )
 	{
 	    const float val = sd.atIndex(idx);
@@ -271,7 +286,9 @@ void Annotation::updateGridLines()
 	    const unsigned short firstcoordindex = coords->size();
 	    for ( int idy=0; idy<4; idy++ )
 	    {
-		coords->push_back( corners[idy] );
+		osg::Vec3 pos;
+		mVisTrans::transform( displaytrans_, corners[idy], pos );
+		coords->push_back( pos );
 		
 		mGetDrawElements(psindexes[idy])->push_back(
 			firstcoordindex+idy);
@@ -307,8 +324,8 @@ void Annotation::getAxisCoords( int dim, osg::Vec3& p0, osg::Vec3& p1 ) const
     const osg::Vec3f* cornercoords = (const osg::Vec3f*)
 	box_->getVertexArray()->getDataPointer();
 
-    p0 = cornercoords[pidx0];
-    p1 = cornercoords[pidx1];
+    mVisTrans::transformBack( displaytrans_, cornercoords[pidx0], p0 );
+    mVisTrans::transformBack( displaytrans_, cornercoords[pidx1], p1 );
 }
 
 
@@ -326,6 +343,7 @@ void Annotation::updateTextPos()
 	tp[1] = (p0[1]+p1[1]) / 2;
 	tp[2] = (p0[2]+p1[2]) / 2;
 
+	mVisTrans::transform( displaytrans_, tp );
 	axisnames_->text(dim)->setPosition( tp );
 	
 	Interval<float> range( p0[dim], p1[dim] );
@@ -350,6 +368,7 @@ void Annotation::updateTextPos()
 	    float displayval = val;
 	    displayval *= annotscale_[dim];
 
+	    mVisTrans::transform( displaytrans_, pos );
 	    text->setPosition( pos );
 	    text->setText( toString(displayval) );
 	}

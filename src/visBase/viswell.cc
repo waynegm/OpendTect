@@ -295,7 +295,7 @@ void Well::addMarker( const MarkerParams& mp )
 	  return;
     Coord3 disppos;
     if ( transformation_ )
-        disppos = transformation_->transform( markerpos );
+        transformation_->transform( markerpos, disppos );
 
     markerset_->getVertexArray()->push_back( osg::Vec3f(disppos.x,disppos.y,
 		disppos.z) );
@@ -523,9 +523,9 @@ Coord3 Well::getPos( const TypeSet<Coord3Value>& crdv, int idx ) const
     if ( mIsUdf(crd.z) )
 	return crd;
 
-    Coord3 pos( 0,0,0 );
+    Coord3 pos;
     if ( transformation_ )
-	pos = transformation_->transform( crd );
+	transformation_->transform( crd, pos );
     return pos;
 }
 

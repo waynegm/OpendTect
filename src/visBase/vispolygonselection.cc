@@ -162,7 +162,7 @@ bool PolygonSelection::isInside( const Coord3& crd, bool displayspace ) const
 
     Coord3 checkcoord3d = crd;
     if ( !displayspace && transformation_ )
-	checkcoord3d = transformation_->transform( checkcoord3d );
+	transformation_->transform( checkcoord3d );
 
     const SbVec2f coord2d = selector_->projectPointToScreen(
 		     SbVec3f((float) checkcoord3d.x,
@@ -216,7 +216,7 @@ char PolygonSelection::includesRange( const Coord3& start, const Coord3& stop,
     if ( !displayspace && transformation_ )
     {
 	for ( int idx=0; idx<8; idx++ )
-	    coords[idx] = transformation_->transform( coords[idx] );
+	    transformation_->transform( coords[idx] );
     }
 
     ODPolygon<double> screenpts;
@@ -266,8 +266,8 @@ bool PolygonSelection::rayPickThrough( const Coord3& worldpos,
 				       int depthidx ) const
 {
     pickedobjids.erase();
-    const Coord3 pos = !transformation_ ? worldpos :
-		       transformation_->transform( worldpos );
+    Coord3 pos;
+    mVisTrans::transform( transformation_, worldpos, pos );
 
     const SbVec3f displaypos( (float) pos.x, (float) pos.y, (float) pos.z );
     const SoPath* path = selector_->rayPickThrough( displaypos, depthidx );

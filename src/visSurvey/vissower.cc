@@ -194,22 +194,22 @@ void Sower::calibrateEventInfo( visBase::EventInfo& eventinfo )
 
     CubeSampling cs = pdd->getCubeSampling( false, false );
     Coord3 p0( SI().transform(cs.hrg.start), cs.zrg.start );
-    p0 = transformation_->transform( p0 );
-    p0 = scene->getZScaleTransform()->transform( p0 );
+    transformation_->transform( p0 );
+    scene->getZScaleTransform()->transform( p0 );
     Coord3 p1( SI().transform( cs.hrg.stop), cs.zrg.start );
-    p1 = transformation_->transform( p1 );
-    p1 = scene->getZScaleTransform()->transform( p1 );
+    transformation_->transform( p1 );
+    scene->getZScaleTransform()->transform( p1 );
     Coord3 p2( SI().transform(cs.hrg.start), cs.zrg.stop );
-    p2 = transformation_->transform( p2 );
-    p2 = scene->getZScaleTransform()->transform( p2 );
+    transformation_->transform( p2 );
+    scene->getZScaleTransform()->transform( p2 );
 
     Coord3 pos;
     if ( !Plane3(p0,p1,p2).intersectWith(eventinfo.mouseline, pos) )
 	return;
 
     eventinfo.displaypickedpos = pos;
-    pos = scene->getZScaleTransform()->transformBack( pos );
-    eventinfo.worldpickedpos = transformation_->transformBack( pos );
+    scene->getZScaleTransform()->transformBack( pos );
+    transformation_->transformBack( pos, eventinfo.worldpickedpos );
 }
 
 
@@ -269,8 +269,8 @@ void Sower::tieToWorkRange( const visBase::EventInfo& eventinfo )
     if ( transformation_ && scene )
     {
 	Coord3& displaypos = eventlist_[eventlist_.size()-1]->displaypickedpos;
-	displaypos = transformation_->transform( lastworldpos );
-	displaypos = scene->getZScaleTransform()->transform( displaypos );
+	transformation_->transform( lastworldpos, displaypos );
+	scene->getZScaleTransform()->transform( displaypos );
     }
 }
 
@@ -307,8 +307,8 @@ bool Sower::acceptMouse( const visBase::EventInfo& eventinfo )
 	    const double t = eventinfo.mouseline.closestPoint(
 						eventinfo.displaypickedpos );
 	    furrowpos = eventinfo.mouseline.getPoint( t-0.01 );
-	    furrowpos = scene->getZScaleTransform()->transformBack( furrowpos );
-	    furrowpos = transformation_->transformBack( furrowpos );
+	    scene->getZScaleTransform()->transformBack( furrowpos );
+	    transformation_->transformBack( furrowpos );
 	}
 
 	bool isvalidpos = !sz ||

@@ -134,18 +134,14 @@ PlaneDataDisplay::PlaneDataDisplay()
     , eventcatcher_( 0 )
     , minx0step_( -1 )
     , minx1step_( -1 )
-    , inl2displaytrans_( 0 )
     , texturerect_( 0 )
 {
-    inl2displaytrans_ = mVisTrans::create();
-    inl2displaytrans_->ref();
-    addChild( inl2displaytrans_->osgNode() );
-
     texturerect_ = visBase::TextureRectangle::create();
-    inl2displaytrans_->addObject( texturerect_ );
+    addChild( texturerect_->osgNode() );
+    
     texturerect_->setTextureChannels( channels_ );
-
-    inl2displaytrans_->addObject( dragger_ );
+    
+    addChild( dragger_->osgNode() );
 
     volumecache_.allowNull( true );
     rposcache_.allowNull( true );
@@ -213,19 +209,6 @@ PlaneDataDisplay::~PlaneDataDisplay()
     draggermaterial_->unRef();
 
     setBaseMap( 0 );
-
-    if ( inl2displaytrans_ ) inl2displaytrans_->unRef();
-}
-
-
-void PlaneDataDisplay::setInlCrlSystem(const InlCrlSystem* ics )
-{
-    SurveyObject::setInlCrlSystem( ics );
-    if ( inl2displaytrans_ )
-    {
-	STM().setIC2DispayTransform(inlcrlsystem_->sampling().hrg,
-				    inl2displaytrans_);
-    }
 }
 
 
@@ -332,7 +315,8 @@ Coord3 PlaneDataDisplay::getNormal( const Coord3& pos ) const
 float PlaneDataDisplay::calcDist( const Coord3& pos ) const
 {
     const mVisTrans* utm2display = scene_->getUTM2DisplayTransform();
-    const Coord3 xytpos = utm2display->transformBack( pos );
+    Coord3 xytpos;
+    utm2display->transformBack( pos, xytpos );
     const BinID binid = inlcrlsystem_->transform( Coord(xytpos.x,xytpos.y) );
 
     const CubeSampling cs = getCubeSampling(false,true);
@@ -1375,6 +1359,14 @@ int PlaneDataDisplay::usePar( const IOPar& par )
  */
 
     return 1;
+}
+    
+    
+void PlaneDataDisplay::setDisplayTransformation( const mVisTrans* t )
+{
+    displaytrans_ = t;
+    texturerect_->setDisplayTransformation( t );
+    dragger_->setDisplayTransformation( t );
 }
 
 

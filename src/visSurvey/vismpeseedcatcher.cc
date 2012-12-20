@@ -341,7 +341,7 @@ void MPEClickCatcher::sendUnderlying2DSeis(
 	{
 	    Coord3 pos = eventinfo.worldpickedpos;
 	    if ( transformation_ )
-		pos = transformation_->transform( pos );
+		transformation_->transform( pos );
 	    float disttoseis2d = seis2ddisp->calcDist( pos );
 	    
 	    if ( !seis2dclosest || disttoseis2d<mindisttoseis2d )

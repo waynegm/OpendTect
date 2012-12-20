@@ -37,6 +37,11 @@ class DataHolder;
 class DataCubes;
 class Data2DHolder;
 
+/*!
+  \ingroup AttributeEngine
+  \brief Base class for attribute Output.
+*/
+
 mClass(AttributeEngine) Output
 { mRefCountImpl(Output);
 public:
@@ -92,6 +97,10 @@ protected:
 	    					    TypeSet<float>& ts ) const \
     				{ return Output::getLocalZRanges(t,f,ts); }
 
+/*!
+  \ingroup AttributeEngine
+  \brief Attribute DataCubes Output.
+*/
 
 mClass(AttributeEngine) DataCubesOutput : public Output
 {
@@ -128,6 +137,11 @@ protected:
 };
 
 
+/*!
+  \ingroup AttributeEngine
+  \brief Seismic trace storage Output.
+*/
+
 mClass(AttributeEngine) SeisTrcStorOutput : public Output
 {
 public:
@@ -159,7 +173,6 @@ public:
     void			setOutpNames( const BufferStringSet& nms )
 				{ outpnames_ = nms; }
 
-    bool 			isDataType(const char*) const;
     const char*			errMsg() const	{ return errmsg_.str(); }
 
     static const char*		seisidkey();
@@ -194,6 +207,11 @@ public:
 };
 
 
+/*!
+  \ingroup AttributeEngine
+  \brief 2D trace Output with variable Z range. 
+*/
+
 mClass(AttributeEngine) Trc2DVarZStorOutput : public SeisTrcStorOutput
 {
 public:
@@ -227,6 +245,11 @@ protected:
 };
 
 
+/*!
+  \ingroup AttributeEngine
+  \brief Simple 2D Output
+*/
+
 mClass(AttributeEngine) TwoDOutput : public Output
 {
 public:
@@ -257,6 +280,11 @@ protected:
     Data2DHolder*		output_;
 };
 
+
+/*!
+  \ingroup AttributeEngine
+  \brief Output at discrete locations ( For example a pickset. )
+*/
 
 mClass(AttributeEngine) LocationOutput : public Output
 {
@@ -291,6 +319,11 @@ protected:
 };
 
 
+/*!
+  \ingroup AttributeEngine
+  \brief Output at an assorted selection of traces.
+*/
+
 mClass(AttributeEngine) TrcSelectionOutput : public Output
 {
 public:
@@ -318,6 +351,11 @@ protected:
     float			stdstarttime_;
 };
 
+
+/*!
+  \ingroup AttributeEngine
+  \brief Output at a selection of locations.
+*/
 
 mClass(AttributeEngine) TableOutput : public Output
 {

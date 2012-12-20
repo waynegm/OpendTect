@@ -10,11 +10,6 @@ ________________________________________________________________________
  RCS:           $Id$
 ________________________________________________________________________
 
-PolynomialND is a N-dimensional polynomial with arbitary orders in each
-dimension. It can be fitted any ArrayND. To access the polynomial's data
-use getValue. getValue3D is optimized for third order, tree-dimensional
-cases.
-
 @$*/
 
 #include <linsolv.h>
@@ -22,6 +17,13 @@ cases.
 #include <arrayndutils.h>
 #include <simpnumer.h>
 
+/*!
+  \ingroup Algo
+  \brief PolynomialND is a N-dimensional polynomial with arbitary orders in each
+  dimension. It can be fitted any ArrayND. To access the polynomial's data
+  use getValue. getValue3D is optimized for third order, tree-dimensional
+  cases.
+*/
 template <class T>
 class PolynomialND
 {
@@ -73,7 +75,7 @@ T PolynomialND<T>::getValue( const TypeSet<float>& pos ) const
 	
 	for ( int idx=0; idx<ndim; idx++ )
 	{
-	    posproduct *= intpow( pos[idx], coeffiter[idx] );
+	    posproduct *= intpow( pos[idx], mCast(char,coeffiter[idx]) );
 	}
      
 	res += posproduct * coeffs.getND( coeffiter.getPos() );
@@ -222,7 +224,7 @@ bool PolynomialND<T>::fit( const ArrayND<T>& input )
 		int coeff = 1;
 		for ( int idx=0; idx<ndim; idx++ )
 		{
-		    coeff *= intpow( positer[idx], powiter[idx] );
+		    coeff *= intpow( positer[idx], mCast(char,powiter[idx]) );
 		}
 	    
 		poscoeffs.set( row, col, (T)coeff );

@@ -50,7 +50,9 @@ namespace Attrib  { class SelSpec; class DataCubes; }
 namespace visSurvey
 {
 
-/*!\brief Base class for all 'Display' objects
+/*!
+\ingroup visSurvey
+\brief Base class for all 'Display' objects
 */
 
 mClass(visSurvey) SurveyObject
@@ -155,6 +157,7 @@ public:
     virtual void		setResolution(int,TaskRunner*)	{}
 
     virtual visBase::TextureChannel2RGBA* getChannels2RGBA()	{ return 0; }
+    const visBase::TextureChannel2RGBA*   getChannels2RGBA() const;
     virtual bool		setChannels2RGBA(visBase::TextureChannel2RGBA*)
 				{ return false; }
 
@@ -188,6 +191,8 @@ public:
     virtual unsigned char	getAttribTransparency(int) const { return 0; }
     virtual const ColTab::MapperSetup*	getColTabMapperSetup(int attrib,
 	    						   int version=0) const;
+    void			getChannelName(int,BufferString&) const;
+    				//!<\Returns "Layer 0", or "Red", "Green" ...
     virtual void		setColTabMapperSetup(int,
 				     const ColTab::MapperSetup&,TaskRunner*);
     virtual const ColTab::Sequence* getColTabSequence(int) const { return 0; }
@@ -332,22 +337,7 @@ protected:
     BufferString		survname_; //Only from IOPar
 };
 
-
-}; // namespace visSurvey
-
-
-/*!\mainpage 3D Visualisation - OpendTect specific
-
-  This module contains front-end classes for displaying 3D objects. Most 
-  functions in these classes deal with the geometry or position of the object, 
-  as well as handling new data and information about the attribute 
-  displayed.
-
-
-
-*/
-
+} // namespace visSurvey
 
 #endif
-
 

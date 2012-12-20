@@ -25,12 +25,14 @@ class PosVecDataSet;
 class NLACreationDesc;
 
 
-/*! \brief Service provider for application level - Non-Linear Analysis
+/*!
+\ingroup uiNLA
+\brief Service provider for application level - Non-Linear Analysis
 
 Will pop up the an NLA manage window on go(). If go() returns true, the user
 will expect that go() to be called again.
 
- */
+*/
 
 mClass(uiNLA) uiNLAPartServer : public uiApplPartServer
 {
@@ -128,21 +130,6 @@ protected:
     DataPointSet&	gtDps() const;
 
 };
-
-
-/*!\mainpage Non-Linear Analysis User Interface
-
-  This class was designed in such a way that the existing dGB Neural network
-  module could be put in a plugin in an easy way. In that way we kept the
-  possibility to make some money by selling our neural network stuff and
-  still make OpendTect (almost) free software.
-
-  Without this small sacrifice I don't think OpendTect would have ever started.
-  We tried to keep the interface as general as possible, though. So it's very
-  well possible and feasible to make your own special analysis module.
-
-  */
-
 
 #endif
 

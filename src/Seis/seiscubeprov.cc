@@ -234,7 +234,7 @@ bool SeisMSCProvider::startWork()
 	{
 	    so.inl = 0;
 	    doextend = doextend && newseldata->type() == Seis::Range;
-	    if ( so.crl && newseldata->type() == Seis::Table )
+	    if ( newseldata->type() == Seis::Table )
 		newseldata->setIsAll( true );
 	}
 
@@ -572,7 +572,7 @@ bool SeisFixedCubeProvider::readData( const CubeSampling& cs,
 
     PtrMan<TrcDataLoader> loader = new TrcDataLoader( seisrdr, *data_, cs_.hrg,
 	    					      lk );
-    const bool res = tr ? tr->execute(*loader) : loader->execute();
+    const bool res = TaskRunner::execute( tr, *loader );
     if ( !res )
 	mErrRet( "Failed to read input dataset" )
 

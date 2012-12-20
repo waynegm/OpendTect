@@ -31,6 +31,7 @@ class uiLayerSequenceGenDesc;
 class uiStratGenDescTools;
 class uiStratLayModEditTools;
 class uiStratLayerModelLMProvider;
+class uiStratSyntheticsProvider;
 namespace Strat { class LayerModel; class LayerSequenceGenDesc; }
 
 
@@ -76,7 +77,7 @@ public:
     static void			doLayerModel(const char* modnm);
 
     uiStratLayerModelDisp*      getLayModelDisp() const	{ return moddisp_; }
-    void			displayFRResult( SyntheticData* );
+    void			displayFRResult(bool usefr,bool parschanged,bool fwd);
     void			prepareFluidRepl();
 
     //Utility
@@ -96,8 +97,10 @@ protected:
 
     Strat::LayerSequenceGenDesc& desc_;
     uiStratLayerModelLMProvider& lmp_;
+    uiStratSyntheticsProvider& 	synthp_;
     CtxtIOObj&			descctio_;
     ElasticPropSelection*	elpropsel_;
+    bool			mostlyfilledwithbrine_;
 
     void			initWin(CallBacker*);
     void			dispEachChg(CallBacker*);
@@ -115,6 +118,7 @@ protected:
     void			setWinTitle();
     void			setModelProps();
     void			setElasticProps();
+    void			infoChanged(CallBacker*);
     void			selElasticPropsCB(CallBacker*);
     bool			selElasticProps(ElasticPropSelection&);
     void			openGenDescCB(CallBacker*) { openGenDesc(); }
@@ -128,7 +132,9 @@ protected:
     
     void			fillDisplayPars(IOPar&) const;
     void			fillWorkBenchPars(IOPar&) const;
+    void			fillSyntheticsPars(IOPar&) const;
     bool			useDisplayPars(const IOPar&);
+    bool			useSyntheticsPars(const IOPar&);
 
 public:
 

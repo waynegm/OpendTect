@@ -43,8 +43,15 @@ mStruct(WellAttrib) SynthGenParams
     IOPar		raypars_;
     BufferString	wvltnm_;
 
-    //gen name from wvlt and raypars
-    const char*		genName() const;
+    
+    void		createName(BufferString&) const;
+    			//!<Create name from wvlt and raypars
+    
+    void		fillPar(IOPar&) const;
+    void		usePar(const IOPar&);
+bool operator==( const SynthGenParams& gp )
+{ return isps_==gp.isps_ && wvltnm_==gp.wvltnm_ && raypars_==gp.raypars_; }
+
 };
 
 
@@ -75,6 +82,9 @@ public:
 
     void				useGenParams(const SynthGenParams&);
     void				fillGenParams(SynthGenParams&) const;
+    const char*				waveletName() const { return wvltnm_; }
+    void				setWavelet( const char* wvltnm )
+					{ wvltnm_ = wvltnm; }
 
 protected:
 					SyntheticData(const SynthGenParams&,
@@ -154,6 +164,8 @@ public:
 
     int				nrSynthetics() const; 
     SyntheticData*		addSynthetic(); 
+    SyntheticData*		addSynthetic(const SynthGenParams&); 
+    bool			removeSynthetic(const char*);
     SyntheticData*		replaceSynthetic(int id);
     SyntheticData*		addDefaultSynthetic(); 
     SyntheticData* 		getSynthetic(const char* nm);
@@ -211,6 +223,9 @@ protected:
 	    				PostStackSyntheticData& sd,
 	    				const Strat::LayerModel&);
     SyntheticData* 		generateSD(const Strat::LayerModel&,
+					TaskRunner* tr=0);
+    SyntheticData* 		generateSD(const Strat::LayerModel&,
+	    				const SynthGenParams&,
 					TaskRunner* tr=0);
 };
 

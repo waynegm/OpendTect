@@ -221,6 +221,35 @@ public:
     				//!<Legacy. Use fromInt64 instead.
 };
 
+/*!Represents a trace position, with the geometry (2D or 3D) and position in
+  the geometry. */
+
+class TraceID
+{
+public:
+				TraceID(const BinID& bid)
+				    : geomid_( std3DGeomID() )
+				    , line_(bid.inl)
+				    , trcnr_(bid.crl) {}
+				TraceID(int geomid, int line, int trcnr)
+				    : geomid_(geomid)
+				    , line_(line)
+				    , trcnr_(trcnr)
+				{}
+    
+    static int			std3DGeomID();
+    
+    static const TraceID&	udf();
+    
+    bool			isUdf() const { return trcnr_<0; }
+    
+    int				geomid_;
+				/*!<-1 refers to the default 3d survey setup
+				    any positive value refers to the geometry.*/
+    int				line_;
+    int				trcnr_;
+};
+
 
 mImplInlineRowColFunctions(BinID, inl, crl);
 

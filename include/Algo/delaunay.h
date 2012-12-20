@@ -18,8 +18,15 @@ ________________________________________________________________________
 #include "sets.h"
 #include "task.h"
 #include "thread.h"
+#include "trigonometry.h"
 
-/*!Reference: "Parallel Incremental Delaunay Triangulation", by Kohout J.2005.
+
+#define mDAGTriangleForceSingleThread
+/*!
+  \ingroup Algo
+  \brief Reference: "Parallel Incremental Delaunay Triangulation", by
+   Kohout J.2005.
+
    For the triangulation, it will skip undefined or duplicated points, all the 
    points should be in random order. We use Kohout's pessimistic method to
    triangulate. The problem is that the pessimistic method only give a 10% speed
@@ -27,7 +34,6 @@ ________________________________________________________________________
    disabled with a macro.
 */
 
-#define mDAGTriangleForceSingleThread
 mClass(Algo) DAGTriangleTree
 {
 public:
@@ -138,7 +144,11 @@ protected:
 };
 
 
-/*!<The parallel triangulation works for only one processor now.*/
+/*!
+  \ingroup Algo
+  \brief The parallel triangulation works for only one processor now.
+*/
+
 mClass(Algo) DelaunayTriangulator : public ParallelTask
 {
 public:
@@ -169,10 +179,14 @@ protected:
 };
 
 
-/*For a given triangulated geometry(set of points), interpolating any point 
-  located in or nearby the goemetry. If the point is located outside of the 
-  boundary of the geometry, we compare azimuth to find related points and then
-  apply inverse distance to calculate weights. */
+/*!
+  \ingroup Algo
+  \brief For a given triangulated geometry(set of points), interpolating any
+  point located in or nearby the goemetry. If the point is located outside of
+  the boundary of the geometry, we compare azimuth to find related points and
+  then apply inverse distance to calculate weights.
+*/
+
 mClass(Algo) Triangle2DInterpolator
 {
 public:
@@ -204,6 +218,85 @@ protected:
     TypeSet<int>		perimeter_;
     TypeSet<double>		perimeterazimuth_;
 };
+
+
+/*Simple polyon triangulation, does not work if you have holes inside it. 
+  return each triangle with three indicies in order. */
+inline  bool PolygonTriangulate( const TypeSet<Coord>& knots,TypeSet<int>& res )
+{
+    const int nrknots = knots.size();
+    if ( nrknots < 3 ) 
+      return false;
+
+    /* Make sure it is a counter-clockwise polygon in ci */
+    double area=0;
+    for( int idx=nrknots-1, idy=0; idy<nrknots; idx=idy++ )
+      area += (knots[idx].x*knots[idy].y - knots[idy].x*knots[idx].y);
+    area *= 0.5;
+
+    TypeSet<int> ci;
+    if ( 0<area )
+    {
+    	for ( int idx=0; idx<nrknots; idx++ ) 
+	    ci += idx;
+    }
+    else
+    {
+    	for( int idx=0; idx<nrknots; idx++ ) 
+	    ci += (nrknots-1-idx);
+    }
+
+    /*Triangulate: three consecutive vertices (idx0,idx,idx1) in polygon,
+      remove cursize-2 Vertices, creating 1 triangle every time */
+    int cursize = nrknots;
+    int errcheck = 2*cursize; 
+
+    for( int idx=cursize-1; cursize>2; )
+    {
+	if ( 0 >= (errcheck--) )
+  	    return false;
+
+	const int idx0 = cursize<=idx ? 0 : idx; 
+	idx = cursize<=idx0+1 ? 0 : idx0+1;
+	const int idx1 = cursize<=idx+1 ? 0 : idx+1;
+
+	const Coord& pos0 = knots[ci[idx0]];
+    	const Coord& pos = knots[ci[idx]];
+    	const Coord& pos1 = knots[ci[idx1]];
+    	if ( (((pos.x-pos0.x)*(pos1.y-pos0.y)) - 
+	      ((pos.y-pos0.y)*(pos1.x-pos0.x)))<0 ) 
+      	    continue;
+
+	bool isvalid = true;
+    	for ( int idy=0; idy<cursize; idy++ )
+    	{
+	    if( (idy==idx0) || (idy==idx) || (idy==idx1) ) 
+		continue;
+	    
+	    if ( pointInTriangle2D(knots[ci[idy]],pos0,pos,pos1,0.0) ) 
+	    {
+		isvalid = false;
+		break;
+	    }
+    	}
+
+	if ( isvalid )
+	{
+	  res += ci[idx0];
+	  res += ci[idx];
+	  res += ci[idx1];
+
+	  /* remove idx from remaining polygon */
+	  for( int i=idx, j=idx+1; j<cursize; i++, j++ ) 
+	      ci[i] = ci[j]; 
+	  
+	  cursize--;
+	  errcheck = 2*cursize;
+	}
+    }
+
+    return true;
+}
 
 #endif
 

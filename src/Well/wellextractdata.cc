@@ -70,7 +70,7 @@ Well::InfoCollector::InfoCollector( bool dologs, bool domarkers, bool dotracks )
     : Executor("Well information extraction")
     , domrkrs_(domarkers)
     , dologs_(dologs)
-    , dotracks_(dotracks)     
+    , dotracks_(dotracks)
     , curidx_(0)
 {
     PtrMan<CtxtIOObj> ctio = mMkCtxtIOObj(Well);
@@ -513,6 +513,7 @@ void Well::TrackSampler::getData( const Well::Data& wd, DataPointSet& dps )
     dahrg.stop = zrgistime ? d2t->getDah( zrg_.stop ) : zrg_.stop;
 
     float zpos = dahrg.start;
+
     if ( extractintime )
     {
 	zpos = zrgistime ? zrg_.start : d2t->getTime( zpos, wd.track() );
@@ -523,7 +524,8 @@ void Well::TrackSampler::getData( const Well::Data& wd, DataPointSet& dps )
     BinIDValue biv; 
     BinIDValue prevbiv; mSetUdf(prevbiv.binid.inl);
 
-    dahrg.start -= mLocalEps;	dahrg.stop  += mLocalEps;
+    dahrg.start -= mLocalEps;
+    dahrg.stop  += mLocalEps;
     while ( true )
     {
 	zpos += zincr;
@@ -1032,7 +1034,14 @@ bool Well::LogSampler::doPrepare( int thread )
 	    zstep_ = 2000 * zstep_;
     }
     if ( mIsUdf(zrg_.start) || mIsUdf(zstep_) )
-	{errmsg_ ="No valid range specified"; return false;}
+	{errmsg_ = "No valid range specified"; return false;}
+
+    if ( zrg_.start < mCast( float, track_.value(0) ) )
+	{errmsg_ = "Cannot extract data above well head"; return false;}
+
+    const int ns = track_.size();
+    if ( zrg_.stop > mCast( float, track_.value( ns-1 ) ) )
+	{errmsg_ = "Cannot extract data below TD"; return false;}
 
     if ( ( extrintime_ || zrgisintime_ ) && !d2t_ )
     { 
@@ -1040,37 +1049,64 @@ bool Well::LogSampler::doPrepare( int thread )
 	return false;
     }	
 
-    TypeSet<float> dahs; Interval<float> dahrg; 
-    dahrg.start = zrgisintime_ ? d2t_->getDah(zrg_.start) : zrg_.start;
-    dahrg.stop = zrgisintime_ ? d2t_->getDah(zrg_.stop) : zrg_.stop;
-    float dah = dahrg.start;
-    float time = mUdf(float);
+    TypeSet<float> dahs; Interval<float> dahrg;
+    const float dahstart = track_.getDahForTVD( zrg_.start, mUdf(float) );
+    const float dahstop = track_.getDahForTVD( zrg_.stop, mUdf(float) );
+    dahrg.start = zrgisintime_ ? d2t_->getDah(zrg_.start) : dahstart;
+    dahrg.stop = zrgisintime_ ? d2t_->getDah(zrg_.stop) : dahstop;
+
+    if ( mIsUdf(dahrg.start) || mIsUdf(dahrg.stop) )
+	{errmsg_ = "Could not determine extraction boundaries"; return false;}
+
+    dahrg.start -= mLocalEps;
+    dahrg.stop  += mLocalEps;
+
+    int nrpts = 0;
+    float curz = mUdf(float);
     if ( extrintime_ )
     {
-	time = zrgisintime_ ? zrg_.start : d2t_->getTime( dah, track_ );
-	time -= zstep_;
+	if ( zrgisintime_ )
+	{
+	    curz = zrg_.start;
+	    nrpts = mCast( int, zrg_.width() / zstep_ ) + 1;
+	}
+	else
+	{
+	    curz = d2t_->getTime( dahrg.start, track_ );
+	    const float lastz = d2t_->getTime( dahrg.stop, track_ );
+	    nrpts = mCast( int, ( lastz - curz ) / zstep_ ) + 1;
+	}
     }
     else
-	dah -= zstep_;
+    {
+	if ( zrgisintime_ )
+	{
+	    curz = dahrg.start;
+	    nrpts = mCast( int, dahrg.width() / zstep_ ) + 1;
+	}
+	else
+	{
+	    curz = zrg_.start;
+	    nrpts = mCast( int, zrg_.width() / zstep_ ) + 1;
+	}
+    }
 
-    dahrg.start -= mLocalEps;	dahrg.stop  += mLocalEps;
-    while ( true )
+    float dah = mUdf(float);
+    for ( int idx=0; idx<=nrpts; idx++ )
     {
 	if ( extrintime_ )
 	{
-	    time += zstep_;
-	    dah = d2t_->getDah( time ); 
+	    dah = d2t_->getDah( curz );
 	}
 	else
-	    dah += zstep_;
-
-	if ( mIsUdf(dah) || !dahrg.includes( dah, true ) )
-	    break;
-
+	{
+	    dah = track_.getDahForTVD( curz, mUdf(float) );
+	}
+	curz += zstep_;
 	dahs += dah;
     }
-    data_ = new Array2DImpl<float>( mCast(int,nrIterations()+1), dahs.size() );
 
+    data_ = new Array2DImpl<float>( mCast(int,nrIterations()+1), dahs.size() );
     for ( int idz=0; idz<dahs.size(); idz++ )
 	data_->set( 0, idz, dahs[idz] );
 
@@ -1094,7 +1130,6 @@ bool Well::LogSampler::doWork( od_int64 start, od_int64 stop, int nrthreads )
 }
 
 
-#define mWinSz extrintime_ ? log->dahStep(true)*20 : SI().zStep()
 bool Well::LogSampler::doLog( int logidx )
 {
     const Well::Log* log = logset_.validIdx( logidx ) ? logset_[logidx] : 0;
@@ -1102,11 +1137,30 @@ bool Well::LogSampler::doLog( int logidx )
 
     for ( int idz=0; idz<data_->info().getSize(1); idz++ ) 
     {
-	const float dah = data_->get( 0, idz );
-	const float winsz = mWinSz;
-	const float lval = samppol_ == Stats::TakeNearest ? 
-	    	  log->getValue(dah,true) 
-		: LogDataExtracter::calcVal(*log,dah,winsz,samppol_);
+	float dah = data_->get( 0, idz );
+	float lval = mUdf(float);
+
+	if ( samppol_ == Stats::TakeNearest )
+	    lval = log->getValue(dah,true);
+	else
+	{
+	    float winsz = SI().zStep();
+	    if ( extrintime_ )
+	    {
+		const float startdahwin = idz == 0 ? dah :
+		    ( data_->get(0,idz)+data_->get(0,idz-1) ) / 2;
+		const float stopdahwin = idz < data_->info().getSize(1) ?
+		    ( data_->get(0,idz)+data_->get(0,idz+1) ) / 2 : dah;
+		const float starttime = d2t_->getTime(startdahwin, track_ );
+		const float stoptime = d2t_->getTime( stopdahwin, track_ );
+		winsz = stoptime - starttime;
+		dah = d2t_->getDah( ( stoptime + starttime ) / 2 );
+	    }
+	    else if ( !mIsUdf(zstep_) )
+		winsz = zstep_;
+
+	    lval = LogDataExtracter::calcVal(*log,dah,winsz,samppol_);
+	}
 	data_->set( logidx+1, idz, lval );
     }
 

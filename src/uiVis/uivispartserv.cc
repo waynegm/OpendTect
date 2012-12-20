@@ -415,6 +415,9 @@ void uiVisPartServer::addObject( visBase::DataObject* dobj, int sceneid,
 
 void uiVisPartServer::removeObject( visBase::DataObject* dobj, int sceneid )
 {
+    if ( !dobj )
+	return;
+
     removeObject( dobj->id(), sceneid );
     objectaddedremoved.trigger();
 }
@@ -1551,23 +1554,24 @@ void uiVisPartServer::toggleBlockDataLoad() const
 }
 
 
-#define mGetScene( prepostfix ) \
-prepostfix visSurvey::Scene* \
-uiVisPartServer::getScene( int sceneid ) prepostfix \
-{ \
-    for ( int idx=0; idx<scenes_.size(); idx++ ) \
-    { \
-	if ( scenes_[idx]->id()==sceneid ) \
-	{ \
+visSurvey::Scene* uiVisPartServer::getScene( int sceneid )
+{
+    for ( int idx=0; idx<scenes_.size(); idx++ )
+    {
+	if ( scenes_[idx]->id()==sceneid )
+	{
 	    return scenes_[idx]; \
-	} \
-    } \
- \
-    return 0; \
+	}
+    }
+
+    return 0;
 }
 
-mGetScene( );
-mGetScene( const ); 
+
+const visSurvey::Scene* uiVisPartServer::getScene( int sceneid ) const
+{
+    return const_cast<uiVisPartServer*>(this)->getScene( sceneid );
+}
 
 
 void uiVisPartServer::removeObject( int id, int sceneid )
@@ -1690,17 +1694,29 @@ bool uiVisPartServer::hasMaterial( int id ) const
 }
 
 
-bool uiVisPartServer::setMaterial( int id )
+void uiVisPartServer::setMaterial( int id )
 {
     mDynamicCastGet(visBase::VisualObject*,vo,getObject(id))
-    if ( !hasMaterial(id) || !vo ) return false;
+    if ( !hasMaterial(id) || !vo ) return;
 
     uiPropertiesDlg* dlg = new uiPropertiesDlg( appserv().parent(),
 	    dynamic_cast<visSurvey::SurveyObject*>(vo) );
     dlg->setDeleteOnClose( true );
     dlg->go();
-    
-    return true;
+}
+
+
+bool uiVisPartServer::hasColor( int id ) const
+{
+    mDynamicCastGet(visSurvey::SurveyObject*,so,getObject(id))
+    return so && so->hasColor();
+}
+
+
+void uiVisPartServer::setColor( int id, const Color& col )
+{
+    mDynamicCastGet(visSurvey::SurveyObject*,so,getObject(id))
+    if ( so ) so->setColor( col );
 }
 
 

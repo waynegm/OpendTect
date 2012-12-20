@@ -354,7 +354,17 @@ foreach ( TEST_FILE ${OD_TEST_PROGS} )
 	    ${TEST_NAME}
 	    ${OD_EXEC_DEP_LIBS}
 	    ${OD_RUNTIMELIBS} )
-    add_test( NAME ${TEST_NAME} WORKING_DIRECTORY ${OD_EXEC_OUTPUT_PATH} COMMAND ${TEST_NAME} )
+    if ( WIN32 )
+        set ( TEST_COMMAND "${OpendTect_DIR}/dtect/run_test.cmd" )
+        set ( TEST_ARGS --command ${TEST_NAME}.exe
+			--wdir ${CMAKE_BINARY_DIR}
+			--config Debug --plf ${OD_PLFSUBDIR}
+			--qtdir ${QTDIR} )
+    else()
+        set ( TEST_COMMAND "${OD_EXEC_OUTPUT_PATH}/${TEST_NAME}" )
+    endif()
+
+    add_test( NAME ${TEST_NAME} WORKING_DIRECTORY ${OD_EXEC_OUTPUT_PATH} COMMAND ${TEST_COMMAND} ${TEST_ARGS} )
     set_property( TEST ${TEST_NAME} PROPERTY ${OD_MODULE_TEST_LABEL} )
 endforeach()
 
@@ -459,6 +469,15 @@ macro ( OD_ADD_LINEEND_TEST )
 	set( CMD "${OpendTect_DIR}/dtect/FindDosEOL.sh" )
 	list( APPEND CMD "${OD_SOURCELIST_FILE}" )
 	add_test( LineEndTest ${CMD} )
+    endif()
+endmacro()
+
+
+macro ( OD_ADD_SVNPROP_TEST )
+    if ( NOT DEFINED WIN32 )
+	set( CMD "${OpendTect_DIR}/dtect/CheckSVNProps.csh" )
+	list( APPEND CMD "--listfile" "${OD_SOURCELIST_FILE}" )
+	add_test( SVNPropertyTest ${CMD} )
     endif()
 endmacro()
 

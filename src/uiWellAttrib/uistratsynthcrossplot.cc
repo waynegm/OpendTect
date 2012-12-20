@@ -107,9 +107,19 @@ DataPointSet* uiStratSynthCrossplot::getData( const Attrib::DescSet& seisattrs,
     DataPointSet* dps = seisattrs.createDataPointSet(Attrib::DescSetup(),false);
     if ( !dps )
 	{ uiMSG().error(seisattrs.errMsg()); return 0; }
-    dps->dataSet().insert( dps->nrFixedCols(),new DataColDef(sKey::Depth()) );
-    dps->dataSet().insert( dps->nrFixedCols()+1,
-	    	new DataColDef(Strat::LayModAttribCalc::sKeyModelIdx()) );
+    if ( dps->nrCols() )
+    {
+	dps->dataSet().insert( dps->nrFixedCols(),new DataColDef("Depth") );
+	dps->dataSet().insert( dps->nrFixedCols()+1,
+		    new DataColDef(Strat::LayModAttribCalc::sKeyModelIdx()) );
+    }
+    else
+    {
+	dps->dataSet().add( new DataColDef("Depth") );
+	dps->dataSet().add( 
+		    new DataColDef(Strat::LayModAttribCalc::sKeyModelIdx()) );
+    }
+
     for ( int iattr=0; iattr<seqattrs.size(); iattr++ )
 	dps->dataSet().add(
 		new DataColDef(seqattrs.attr(iattr).name(),toString(iattr)) );
@@ -193,8 +203,8 @@ bool uiStratSynthCrossplot::extractSeisAttribs( DataPointSet& dps,
     }
 
     exec->setName( "Attributes from Traces" );                       
-    uiTaskRunner dlg( this );                                                   
-    dlg.execute(*exec);
+    uiTaskRunner dlg( this );
+    TaskRunner::execute( &dlg, *exec );
     return true;
 }
 
@@ -207,7 +217,7 @@ bool uiStratSynthCrossplot::extractLayerAttribs( DataPointSet& dps,
 
     Strat::LayModAttribCalc lmac( lm_, seqattrs, dps );
     uiTaskRunner tr( this );
-    return tr.execute( lmac );
+    return TaskRunner::execute( &tr, lmac );
 }
 
 

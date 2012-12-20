@@ -17,7 +17,9 @@ ________________________________________________________________________
 #include "gendefs.h"
 #include "fixedstring.h"
 
-/*!\brief is used for defining key strings that are 'global'.
+/*!
+\ingroup Basic
+\brief is used for defining key strings that are 'global'.
 
 Some standard key strings are shared between otherwise unrelated modules.
 To make sure no artificial dependencies are created, such a key can be added
@@ -42,6 +44,7 @@ namespace sKey
     inline FixedString DataStorage()	{ return "Data storage"; }
     inline FixedString DataType()	{ return "DataType"; }
     inline FixedString Date()		{ return "Date"; }
+    inline FixedString Default()	{ return "Default"; }
     inline FixedString Depth()		{ return "Depth"; }
     inline FixedString Desc()		{ return "Description"; }
     inline FixedString EmptyString()	{ return ""; }
@@ -59,6 +62,7 @@ namespace sKey
     inline FixedString Line()		{ return "Line"; }
     inline FixedString LineKey()	{ return "Line key"; }
     inline FixedString LineName()	{ return "Line name"; }
+    inline FixedString LineNames()	{ return "Line names"; }
     inline FixedString Log()		{ return "Log"; }
     inline FixedString LogFile()	{ return "Log file"; }
     inline FixedString Name()		{ return "Name"; }
@@ -94,6 +98,7 @@ namespace sKey
     inline FixedString Type()		{ return "Type"; }
     inline FixedString Undef()		{ return "Undefined"; }
     inline FixedString Unit()		{ return "Unit"; }
+    inline FixedString User()		{ return "User"; }
     inline FixedString Value()		{ return "Value"; }
     inline FixedString Version()	{ return "Version"; }
     inline FixedString Well()		{ return "Well"; }
@@ -125,8 +130,6 @@ namespace sKey
     inline FixedString TrcRange()	{ return "Trace Range"; }
 
     inline FixedString TmpStor()	{ return "Temporary storage location"; }
-
-    inline FixedString Default()	{ return "Default"; }
 };
 
 

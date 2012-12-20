@@ -477,6 +477,8 @@ void uiDataPointSetCrossPlotter::drawUserDefPolyLine( bool isy1 )
 	if ( mIsUdf(x_.axis_->getPix(pt.x)) ||
 	       	mIsUdf(vert.axis_->getPix(pt.y)) )
 	    continue;
+	if (!x_.axis_->pixRange().includes(x_.axis_->getPix(pt.x),false) )
+	    continue;
 	if (!vert.axis_->pixRange().includes(vert.axis_->getPix(pt.y),false) )
 	    continue;
 
@@ -568,6 +570,7 @@ void uiDataPointSetCrossPlotter::mouseClicked( CallBacker* )
 
     curselarea_ = selgrp->size() - 1;
     SelectionArea& selarea = getCurSelArea();
+    if ( !axisHandler(0) || !axisHandler(1) ) return;
     selarea.xaxisnm_ = axisHandler(0)->name();
     selarea.yaxisnm_ = axisHandler( isy1selectable_ ? 1 : 2 )->name();
 }

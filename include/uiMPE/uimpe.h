@@ -12,16 +12,6 @@ ________________________________________________________________________
 
 -*/
 
-/*!\mainpage
-uiMPE contains user interface for the MPE-engines trackers and editors. The
-class uiMPEPartServer provides tracking services for higher hierarchies 
-(i.e. the application manager).
-
-There are two factories avaliable for Trackning and Editing UI from
-the MPE::uiMPEEngine object, which is available through the static function
-MPE::uiMPE(). */
-
-
 #include "uimpemod.h"
 #include "bufstring.h"
 #include "callback.h"
@@ -44,9 +34,11 @@ namespace MPE
 class ObjectEditor;
 class SectionTracker;
 
-/*! Interface for the ui interaction with MPE::ObjectEditor. Object is
-    implemented in separate classes inheriting uiEMEditor that can be created
-    by:
+/*!
+\ingroup uiMPE
+\brief Interface for the ui interaction with MPE::ObjectEditor.
+Object is implemented in separate classes inheriting uiEMEditor that
+can be created by:
 
 \code
     PtrMan<uiEMEditor> uieditor =
@@ -155,8 +147,11 @@ protected:
 };
 
 
-/*! Holder class for MPE ui-factories. Is normally only retrieved by
-    MPE::uiMPE(). */
+/*!
+\ingroup uiMPE
+\brief Holder class for MPE ui-factories.
+  Is normally only retrieved by MPE::uiMPE().
+*/
 
 
 mClass(uiMPE) uiMPEEngine 
@@ -168,12 +163,13 @@ public:
 
 
 
-/*! Access function for an instance (and normally the only instance) of
-  MPE::uiMPEEngine. */
+/*!
+\brief Access function for an instance (and normally the only instance) of
+  MPE::uiMPEEngine.
+*/
 mGlobal(uiMPE) uiMPEEngine& uiMPE();
 
 };
-
 
 #endif
 

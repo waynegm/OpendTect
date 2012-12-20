@@ -1,0 +1,23 @@
+/*+
+________________________________________________________________________
+
+ (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
+ Author:	Nanne Hemstra
+ Date:		September 2012
+ SVN:		$Id$
+________________________________________________________________________
+
+-*/
+
+
+/*!
+\defgroup uiEMAttrib uiEMAttrib
+\section Introduction Introduction
+EMAttrib User Interface
+
+Here you will find all attribute handling regarding EarthModel objects.
+The uiEMAttribPartServer delivers the services needed.
+
+\section Content Content
+
+*/

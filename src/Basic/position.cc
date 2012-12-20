@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "rowcol.h"
 #include "string2.h"
 #include "undefval.h"
+#include "survgeom.h"
 
 #include <ctype.h>
 #include <math.h>
@@ -274,3 +275,15 @@ void BinIDValues::setVals( const float* vs )
 {
     if ( sz ) memcpy( vals, vs, sz * sizeof(float) );
 }
+
+
+const TraceID& TraceID::udf()
+{
+    static TraceID trcid( -1, -1, -1 );
+    return trcid;
+}
+
+
+int TraceID::std3DGeomID()
+{ return Survey::GeometryManager::cDefault3DGeom(); }
+

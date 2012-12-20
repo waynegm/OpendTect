@@ -158,13 +158,61 @@ void PosInfo::Survey2D::readIdxFiles()
 }
 
 
+struct IdxFileData
+{
+    BufferString	filename_;
+    od_int64		timestamp_;
+    IOPar		iopar_;
+};
+
+static ObjectSet<IdxFileData> idxfilecache;
+static Threads::ReadWriteLock idxfilecachelock;
+
+static int getIdxFileCacheIdx( const char* fnm )
+{
+    for ( int idx=idxfilecache.size()-1; idx>=0; idx-- )
+    {
+	if ( idxfilecache[idx]->filename_ == fnm )
+	    return idx;
+    }
+    return -1;
+}
+
+
 void PosInfo::Survey2D::readIdxFile( const char* fnm, IOPar& iop )
 {
+    idxfilecachelock.readLock();
+
+    int idx = getIdxFileCacheIdx( fnm );
+    if ( idx>=0 && File::getTimeInSeconds(fnm)<=idxfilecache[idx]->timestamp_ )
+    {
+	iop = idxfilecache[idx]->iopar_;
+	idxfilecachelock.readUnLock();
+	return;
+    }
+
+    idxfilecachelock.readUnLock();
+
     iop.setEmpty();
     SafeFileIO sfio( fnm, true );
     if ( !sfio.open(true) ) return;
     ascistream astrm( sfio.istrm() );
     iop.getFrom( astrm );
+
+    idxfilecachelock.writeLock();
+
+    idx = getIdxFileCacheIdx( fnm );
+    if ( idx >= 0 )
+	delete idxfilecache.removeSingle( idx );
+
+    IdxFileData* idxfiledata = new IdxFileData();
+    idxfiledata->filename_ = fnm;
+    idxfiledata->timestamp_ = File::getTimeInSeconds( fnm );
+    idxfiledata->iopar_ = iop;
+    idxfilecache += idxfiledata;
+
+    idxfilecachelock.writeUnLock();
+
     sfio.closeSuccess();
 }
 
@@ -181,7 +229,17 @@ void PosInfo::Survey2D::writeIdxFile( bool lines ) const
     astrm.putHeader("File Name Table");
     (lines ? lineindex_ : lsindex_).putTo( astrm );
     if ( sfio.ostrm().good() )
+    {
+	idxfilecachelock.writeLock();
+
+	int idx = getIdxFileCacheIdx( fp.fullPath() );
+	if ( idx >= 0 )
+	    idxfilecache[idx]->timestamp_ = -1;
+
+	idxfilecachelock.writeUnLock();
+
 	sfio.closeSuccess();
+    }
     else
     {
 	sfio.closeFail();
@@ -734,7 +792,7 @@ void PosInfo::Survey2D::removeLineSet( const char* lsnm )
     if ( File::exists(dirnm) )
 	File::removeDir(dirnm);
     lsindex_.remove( lsidx );
-	writeIdxFile( false );
+    writeIdxFile( false );
     if ( !iscurls ) return;
 
     if ( lsindex_.size() > 1 ) 
@@ -826,3 +884,38 @@ BufferString PosInfo::Survey2D::getIdxTimeStamp( const char* lsnm ) const
     BufferString timestamp( File::timeLastModified(fp.fullPath()) );
     return timestamp;
 }
+
+
+// New Stuff
+
+Survey::Geometry2D::Geometry2D()
+    : data_(*new PosInfo::Line2DData)
+{
+}
+
+Survey::Geometry2D::~Geometry2D()
+{ delete &data_; }
+
+
+Coord Survey::Geometry2D::toCoord( int line, int trcnr ) const
+{
+    PosInfo::Line2DPos pos;
+    return data_.getPos(trcnr,pos) ? pos.coord_ : Coord::udf();
+}
+
+
+TraceID Survey::Geometry2D::nearestTrace( const Coord& crd, float* dist ) const
+{
+    PosInfo::Line2DPos pos;
+    return data_.getPos(crd,pos,dist) ? TraceID( geomid_, geomid_, pos.nr_) 
+				      : TraceID::udf();
+
+}
+
+
+bool Survey::Geometry2D::includes( int line, int tracenr ) const
+{ return data_.indexOf(tracenr) >= 0; }
+
+
+
+

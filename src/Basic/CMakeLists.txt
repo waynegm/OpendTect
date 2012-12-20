@@ -7,7 +7,7 @@
 
 SET(OD_USEQT Core)
 SET(OD_USEZLIB Yes)
-SET(QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h)
+SET(QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h i_qptr.h)
 SET(OD_MODULE_SOURCES genc.cc oddirs.cc
 	    arrayndinfo.cc
 	    arrayndslice.cc
@@ -52,6 +52,7 @@ SET(OD_MODULE_SOURCES genc.cc oddirs.cc
 	    rcol2coord.cc
 	    repos.cc
 	    rowcol.cc
+	    qptr.cc
 	    safefileio.cc
 	    separstr.cc
 	    settings.cc
@@ -61,6 +62,7 @@ SET(OD_MODULE_SOURCES genc.cc oddirs.cc
 	    string2.cc
 	    strmoper.cc
 	    strmprov.cc
+	    survgeom.cc
 	    survinfo.cc
 	    surv2dgeom.cc
 	    task.cc

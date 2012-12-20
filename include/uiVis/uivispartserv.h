@@ -52,7 +52,10 @@ namespace ColTab    { class Sequence; class MapperSetup; }
 namespace ZDomain   { class Info; }
 
 
-/*! \brief The Visualisation Part Server */
+/*!
+\ingroup uiVis
+\brief The Visualisation Part Server
+*/
 
 mClass(uiVis) uiVisPartServer : public uiApplPartServer
 {
@@ -97,6 +100,7 @@ public:
     NotifierAccess&	nrScenesChange() { return nrsceneschange_; }
     bool		clickablesInScene(const char* trackertype, 
 					  int sceneid) const;
+    const ObjectSet<visSurvey::Scene>& getAllScenes() const { return scenes_; }
 
     void		getChildIds(int id,TypeSet<int>&) const;
 			/*!< Gets a scenes' children or a volumes' parts
@@ -171,6 +175,11 @@ public:
 	    				  DataPointSet& ) const;
     void		setRandomPosData(int visid, int attrib,
 					 const DataPointSet*);
+
+    bool		hasMaterial(int id) const;
+    void		setMaterial(int id);
+    bool		hasColor(int id) const;
+    void		setColor(int id,const Color&);
 
     bool		blockMouseSelection(bool yn);
 			/*!<\returns Previous status. */
@@ -397,11 +406,6 @@ protected:
     void			acceptManipulation(int id);
     bool			resetManipulation(int id);
 
-    bool			hasMaterial(int id) const;
-    bool			setMaterial(int id);
-
-    bool			hasColor(int id) const;
-
     void			setUpConnections(int id);
     				/*!< Should set all cbs for the object */
     void			removeConnections(int id);
@@ -470,21 +474,6 @@ protected:
 
     uiDirLightDlg*		dirlightdlg_;
 };
-
-
-/*!\mainpage Visualisation User Interface
-
-  This module provides the plain user interface classes necessary to do the
-  3D visualisation in the way that the user wants.
-
-  Main task of this server is adding and removing scene objects and 
-  transfer of data to be displayed. All supported scene objects are inheriting
-  visSurvey::SurveyObject.
-
-  A lot of user interaction is done via popupmenus, and all objects share
-  one uiMenuHandler that is accessed via getMenuHandler. To add items or
-  manipulate the menus, please refer to the uiMenuHandler documentation.
-*/
 
 
 class uiVisModeMgr 

@@ -21,8 +21,9 @@ template <class T> class Array3D;
 
 class TaskRunner;
 
-/*!\brief
- Get a flag output for faults based on 2D input attribute data.
+/*!
+  \ingroup Algo
+  \brief Get a flag output for faults based on 2D input attribute data.
 */
 
 mClass(Algo) FingerVein
@@ -63,8 +64,9 @@ protected:
 };
 
 
-/*! \brief \
- Calculate azimuth and dip for 3D data.\
+/*!
+  \ingroup Algo
+  \brief Calculate azimuth and dip for 3D data.
 */
 
 mClass(Algo) FaultOrientation
@@ -76,8 +78,8 @@ public:
 
     void			setThreshold(float threshold,bool isabove);
     void			setMinFaultLength(int minleng);
-    void			setParameters(int sigma,float vein_percentage);
-    				/*!<sigma is Gaussian kernel sigma, percentage 
+    void			setParameters(int sigma=3,float scorerate=0.9);
+    				/*!<sigma is Gaussian kernel sigma, scorerate 
 				  is between 0 and 1.*/
     bool			compute(const Array3D<float>& input,
 	    				bool forazimuth=true,bool fordip=true,
@@ -161,10 +163,10 @@ protected:
 					  float null_value);
 
     float			threshold_;
+    float			scorerate_;
     bool			isfltabove_;
     int				minfaultlength_;
     int				sigma_;
-    float			percent_;
     Array3D<float>*		azimuth_stable_;
     Array3D<float>*		dip_stable_; 
     Array3D<bool>*		conf_low_; 

@@ -554,7 +554,7 @@ void VolumeDisplay::setFullMode( const mVisMCSurf* mcd, bool full )
     if ( idx<0 )
 	return;
     
-    isosurfsettings_[idx].mode_ = full;
+    isosurfsettings_[idx].mode_ = full ? 1 : 0;
 }
 
 
@@ -879,8 +879,7 @@ bool VolumeDisplay::setDataVolume( int attrib,
 				    attribdata->cubeSampling() );
 	datatransformer_->setOutputRange( getCubeSampling(true,true,0) );
 
-	if ( (tr && !tr->execute(*datatransformer_)) ||
-             !datatransformer_->execute() )
+	if ( !TaskRunner::execute( tr, *datatransformer_ ) )
 	{
 	    pErrMsg( "Transform failed" );
 	    return false;

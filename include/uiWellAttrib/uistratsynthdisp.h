@@ -30,6 +30,7 @@ class uiGenInput;
 class uiCheckBox;
 class uiFlatViewer;
 class uiRayTracerSel;
+class uiListBox;
 class uiLabeledComboBox;
 class uiFlatViewMainWin;
 class uiMultiFlatViewControl;
@@ -80,7 +81,7 @@ public:
     Notifier<uiStratSynthDisp>	layerPropSelNeeded;
     Notifier<uiStratSynthDisp>	modSelChanged;
 
-    mDeclInstanceCreatedNotifierAccess(uiStratSynthDisp);
+    //mDeclInstanceCreatedNotifierAccess(uiStratSynthDisp);
     void		addTool(const uiToolButtonSetup&);
     void		addViewerToControl(uiFlatViewer&);
 
@@ -89,6 +90,9 @@ public:
     void		displaySynthetic(const SyntheticData*);
 
     uiMultiFlatViewControl* control() 	{ return control_; }
+
+    void		fillPar(IOPar&) const;
+    bool		usePar(const IOPar&);
 
 protected:
 
@@ -121,8 +125,10 @@ protected:
     uiSynthSlicePos*	offsetposfld_;
     uiSynthSlicePos*	modelposfld_;
     uiFlatViewMainWin*	prestackwin_;
+    PtrMan<TaskRunner>	taskrunner_;
 
     void		setCurrentSynthetic();
+    void		setCurrentWavelet();
     void		cleanSynthetics();
     void		doModelChange();
     const SeisTrcBuf&	curTrcBuf() const;
@@ -144,6 +150,8 @@ protected:
     void		viewPreStackPush(CallBacker*);
     void		wvltChg(CallBacker*);
     void		zoomChg(CallBacker*);
+    void		syntheticRemoved(CallBacker*);
+    void		syntheticChanged(CallBacker*);
 
 };
 
@@ -156,6 +164,7 @@ public:
     Notifier<uiSynthSlicePos>	positionChg;
     void		setLimitSampling(StepInterval<float>);
     int			getValue() const;
+    void		setValue(int) const;
 
 protected:
     uiLabel* 		label_;
@@ -194,30 +203,44 @@ protected:
 mClass(uiWellAttrib) uiSynthGenDlg : public uiDialog
 {
 public:
-				uiSynthGenDlg(uiParent*,SynthGenParams&);
+				uiSynthGenDlg(uiParent*,StratSynth&);
 
     void			getFromScreen();
     void			putToScreen();
+    void			updateSynthNames();
+    void			updateWaveletName();
 
     Notifier<uiSynthGenDlg>	genNewReq;
+    CNotifier<uiSynthGenDlg,BufferString> synthRemoved;
+    CNotifier<uiSynthGenDlg,BufferString> synthChanged;
 
 protected:
+    void			updateFieldSensitivity();
 
+    uiSeisWaveletSel*		wvltfld_;
     uiGenInput*			typefld_;
     uiGenInput*  		namefld_;
-    uiCheckBox*			nmobox_;
+    uiGenInput*			nmofld_;
+    uiGenInput*			stretchmutelimitfld_;
+    uiGenInput*			mutelenfld_;
     uiCheckBox*			stackfld_;
     uiRayTracerSel*		rtsel_;
     uiPushButton*		gennewbut_;
     uiPushButton*		applybut_;
     uiPushButton*		revertbut_;
     uiPushButton*		savebut_;
-    SynthGenParams&		sd_;
+    uiListBox*			synthnmlb_;
+    StratSynth&			stratsynth_;
 
 
     void			typeChg(CallBacker*);
     bool			genNewCB(CallBacker*);
     bool			acceptOK(CallBacker*);
+    void			removeSyntheticsCB(CallBacker*);
+    void			changeSyntheticsCB(CallBacker*);
+    void			parsChanged(CallBacker*);
+    void			nameChanged(CallBacker*);
+    bool			rejectOK(CallBacker*);
 
 };
 

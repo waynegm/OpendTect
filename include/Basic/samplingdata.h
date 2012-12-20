@@ -12,8 +12,9 @@ ________________________________________________________________________
 
 -*/
 
-#include "ranges.h"
+#include "commondefs.h"
 
+template <class T> class StepInterval;
 
 /*!\brief holds the fundamental sampling info: start and interval. */
 
@@ -33,6 +34,9 @@ public:
     template <class IT> inline StepInterval<T> interval(IT nrsamples) const;
     template <class FT> inline float	getfIndex(FT) const;
     template <class FT> inline int	nearestIndex(FT) const;
+    template <class FT> inline int	indexOnOrAfter(FT,
+						    float eps=mDefEps ) const;
+    					//!\var eps is in number of samples.
     template <class IT> inline T	atIndex(IT) const;
     template <class FT> inline T	snap(FT) const;
 
@@ -63,14 +67,18 @@ SamplingData<T>::SamplingData( T x0, T y0, T x1, T y1 )
 template <class T> 
 template <class FT> inline
 SamplingData<T>::SamplingData( const SamplingData<FT>& sd )
-    : start( sd.start ), step( sd.step )
+    : start( mCast(T,sd.start) ), step( mCast(T,sd.step) )
 {}
+
+
+
+#include "ranges.h"
 
 
 template <class T>
 template <class FT> inline
 SamplingData<T>::SamplingData( const StepInterval<FT>& intv )
-    : start(intv.start), step(intv.step)
+    : start(mCast(T,intv.start)), step(mCast(T,intv.step))
 {}
 
 
@@ -120,6 +128,20 @@ template <class T>
 template <class FT> inline
 int SamplingData<T>::nearestIndex( FT x ) const
 { const float fidx = getfIndex(x); return mNINT32(fidx); }
+
+
+template <class T>
+template <class FT> inline
+int SamplingData<T>::indexOnOrAfter( FT x, float eps ) const
+{
+    float fres = getfIndex( x );
+    int res = (int) getfIndex(x);
+    const float diff = fres-res;
+    if ( diff>eps )
+	res++;
+    
+    return res;
+}
 
 
 template <class T>

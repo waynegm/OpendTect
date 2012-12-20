@@ -7,15 +7,14 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUsedVar = "$Id: uiobj.cc 26529 2012-09-30 11:26:40Z nageswara.rao@dgbes.com $";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uieventfilter.h"
-#include "uibaseobject.h"
+#include "uiobj.h"
+#include "i_qptr.h"
 
 #include <QEvent>
 #include <QWidget>
-#include <QWeakPointer>
-#include "i_qobjectptr.h"
 
 mUseQtnamespace
 
@@ -25,37 +24,25 @@ public:
 					uiEventFilterImpl( uiEventFilter& uif )
 					    : uif_( uif )
 					{}
-    
-    bool 				eventFilter(QObject*, QEvent*);
+
+    bool 				eventFilter(QObject*,QEvent*);
     static uiEventFilter::EventType	translate(QEvent::Type);
     static QEvent::Type			translate(uiEventFilter::EventType);
-    
+
     					//Set at the events
     const QEvent*			currentevent_;
     bool				blockevent_;
-    
+
     TypeSet<QEvent::Type>		eventtypes_;
-    
-    void				attachFilter(QObject* obj)
-    {
-	if ( qobj_.get() )
-	    return;
-	
-	qobj_ = obj;
-	qobj_->installEventFilter( this );
-    }
-    
-    void				detachFilter()
-    {
-	qobj_->removeEventFilter( this );
-	qobj_ = 0;
-    }
-    
+
+    void				attachFilter(QObject*);
+    void				detachFilter();
+
 protected:
-    
-    i_QObjectPtr			qobj_;
+    i_QPtrImpl				qobj_;
     uiEventFilter& 			uif_;
 };
+
 
 
 uiEventFilter::uiEventFilter()
@@ -77,7 +64,7 @@ void uiEventFilter::addEventType( uiEventFilter::EventType tp )
 }
 
 
-void uiEventFilter::removeEventType(uiEventFilter::EventType tp )
+void uiEventFilter::removeEventType( uiEventFilter::EventType tp )
 {
     impl_->eventtypes_ -= uiEventFilterImpl::translate( tp );
 }
@@ -96,17 +83,15 @@ bool uiEventFilter::getBlockEvent() const
 
 
 const QEvent* uiEventFilter::getCurrentEvent() const
-{
-    return impl_->currentevent_;
-}
+{ return impl_->currentevent_; }
 
 
-void uiEventFilter::attach( uiBaseObject* obj, int widgetidx )
+void uiEventFilter::attach( uiBaseObject* obj )
 {
-    if ( !obj->getWidget( widgetidx ) )
+    if ( !obj->getWidget() )
 	return;
-    
-    attachToQObj( obj->getWidget( widgetidx ) );
+
+    attachToQObj( obj->getWidget() );
 }
 
 
@@ -122,26 +107,43 @@ void uiEventFilter::detach()
 }
 
 
-
-bool uiEventFilterImpl::eventFilter(QObject* obj, QEvent* ev )
+// uiEventFilterImpl
+void uiEventFilterImpl::attachFilter( QObject* obj )
 {
-    if ( !qobj_ )
-	return false;
+    if ( qobj_ ) return;
+
+    qobj_ = obj;
+    qobj_->installEventFilter( this );
+}
+
+
+void uiEventFilterImpl::detachFilter()
+{
+    Threads::MutexLocker lock( qobj_.lock_ );
     
+    if ( qobj_ ) qobj_->removeEventFilter( this );
+    qobj_ = 0;
+}
+
+
+bool uiEventFilterImpl::eventFilter( QObject* obj, QEvent* ev )
+{
+    Threads::MutexLocker lock( qobj_.lock_ );
+
+    if ( qobj_ )
+	return false;
+
     if ( qobj_!=obj )
 	return false;
-    
-    if ( ev->type()==QEvent::DeferredDelete )
-	detachFilter();
-    
+
     if ( !eventtypes_.isPresent( ev->type() ) )
 	return false;
-	
+
     blockevent_ = false;
     currentevent_ = ev;
-    
+
     uif_.eventhappened.trigger();
-    
+
     currentevent_ = 0;
     return blockevent_;
 }
@@ -155,6 +157,9 @@ bool uiEventFilterImpl::eventFilter(QObject* obj, QEvent* ev )
     switch (tp) \
     { \
 	mImplCase( fromnmspace, tonmspace, None ); \
+	mImplCase( fromnmspace, tonmspace, AccessibilityDescription ); \
+	mImplCase( fromnmspace, tonmspace, AccessibilityHelp ); \
+	mImplCase( fromnmspace, tonmspace, AccessibilityPrepare ); \
 	mImplCase( fromnmspace, tonmspace, ActionAdded ); \
 	mImplCase( fromnmspace, tonmspace, ActionChanged ); \
 	mImplCase( fromnmspace, tonmspace, ActionRemoved ); \
@@ -224,6 +229,7 @@ bool uiEventFilterImpl::eventFilter(QObject* obj, QEvent* ev )
 	mImplCase( fromnmspace, tonmspace, NonClientAreaMouseButtonRelease ); \
 	mImplCase( fromnmspace, tonmspace, NonClientAreaMouseMove ); \
 	mImplCase( fromnmspace, tonmspace, MacSizeChange ); \
+	mImplCase( fromnmspace, tonmspace, MenubarUpdated ); \
 	mImplCase( fromnmspace, tonmspace, MetaCall ); \
 	mImplCase( fromnmspace, tonmspace, ModifiedChange ); \
 	mImplCase( fromnmspace, tonmspace, MouseButtonDblClick ); \
@@ -285,6 +291,7 @@ QEvent::Type uiEventFilterImpl::translate( uiEventFilter::EventType tp )
 {
     mImpTransform( uiEventFilter, QEvent );
 }
+
 
 uiEventFilter::EventType uiEventFilterImpl::translate( QEvent::Type tp )
 {

@@ -29,7 +29,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "timeser.h"
 #include "wavelet.h"
 
-
+static const char* sKeyIsPreStack()		{ return "Is Pre Stack"; }
+static const char* sKeyWaveLetName()		{ return "Wavelet Name"; }
+static const char* sKeyRayPar() 		{ return "Ray Parameter"; } 
 
 SynthGenParams::SynthGenParams()
     : isps_(false)
@@ -44,9 +46,30 @@ SynthGenParams::SynthGenParams()
 }
 
 
-const char* SynthGenParams::genName() const
+void SynthGenParams::fillPar( IOPar& par ) const
 {
-    BufferString nm( wvltnm_ );
+    par.set( sKey::Name(), name_ );
+    par.setYN( sKeyIsPreStack(), isps_ );
+    par.set( sKeyWaveLetName(), wvltnm_ );
+    IOPar raypar;
+    raypar.mergeComp( raypars_, sKeyRayPar() );
+    par.merge( raypar );
+}
+
+
+void SynthGenParams::usePar( const IOPar& par ) 
+{
+    par.get( sKey::Name(), name_ );
+    par.getYN( sKeyIsPreStack(), isps_ );
+    par.get( sKeyWaveLetName(), wvltnm_ );
+    IOPar raypar;
+    raypars_ = *par.subselect( sKeyRayPar() );
+}
+
+
+void SynthGenParams::createName( BufferString& nm ) const
+{
+    nm = wvltnm_;
     TypeSet<float> offset; 
     raypars_.get( RayTracer1D::sKeyOffset(), offset );
     const int offsz = offset.size();
@@ -58,9 +81,6 @@ const char* SynthGenParams::genName() const
 	if ( offsz > 1 )
 	    nm += "-"; nm += offset[offsz-1];
     }
-
-    BufferString* newnm = new BufferString( nm );
-    return newnm->buf();
 }
 
 
@@ -106,6 +126,21 @@ void StratSynth::clearSynthetics()
     act;\
 }
 
+bool StratSynth::removeSynthetic( const char* nm )
+{
+    for ( int idx=0; idx<synthetics_.size(); idx++ )
+    {
+	if ( synthetics_[idx]->name() == nm )
+	{
+	    delete synthetics_.removeSingle( idx );
+	    return true;
+	}
+    }
+
+    return false;
+}
+
+
 SyntheticData* StratSynth::addSynthetic()
 {
     SyntheticData* sd = generateSD( lm_,tr_ );
@@ -113,6 +148,16 @@ SyntheticData* StratSynth::addSynthetic()
 	synthetics_ += sd;
     return sd;
 }
+
+
+SyntheticData* StratSynth::addSynthetic( const SynthGenParams& synthgen )
+{
+    SyntheticData* sd = generateSD( lm_, synthgen, tr_ );
+    if ( sd )
+	synthetics_ += sd;
+    return sd;
+}
+
 
 
 SyntheticData* StratSynth::replaceSynthetic( int id )
@@ -123,7 +168,10 @@ SyntheticData* StratSynth::replaceSynthetic( int id )
     const int sdidx = synthetics_.indexOf( sd );
     sd = generateSD( lm_, tr_ );
     if ( sd )
+    {
+	sd->setName( synthetics_[sdidx]->name() );
 	delete synthetics_.replace( sdidx, sd );
+    }
 
     return sd;
 }
@@ -131,7 +179,7 @@ SyntheticData* StratSynth::replaceSynthetic( int id )
 
 SyntheticData* StratSynth::addDefaultSynthetic()
 {
-    genparams_.name_ = genparams_.genName();
+    genparams_.createName( genparams_.name_ );
     SyntheticData* sd = addSynthetic();
 
     mDynamicCastGet(PostStackSyntheticData*,psd,sd);
@@ -208,7 +256,13 @@ bool StratSynth::generate( const Strat::LayerModel& lm, SeisTrcBuf& trcbuf )
 }
 
 
-SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm, 
+SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
+				       TaskRunner* tr )
+{ return generateSD( lm, genparams_, tr ); }
+
+
+SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
+				       const SynthGenParams& synthgenpar,
 				       TaskRunner* tr )
 {
     errmsg_.setEmpty(); 
@@ -218,7 +272,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 
     Seis::RaySynthGenerator synthgen;
     synthgen.setWavelet( wvlt_, OD::UsePtr );
-    const IOPar& raypars = genparams_.raypars_;
+    const IOPar& raypars = synthgenpar.raypars_;
     synthgen.usePar( raypars );
 
     const int nraimdls = lm.size();
@@ -246,7 +300,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	mErrRet( "Model has only one layer, please add an other layer.", 
 		return 0; );
 
-    if ( (tr && !tr->execute( synthgen ) ) || !synthgen.execute() )
+    if ( !TaskRunner::execute( tr, synthgen) )
     {
 	const char* errmsg = synthgen.errMsg();
 	mErrRet( errmsg ? errmsg : "", return 0 ) ;
@@ -273,7 +327,7 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
     }
 
     SyntheticData* sd = 0;
-    if ( genparams_.isps_ )
+    if ( synthgenpar.isps_ )
     {
 	ObjectSet<PreStack::Gather> gatherset;
 	while ( tbufs.size() )
@@ -286,8 +340,8 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	    gatherset += gather;
 	}
 	PreStack::GatherSetDataPack* dp = 
-		new PreStack::GatherSetDataPack( genparams_.name_, gatherset );
-	sd = new PreStackSyntheticData( genparams_, *dp );
+		new PreStack::GatherSetDataPack( synthgenpar.name_, gatherset );
+	sd = new PreStackSyntheticData( synthgenpar, *dp );
     }
     else
     {
@@ -305,8 +359,8 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 	    dptrcbuf->add( *tbuf );
 	}
 	SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( *dptrcbuf, Seis::Line,
-				   SeisTrcInfo::TrcNr, genparams_.name_ );	
-	sd = new PostStackSyntheticData( genparams_, *dp );
+				   SeisTrcInfo::TrcNr, synthgenpar.name_ );	
+	sd = new PostStackSyntheticData( synthgenpar, *dp );
     }
 
     sd->id_ = ++lastsyntheticid_;

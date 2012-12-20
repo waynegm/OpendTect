@@ -25,6 +25,11 @@ namespace Attrib
 
 class DataHolder;
 
+/*!
+  \ingroup AttributeEngine
+  \brief Attribute storage provider.
+*/
+
 mClass(AttributeEngine) StorageProvider : public Provider
 {
 public:
@@ -37,7 +42,8 @@ public:
 	    				bool firstcheck=false);
     bool		getPossibleVolume(int outp,CubeSampling&);
     BinID		getStepoutStep() const;
-    float		getMaxDistBetwTrcs() const;
+    void		compDistBetwTrcsStats(
+	    				TypeSet< LineTrcDistStats >&) const;
     void		updateStorageReqs(bool all=true);
     void		adjust2DLineStoredVolume();
     PosInfo::GeomID	getGeomID() const;
@@ -87,6 +93,7 @@ protected:
     bool		set2DRangeSelData();
 
     void		registerNewPosInfo(SeisTrc*,const BinID&,bool,bool&);
+    bool                useInterTrcDist() const;
 
     TypeSet<BinDataDesc> datachar_;
     SeisMSCProvider*	mscprov_;

@@ -36,6 +36,8 @@ uiWellLogCalcInpData::uiWellLogCalcInpData( uiWellLogCalc* p, uiGroup* inpgrp,
     , wls_(&p->wls_)
     , convertedlog_(0)
 {
+    inpfld_->box()->selectionChanged.notify( 
+				    mCB( this,uiWellLogCalcInpData,inputSel ) );
     inpfld_->box()->selectionChanged.notify( mCB(p,uiWellLogCalc,inpSel) );
 
     udfbox_ = new uiCheckBox( this, "Fill empty sections" );
@@ -66,6 +68,8 @@ void uiWellLogCalcInpData::use( const MathExpression* expr )
     const int nearidx = posinpnms_.nearestMatch( varnm );
     if ( nearidx >= 0 )
 	inpfld_->box()->setCurrentItem( nearidx );
+
+    inputSel(0);
 }
 
 
@@ -86,7 +90,7 @@ bool uiWellLogCalcInpData::getInp( uiWellLogCalc::InpData& inpdata )
     inpdata.noudf_ = udfbox_->isChecked();
     inpdata.wl_ = getLog();
     const char* logunitnm = inpdata.wl_->unitMeasLabel();
-    const UnitOfMeasure* logun = UoMR().get( logunitnm );
+    const UnitOfMeasure* logun = UnitOfMeasure::getGuessed( logunitnm );
     const UnitOfMeasure* convertun = getUnit();
     if ( !logun || !convertun )
 	return inpdata.wl_;		//TODO: would we want to stop?
@@ -111,3 +115,36 @@ bool uiWellLogCalcInpData::getInp( uiWellLogCalc::InpData& inpdata )
 }
 
 
+void uiWellLogCalcInpData::inputSel( CallBacker* )
+{
+    if ( !unfld_ ) return;
+
+    const char* logunitnm = getLog() ? getLog()->unitMeasLabel() : 0;
+    const UnitOfMeasure* logun = UnitOfMeasure::getGuessed( logunitnm );
+    if ( !logun ) return;
+    ObjectSet<const UnitOfMeasure> possibleunits;
+    UoMR().getRelevant( logun->propType(), possibleunits );
+    const char* curtxt = unfld_->box()->text();
+    unfld_->box()->setEmpty();
+    unfld_->box()->addItem( "-" );
+    for ( int idx=0; idx<possibleunits.size(); idx++ )
+	unfld_->box()->addItem( possibleunits[idx]->name() );
+
+    unfld_->box()->setText( curtxt );
+}
+
+
+void uiWellLogCalcInpData::restrictLogChoice( const PropertyRef::StdType& type )
+{
+    if ( !wls_ ) return;
+    PropertyRef property( "dummy", type );
+    BufferStringSet lognms;
+    TypeSet<int> propidx;                                                   
+    TypeSet<int> isaltpropref;
+    uiWellLogCalc::getSuitableLogs( *wls_, lognms, propidx, isaltpropref,
+	    			    property, 0 );
+    const_cast<BufferStringSet&>(posinpnms_) = lognms;
+    inpfld_->box()->setEmpty();
+    inpfld_->box()->addItems( lognms );
+    inpfld_->box()->addItem( "Constant" );
+}

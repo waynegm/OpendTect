@@ -80,16 +80,36 @@ bool DescSet::hasStoredInMem() const
 }
 
 
+#define mGetPar(key) \
+    defpars->find(SeisTrcTranslatorGroup::key())
+
 DescID DescSet::ensureDefStoredPresent() const
 {
     BufferString idstr; DescID retid;
 
-    if ( is2d_ )
-	idstr =
-	    LineKey( SI().pars().find(SeisTrcTranslatorGroup::sKeyDefault2D()),
-		SI().pars().find(SeisTrcTranslatorGroup::sKeyDefaultAttrib()));
-    else
-	idstr = SI().pars().find( SeisTrcTranslatorGroup::sKeyDefault3D() );
+    PtrMan<IOPar> defpars = SI().pars().subselect( sKey::Default() );
+    if ( defpars )
+    {
+	if ( is2d_ )
+	{
+	    const FixedString lsid = mGetPar( sKeyDefault2D );
+	    PtrMan<IOObj> lsobj = IOM().get( MultiID(lsid) );
+	    BufferString attrnm = mGetPar( sKeyDefaultAttrib );
+	    if ( lsobj && attrnm.isEmpty() )
+	    {
+		SeisIOObjInfo seisinfo( lsobj );
+		BufferStringSet attrnms;
+		SeisIOObjInfo::Opts2D o2d; o2d.steerpol_ = 0;
+		seisinfo.getAttribNames( attrnms, o2d );
+		if ( !attrnms.isEmpty() )
+		    attrnm = attrnms.get(0);
+	    }
+
+	    idstr = LineKey( lsid, attrnm );
+	}
+	else
+	    idstr = mGetPar( sKeyDefault3D );
+    }
 
     if ( defidstr_ == idstr && defattribid_ != DescID::undef() )
 	return defattribid_;

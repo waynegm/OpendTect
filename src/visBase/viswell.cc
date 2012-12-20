@@ -156,7 +156,6 @@ void Well::setTrack( const TypeSet<Coord3>& pts )
 	    continue;
 
 	track_->getCoordinates()->setPos( ptidx, pts[idx] );
-	Coord3 crd = track_->getPoint(idx);
 	ptidx++;
     }
     
@@ -293,12 +292,11 @@ void Well::addMarker( const MarkerParams& mp )
 	  markerpos.z = zaxistransform_->transform( markerpos );
     if ( mIsUdf(markerpos.z) )
 	  return;
-    Coord3 disppos;
-    if ( transformation_ )
-        transformation_->transform( markerpos, disppos );
-
-    markerset_->getVertexArray()->push_back( osg::Vec3f(disppos.x,disppos.y,
-		disppos.z) );
+    
+    osg::Vec3f disppos;
+    mVisTrans::transform( transformation_, markerpos, disppos );
+    
+    markerset_->getVertexArray()->push_back( disppos );
     markerset_->getColorArray()->push_back( Conv::to<osg::Vec4>(mp.col_));
 
     const int textidx = markernames_->addText();

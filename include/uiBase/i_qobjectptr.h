@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:        K. Tingdahl
  Date:          Nov 2012
- RCS:           $Id: i_qtreeview.h 26341 2012-09-23 13:30:12Z kristofer.tingdahl@dgbes.com $
+ RCS:           $Id$
 ________________________________________________________________________
 
 -*/

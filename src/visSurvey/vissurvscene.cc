@@ -63,7 +63,7 @@ Scene::Scene()
     , mouseposval_(0)
     , mouseposstr_("")
     , zstretchchange(this)
-    , curzstretch_(-1)
+    , curzstretch_( 2 )
     , datatransform_( 0 )
     , appallowshad_(true)
     , userwantsshading_(true)
@@ -116,12 +116,10 @@ void Scene::setup()
     annot_ = visBase::Annotation::create();
 
     const CubeSampling& cs = SI().sampling(true);
-    createTransforms( cs.hrg );
-    float zsc = STM().defZStretch();
-    if ( !SI().pars().get( STM().zStretchStr(), zsc ) )
-	SI().pars().get( STM().zOldStretchStr(), zsc );
-    setZStretch( zsc );
-
+    
+    SI().pars().get( sKeyZStretch(), curzstretch_ );
+    updateTransforms( cs.hrg );
+    
     setCubeSampling( cs );
     addInlCrlZObject( annot_ );
     updateAnnotationText();
@@ -180,7 +178,6 @@ Scene::~Scene()
 
     events_.eventhappened.remove( mCB(this,Scene,mouseMoveCB) );
 
-    if ( utm2disptransform_ ) utm2disptransform_->unRef();
     if ( datatransform_ ) datatransform_->unRef();
 
     for ( int idx=0; idx<size(); idx++ )
@@ -202,7 +199,7 @@ Scene::~Scene()
 }
 
 
-void Scene::createTransforms( const HorSampling& hs )
+void Scene::updateTransforms( const HorSampling& hs )
 {
     if ( !zscaletransform_ )
     {
@@ -210,21 +207,53 @@ void Scene::createTransforms( const HorSampling& hs )
 	visBase::DataObjectGroup::addObject( zscaletransform_ );
     }
 
-    if ( !inlcrlrotation_ )
+    RefMan<mVisTrans> newinlcrlrotation = mVisTrans::create();
+    RefMan<mVisTrans> newinlcrlscale = mVisTrans::create();
+    
+    const float zfactor = zscale_*curzstretch_;
+    
+    SceneTransformManager::computeICRotationTransform(*SI().get3DGeometry(true),
+	zfactor, newinlcrlrotation, newinlcrlscale );
+    
+    zscaletransform_->addObject( newinlcrlrotation );
+    
+    RefMan<mVisTrans> oldinlcrlrotation = inlcrlrotation_;
+    inlcrlrotation_ = newinlcrlrotation;
+    inlcrlscale_ = newinlcrlscale;
+    
+    if ( oldinlcrlrotation )
     {
-	inlcrlrotation_ = mVisTrans::create();
-	inlcrlscale_ = mVisTrans::create();
-	STM().computeICRotationTransform( *SI().get3DGeometry(true),
-					  inlcrlrotation_, inlcrlscale_);
-	zscaletransform_->addObject( inlcrlrotation_ );
+	zscaletransform_->removeObject(
+			   zscaletransform_->getFirstIdx( oldinlcrlrotation ));
+	
+	for ( int idx=0; idx<oldinlcrlrotation->size(); idx++ )
+	{
+	    RefMan<visBase::DataObject> dobj = oldinlcrlrotation->getObject(idx);
+	    inlcrlrotation_->addObject( dobj );
+	    dobj->setDisplayTransformation( inlcrlscale_ );
+	}
+	
+	oldinlcrlrotation->removeAll();
     }
 
-    if ( !utm2disptransform_ )
+    RefMan<mVisTrans> newutm2disptransform = mVisTrans::create();
+    SceneTransformManager::computeUTM2DisplayTransform(
+		    *SI().get3DGeometry(true), zfactor, newutm2disptransform );
+    
+    if ( utm2disptransform_ )
     {
-	utm2disptransform_ = STM().createUTM2DisplayTransform( hs );
-	utm2disptransform_->ref();
+	for ( int idx=0; idx<zscaletransform_->size(); idx++ )
+	{
+	    visBase::DataObject* dobj = zscaletransform_->getObject( idx );
+	    if ( dobj->getDisplayTransformation()==utm2disptransform_ )
+	    {
+		dobj->setDisplayTransformation( newutm2disptransform );
+	    }
+	}
     }
-
+    
+    utm2disptransform_ = newutm2disptransform;
+    
     ObjectSet<visBase::Transformation> utm2display;
     utm2display += utm2disptransform_;
     utm2display += zscaletransform_;
@@ -240,6 +269,7 @@ bool Scene::isRightHandSystem() const
 
 const ZDomain::Info& Scene::zDomainInfo() const
 { return *zdomaininfo_; }
+    
 
 void Scene::setZDomainInfo( const ZDomain::Info& zdinf )
 {
@@ -388,12 +418,11 @@ void Scene::removeObject( int idx )
 
 void Scene::setZStretch( float zstretch )
 {
-    if ( !zscaletransform_ ) return;
-
     if ( mIsEqual(zstretch,curzstretch_,mDefEps) ) return;
 
-    STM().setZScale( zscaletransform_, zstretch*zscale_ );
     curzstretch_ = zstretch;
+    updateTransforms( cs_.hrg );
+    
     zstretchchange.trigger();
 }
 
@@ -405,8 +434,7 @@ float Scene::getZStretch() const
 void Scene::setZScale( float zscale )
 {
     zscale_ = zscale;
-    if ( zscaletransform_ )
-       	STM().setZScale( zscaletransform_, curzstretch_*zscale_ );
+    updateTransforms( cs_.hrg );
 }
 
 

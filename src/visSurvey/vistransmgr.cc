@@ -19,10 +19,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "linsolv.h"
 
 
-namespace visSurvey
-{
+using namespace visSurvey;
 
-SceneTransformManager& STM()
+
+SceneTransformManager& visSurvey::STM()
 {
     static SceneTransformManager* tm = 0;
     if ( !tm ) mTryAlloc( tm, SceneTransformManager );
@@ -30,46 +30,22 @@ SceneTransformManager& STM()
 }
     
 
-void SceneTransformManager::setZScale( mVisTrans* tf,
-				       float zscale )
+void SceneTransformManager::computeUTM2DisplayTransform(const InlCrlSystem& ics,
+					       float zfactor, mVisTrans* res)
 {
-    if ( !tf ) return;
+    const Coord startpos = SI().transform( ics.sampling().hrg.start );
 
-    const float zsc = zscale / 2;
-    tf->setA(	1,	0,	0,	0,
-	    	0,	1,	0,	0,
-		0,	0,	zsc,	0,
-		0,	0,	0,	1 );
-}
-
-
-mVisTrans* 
-SceneTransformManager::createUTM2DisplayTransform( const HorSampling& hs ) const
-{
-    mVisTrans* tf = mVisTrans::create();
-
-    const Coord startpos = SI().transform( hs.start );
-
-    tf->setA(	1,	0,	0,	-startpos.x,
+    res->setA(	1,	0,	0,	-startpos.x,
 	    	0,	1,	0,	-startpos.y,
-		0,	0,	-curzscale_,	0,
+		0,	0,	zfactor,	0,
 		0,	0,	0,	1 );
-    return tf;
-}
-
-
-mVisTrans*
-SceneTransformManager::createICRotationTransform( const HorSampling& hs ) const
-{
-    mVisTrans* tf = mVisTrans::create();
-    computeICRotationTransform( *SI().get3DGeometry( true ), tf, 0 );
-    return tf;
 }
 
 
 void SceneTransformManager::computeICRotationTransform( const InlCrlSystem& ics,
+	        float zfactor,
 		visBase::Transformation* rotation,
-		visBase::Transformation* disptrans ) const
+		visBase::Transformation* disptrans )
 {
     const HorSampling hs = ics.sampling().hrg;
     
@@ -149,8 +125,7 @@ void SceneTransformManager::computeICRotationTransform( const InlCrlSystem& ics,
     if ( disptrans )
 	disptrans->setA( inldist,	0,		0,		0,
 			 0,		crldist,	0,		0,
-			 0,		0,		-curzscale_,	0,
+			 0,		0,		zfactor,	0,
 			 0,		0,		0,		1 );
 }
 
-} // namespace visSurvey

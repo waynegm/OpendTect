@@ -188,13 +188,15 @@ public:
     virtual void		fillPar(IOPar&,TypeSet<int>&) const;
     virtual int			usePar(const IOPar&);
     bool			acceptsIncompletePar() const { return true; }
+    
+    static const char*		sKeyZStretch();
 
 protected:
     				~Scene();
 
     void			setup();
     void			updateAnnotationText();
-    void			createTransforms(const HorSampling&);
+    void			updateTransforms(const HorSampling&);
     void			mouseMoveCB(CallBacker*);
     visBase::Marker*		createMarker() const;
     void			updateBaseMapCursor(const Coord&);
@@ -207,6 +209,7 @@ protected:
     RefMan<visBase::Transformation>	utm2disptransform_;
     
     ZAxisTransform*			datatransform_;
+    
 
     BaseMap*			basemap_;
     BaseMapMarkers*		basemapcursor_;
@@ -241,7 +244,6 @@ protected:
     static const char*		sKeyShowGrid();
     static const char*		sKeyAnnotFont();
     static const char*		sKeyShowCube();
-    static const char*		sKeyZStretch();
     static const char*		sKeyZAxisTransform();
     static const char*		sKeyAppAllowShading();
     static const char*		sKeyTopImageID();

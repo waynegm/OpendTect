@@ -29,34 +29,23 @@ mClass(visSurvey) SceneTransformManager
 public:
     			SceneTransformManager()
 			    : scene_(0)
-			    , curzscale_( defZStretch() )
     			{}
     
-    mVisTrans*		createUTM2DisplayTransform(const HorSampling&) const;
+    static void		computeUTM2DisplayTransform(const InlCrlSystem&,
+				    float zfactor, mVisTrans* res);
     			//!<Given to all objects in XY-space
-    
-    mVisTrans*		createICRotationTransform(const HorSampling&) const;
-    			//!<Parent of all objects in IC space
-    
-    mVisTrans*		createICScalingTransform(const HorSampling&) const;
-    			//!<Given to all objects in IC space
 
-    void		computeICRotationTransform(const InlCrlSystem&,
+    static void		computeICRotationTransform(const InlCrlSystem&,
+						   float zfactor,
 					      	   mVisTrans* rotation,
-						   mVisTrans* disptrans) const;
-
-    static void		setZScale(mVisTrans*,float);
-    float		defZStretch() const	{ return 2; }
-    const char*		zStretchStr() const	{ return "Z Stretch"; }
-    const char*		zOldStretchStr() const	{ return "Z Scale"; }
-
+						   mVisTrans* disptrans );
+    
     void		setCurrentScene( Scene* scn ) { scene_ = scn; }
     Scene*		currentScene() const	{ return scene_; }
 
 protected:
 
     Scene*		scene_;
-    float		curzscale_;
 };
 
 

@@ -114,8 +114,8 @@ void uiZStretchDlg::updateSliderValues()
 float uiZStretchDlg::getCurrentZStretch() const
 {
     if ( sceneids.size() == 0 )
-	return visSurvey::STM().defZStretch();
-
+	return 1.0f;
+    
     int sceneidx = scenefld ? scenefld->box()->currentItem()-1 : 0;
     if ( sceneidx < 0 ) sceneidx = 0;
     mDynamicCastGet(visSurvey::Scene*,scene,
@@ -151,7 +151,7 @@ bool uiZStretchDlg::acceptOK( CallBacker* )
 
     if ( savefld->isChecked() )
     {
-	SI().getPars().set( visSurvey::STM().zStretchStr(), slval );
+	SI().getPars().set( visSurvey::Scene::sKeyZStretch(), slval );
 	SI().savePars();
     }
 

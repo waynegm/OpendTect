@@ -210,7 +210,8 @@ void Scene::updateTransforms( const HorSampling& hs )
     RefMan<mVisTrans> newinlcrlrotation = mVisTrans::create();
     RefMan<mVisTrans> newinlcrlscale = mVisTrans::create();
     
-    const float zfactor = zscale_*curzstretch_;
+    const float zfactor = -1 * zscale_*curzstretch_;
+    //-1 to compensate for that we want z to increase with depth
     
     SceneTransformManager::computeICRotationTransform(*SI().get3DGeometry(true),
 	zfactor, newinlcrlrotation, newinlcrlscale );

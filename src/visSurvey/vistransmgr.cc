@@ -119,7 +119,7 @@ void SceneTransformManager::computeICRotationTransform( const InlCrlSystem& ics,
 
     rotation->setA(	mat11,	mat12,	0,	mat14,
 		mat21,	mat22,	0,	mat24,
-		0,	0,	-1,	0,
+		0,	0,	1,	0,
 		0,	0,	0,	1 );
     
     if ( disptrans )

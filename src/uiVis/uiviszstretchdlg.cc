@@ -124,7 +124,7 @@ float uiZStretchDlg::getCurrentZStretch() const
 }
 
 
-void uiZStretchDlg::setZStretch( float zstretch )
+void uiZStretchDlg::setZStretch( float zstretch, bool permanent )
 {
     const bool stretchall = scenefld && scenefld->box()->currentItem()==0;
     for ( int idx=0; idx<sceneids.size(); idx++ )
@@ -134,8 +134,20 @@ void uiZStretchDlg::setZStretch( float zstretch )
 	if ( !dostretch ) continue;
 
 	mDynamicCastGet(visSurvey::Scene*,scene,
-			visBase::DM().getObject(sceneids[idx]))
-	scene->setZStretch( zstretch );
+			visBase::DM().getObject(sceneids[idx]));
+	
+	RefMan<visBase::Transformation> zscaletrans =
+						scene->getZScaleTransform();
+	if ( permanent )
+	{
+	    MouseCursorChanger cursorchanger( MouseCursor::Busy );
+	    zscaletrans->reset();
+	    scene->setZStretch( zstretch );
+	}
+	else
+	{
+	    zscaletrans->setScale( Coord3(1,1,zstretch/scene->getZStretch() ));
+	}
     }
 }
 
@@ -147,7 +159,7 @@ bool uiZStretchDlg::acceptOK( CallBacker* )
 
     sliderfld->processInput();
     const float slval = sliderfld->sldr()->getValue();
-    setZStretch( slval );
+    setZStretch( slval, true );
 
     if ( savefld->isChecked() )
     {
@@ -164,7 +176,7 @@ bool uiZStretchDlg::acceptOK( CallBacker* )
 void uiZStretchDlg::sliderMove( CallBacker* )
 {
     const float slval = sliderfld->sldr()->getValue();
-    setZStretch( slval );
+    setZStretch( slval, false );
 }
 
 

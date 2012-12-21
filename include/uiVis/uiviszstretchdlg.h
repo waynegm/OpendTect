@@ -39,7 +39,7 @@ protected:
     float		initslval;
     bool		valchgd;
 
-    void		setZStretch(float);
+    void		setZStretch(float,bool permanent);
     float		getCurrentZStretch() const;
     void		updateSliderValues();
 

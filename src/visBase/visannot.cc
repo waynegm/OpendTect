@@ -175,6 +175,9 @@ void Annotation::setCubeSampling( const CubeSampling& cs )
     setCorner( 6, inlrg.stop, crlrg.stop, zrg.stop );
     setCorner( 7, inlrg.start, crlrg.stop, zrg.stop );
 
+    box_->dirtyDisplayList();
+    geode_->dirtyBound();
+    
     updateTextPos();
     updateGridLines();
 }
@@ -297,6 +300,11 @@ void Annotation::updateGridLines()
 	    }
 	}
     }
+    
+    for ( int idx=gridlines_->getNumDrawables()-1; idx>=0; idx-- )
+	gridlines_->getDrawable(idx)->dirtyDisplayList();
+    
+    gridlines_->dirtyBound();
 }
 
 

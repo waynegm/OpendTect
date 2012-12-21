@@ -447,6 +447,10 @@ const mVisTrans* Scene::getZScaleTransform() const
 { return zscaletransform_; }
 
 
+mVisTrans* Scene::getZScaleTransform()
+{ return zscaletransform_; }
+
+
 const mVisTrans* Scene::getInlCrl2DisplayTransform() const
 { return inlcrlrotation_; }
 

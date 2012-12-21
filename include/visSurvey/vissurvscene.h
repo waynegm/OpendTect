@@ -147,6 +147,7 @@ public:
 				    relates to XY coordinates in this scene. */
 
     const mVisTrans*		getZScaleTransform() const;
+    mVisTrans*			getZScaleTransform();
     const mVisTrans*		getInlCrl2DisplayTransform() const;
     const mVisTrans*		getUTM2DisplayTransform() const;
     void			setZAxisTransform(ZAxisTransform*,TaskRunner*);

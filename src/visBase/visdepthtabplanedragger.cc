@@ -348,8 +348,11 @@ void DepthTabPlaneDragger::setSize( const Coord3& scale, bool alldims )
 Coord3 DepthTabPlaneDragger::size() const
 {
     Coord3 scale;
-    Transformation::transformBack( transform_,
-				   osgdragger_->getMatrix().getScale(), scale );
+    Transformation::transformBackDir( transform_,
+				      osgdragger_->getMatrix().getScale(),
+				      scale );
+
+    scale.x = fabs(scale.x); scale.y = fabs(scale.y); scale.z = fabs(scale.z);
     return scale;
 }
 

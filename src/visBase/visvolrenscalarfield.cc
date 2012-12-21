@@ -19,6 +19,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "ostream"
 
+#include <stdint.h>
 #include <osgVolume/Volume>                                                     
 #include <osgVolume/VolumeTile>
 #include <osgVolume/FixedFunctionTechnique>

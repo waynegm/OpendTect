@@ -398,7 +398,9 @@ visBase::DataObject* uiVisPartServer::getObject( int id ) const
 void uiVisPartServer::addObject( visBase::DataObject* dobj, int sceneid,
 				 bool )
 {
-    mDynamicCastGet(visSurvey::Scene*,scene,visBase::DM().getObject(sceneid))
+    mDynamicCastGet(visSurvey::Scene*,scene,visBase::DM().getObject(sceneid));
+    if ( !scene ) return;
+
     scene->addObject( dobj );
     objectaddedremoved.trigger();
     setUpConnections( dobj->id() );
@@ -593,6 +595,16 @@ int uiVisPartServer::getNrAttribs( int id ) const
     if ( !so ) return 0;
 
     return so->nrAttribs();
+}
+
+
+void uiVisPartServer::getAttribPosName(int id, int attrib,
+				       BufferString& res ) const
+{
+    mDynamicCastGet(visSurvey::SurveyObject*,so,getObject(id));
+    if ( !so ) return;
+    
+    return so->getChannelName( attrib, res );
 }
 
 
@@ -1658,17 +1670,29 @@ bool uiVisPartServer::hasMaterial( int id ) const
 }
 
 
-bool uiVisPartServer::setMaterial( int id )
+void uiVisPartServer::setMaterial( int id )
 {
     mDynamicCastGet(visBase::VisualObject*,vo,getObject(id))
-    if ( !hasMaterial(id) || !vo ) return false;
+    if ( !hasMaterial(id) || !vo ) return;
 
     uiPropertiesDlg* dlg = new uiPropertiesDlg( appserv().parent(),
 	    dynamic_cast<visSurvey::SurveyObject*>(vo) );
     dlg->setDeleteOnClose( true );
     dlg->go();
-    
-    return true;
+}
+
+
+bool uiVisPartServer::hasColor( int id ) const
+{
+    mDynamicCastGet(visSurvey::SurveyObject*,so,getObject(id))
+    return so && so->hasColor();
+}
+
+
+void uiVisPartServer::setColor( int id, const Color& col )
+{
+    mDynamicCastGet(visSurvey::SurveyObject*,so,getObject(id))
+    if ( so ) so->setColor( col );
 }
 
 

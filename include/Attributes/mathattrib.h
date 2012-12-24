@@ -12,13 +12,6 @@ ________________________________________________________________________
 
 -*/
 
-/*! \brief
-#### Short description
-\par
-#### Detailed description.
-
-*/
-
 #include "attributesmod.h"
 #include "attribprovider.h"
 
@@ -26,6 +19,11 @@ class MathExpression;
 
 namespace Attrib
 {
+
+/*!
+\ingroup Attributes
+\brief %Math Attribute
+*/
 
 mClass(Attributes) Math : public Provider
 {

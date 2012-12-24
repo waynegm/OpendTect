@@ -20,22 +20,25 @@ ________________________________________________________________________
 #include <complex>
 
 
-/*!\brief Frequency filtering Attribute
+namespace Attrib
+{
 
+/*!
+\ingroup Attributes
+\brief %Frequency filtering attribute.
+
+<pre>
   FreqFilter type=LowPass,HighPass,BandPass minfreq= maxfreq= nrpoles=
              isfftfilter= window=
 
-Input:                                  ||
-0       Real data                       ||0     Real Data
-                                        ||1     Imaginary Data
-Output:                                 ||
-0       Frequency filtered data         ||0     Frequency filtered data
-          (Butterworth Filter)          ||           (FFT Filter)
-
+  Input:                                  ||
+  0       Real data                       ||0     Real Data
+                                          ||1     Imaginary Data
+  Output:                                 ||
+  0       Frequency filtered data         ||0     Frequency filtered data
+            (Butterworth Filter)          ||           (FFT Filter)
+</pre>
 */
-
-namespace Attrib
-{
 
 mClass(Attributes) FreqFilter: public Provider
 {

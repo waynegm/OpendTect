@@ -402,7 +402,7 @@ bool ChannelInfo::mapData( int version, TaskRunner* tr )
 	    mappeddata_[version], spacing,
 	    mappeddata_[version]+1, spacing  );
 
-    if ( ( tr && tr->execute(maptask) ) || maptask.execute() )
+    if ( TaskRunner::execute( tr, maptask ) )
     {
 	int max = 0;
 	const unsigned int* histogram = maptask.getHistogram();

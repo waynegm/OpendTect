@@ -131,6 +131,8 @@ public:
     int			addAttrib(int id);
     void		removeAttrib(int id,int attrib);
     int			getNrAttribs(int id) const;
+    void		getAttribPosName(int id,int attrib,BufferString&) const;
+    			//!<Gets the name of the attrib position
     bool		swapAttribs(int id,int attrib0,int attrib1);
     void		showAttribTransparencyDlg(int id,int attrib);
     unsigned char	getAttribTransparency(int id,int attrib) const;
@@ -175,6 +177,11 @@ public:
 	    				  DataPointSet& ) const;
     void		setRandomPosData(int visid, int attrib,
 					 const DataPointSet*);
+
+    bool		hasMaterial(int id) const;
+    void		setMaterial(int id);
+    bool		hasColor(int id) const;
+    void		setColor(int id,const Color&);
 
     bool		blockMouseSelection(bool yn);
 			/*!<\returns Previous status. */
@@ -400,11 +407,6 @@ protected:
     bool			isManipulated(int id) const;
     void			acceptManipulation(int id);
     bool			resetManipulation(int id);
-
-    bool			hasMaterial(int id) const;
-    bool			setMaterial(int id);
-
-    bool			hasColor(int id) const;
 
     void			setUpConnections(int id);
     				/*!< Should set all cbs for the object */

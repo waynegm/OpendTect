@@ -214,7 +214,8 @@ void Array2DInterpol::getNodesToFill( const bool* def,
 
     MemSetter<bool> setter( shouldinterpol, filltype_!=ConvexHull,
 	    		    nrcells_ );
-    tr ? tr->execute(setter) : setter.execute();
+    
+    TaskRunner::execute( tr, setter );
 
     if ( filltype_==ConvexHull )
     {
@@ -1352,7 +1353,7 @@ bool TriangulationArray2DInterpol::initFromArray( TaskRunner* tr )
     DelaunayTriangulator triangulator( *triangulation_ );
     triangulator.dataIsRandom( false );
 
-    if ( (tr && !tr->execute(triangulator)) || !triangulator.execute() )
+    if ( !TaskRunner::execute( tr, triangulator ) )
 	return false;
     
     if ( triangleinterpolator_ )

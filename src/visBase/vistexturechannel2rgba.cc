@@ -254,6 +254,11 @@ bool TextureChannel2RGBA::canUseShading() const
 }
 
 
+void TextureChannel2RGBA::getChannelName( int idx, BufferString& res ) const
+{
+    res = "Layer ";
+    res += idx+1;
+}
 bool ColTabTextureChannel2RGBA::canUseShading() const
 {
     return TextureChannel2RGBA::canUseShading() &&
@@ -342,7 +347,9 @@ void ColTabTextureChannel2RGBA::updateOsgTexture() const
 		    proc->setColorSequence( osgcolsequences_[procidx] );
 
 		    const Color& udfcol = getSequence(channel)->undefColor();
-		    proc->setNewUndefColor( Conv::to<osg::Vec4f>(udfcol) );
+		    osg::Vec4f
+			udfcolvec( udfcol.r(), udfcol.g(), udfcol.b(), udfcol.t() );
+		    proc->setNewUndefColor( udfcolvec );
 		}
 		else
 		    layerids.removeSingle( procidx );

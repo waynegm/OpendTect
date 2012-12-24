@@ -65,6 +65,8 @@ uiSeis2DFileMan::uiSeis2DFileMan( uiParent* p, const IOObj& ioobj )
     linegrp_ = new uiManipButGrp( lllb );
     linegrp_->addButton( uiManipButGrp::Rename, "Rename line",
 			mCB(this,uiSeis2DFileMan,renameLine) );
+    linegrp_->addButton( uiManipButGrp::Remove, "Remove line",
+	    		mCB(this,uiSeis2DFileMan,removeLine) );
     linegrp_->addButton( "mergelines", "Merge lines",
 			mCB(this,uiSeis2DFileMan,mergeLines) );
     if ( SI().has3D() )
@@ -272,6 +274,30 @@ void uiSeis2DFileMan::makeDefault( CallBacker* )
 }
 
 
+void uiSeis2DFileMan::removeLine( CallBacker* )
+{
+    BufferStringSet sellines;
+    linefld_->getSelectedItems( sellines );
+    if ( sellines.isEmpty() ||
+	!uiMSG().askRemove("All selected lines and associated attributes "
+	    "will be removed. Do you want to continue?") )
+	return;
+
+    for ( int idx=0; idx<sellines.size(); idx++ )
+    {
+	const char* linenm = sellines.get(idx);
+	SeisIOObjInfo::Opts2D opts2d; opts2d.zdomky_ = "*";
+	BufferStringSet attrnms;
+	objinfo_->ioObjInfo().getAttribNamesForLine( linenm, attrnms, opts2d );
+	for ( int ida=0; ida<attrnms.size(); ida++ )
+	{
+	    LineKey linekey( linenm, attrnms.get(ida) );
+	    lineset_->remove( linekey );
+	}
+    }
+}
+
+
 void uiSeis2DFileMan::removeAttrib( CallBacker* )
 {
     BufferStringSet attribnms;
@@ -465,7 +491,7 @@ bool acceptOK( CallBacker* )
     }
 
     uiTaskRunner tr( this );
-    tr.execute( lmrgr );
+    TaskRunner::execute( &tr, lmrgr );
     // return tr.execute( lmrgr );
     return false;
 }
@@ -572,7 +598,7 @@ bool acceptOK( CallBacker* )
     SeisCube2LineDataExtracter extr( *ioobj, *objinf_.ioObj(), attrnm,
 	    			     lnms.isEmpty() ? 0 : &lnms );
     uiTaskRunner tr( this );
-    return tr.execute( extr );
+    return TaskRunner::execute( &tr, extr );
 }
 
     const uiSeisIOObjInfo&	objinf_;

@@ -12,6 +12,7 @@ ________________________________________________________________________
 
 -*/
 
+#include "factory.h"
 #include "position.h"
 #include "refcount.h"
 
@@ -25,6 +26,7 @@ namespace Survey
 mClass(Basic) Geometry
 { mRefCountImpl(Geometry);
 public:
+    virtual bool	is3D() const					= 0;
     int			getGeomID() const { return geomid_; }
     void		setGeomID(int id) { geomid_ = id; }
     virtual Coord	toCoord(const TraceID& tid) const
@@ -54,6 +56,8 @@ public:
     const Geometry*	getGeomety(const MultiID&) const;
     
     Coord		toCoord(const TraceID&) const;
+
+    bool		write();
     
     static int		cDefault3DGeom() { return -1; }
 
@@ -63,8 +67,25 @@ protected:
     ObjectSet<Geometry> geometries_;
 };
 
-} //namespace Survey
 
+mClass(Basic) GeometryReader
+{
+public:
+			GeometryReader(){};
+			mDefineFactoryInClass(GeometryReader,factory);
+};
+
+
+mClass(Basic) GeometryWriter
+{
+public:
+			GeometryWriter(){};
+			mDefineFactoryInClass(GeometryWriter,factory);
+
+    virtual bool	write(Geometry*)		    {return true;};
+};
+
+} //namespace Survey
 
 
 #endif

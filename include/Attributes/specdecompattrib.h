@@ -17,12 +17,20 @@ ________________________________________________________________________
 #include "wavelettrans.h"
 #include "fourier.h"
 
+namespace Attrib
+{
 
-/*!\brief Spectral Decomposition Attribute
+class DataHolder;
 
-SpecDecomp gate=[-12,12] window=[Box]|Hamming|Hanning|Barlett|Blackman|CosTaper5
+/*!
+\ingroup Attributes
+\brief Spectral Decomposition Attribute
 
 Calculates the frequency spectrum of a trace
+
+<pre>
+SpecDecomp gate=[-12,12] window=[Box]|Hamming|Hanning|Barlett|Blackman|CosTaper5
+
 Input:
 0       Real data
 1       Imag data
@@ -34,13 +42,8 @@ Output:
 |       etc
 |       etc
 N
-
+</pre>
 */
-
-namespace Attrib
-{
-
-class DataHolder;
 
 mClass(Attributes) SpecDecomp : public Provider
 {

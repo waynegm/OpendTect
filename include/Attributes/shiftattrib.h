@@ -16,24 +16,27 @@ ________________________________________________________________________
 #include "attribprovider.h"
 #include "position.h"
 
-/*!\brief Shift Attribute
-
-  Shift pos= steering=Yes/No
-
-  Shift takes the input at a specified position and outputs it at other
-  relative positions.
-
-Input:
-0 - attrib to be hashed
-1 - steering (optional)
-
-Output
-0 - hashed attrib
-
-*/
-
 namespace Attrib
 {
+
+/*!
+\ingroup Attributes
+\brief %Shift Attribute
+  %Shift takes the input at a specified position and outputs it at other
+  relative positions.
+
+<pre>
+  %Shift pos= steering=Yes/No
+
+  Input:
+  0 - attrib to be hashed
+  1 - steering (optional)
+  
+  %Output:
+  0 - hashed attrib
+</pre>
+*/
+
 
 mClass(Attributes) Shift : public Provider
 {

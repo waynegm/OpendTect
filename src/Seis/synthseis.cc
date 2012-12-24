@@ -37,12 +37,11 @@ mImplFactory( SynthGenerator, SynthGenerator::factory );
 SynthGenBase::SynthGenBase()
     : wavelet_(0)
     , isfourier_(true)
-    , stretchlimit_( 0.2f ) //20%
-    , mutelength_( 0.020 )  //20ms
+    , stretchlimit_( cStdStretchLimit() ) //20%
+    , mutelength_( cStdMuteLength() )  //20ms
     , waveletismine_(false)
     , applynmo_(false)
     , outputsampling_(mUdf(float),mUdf(float),mUdf(float))
-    , tr_(0)
     , dointernalmultiples_(false)
     , surfreflcoeff_(1)
 {}
@@ -188,8 +187,7 @@ int SynthGenerator::nextStep()
     if ( !wavelet_ )
 	mErrRet( "No wavelet found", SequentialTask::ErrorOccurred() );
     
-    if ( !refmodel_ )
-	mErrRet( "No reflectivity model found",
+    if ( !refmodel_ ) mErrRet( "No reflectivity model found",
 		SequentialTask::ErrorOccurred() );
     
     if ( outputsampling_.nrSteps() < 2 )
@@ -212,7 +210,14 @@ int SynthGenerator::nextStep()
 	    float maxtime = 0;
 	    for ( int idx=0; idx<refmodel_->size(); idx++)
 	    {
-		float time = (*refmodel_)[idx].time_;
+		const ReflectivitySpike& spike = (*refmodel_)[idx];
+		const float time = spike.time_;
+		if ( mIsUdf(time) )
+		{
+		    pErrMsg("Undefined time detected");
+		    continue;
+		}
+
 		maxtime = mMAX( time, maxtime );
 	    }
 	    
@@ -323,23 +328,22 @@ bool SynthGenerator::computeTrace( SeisTrc& res ) const
 bool SynthGenerator::doNMOStretch(const ValueSeries<float>& input, int insz,
 				  ValueSeries<float>& out, int outsz ) const
 {
+    out.setAll( 0 );
+
+    if ( !refmodel_->size() )
+	return true;
+    
     float mutelevel = outputsampling_.start;
+    float firsttime = mUdf(float);
     
     PointBasedMathFunction stretchfunc( PointBasedMathFunction::Linear,
 				       PointBasedMathFunction::ExtraPolGradient);
-    
+
     for ( int idx=0; idx<refmodel_->size(); idx++ )
     {
 	const ReflectivitySpike& spike = (*refmodel_)[idx];
 	
-	if ( spike.correctedtime_<=0 )
-	    continue;
-	
-	const float stretch = (spike.time_/spike.correctedtime_)-1;
-	if ( stretch>stretchlimit_ )
-	    mutelevel = mMAX(spike.correctedtime_,mutelevel );
-	
-	if ( idx )
+	if ( idx>0 )
 	{
 	    //check for crossing events
 	    const ReflectivitySpike& spikeabove = (*refmodel_)[idx-1];
@@ -347,29 +351,39 @@ bool SynthGenerator::doNMOStretch(const ValueSeries<float>& input, int insz,
 	    {
 		mutelevel = mMAX(spike.correctedtime_, mutelevel );
 	    }
-	}
-	
+    	}
+    
+	firsttime = mMIN( firsttime, spike.correctedtime_ );
 	stretchfunc.add( spike.correctedtime_, spike.time_ );
     }
     
-    out.setAll( 0 );
-    const int firstsample = 0; //couttrc_.info().sampling.indexOnOrAfter( mutelevel );
+    if ( firsttime>0 )
+	stretchfunc.add( 0, 0 );
+    
+    outtrc_.info().sampling.indexOnOrAfter( mutelevel );
     
     SampledFunctionImpl<float,ValueSeries<float> > samplfunc( input,
 	    insz, outputsampling_.start,
 	    outputsampling_.step );
 				
-    for ( int idx=firstsample; idx<outsz; idx++ )
+    for ( int idx=0; idx<outsz; idx++ )
     {
 	const float corrtime = outtrc_.info().sampling.atIndex( idx );
 	const float uncorrtime = stretchfunc.getValue( corrtime );
+	
+	const float stretch = corrtime>0
+	    ? uncorrtime/corrtime -1
+	    : 0;
+	
+	if ( stretch>stretchlimit_ )
+	    mutelevel = mMAX( corrtime, mutelevel );
 	
 	const float outval = samplfunc.getValue( uncorrtime );
 	out.setValue( idx, mIsUdf(outval) ? 0 : outval );
     }
 
     
-    if ( false && mutelevel>outputsampling_.start )
+    if ( mutelevel>outputsampling_.start )
     {
 	Muter muter( mutelength_/outputsampling_.step, false );
 	muter.mute( out, outtrc_.size(),
@@ -575,6 +589,7 @@ void MultiTraceSynthGenerator::getSampledReflectivities(
 RaySynthGenerator::RaySynthGenerator()
     : raysampling_(0,0)
     , forcerefltimes_(false)
+    , rtr_( 0 )
 {}
 
 
@@ -612,8 +627,11 @@ bool RaySynthGenerator::doPrepare( int )
     //TODO Put this in the doWork this by looking for the 0 offset longest time,
     //run the corresponding RayTracer, get raysamling and put the rest in doWork
     RayTracerRunner rtr( aimodels_, raysetup_ );
-    if ( ( tr_ && !tr_->execute( rtr ) ) || !rtr.execute() ) 
-	mErrRet( rtr.errMsg(), false )
+    rtr_ = &rtr;
+    message_ = "Raytracing";
+    if ( !rtr.execute() ) 
+	mErrRet( rtr.errMsg(), false );
+    rtr_ = 0;
 
     ObjectSet<RayTracer1D>& rt1ds = rtr.rayTracers();
     for ( int idx=rt1ds.size()-1; idx>=0; idx-- )
@@ -634,6 +652,7 @@ bool RaySynthGenerator::doPrepare( int )
 	if ( forcerefltimes_ )
 	    rm->forceReflTimes( forcedrefltimes_ );
     }
+    
     if ( !raysampling_.width() )
 	mErrRet( "no valid time generated from raytracing", false );
 
@@ -648,6 +667,8 @@ bool RaySynthGenerator::doPrepare( int )
 	mErrRet( "Time range can not be smaller than wavelet", false )
     if ( outputsampling_.nrSteps() < 1 )
 	mErrRet( "Time interval is empty", false );
+    
+    message_ = "Generating synthethics";
 
     return true;
 }
@@ -666,13 +687,12 @@ bool RaySynthGenerator::doWork( od_int64 start, od_int64 stop, int )
 
 	rm.sampledrefs_.erase();
 	MultiTraceSynthGenerator multitracegen;
-	multitracegen.setTaskRunner( tr_ );
 	multitracegen.setModels( rm.refmodels_ );
 	multitracegen.setWavelet( wavelet_, OD::UsePtr );
 	multitracegen.setOutSampling( outputsampling_ );
 	multitracegen.usePar( par );
 
-	if ( (tr_ && !tr_->execute(multitracegen)) || !multitracegen.execute() )
+	if ( !multitracegen.execute() )
 	    mErrRet( multitracegen.errMsg(), false )
 
 	multitracegen.getResult( rm.outtrcs_ );
@@ -690,7 +710,20 @@ bool RaySynthGenerator::doWork( od_int64 start, od_int64 stop, int )
 	    multitracegen.getSampledReflectivities( rm.sampledrefs_ );
 	}
     }
+    
     return true;
+}
+
+
+od_int64 RaySynthGenerator::totalNr() const
+{
+    return rtr_ ? rtr_->totalNr() : nrIterations();
+}
+
+
+od_int64 RaySynthGenerator::nrDone() const
+{
+    return rtr_ ? rtr_->nrDone() : ParallelTask::nrDone();
 }
 
 
@@ -700,10 +733,19 @@ RaySynthGenerator::RayModel::RayModel( const RayTracer1D& rt1d, int nroffsets )
     for ( int idx=0; idx<nroffsets; idx++ )
     {
 	ReflectivityModel* refmodel = new ReflectivityModel(); 
-	refmodels_ += refmodel;
 	rt1d.getReflectivity( idx, *refmodel );
+
 	TimeDepthModel* t2dm = new TimeDepthModel();
 	rt1d.getTWT( idx, *t2dm );
+
+	for ( int idy=refmodel->size()-1; idy>=0; idy-- )
+	{
+	    const ReflectivitySpike& spike = (*refmodel)[idy];
+	    if ( mIsUdf(spike.reflectivity_) )
+		refmodel->removeSingle( idy );
+	}
+
+	refmodels_ += refmodel;
 	t2dmodels_ += t2dm;
     }
 }

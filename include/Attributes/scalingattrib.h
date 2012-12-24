@@ -16,23 +16,25 @@ ________________________________________________________________________
 #include "attributesmod.h"
 #include "attribprovider.h"
 
-/*!\brief Scaling Attribute
+namespace Attrib
+{
 
-  Scaling gate=
-
+/*!
+\ingroup Attributes
+\brief %Scaling Attribute
   Calculates the squared sum of the gate's samples divided by the number of
   samples in the gate.
 
-Input:
-0               Data
+<pre>
+  %Scaling gate =
 
-Outputs:
-0               The scaled trace
+  Input:
+  0               Data
+ 
+  Outputs:
+  0               The scaled trace
+</pre>
 */
-    
-
-namespace Attrib
-{
 
 mClass(Attributes) Scaling: public Provider
 {

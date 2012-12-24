@@ -354,7 +354,8 @@ const NLAModel* uiAttribPartServer::getNLAModel( bool is2d ) const
 
 
 bool uiAttribPartServer::selectAttrib( SelSpec& selspec,
-				       const ZDomain::Info* zdominfo, bool is2d)
+				       const ZDomain::Info* zdominfo, bool is2d,
+				       const char* seltxt )
 {
     DescSetMan* adsman = eDSHolder().getDescSetMan( is2d );
     if ( !adsman->descSet() )
@@ -386,7 +387,7 @@ bool uiAttribPartServer::selectAttrib( SelSpec& selspec,
     }
     else
     {
-	uiAttrSelDlg::Setup setup( "View Data" );
+	uiAttrSelDlg::Setup setup( seltxt );
 	setup.showsteeringdata(true);
 	uiAttrSelDlg dlg( parent(), attrdata, setup );
 	if ( !dlg.go() )
@@ -410,7 +411,7 @@ bool uiAttribPartServer::selectAttrib( SelSpec& selspec,
 	attrdata.attribid_.setStored( false );
     }
 
-    selspec.set( 0, isnla ? DescID(attrdata.outputnr_,false)
+    selspec.set( 0, isnla ? DescID(attrdata.outputnr_,isstored)
 	    		  : attrdata.attribid_, isnla, objref );
     if ( isnla && attrdata.nlamodel_ )
 	selspec.setRefFromID( *attrdata.nlamodel_ );
@@ -675,7 +676,7 @@ const Attrib::DataCubes* uiAttribPartServer::createOutput(
 	if ( !hideprogress )
 	{
 	    uiTaskRunner taskrunner( parent() );
-	    success = taskrunner.execute( *process );
+	    success = TaskRunner::execute( &taskrunner, *process );
 	}
 	else
 	{
@@ -729,7 +730,7 @@ bool uiAttribPartServer::createOutput( DataPointSet& posvals, int firstcol )
 	{ uiMSG().error(errmsg); return false; }
 
     uiTaskRunner taskrunner( parent() );
-    if ( !taskrunner.execute(*process) ) return false;
+    if ( !TaskRunner::execute( &taskrunner, *process ) ) return false;
 
     posvals.setName( targetspecs_[0].userRef() );
     return true;
@@ -754,7 +755,7 @@ bool uiAttribPartServer::createOutput( ObjectSet<DataPointSet>& dpss,
 
     bool res = true;
     uiTaskRunner taskrunner( parent() );
-    res = taskrunner.execute( execgrp );
+    res = TaskRunner::execute( &taskrunner, execgrp );
 
     deepErase( aems );
     return res;
@@ -800,7 +801,7 @@ bool uiAttribPartServer::createOutput( const BinIDValueSet& bidset,
 	{ uiMSG().error(errmsg); return false; }
 
     uiTaskRunner taskrunner( parent() );
-    if ( !taskrunner.execute(*process) ) return false;
+    if ( !TaskRunner::execute( &taskrunner, *process ) ) return false;
 
     return true;
 }
@@ -819,7 +820,7 @@ DataPack::ID uiAttribPartServer::create2DOutput( const CubeSampling& cs,
     if ( !process )
 	{ uiMSG().error(errmsg); return -1; }
 
-    if ( !tr.execute(*process) )
+    if ( !TaskRunner::execute( &tr, *process ) )
 	return -1;
 
     int component = 0;
@@ -889,7 +890,7 @@ bool uiAttribPartServer::extractData( ObjectSet<DataPointSet>& dpss )
 	Executor* tabextr = aem.getTableExtractor( dps, *ads, err );
 	if ( !tabextr ) { pErrMsg(err); return 0; }
 
-	if ( taskrunner.execute(*tabextr) )
+	if ( TaskRunner::execute( &taskrunner, *tabextr ) )
 	    somesuccess = true;
 	else
 	    somefail = true;
@@ -1506,10 +1507,14 @@ IOObj* uiAttribPartServer::getIOObj( const Attrib::SelSpec& as ) const
     if ( as.isNLA() ) return 0;
 
     const Attrib::DescSet* attrset = DSHolder().getDescSet( as.is2D(), true );
-    if ( !attrset ) return 0;
-
-    const Attrib::Desc* desc = attrset->getDesc( as.id() );
-    if ( !desc ) return 0;
+    const Attrib::Desc* desc = attrset ? attrset->getDesc( as.id() ) : 0;
+    if ( !desc )
+    {
+        attrset = DSHolder().getDescSet( as.is2D(), false );
+        desc = attrset ? attrset->getDesc( as.id() ) : 0;
+        if ( !desc )
+            return 0;
+    }
 
     BufferString storedid = desc->getStoredID();
     if ( !desc->isStored() || storedid.isEmpty() ) return 0;

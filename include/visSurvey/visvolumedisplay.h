@@ -176,6 +176,8 @@ public:
 
     bool			writeVolume( const char* filenm ) const;
 
+    void			setDisplayTransformation(const mVisTrans*);
+
 protected:
 				~VolumeDisplay();
 
@@ -241,7 +243,7 @@ protected:
     bool			isinited_;
     bool                        onoffstatus_;
 
-    mVisTrans*			displaytrans_;
+    RefMan<const mVisTrans>	displaytrans_;
 
     static const char*		sKeyVolumeID();
     static const char*		sKeyInline();

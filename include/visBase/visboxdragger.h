@@ -60,6 +60,9 @@ public:
     bool			selectable() const { return selectable_; }
     void			setSelectable(bool yn) { selectable_ = yn; }
 
+    void			setDisplayTransformation(const mVisTrans*);
+    const mVisTrans*		getDisplayTransformation() const;
+
     Notifier<BoxDragger>	started;
     Notifier<BoxDragger>	motion;
     Notifier<BoxDragger>	changed;
@@ -67,6 +70,8 @@ public:
 
 protected:
 					~BoxDragger();
+
+    RefMan<const mVisTrans>		transform_;
 
     void				setOsgMatrix(const Coord3& worldscale,
 						     const Coord3& worldtrans);

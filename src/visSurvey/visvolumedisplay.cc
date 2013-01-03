@@ -95,7 +95,7 @@ VolumeDisplay::VolumeDisplay()
     , cache_(0)
     , cacheid_(DataPack::cNoID())
     , slicemoving(this)
-    , voltrans_(visBase::Transformation::create())
+    , voltrans_(mVisTrans::create())
     , allowshading_(false)
     , datatransform_(0)
     , datatransformer_(0)
@@ -460,9 +460,13 @@ void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
 				    mCast(float,cs.hrg.stop.crl) );
     const Interval<float> zintv( cs.zrg.start, cs.zrg.stop );
 
-    voltrans_->setMatrix( Coord3(xintv.start,yintv.start,zintv.start),
-			  Coord3( 0, 1, 0 ), M_PI_2,
-			  Coord3(-zintv.width(),yintv.width(),xintv.width()) );
+    Coord3 trans( xintv.center(), yintv.center(), zintv.center() );
+    mVisTrans::transform( displaytrans_, trans );
+    Coord3 scale( xintv.width(), yintv.width(), zintv.width() );
+    mVisTrans::transformDir( displaytrans_, scale );
+    trans -= 0.5*scale;
+    scale = Coord3( -scale.z, scale.y, scale.x );
+    voltrans_->setMatrix( trans, Coord3( 0, 1, 0 ), M_PI_2, scale );
 
     for ( int idx=0; idx<slices_.size(); idx++ )
 	slices_[idx]->setSpaceLimits( Interval<float>(-0.5,0.5), 
@@ -959,9 +963,11 @@ CubeSampling VolumeDisplay::getCubeSampling( bool manippos, bool displayspace,
     }
     else
     {
-	const Coord3 transl = voltrans_->getTranslation();
 	Coord3 scale = voltrans_->getScale();
-	double dummy = -scale.x; scale.x=scale.z; scale.z = dummy;
+	scale = Coord3( scale.z, scale.y, -scale.x );
+	Coord3 transl = voltrans_->getTranslation();
+	mVisTrans::transformBackDir( displaytrans_, scale );
+	mVisTrans::transformBack( displaytrans_, transl );
 
 	res.hrg.start = BinID( mNINT32(transl.x), mNINT32(transl.y) );
 	res.hrg.stop = BinID( mNINT32(transl.x+scale.x),
@@ -1342,5 +1348,18 @@ CubeSampling VolumeDisplay::sliceSampling(visBase::OrthogonalSlice* slice) const
 	cs.hrg.setInlRange( Interval<int>( mNINT32(pos), mNINT32(pos) ) );
     return cs;
 }
+
+
+void VolumeDisplay::setDisplayTransformation( const mVisTrans* t )
+{
+    const bool voldisplayed = scalarfield_->isOn();
+    CubeSampling cs = getCubeSampling( false, true, 0 );
+
+    displaytrans_ = t;
+    boxdragger_->setDisplayTransformation( t );
+
+    setCubeSampling( cs );
+    scalarfield_->turnOn( voldisplayed );
+}  
 
 } // namespace visSurvey

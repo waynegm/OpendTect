@@ -10,6 +10,8 @@ ________________________________________________________________________
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "visboxdragger.h"
+
+#include "vistransform.h"
 #include "ranges.h"
 #include "iopar.h"
 #include "survinfo.h"
@@ -189,6 +191,9 @@ BoxDragger::BoxDragger()
 	    }
 	}
     }
+
+    osgboxdragger_->getOrCreateStateSet()->setAttributeAndModes(
+	    new osg::PolygonOffset(-1.0,1.0), osg::StateAttribute::ON );
 }
 
 
@@ -202,9 +207,13 @@ BoxDragger::~BoxDragger()
 void BoxDragger::setOsgMatrix( const Coord3& worldscale,
 			       const Coord3& worldtrans )
 {
+    osg::Vec3d scale, trans;
+    mVisTrans::transformDir( transform_, worldscale, scale );
+    mVisTrans::transform( transform_, worldtrans, trans ); 
+
     osg::Matrix mat;
-    mat *= osg::Matrix::scale( Conv::to<osg::Vec3d>(worldscale) );
-    mat *= osg::Matrix::translate( Conv::to<osg::Vec3d>(worldtrans) );
+    mat *= osg::Matrix::scale( scale );
+    mat *= osg::Matrix::translate( trans );
     osgboxdragger_->setMatrix( mat );
 }
 
@@ -223,7 +232,11 @@ void BoxDragger::setCenter( const Coord3& pos )
 
 Coord3 BoxDragger::center() const
 {
-    return Conv::to<Coord3>( osgboxdragger_->getMatrix().getTrans() );
+    Coord3 trans;
+    mVisTrans::transformBack( transform_,
+			      osgboxdragger_->getMatrix().getTrans(),
+			      trans );
+    return trans;
 }
 
 
@@ -235,7 +248,13 @@ void BoxDragger::setWidth( const Coord3& scale )
 
 Coord3 BoxDragger::width() const
 {
-    return Conv::to<Coord3>( osgboxdragger_->getMatrix().getScale() );
+    Coord3 scale;
+    mVisTrans::transformBackDir( transform_,
+				 osgboxdragger_->getMatrix().getScale(),
+				 scale );
+
+    scale.x = fabs(scale.x); scale.y = fabs(scale.y); scale.z = fabs(scale.z);
+    return scale;
 }
 
 
@@ -270,6 +289,27 @@ bool BoxDragger::isOn() const
 
 osg::Node* BoxDragger::gtOsgNode()
 { return osgdraggerroot_; }
+
+
+void BoxDragger::setDisplayTransformation( const mVisTrans* nt )
+{
+    if ( transform_ == nt )
+	return;
+
+    const Coord3 oldcenter = center();
+    const Coord3 oldwidth = width();
+
+    transform_ = nt;
+
+    setWidth( oldwidth );
+    setCenter( oldcenter );
+}
+
+
+const mVisTrans* BoxDragger::getDisplayTransformation() const
+{
+    return transform_;
+}
 
 
 }; // namespace visBase

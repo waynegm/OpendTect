@@ -176,7 +176,6 @@ void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
 
 DepthTabPlaneDragger::DepthTabPlaneDragger()
     : VisualObjectImpl( false )
-    , transform_( 0 )
     , dim_( 2 )
     , started( this )
     , motion( this )
@@ -199,8 +198,6 @@ DepthTabPlaneDragger::DepthTabPlaneDragger()
 DepthTabPlaneDragger::~DepthTabPlaneDragger()
 {
     osgdragger_->removeDraggerCallback( osgcallbackhandler_ );
-
-    if ( transform_ ) transform_->unRef();
 }
 
 
@@ -322,8 +319,8 @@ void DepthTabPlaneDragger::setCenter( const Coord3& newcenter, bool alldims )
 Coord3 DepthTabPlaneDragger::center() const
 {
     Coord3 res;
-    Transformation::transformBack( transform_,
-				   osgdragger_->getMatrix().getTrans(), res );
+    mVisTrans::transformBack( transform_,
+			      osgdragger_->getMatrix().getTrans(), res );
     return res;
 }
 
@@ -348,9 +345,8 @@ void DepthTabPlaneDragger::setSize( const Coord3& scale, bool alldims )
 Coord3 DepthTabPlaneDragger::size() const
 {
     Coord3 scale;
-    Transformation::transformBackDir( transform_,
-				      osgdragger_->getMatrix().getScale(),
-				      scale );
+    mVisTrans::transformBackDir( transform_,
+				 osgdragger_->getMatrix().getScale(), scale );
 
     scale.x = fabs(scale.x); scale.y = fabs(scale.y); scale.z = fabs(scale.z);
     return scale;
@@ -427,24 +423,13 @@ void DepthTabPlaneDragger::getWidthLimits( Interval<float>& x,
 
 void DepthTabPlaneDragger::setDisplayTransformation( const mVisTrans* nt )
 {
-    if ( transform_==nt ) return;
+    if ( transform_ == nt )
+	return;
 
     const Coord3 centerpos = center();
     const Coord3 savedsize = size();
 
-    if ( transform_ )
-    {
-	removeChild( const_cast<mVisTrans*>(transform_)->getInventorNode() );
-	transform_->unRef();
-    }
-
     transform_ = nt;
-
-    if ( transform_ )
-    {
-	insertChild(0, const_cast<mVisTrans*>(transform_)->getInventorNode() );
-	transform_->ref();
-    }
 
     setSize( savedsize );
     setCenter( centerpos );

@@ -118,7 +118,7 @@ protected:
     TypeSet<Coord3>		centers_;
     TypeSet<Coord3>		sizes_;
 
-    const mVisTrans*		transform_;
+    RefMan<const mVisTrans>	transform_;
 
     osgManipulator::TabPlaneDragger*	osgdragger_;
     osg::Switch*			osgdraggerplane_;

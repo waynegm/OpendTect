@@ -127,6 +127,7 @@ protected:
     bool			saveGenDesc() const;
     bool			saveGenDescIfNecessary() const;
     void			manPropsCB(CallBacker*);
+    void			snapshotCB(CallBacker*);
 
     bool			closeOK();
     
@@ -135,6 +136,7 @@ protected:
     void			fillSyntheticsPars(IOPar&) const;
     bool			useDisplayPars(const IOPar&);
     bool			useSyntheticsPars(const IOPar&);
+    bool			exportLayerModelGDI(BufferString) const;
 
 public:
 

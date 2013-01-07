@@ -11,11 +11,14 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uistratlayermodel.h"
 
+#include "ascstream.h"
 #include "ctxtioobj.h"
 #include "elasticpropsel.h"
+#include "envvars.h"
 #include "executor.h"
 #include "ioobj.h"
 #include "ioman.h"
+#include "pixmap.h"
 #include "strmprov.h"
 #include "settings.h"
 #include "separstr.h"
@@ -25,11 +28,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "stratlaymodgen.h"
 #include "stratreftree.h"
 #include "stratsynth.h"
+#include "survinfo.h"
 #include "wavelet.h"
 
 #include "uielasticpropsel.h"
 #include "uiobjdisposer.h"
 #include "uiioobjsel.h"
+#include "uifileinput.h"
 #include "uigeninput.h"
 #include "uigroup.h"
 #include "uilabel.h"
@@ -42,6 +47,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uiflatviewwin.h"
 #include "uiflatviewstdcontrol.h"
 #include "uimultiflatviewcontrol.h"
+#include "uisaveimagedlg.h"
+#include "uispinbox.h"
 #include "uistratbasiclayseqgendesc.h"
 #include "uistratsimplelaymoddisp.h"
 #include "uistratsynthdisp.h"
@@ -147,9 +154,6 @@ void doLayerModel( uiParent* p, const char* modnm )
     uiStratLayerModel* dlg = new uiStratLayerModel( p, modnm );
     dlg->go();
 }
-
-
-
 
 
 void addToTreeWin()
@@ -313,6 +317,8 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
     analtb_ = new uiToolBar( this, "Analysis toolbar", uiToolBar::Right );
     uiToolButtonSetup tbsu( "xplot", "Attributes vs model properties",
 	   		    mCB(this,uiStratLayerModel,xPlotReq) );
+    synthdisp_->control()->getToolBar(0)->addButton(
+	    "snapshot", "Get snapshot", mCB(this,uiStratLayerModel,snapshotCB));
     analtb_->addButton( tbsu );
     mDynamicCastGet( uiFlatViewer*,vwr,moddisp_->getViewer());
     if ( vwr ) synthdisp_->addViewerToControl( *vwr );
@@ -377,6 +383,72 @@ uiStratLayerModel::~uiStratLayerModel()
     delete &synthp_;
     delete descctio_.ioobj; delete &descctio_;
     StratTreeWin().changeLayerModelNumber( false );
+}
+
+
+class uiStratLayModelSnapshotDlg : public uiSaveImageDlg
+{
+public:
+uiStratLayModelSnapshotDlg( uiParent* p )
+    : uiSaveImageDlg(p)
+{
+    screendpi_ = 90;
+    createGeomInpFlds( cliboardselfld_ );
+    dpifld_->box()->setValue( screendpi_ );
+    setFldVals( 0 );
+}
+
+protected:
+
+void setFldVals( CallBacker* )
+{
+    mDynamicCastGet(uiMainWin*,mw,parent());
+    if ( mw )
+    {
+	const int w = mw->geometry().width();
+	const int h = mw->geometry().height();
+	setSizeInPix( w, h );
+    }
+}
+
+
+void getSupportedFormats( const char** imagefrmt, const char** frmtdesc,
+			  BufferString& filters )
+{
+    BufferStringSet supportedformats;
+    supportedImageFormats( supportedformats );
+    int idy = 0;
+    while ( imagefrmt[idy] )
+    {
+	const int idx = supportedformats.indexOf( imagefrmt[idy] );
+	if ( idx>=0 )
+	{
+	    if ( !filters.isEmpty() ) filters += ";;";
+	    filters += frmtdesc[idy];
+	}
+	idy++;
+    }
+
+    filters_ = filters;
+}
+
+
+bool acceptOK( CallBacker* )
+{
+    mDynamicCastGet(uiMainWin*,mw,parent());
+    if ( !mw ) return false;
+    mw->saveImage( fileinputfld_->fileName(), (int)sizepix_.width(),
+	    	   (int)sizepix_.height(),dpifld_->box()->getValue());
+    return true;
+}
+
+};
+
+
+void uiStratLayerModel::snapshotCB( CallBacker* )
+{
+    uiStratLayModelSnapshotDlg snapshotdlg( this );
+    snapshotdlg.go();
 }
 
 
@@ -559,6 +631,8 @@ bool uiStratLayerModel::selElasticProps( ElasticPropSelection& elsel )
 	    desc_.setElasticPropSel( dlg.storedKey() );
 	    seqdisp_->setNeedSave( true );
 	}
+
+	elsel.fillPar( desc_.getWorkBenchParams() );
 	return true;
     }
     return false;
@@ -625,6 +699,7 @@ bool uiStratLayerModel::openGenDesc()
     if ( !sd.usable() )
 	{ uiMSG().error( "Cannot open input file" ); return false; }
 
+    delete elpropsel_; elpropsel_ = 0;
     desc_.erase();
     MouseCursorChanger mcch( MouseCursor::Wait );
     bool rv = desc_.getFrom( *sd.istrm );
@@ -645,19 +720,35 @@ bool uiStratLayerModel::openGenDesc()
 
     delete elpropsel_; elpropsel_ = 0;
     
-    gentools_->genReq.trigger();
-    CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(), 
+    CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(),
 	    		    const_cast<uiStratLayerModel*>(this) );
     const_cast<uiStratLayerModel*>(this)->retrieveRequired.trigger( &caps );
 
-    //Set when everything is in place.
-    moddisp_->modelChanged();
-    synthdisp_->modelChanged();
+    moddisp_->setZoomBox( uiWorldRect(mUdf(double),0,0,0) );
+    BufferString edtyp;
+    descctio_.ctxt.toselect.require_.get( sKey::Type(), edtyp );
+    BufferString profilestr( "Profile" );
+    if ( !profilestr.isStartOf(edtyp) )
+    {
+	gentools_->genReq.trigger();
+	//Set when everything is in place.
+	moddisp_->modelChanged();
+	synthdisp_->modelChanged();
+    }
 
     if ( !useDisplayPars( desc_.getWorkBenchParams() ))
 	return false;
+
     useSyntheticsPars( desc_.getWorkBenchParams() );
+
+    if ( GetEnvVarYN("DTECT_EXPORT_LAYERMODEL") )
+    {
+	if ( !exportLayerModelGDI( fnm ) )
+	    return false;
+    }
     
+    //Before calculation
+    if ( !gentools_->usePar( desc_.getWorkBenchParams() ) )
     setWinTitle();
     return true;
 }
@@ -702,6 +793,7 @@ void uiStratLayerModel::genModels( CallBacker* )
 
     moddisp_->modelChanged();
     synthdisp_->modelChanged();
+    useSyntheticsPars( desc_.getWorkBenchParams() );
     levelChg( 0 );
     newModels.trigger();
 
@@ -725,21 +817,29 @@ void uiStratLayerModel::setModelProps()
     for ( int idx=0; idx<conts.size(); idx++ )
 	nms.add( conts[idx]->name() );
     modtools_->setContentNames( nms );
-
-    delete elpropsel_; elpropsel_ = 0;
-    setElasticProps();
 }
 
 
 void uiStratLayerModel::setElasticProps()
 {
     if ( !elpropsel_ )
-	elpropsel_ = ElasticPropSelection::get( desc_.elasticPropSel() );
+    {
+	elpropsel_ = new ElasticPropSelection;
+	if ( !elpropsel_->usePar(desc_.getWorkBenchParams()) )
+	{
+	    delete elpropsel_;
+	    elpropsel_ = 0;
+	}
+    }
 
     if ( !elpropsel_ )
     {
-	elpropsel_ = new ElasticPropSelection;
-	ElasticPropGuess( desc_.propSelection(), *elpropsel_ );
+	elpropsel_ = ElasticPropSelection::get( desc_.elasticPropSel() );
+	if ( !elpropsel_ )
+	{
+	    elpropsel_ = new ElasticPropSelection;
+	    ElasticPropGuess( desc_.propSelection(), *elpropsel_ );
+	}
     }
 
     BufferString errmsg;
@@ -855,6 +955,8 @@ void uiStratLayerModel::fillWorkBenchPars( IOPar& par ) const
     CBCapsule<IOPar*> caps( &par, const_cast<uiStratLayerModel*>(this) );
     const_cast<uiStratLayerModel*>(this)->saveRequired.trigger( &caps );
     gentools_->fillPar( par );
+    if ( elpropsel_ )
+	elpropsel_->fillPar( par );
     fillDisplayPars( par );
     fillSyntheticsPars( par );
 }
@@ -905,3 +1007,131 @@ void uiStratLayerModel::infoChanged( CallBacker* cb )
 	statusBar()->message( msg.buf() );
     }
 } 
+
+
+bool uiStratLayerModel::exportLayerModelGDI(BufferString fnm) const
+{
+    BufferString fnmlm;
+    fnmlm = fnm;
+    fnmlm += ".txt";
+    StreamData* outstreamdata =
+       			  new StreamData( StreamProvider(fnmlm).makeOStream() );
+    if ( !outstreamdata->usable() )
+	{ uiMSG().error( "Cannot open '", fnmlm,"' for write" ); return false; }
+
+    ascostream astrm( *outstreamdata->ostrm );
+    const char* typ = "Well group";
+    astrm.putHeader( typ );
+    std::ostream& strm = astrm.stream();
+
+    const int nrpswells = layerModel().size();
+    BufferString str;
+    str = "Name: ";
+    str += nrpswells;
+    str += " pseudowells";
+    astrm << str << std::endl;
+    strm << "!\n";
+
+    for ( int iwell=0; iwell<nrpswells; iwell++ )
+    {
+	str = "Name: ";
+	str += iwell + 1;
+	str += "-pseudowell";
+	astrm << str << std::endl;
+	str = "Inline: ";
+	const int inlnb = SI().inlRange(true).stop + SI().inlStep();
+	str += inlnb;
+	astrm << str << std::endl;
+	str = "Crossline: ";
+	const int crlnb = SI().crlRange(true).stop +
+	   		  SI().crlStep() * ( iwell + 1 );
+	str += crlnb;
+	astrm << str << std::endl;
+	str = "Rep Area: ";
+	str += inlnb; str += "`"; str += inlnb; str += "`";
+	str += crlnb; str += "`"; str += crlnb;
+	astrm << str << std::endl;
+	str = "Simulated: Yes";
+	astrm << str << std::endl;
+	strm << "!\n";
+
+	str = "Reference depth: ";
+	str += layerModel().sequence(iwell).startDepth();
+	astrm << str << std::endl;
+	const int nrvals = layerModel().sequence(iwell).layers()[0]->nrValues();
+	str = "Compact: Yes";
+	astrm << str << std::endl;
+	BufferString propnm;
+	for ( int ival=0; ival<nrvals; ival++ )
+	{
+	    str = "Quantity: ";
+	    propnm = layerModel().propertyRefs()[ival]->name();
+	    cleanupString( propnm.buf(), false, false, true );
+	    str += propnm;
+	    astrm << str << std::endl;
+	}
+	strm << "!\n";
+
+	const int nrlayers = layerModel().sequence(iwell).size();
+	BufferString prevunitnm;
+	TypeSet<int> nrliths;
+	TypeSet<BufferString> lithnms;
+	for ( int ilayer=0; ilayer<nrlayers; ilayer++ )
+	{
+	    BufferString unitnm = layerModel().sequence(iwell).layers()[ilayer]
+				   ->unitRef().parentCode().buf();
+	    BufferString lith = layerModel().sequence(iwell).layers()[ilayer]
+				->unitRef().code();
+	    if ( unitnm == prevunitnm )
+	    {
+		const int idx = lithnms.isPresent(lith) ?
+		   		lithnms.indexOf(lith) : 
+				lithnms.size();
+		if ( lithnms.isPresent(lith) )
+		{
+		    nrliths[idx]++;
+		}
+		else
+		{
+		    nrliths += 1;
+		    lithnms += lith;
+		}
+	    }
+	    else
+	    {
+		lithnms.erase();
+		nrliths.erase();
+		lithnms += lith;
+		nrliths += 1;
+	    }
+	    prevunitnm = unitnm;
+	    str = unitnm; str += "."; str += lith;
+	    if ( nrliths[lithnms.indexOf(lith)] > 1 )
+	    {
+		str += "(";
+		str += nrliths[lithnms.indexOf(lith)];
+		str += ")";
+	    }
+	    if ( !layerModel().sequence(iwell).layers()[ilayer]->content().
+		    name().isEmpty() )
+	    {
+		str+= ",";
+		str+= layerModel().sequence(iwell).layers()[ilayer]
+		      ->content().name();
+	    }
+	    for ( int ival=0; ival<nrvals; ival++ )
+	    {
+		str += " ";
+		str+=layerModel().sequence(iwell).layers()[ilayer]->value(ival);
+	    }
+	    astrm << str << std::endl;
+	}
+	strm << "!\n!\n!\n";
+    }
+    const bool res = strm.good();
+    outstreamdata->close();
+    delete outstreamdata;
+    outstreamdata = 0;
+
+    return res;
+}

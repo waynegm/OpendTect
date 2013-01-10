@@ -347,9 +347,7 @@ void ColTabTextureChannel2RGBA::updateOsgTexture() const
 		    proc->setColorSequence( osgcolsequences_[procidx] );
 
 		    const Color& udfcol = getSequence(channel)->undefColor();
-		    osg::Vec4f
-			udfcolvec( udfcol.r(), udfcol.g(), udfcol.b(), udfcol.t() );
-		    proc->setNewUndefColor( udfcolvec );
+		    proc->setNewUndefColor( Conv::to<osg::Vec4f>(udfcol) );
 		}
 		else
 		    layerids.removeSingle( procidx );

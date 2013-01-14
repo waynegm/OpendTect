@@ -16,7 +16,9 @@ ________________________________________________________________________
 #include "bufstringset.h"
 
 
-/*!\brief File pathname tools.
+/*!
+\ingroup Basic
+\brief File pathname tools.
 
   This class splits a full filename (with path) into the separate parts:
   directories and possibly a filename (the last part does not have to be a
@@ -28,15 +30,14 @@ ________________________________________________________________________
   fileName() returns the last part, pathOnly() returns all but the last part.
   setFileName() replaces the last part, setPath() replaces all but the last
   part.
- 
- */
+*/
 
 mClass(Basic) FilePath
 {
 public:
     enum Style		{ Local, Unix, Windows };
 
-    			FilePath(const char* fullinp=0,bool withlink=false);
+    			FilePath(const char* fullinp=0);
     			FilePath(const char* p1,const char* p2,const char* p3=0,
 				 const char* p4=0,const char* p5=0);
 			FilePath( const FilePath& fp )	{ *this = fp; }
@@ -94,7 +95,6 @@ protected:
     bool		isabs_;
     BufferString	prefix_;
     BufferStringSet	lvls_;
-    bool		withlink_;
 
     void		addPart(const char*);
     void		compress(int sl=0);

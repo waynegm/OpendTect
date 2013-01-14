@@ -17,6 +17,11 @@ ________________________________________________________________________
 #include "sets.h"
 
 
+/*!
+\ingroup Basic
+\brief A reflectivity spike.
+*/
+
 class ReflectivitySpike
 {
 public:
@@ -26,6 +31,8 @@ public:
 			    , correctedtime_( mUdf(float) )
 			    , depth_( mUdf(float) )
 			{}
+    
+    inline bool		isDefined() const;
 
     inline bool		operator==(const ReflectivitySpike& s) const;
     inline bool		operator!=(const ReflectivitySpike& s) const;
@@ -56,6 +63,12 @@ inline bool ReflectivitySpike::operator==(const ReflectivitySpike& s) const
 inline bool ReflectivitySpike::operator!=(const ReflectivitySpike& s) const
 { return !(*this==s); }
 
+
+inline bool ReflectivitySpike::isDefined() const
+{
+    return !mIsUdf(reflectivity_) && !mIsUdf(time_) &&
+	   !mIsUdf(correctedtime_) && !mIsUdf(depth_);
+}
 
 #endif
 

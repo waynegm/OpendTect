@@ -77,6 +77,12 @@ uiDataPointSetCrossPlotWin::uiDataPointSetCrossPlotWin( uiDataPointSet& uidps )
     Settings& setts = Settings::common();
     if ( !setts.get(sKeyMinDPPts(),minptsfordensity_) )
 	minptsfordensity_ = cMinPtsForDensity;
+    if ( minptsfordensity_ <= 0 || mIsUdf(minptsfordensity_) )
+    {
+	setts.set( sKeyMinDPPts(), cMinPtsForDensity ); setts.write();
+	minptsfordensity_ = cMinPtsForDensity;
+    }
+
     const int nrpts = plotter_.y2_.axis_ ? uidps.pointSet().nrActive()*2
 					 : uidps.pointSet().nrActive();
     const float perc = (float)( 100/(1 + nrpts/minptsfordensity_) );
@@ -528,6 +534,11 @@ void uiDataPointSetCrossPlotWin::eachChg( CallBacker* )
     Settings& setts = Settings::common();
     if ( !setts.get(sKeyMinDPPts(),minptsfordensity_) )
 	minptsfordensity_ = cMinPtsForDensity;
+    if ( minptsfordensity_ <= 0 || mIsUdf(minptsfordensity_) )
+    {
+	setts.set( sKeyMinDPPts(), cMinPtsForDensity ); setts.write();
+	minptsfordensity_ = cMinPtsForDensity;
+    }
 
     if ( estpts > minptsfordensity_ && !plotter_.isADensityPlot() )
     {
@@ -618,6 +629,8 @@ void uiDataPointSetCrossPlotWin::manageSel( CallBacker* )
 
 void uiDataPointSetCrossPlotWin::overlayAttrCB( CallBacker* )
 {
+    if ( !plotter_.axisHandler(0) || !plotter_.axisHandler(1) ) return;
+
     uiDPSOverlayPropDlg dlg( this, plotter_ );
     dlg.go();
 }

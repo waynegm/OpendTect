@@ -112,8 +112,6 @@ uiDataPointSetCrossPlotter::uiDataPointSetCrossPlotter( uiParent* p,
     , drawuserdefline_(false)
     , drawy1userdefpolyline_(false)
     , drawy2userdefpolyline_(false)
-    , y1clipping_(true)
-    , y2clipping_(true)
     , drawy2_(false)
     , timer_(*new Timer())
     , trmsg_("Calculating Density" )
@@ -650,6 +648,8 @@ void uiDataPointSetCrossPlotter::setShowY4( bool yn )
 
 void uiDataPointSetCrossPlotter::drawColTabItem( bool isy1 )
 {
+    if ( !axisHandler(0) || !axisHandler(isy1? 1:2) ) return;
+
     if ( (isy1 && !showy3_) || (!isy1 && !showy4_) )
     {
 	if ( y1overlayctitem_ ) y1overlayctitem_->setVisible( showy3_ );
@@ -1185,15 +1185,14 @@ void uiDataPointSetCrossPlotter::setCols( DataPointSet::ColID x,
 
     if ( !isprevx || !isprevy )
     {
-	if ( y1userdefpolylineitm_ && !y_.axis_ )
+	if ( y1userdefpolylineitm_ && !axisHandler(1) )
 	    y1userdefpolylineitm_->setVisible( false );
 
 	userdefy1str_.setEmpty(); y1rmserr_.setEmpty();
 	setup().showy1userdefpolyline_ = false;
     }
-    drawy1userdefpolyline_ = isprevx && isprevy;
+    drawy1userdefpolyline_ = setup().showy1userdefpolyline_;
     
-
     if ( !isprevx || !isprevy2 )
     {
 	userdefy2str_.setEmpty(); y2rmserr_.setEmpty();

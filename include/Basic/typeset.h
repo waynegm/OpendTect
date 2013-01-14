@@ -23,16 +23,9 @@ ________________________________________________________________________
 # include "debug.h"
 #endif
 
-/*!\brief Set of (small) copyable elements
-
-The TypeSetBase is meant for simple types or small objects that have a copy
-constructor. The `-=' function will only remove the first occurrence that
-matches using the `==' operator. The requirement of the presence of that
-operator is actually not that bad: at least you can't forget it.
-
-Do not make TypeSetBase<bool> (don't worry, it won't compile). Use the BoolTypeSet
-typedef just after the class definition. See vectoraccess.h for details on why.
-
+/*!
+\ingroup Basic
+\brief Use TypeSet instead.
 */
 
 template <class T, class I>
@@ -69,7 +62,8 @@ public:
     inline virtual bool		append(const T*,I);
     inline virtual bool		append(const TypeSetBase<T,I>&);
     inline bool			add(const T&);
-
+    inline bool			push(const T& t) { return add(t); }
+    inline T			pop();
     inline virtual void		swap(od_int64,od_int64);
     inline virtual void		reverse();
     virtual inline void		createUnion(const TypeSetBase<T,I>&);
@@ -110,6 +104,20 @@ protected:
 };
 
 
+/*!
+\ingroup Basic
+\brief Set of (small) copyable elements.
+
+  TypeSet is meant for simple types or small objects that have a copy
+  constructor. The `-=' function will only remove the first occurrence that
+  matches using the `==' operator. The requirement of the presence of that  
+  operator is actually not that bad: at least you can't forget it.
+  
+  Do not make TypeSet<bool> (don't worry, it won't compile). Use the
+  BoolTypeSet typedef just after the class definition. See vectoraccess.h for
+  details on why.
+*/
+
 template <class T>
 class TypeSet : public TypeSetBase<T,int>
 {
@@ -121,7 +129,11 @@ public:
 	TypeSet(const TypeSet<T>& t) : TypeSetBase<T,size_type>( t )	{}
 };
 
-//! We need this because STL has a crazy specialisation of the vector<bool>
+
+/*!
+\ingroup Basic
+\brief We need this because STL has a crazy specialisation of the vector<bool>.
+*/
 
 class BoolTypeSetType
 {
@@ -136,6 +148,11 @@ protected:
 typedef TypeSet<BoolTypeSetType> BoolTypeSet;
 //!< This sux, BTW.
 
+
+/*!
+\ingroup Basic
+\brief Large Value Vector. Publicly derived from TypeSetBase.
+*/
 
 template <class T>
 class LargeValVec : public TypeSetBase<T,od_int64>
@@ -301,16 +318,29 @@ const T& TypeSetBase<T,I>::operator[]( I idx ) const
 
 
 template <class T, class I> inline
-T& TypeSetBase<T,I>::first()			{ return vec_[0]; }
+T& TypeSetBase<T,I>::first()			{ return vec_.first(); }
+
 
 template <class T, class I> inline
-const T& TypeSetBase<T,I>::first() const	{ return vec_[0]; }
+const T& TypeSetBase<T,I>::first() const	{ return vec_.first(); }
+
 
 template <class T, class I> inline
-T& TypeSetBase<T,I>::last()			{ return vec_[size()-1]; }
+T& TypeSetBase<T,I>::last()			{ return vec_.last(); }
+
 
 template <class T, class I> inline
-const T& TypeSetBase<T,I>::last() const	{ return vec_[size()-1]; }
+const T& TypeSetBase<T,I>::last() const		{ return vec_.last(); }
+
+
+template <class T, class I> inline
+T TypeSetBase<T,I>::pop()
+{
+    const T res = vec_.last();
+    vec_.pop_back();
+    return res;
+}
+
 
 
 template <class T, class I> inline

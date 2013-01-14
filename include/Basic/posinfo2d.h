@@ -21,7 +21,10 @@ class BinID;
 namespace PosInfo
 {
 
-/*!\brief One position on a 2D line */
+/*!
+\ingroup Basic  
+\brief One position on a 2D line.
+*/
 
 mClass(Basic) Line2DPos
 {
@@ -41,6 +44,11 @@ public:
 };
 
 
+/*!
+\ingroup Basic
+\brief Line2DPos with a z value.
+*/
+
 mClass(Basic) Line2DPos3D : public Line2DPos
 {
 public:
@@ -51,12 +59,20 @@ public:
 };
 
 
-/*!\brief Position info for a 2D line */
+/*!
+\ingroup Basic
+\brief Position info for a 2D line.
+*/
 
 mClass(Basic) Line2DData
 {
 public:
 			Line2DData(const char* lnm=0);
+
+			Line2DData(const Line2DData& l2d)
+			: zrg_(l2d.zRange())
+			, lnm_(l2d.lineName())
+			, posns_(l2d.positions()){}
 
     const StepInterval<float>& zRange() const		{ return zrg_; }
     const BufferString&	lineName() const		{ return lnm_; }

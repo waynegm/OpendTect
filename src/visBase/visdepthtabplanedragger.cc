@@ -269,6 +269,7 @@ void DepthTabPlaneDragger::initOsgDragger()
     geode->addDrawable( plane.get() );
     geode->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
     geode->getStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
+    geode->getStateSet()->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
     geode->getStateSet()->setAttributeAndModes(
 	    	new osg::PolygonOffset(1.0,1.0), osg::StateAttribute::ON );
 

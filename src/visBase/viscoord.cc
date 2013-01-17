@@ -112,8 +112,8 @@ int Coordinates::addPos( const Coord3& pos )
     const int nrunused = unusedcoords_.size();
     if ( nrunused )
     {
-	res = unusedcoords_[nrunused-1];
-	unusedcoords_.removeSingle( nrunused-1 );
+	res = unusedcoords_.pop();
+	setPosWithoutLock( res, pos );
     }
     else
     {
@@ -199,6 +199,7 @@ void Coordinates::setPosWithoutLock( int idx, const Coord3& pos )
 	mGetOsgVec3Arr(osgcoords_)->resize( idx+1 );
     
     (*mGetOsgVec3Arr(osgcoords_))[idx] = Conv::to<osg::Vec3f>( postoset );
+    osgcoords_->dirty();
 
     const int unusedidx = unusedcoords_.indexOf(idx);
     if ( unusedidx!=-1 )

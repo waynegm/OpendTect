@@ -55,7 +55,6 @@ Horizon2DDisplay::~Horizon2DDisplay()
 void Horizon2DDisplay::setDisplayTransformation( const mVisTrans* nt )
 {
     EMObjectDisplay::setDisplayTransformation( nt );
-
     for ( int idx=0; idx<lines_.size(); idx++ )
 	lines_[idx]->setDisplayTransformation( transformation_ );
 
@@ -152,7 +151,9 @@ bool Horizon2DDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
     pl->ref();
     pl->setDisplayTransformation( transformation_ );
     pl->setName( "PolyLine3D" );
-    pl->setLineStyle( drawstyle_->lineStyle() );
+    LineStyle ls;
+    ls.width_ = 200;
+    pl->setLineStyle( ls );
     addChild( pl->osgNode() );
     lines_ += pl;
     points_ += 0;
@@ -215,6 +216,7 @@ Horizon2DDisplayUpdater( const Geometry::RowColSurface* rcs,
     , scale_( 1, 1, SI().zScale() )
     , zaxt_( zaxt )
     , linenames_(linenames)
+    , crdidx_(0)
 {
     eps_ = mMIN(SI().inlDistance(),SI().crlDistance());
     eps_ = (float) mMIN(eps_,SI().zRange(true).step*scale_.z )/4;
@@ -319,7 +321,8 @@ void sendPositions( TypeSet<Coord3>& positions )
 	    for ( int idy=0; idy<nrbendpoints; idy++ )
 	    {
 		const Coord3& pos = positions[ bendpoints[idy] ];
-		indices += lines_->getCoordinates()->addPos( pos );
+		lines_->getCoordinates()->setPos( crdidx_, pos );
+		indices += crdidx_++;
 	    }
 
 	    if ( lineci_ < lines_->nrPrimitiveSets() )
@@ -362,6 +365,7 @@ protected:
     StepInterval<int>			rowrg_;
     int					nriter_;
     int					curidx_;
+    int					crdidx_;
 };
 
 

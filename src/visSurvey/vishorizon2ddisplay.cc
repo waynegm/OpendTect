@@ -55,6 +55,7 @@ Horizon2DDisplay::~Horizon2DDisplay()
 void Horizon2DDisplay::setDisplayTransformation( const mVisTrans* nt )
 {
     EMObjectDisplay::setDisplayTransformation( nt );
+
     for ( int idx=0; idx<lines_.size(); idx++ )
 	lines_[idx]->setDisplayTransformation( transformation_ );
 
@@ -151,9 +152,7 @@ bool Horizon2DDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
     pl->ref();
     pl->setDisplayTransformation( transformation_ );
     pl->setName( "PolyLine3D" );
-    LineStyle ls;
-    ls.width_ = 200;
-    pl->setLineStyle( ls );
+    pl->setLineStyle( drawstyle_->lineStyle() );
     addChild( pl->osgNode() );
     lines_ += pl;
     points_ += 0;

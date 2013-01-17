@@ -606,6 +606,8 @@ void ColTabTextureChannel2RGBA::update()
 {
     adjustNrChannels();
 
+/* Temporarily outcommented to avoid "Coin-crashes" when changing color table.
+
     const bool doshading = shadingallowed_ && canUseShading();
     if ( doshading )
 	setShadingVars();
@@ -616,7 +618,8 @@ void ColTabTextureChannel2RGBA::update()
 	}
     
 	doFill( converter_ );
-    }
+     }
+ */
 }
 
 

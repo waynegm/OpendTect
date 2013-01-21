@@ -31,6 +31,11 @@ namespace EM
 {
 class EMManager;
 
+/*!
+\ingroup EarthModel
+\brief 2D HorizonGeometry
+*/
+
 mClass(EarthModel) Horizon2DGeometry : public HorizonGeometry
 {
 public:
@@ -58,7 +63,7 @@ public:
 					   true, it returnes unf, if not
 					   it return the id of the undef
 					   neighbor. */
-					   
+
     static const char*		sKeyLineIDs()	{ return "Line IDs"; }
     static const char*		sKeyLineNames()	{ return "Line names"; }
     static const char*		sKeyLineSets()	{ return "Set ID of line "; }
@@ -83,14 +88,17 @@ protected:
 
     void			fillPar(IOPar&) const;
     bool			usePar(const IOPar&);
-    
+
     TypeSet<PosInfo::GeomID>	geomids_;
 };
 
+
 /*!
-2d horizons. The horizons is only present along 2d lines, set by addLine. Each
-position's subid is formed by RowCol( lineid, tracenr ).getInt64(). If
-multiple z-values per trace is needed, multiple sections can be added. */
+\ingroup EarthModel
+\brief 2D Horizon. The Horizon is only present along 2d lines, set by addLine.
+Each position's subid is formed by RowCol( lineid, tracenr ).getInt64(). If
+multiple z-values per trace is needed, multiple sections can be added.
+*/
 
 mClass(EarthModel) Horizon2D : public Horizon
 { mDefineEMObjFuncs( Horizon2D );
@@ -125,9 +133,15 @@ public:
     void			removeSelected(const Selector<Coord3>& selector,
 	    				       TaskRunner* tr );
 
-    bool			setArray1D(const Array1D<float>&,SectionID sid,
-	    				   const PosInfo::GeomID& geomid,
-					   bool onlyfillundefs );
+    bool			setArray1D(const Array1D<float>&,
+					   SectionID sid,
+					   const PosInfo::GeomID& geomid,
+					   bool onlyfillundefs);
+    bool			setArray1D(const Array1D<float>&,
+					   const StepInterval<int>& trcrg,
+					   SectionID sid,
+					   const PosInfo::GeomID& geomid,
+					   bool onlyfillundefs);
     Array1D<float>*		createArray1D(SectionID,
 	    				      const PosInfo::GeomID& geomid,
 	    				      const ZAxisTransform* =0) const;
@@ -138,6 +152,11 @@ protected:
     Horizon2DGeometry		geometry_;
 };
 
+
+/*!
+\ingroup EarthModel
+\brief Ascii I/O for Horizon2D.
+*/
 
 mClass(EarthModel) Horizon2DAscIO : public Table::AscIO
 {

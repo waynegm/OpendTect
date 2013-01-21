@@ -59,8 +59,7 @@ RangePrimitiveSet* RangePrimitiveSet::create()
 
     
     
-void PrimitiveSetCreator::setCreator(
-				Geometry::PrimitiveSetCreator* c )
+void PrimitiveSetCreator::setCreator( Geometry::PrimitiveSetCreator* c )
 {
     creator_ = c;
 }

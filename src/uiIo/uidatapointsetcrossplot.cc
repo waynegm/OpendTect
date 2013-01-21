@@ -689,7 +689,7 @@ void uiDataPointSetCrossPlotter::drawColTabItem( bool isy1 )
     const ColTab::MapperSetup& mappersetup = isy1 ? y3mapper_.setup_
 						  : y4mapper_.setup_;
     coltabitem->setColTabMapperSetup( mappersetup );
-    coltabitem->setVisible( showy4_ && isY2Shown() );
+    coltabitem->setVisible( isy1 ? showy3_ : ( showy4_ && isY2Shown() ) );
 }
 
 
@@ -1279,20 +1279,13 @@ void uiDataPointSetCrossPlotter::drawContent( bool withaxis )
 
 void uiDataPointSetCrossPlotter::prepareItems( bool y2 )
 {
-    if ( y2 ? !y2ptitems_ : !yptitems_ )
+    uiGraphicsItemGroup*& ptitems = y2 ? y2ptitems_ : yptitems_;
+
+    if ( !ptitems )
     {
-	if ( y2 )
-	{
-	    y2ptitems_ = new uiGraphicsItemGroup();
-	    scene().addItemGrp( y2ptitems_ );
-	    y2ptitems_->setZValue( 4 );
-	}
-	else
-	{
-	    yptitems_ = new uiGraphicsItemGroup();
-	    scene().addItemGrp( yptitems_ );
-	    yptitems_->setZValue( 4 );
-	}
+	ptitems = new uiGraphicsItemGroup();
+	scene().addItemGrp( ptitems );
+	ptitems->setZValue( 4 );
     }
 }
 
@@ -1579,6 +1572,7 @@ void uiDataPointSetCrossPlotter::checkSelection( uiDataPointSet::DRowID rid,
     
 }
 
+
 int uiDataPointSetCrossPlotter::calculateDensity( Array2D<float>* data,
 						  bool chgdps, bool removesel )
 { return calcDensity( data, chgdps, removesel, false, 0 ); }
@@ -1814,7 +1808,6 @@ void uiDataPointSetCrossPlotter::drawData(
     drawUserDefPolyLine( true );
     drawUserDefPolyLine( false );
 }
-
 
 
 void uiDataPointSetCrossPlotter::drawRegrLine( uiAxisHandler& yah,

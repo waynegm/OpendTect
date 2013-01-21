@@ -86,6 +86,12 @@ protected:
     void		d2TSelChg(CallBacker*);
     void		wellSelChg(CallBacker*);
     void 		wellTieDlgClosed(CallBacker*);
+    void		set3DSeis() const;
+    void		set2DSeis() const;
+    void		setLine() const;
+    void		setTypeFld();
+    bool		seisIDIs3D(MultiID) const;
+    bool		setupwasused_;
 };
 
 }; //namespace WellTie

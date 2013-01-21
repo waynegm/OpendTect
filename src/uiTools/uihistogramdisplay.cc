@@ -39,6 +39,9 @@ uiHistogramDisplay::uiHistogramDisplay( uiParent* p,
     , withheader_(withheader)
     , header_(0)
     , nitm_(0)
+    , mydrawrg_(mUdf(float),mUdf(float))
+    , usemydrawrg_(false) 
+    , drawRangeChanged(this)  
 {
     xAxis()->setName( "Value" );
     yAxis(false)->setName( "Count" );
@@ -133,29 +136,17 @@ void uiHistogramDisplay::setData( const DataPointSet& dpset )
 
 void uiHistogramDisplay::setData( const Array2D<float>* array )
 {
-    if ( !array ) return;
+    const float* data = array ? array->getData() : 0;
+    if ( !data ) return;
 
-    if ( array->getData() )
-    {
-	setData( array->getData(), mCast(int,array->info().getTotalSz()) );
-	return;
-    }
-
-    const int sz2d0 = array->info().getSize( 0 );
-    const int sz2d1 = array->info().getSize( 1 );
+    const int totalsz = mCast(int, array->info().getTotalSz() );
     TypeSet<float> valarr;
-    for ( int idx0=0; idx0<sz2d0; idx0++ )
+    for ( int idx=0; idx<totalsz; idx++ )
     {
-	for ( int idx1=0; idx1<sz2d1; idx1++ )
-	{
-	    const float val = array->get( idx0, idx1 );
-	    if ( mIsUdf(val) ) continue;
-
-	    valarr += val;
-	}
+	if ( !mIsUdf(data[idx]) )
+	    valarr += data[idx];
     }
-    rc_.setValues( valarr.arr(), valarr.size() );
-    updateAndDraw();
+    setData( valarr.arr(), valarr.size() ); 
 }
 
 
@@ -163,7 +154,32 @@ void uiHistogramDisplay::setData( const float* array, int sz )
 {
     if ( !array ) return;
 
-    rc_.setValues( array, sz );
+    if ( array != originaldata_.arr() )
+    {
+    	originaldata_.erase();
+    	for ( int idx=0; idx<sz; idx++ )
+    	    originaldata_ += array[idx];
+    }
+
+    const bool usedrawrg = usemydrawrg_ && !mIsUdf(mydrawrg_.start) && 
+	!mIsUdf(mydrawrg_.stop);
+    if ( usedrawrg )
+    {
+	mydisplaydata_.erase();
+	for ( int idx=0; idx<sz; idx++ )
+	{
+    	    if ( mIsUdf(array[idx]) )
+     		continue;
+      	    
+	    if ( mydrawrg_.includes(array[idx],false) )
+    		mydisplaydata_ += array[idx];
+	}
+    
+	rc_.setValues( mydisplaydata_.arr(), mydisplaydata_.size() );
+    }
+    else
+	rc_.setValues( originaldata_.arr(), originaldata_.size() );
+
     updateAndDraw();
 }
 
@@ -209,6 +225,36 @@ void uiHistogramDisplay::updateHistogram()
     setHistogram( histdata, Interval<float>(min + 0.5f*step, max - 0.5f*step),
 	    	  nrinpvals_ );
 }
+
+
+void uiHistogramDisplay::useDrawRange( bool yn )    
+{
+   if ( usemydrawrg_==yn )
+      return;
+
+    usemydrawrg_ = yn; 
+    if ( usemydrawrg_ && !mIsUdf(mydrawrg_.start) && !mIsUdf(mydrawrg_.stop) )
+    {
+	setData( originaldata_.arr(), originaldata_.size() );
+    	drawRangeChanged.trigger();
+    }
+}
+
+
+void uiHistogramDisplay::setDrawRange( const Interval<float>& ni )
+{
+    if ( mIsEqual(ni.start,mydrawrg_.start,1e-5) && 
+	 mIsEqual(ni.stop,mydrawrg_.stop,1e-5) )
+	return;
+
+    mydrawrg_ = ni;
+    if ( usemydrawrg_ )
+    {
+	setData( originaldata_.arr(), originaldata_.size() );
+    	drawRangeChanged.trigger();
+    }
+}
+
 
 
 void uiHistogramDisplay::setHistogram( const TypeSet<float>& histdata,

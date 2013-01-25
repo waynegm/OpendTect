@@ -193,8 +193,6 @@ protected:
 
     CubeSampling		snapPosition(const CubeSampling&) const;
     
-    void			setDisplayTransform(mVisTrans*);
-
     visBase::EventCatcher*		eventcatcher_;
     MouseCursor				mousecursor_;
     RefMan<visBase::DepthTabPlaneDragger> dragger_;

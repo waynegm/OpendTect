@@ -1207,3 +1207,4 @@ visBase::Scene* ui3DViewer::getScene()
 
 const visBase::Scene* ui3DViewer::getScene() const
 { return const_cast<ui3DViewer*>(this)->getScene(); }
+

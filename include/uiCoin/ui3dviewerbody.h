@@ -20,6 +20,7 @@ ________________________________________________________________________
 
 namespace visBase
 {
+    class Axes;
     class Camera;
     class Scene;
     class Transformation;
@@ -95,11 +96,13 @@ public:
     
     void			setAnimationEnabled(bool) { pErrMsg("Impl!"); }
     bool			isAnimationEnabled() { return true; }
+    void			showRotAxis(bool);
 
 protected:
     
     void				setupHUD();
     void				setupView();
+    void				setupAxes();
     void				qtEventCB(CallBacker*);
     
     static osgViewer::CompositeViewer*	getCompositeViewer();
@@ -132,6 +135,8 @@ protected:
     RefMan<visBase::DataObjectGroup>			hudscene_;
     
     uiEventFilter					eventfilter_;
+    osg::Camera*					axescamera_;
+    RefMan<visBase::Axes>				axes_;
 };
 
 #endif

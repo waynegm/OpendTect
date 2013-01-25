@@ -13,6 +13,7 @@ SET(OD_MODULE_SOURCES
 	   initvisbase.cc
 	   visanchor.cc
 	   visannot.cc
+	   visaxes.cc
 	   visboxdragger.cc
 	   viscamera.cc
 	   viscamerainfo.cc

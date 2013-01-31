@@ -45,6 +45,7 @@ class DataObjectGroup;
 inline unsigned int cEventTraversalMask() 		{ return 0x00000001; }
 inline unsigned int cIntersectionTraversalMask()	{ return 0x00000002; }
 inline unsigned int cBBoxTraversalMask()		{ return 0x00000004; }
+inline unsigned int cAllTraversalsMask()		{ return 0xFFFFFFFF; }
 
 
 /*!\brief

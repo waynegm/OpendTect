@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUsedVar = "$Id: ui3dviewer.cc 26620 2012-10-05 12:13:15Z jaap.glas@dgbes.com $";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uiosgfont.h"
 #include "uifont.h"

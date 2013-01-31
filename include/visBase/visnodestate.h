@@ -7,7 +7,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:	Kristofer Tingdahl
  Date:		Oct 2012
- RCS:		$Id: viscoord.h 26346 2012-09-24 05:48:51Z kristofer.tingdahl@dgbes.com $
+ RCS:		$Id$
 ________________________________________________________________________
 
 

@@ -30,8 +30,8 @@ mExternC(visBase) void unrefOsgObj( osg::Object* obj )
 }
 
 
-namespace visBase
-{
+using namespace visBase;
+
 
 void DataObject::enableTraversal( unsigned int tt, bool yn )
 {
@@ -76,6 +76,7 @@ void DataObject::setName( const char* nm )
 DataObject::DataObject()
     : id_( -1 )
     , name_( 0 )
+    , enabledmask_( cAllTraversalMask() )
 {
     DM().addObject( this );
 }
@@ -92,6 +93,37 @@ void DataObject::setID( int nid )
 {
     id_ = nid;
     updateOsgNodeData();
+}
+    
+    
+bool DataObject::turnOn( bool yn )
+{
+    const bool res = isOn();
+    enableTraversal( enabledmask_, yn );
+    return res;
+}
+    
+
+bool DataObject::isOn() const
+{
+    return isTraversalEnabled( enabledmask_ );
+}
+    
+    
+void DataObject::setPickable( bool yn )
+{
+    const bool ison = isOn();
+    enabledmask_ = yn
+    	? (enabledmask_ | cEventTraversalMask() )
+        : (enabledmask_ & ~cEventTraversalMask() );
+    
+    turnOn( ison );
+}
+    
+    
+bool DataObject::isPickable() const
+{
+    return enabledmask_ & cEventTraversalMask();
 }
 
 
@@ -134,6 +166,3 @@ bool DataObject::serialize( const char* filename, bool binary )
     
     return osgDB::writeNodeFile( *osgNode(), std::string( filename ) );
 }
-
-
-}; // namespace visBase

@@ -1174,7 +1174,7 @@ bool RandomTrackDisplay::checkValidPick( const visBase::EventInfo& evi,
     {
 	const DataObject* pickedobj =
 	    visBase::DM().getObject( evi.pickedobjids[idx] );
-	if ( eventid==-1 && pickedobj->pickable() )
+	if ( eventid==-1 && pickedobj->isPickable() )
 	{
 	    eventid = evi.pickedobjids[idx];
 	    if ( validpicksurface )

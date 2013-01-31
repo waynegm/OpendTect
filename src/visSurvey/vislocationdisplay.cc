@@ -333,7 +333,7 @@ void LocationDisplay::pickCB( CallBacker* cb )
 	if ( dataobj == this )
 	    continue;
 
-	if ( dataobj->pickable() )
+	if ( dataobj->isPickable() )
 	    eventid = eventinfo.pickedobjids[idx];
 
 	mDynamicCastGet(const SurveyObject*,so,dataobj);
@@ -447,7 +447,7 @@ bool LocationDisplay::getPickSurface( const visBase::EventInfo& evi,
 	if ( pickedobj == this )
 	    continue;
 
-	if ( eventid==-1 && pickedobj->pickable() )
+	if ( eventid==-1 && pickedobj->isPickable() )
 	{
 	    eventid = evi.pickedobjids[idx];
 	    if ( validpicksurface )

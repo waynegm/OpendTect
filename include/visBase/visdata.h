@@ -42,10 +42,12 @@ class DataObjectGroup;
 
 
 // OSG traversal bitmasks defined by OpendTect
+inline unsigned int cNoTraversalMask()			{ return 0; }
+inline unsigned int cAllTraversalMask()			{ return 0xFFFFFFFF; }
 inline unsigned int cEventTraversalMask() 		{ return 0x00000001; }
 inline unsigned int cIntersectionTraversalMask()	{ return 0x00000002; }
 inline unsigned int cBBoxTraversalMask()		{ return 0x00000004; }
-inline unsigned int cAllTraversalsMask()		{ return 0xFFFFFFFF; }
+
 
 
 /*!\brief
@@ -80,8 +82,13 @@ public:
     inline SoNode*		getInventorNode()	{return 0;}
     inline const SoNode*	getInventorNode() const
 				{ return 0; }
+    
+    virtual bool		turnOn(bool yn);
+    virtual bool		isOn() const;
 
-    virtual bool		pickable() const 	{ return selectable(); }
+    bool			isPickable() const;
+    void			setPickable(bool yn);
+    
     virtual bool		rightClickable() const 	{ return selectable(); }
     virtual bool		selectable() const	{ return false; }
     void			select() const;
@@ -156,6 +163,7 @@ protected:
 private:
     int				id_;
     BufferString*		name_;
+    unsigned int		enabledmask_;
 };
 
 };

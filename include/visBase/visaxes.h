@@ -29,9 +29,7 @@ public:
     static Axes*		create()
     				mCreateDataObj(Axes);
     void			setRadius(float);
-    float			getRadius() const;
-    bool			turnOn(bool);
-    bool			isOn() const { return ison_; }
+    float			getRadius() const;	
 
 protected:
     				~Axes();

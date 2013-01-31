@@ -25,7 +25,6 @@ namespace visBase
 
 Axes::Axes()
     : axesnode_(new osgGeo::AxesNode)
-    , ison_(true)
 {
     axesnode_->ref();
 }
@@ -54,13 +53,5 @@ void Axes::setRadius( float rad )
     axesnode_->setRadius( rad );
 }
 
-
-bool Axes::turnOn( bool yn )
-{
-    const bool res = isOn();
-    ison_ = yn;
-    axesnode_->setNodeMask( ison_ ? 0xffffffff : 0x0 );
-    return res;
-}
 
 } //namespace visBase

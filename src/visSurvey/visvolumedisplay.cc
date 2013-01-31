@@ -1162,11 +1162,11 @@ const ColTab::MapperSetup* VolumeDisplay::getColTabMapperSetup( int, int ) const
 }
 
 
-void VolumeDisplay::turnOn( bool yn )
+bool VolumeDisplay::turnOn( bool yn )
 {
     onoffstatus_ = yn;
     
-    VisualObjectImpl::turnOn( isAttribEnabled( 0 ) && yn );
+    return VisualObjectImpl::turnOn( isAttribEnabled( 0 ) && yn );
 }
 
 

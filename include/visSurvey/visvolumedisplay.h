@@ -99,7 +99,7 @@ public:
 	    			    const visBase::MarchingCubesSurface*) const;
     void			setSeedsID(const visBase::MarchingCubesSurface*,					   MultiID);
 
-    void                        turnOn(bool yn);
+    bool                        turnOn(bool yn);
     bool                        isOn() const;
     void			showManipulator(bool yn);
     bool			isManipulatorShown() const;

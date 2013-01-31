@@ -38,7 +38,7 @@ mExpClass(visSurvey) MultiTextureSurveyObject : public visBase::VisualObjectImpl
 				  public SurveyObject
 {
 public:
-    void			turnOn(bool yn);
+    bool			turnOn(bool yn);
     bool			isOn() const;
     bool			isShown() const;
     				//!<Returns true if displayed, i.e. it is

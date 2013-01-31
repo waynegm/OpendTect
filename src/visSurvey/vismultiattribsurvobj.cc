@@ -130,10 +130,12 @@ void MultiTextureSurveyObject::allowShading( bool yn )
 }
 
 
-void MultiTextureSurveyObject::turnOn( bool yn )
+bool MultiTextureSurveyObject::turnOn( bool yn )
 {
+    const bool res = isOn();
     onoffstatus_ = yn;
     updateMainSwitch();
+    return res;
 }
 
 

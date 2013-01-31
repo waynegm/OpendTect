@@ -45,7 +45,7 @@ public: \
 mExpClass(visBase) Shape : public VisualObject
 {
 public:
-    void			turnOn(bool);
+    bool			turnOn(bool);
     bool			isOn() const;
    
     mDeclSetGetItem( Shape,	Texture2, texture2_ );

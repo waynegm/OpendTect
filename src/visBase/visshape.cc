@@ -63,8 +63,9 @@ Shape::~Shape()
 }
 
 
-void Shape::turnOn(bool n)
+bool Shape::turnOn(bool n)
 {
+    const bool res = isOn();
     if ( osgswitch_ )
     {
 	if ( n ) osgswitch_->setAllChildrenOn();
@@ -74,6 +75,8 @@ void Shape::turnOn(bool n)
     {
 	pErrMsg( "Turning off object without switch");
     }
+    
+    return res;
 }
 
 

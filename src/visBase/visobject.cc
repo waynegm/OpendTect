@@ -140,13 +140,15 @@ bool VisualObjectImpl::tryWriteLock()
 
 
 
-void VisualObjectImpl::turnOn( bool yn )
+bool VisualObjectImpl::turnOn( bool yn )
 {
-
+    const bool res = isOn();
     if ( yn )
 	osgroot_->setAllChildrenOn();
     else
 	osgroot_->setAllChildrenOff();
+    
+    return res;
 }
 
 

@@ -210,12 +210,15 @@ const EventInfo* Dragger::rightClickedEventInfo() const
 { return rightclickeventinfo_; }
 
 
-void Dragger::turnOn( bool yn )
+bool Dragger::turnOn( bool yn )
 {
+    const bool res = isOn();
     if ( yn )
 	onoff_->setAllChildrenOn();
     else
 	onoff_->setAllChildrenOff();
+
+    return res;
 }
 
 

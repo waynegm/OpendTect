@@ -53,7 +53,7 @@ public:
 	    				       const Interval<float>& y,
 					       const Interval<float>& z );
 
-    void			turnOn(bool yn);
+    bool			turnOn(bool yn);
     bool			isOn() const;
 
 

@@ -81,10 +81,12 @@ void RotationDragger::set( const Quaternion& q )
 }
 
 
-void RotationDragger::turnOn( bool yn )
+bool RotationDragger::turnOn( bool yn )
 {
+    const bool res = isOn();
     if ( !onoff_ ) { onoff_ = new SoSwitch(); onoff_->ref(); }
     onoff_->whichChild = yn ? 0 : SO_SWITCH_NONE;
+    return res;
 }
 
 

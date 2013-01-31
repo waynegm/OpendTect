@@ -55,10 +55,12 @@ void Axes::setRadius( float rad )
 }
 
 
-void Axes::turnOn( bool yn )
+bool Axes::turnOn( bool yn )
 {
+    const bool res = isOn();
     ison_ = yn;
     axesnode_->setNodeMask( ison_ ? 0xffffffff : 0x0 );
+    return res;
 }
 
 } //namespace visBase

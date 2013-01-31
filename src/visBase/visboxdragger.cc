@@ -275,9 +275,11 @@ void BoxDragger::setWidthLimits( const Interval<float>& x,
 }
 
 
-void BoxDragger::turnOn( bool yn )
+bool BoxDragger::turnOn( bool yn )
 {
+    const bool res = isOn();
     osgdraggerroot_->setValue( 0, yn );
+    return res;
 }
 
 

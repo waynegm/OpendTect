@@ -137,10 +137,11 @@ void SceneColTab::setColTabMapperSetup( const ColTab::MapperSetup& ms )
 }
 
 
-void SceneColTab::turnOn( bool yn )
+bool SceneColTab::turnOn( bool yn )
 {
-    VisualObjectImpl::turnOn( yn );
+    const bool res = VisualObjectImpl::turnOn( yn );
     updateVis();
+    return res;
 }
 
 

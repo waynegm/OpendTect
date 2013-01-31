@@ -47,7 +47,7 @@ public:
 
     Quaternion			get() const;
     void			set(const Quaternion&);
-    void			turnOn(bool yn);
+    bool			turnOn(bool yn);
     bool			isOn() const;
     void			setOwnFeedback(DataObject*,bool active);
     				/*!<\note do->getInventorNode() must return a

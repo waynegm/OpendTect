@@ -76,7 +76,7 @@ public:
     void			setRotation(const Coord3&,float);
     void			setDefaultRotation();
 
-    void			turnOn(bool);
+    bool			turnOn(bool);
     bool			isOn() const;
 
     

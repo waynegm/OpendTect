@@ -30,7 +30,7 @@ public:
     				mCreateDataObj(Axes);
     void			setRadius(float);
     float			getRadius() const;
-    void			turnOn(bool);
+    bool			turnOn(bool);
     bool			isOn() const { return ison_; }
 
 protected:

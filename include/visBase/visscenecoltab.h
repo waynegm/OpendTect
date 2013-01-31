@@ -37,7 +37,7 @@ public:
     void			setColTabMapperSetup(const ColTab::MapperSetup&);
 
     void			setDisplayTransformation(const mVisTrans*) {}
-    void			turnOn(bool);
+    bool			turnOn(bool);
     void			setSize(int w,int h);
     Geom::Size2D<int>		getSize();
     

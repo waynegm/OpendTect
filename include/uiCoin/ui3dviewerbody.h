@@ -46,7 +46,7 @@ namespace osg
 
 //!Baseclass for different body implementation (direct & indirect) of OSG
 
-class ui3DViewerBody : public uiObjectBody
+mClass(uiCoin) ui3DViewerBody : public uiObjectBody
 {
 public:
     			ui3DViewerBody( ui3DViewer& h, uiParent* parnt );

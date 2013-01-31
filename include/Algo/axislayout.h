@@ -20,12 +20,11 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Algo
 \brief Helps making nice axes for graphs.
 */
 
 template <class T>
-class AxisLayout
+mClass(Algo) AxisLayout
 {
 public:
 			// Have layout calculated

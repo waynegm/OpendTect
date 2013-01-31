@@ -21,11 +21,10 @@ ________________________________________________________________________
 class Task;
 
 /*!
-\ingroup Basic
 \brief Is an interface where processes can report their progress.
 */
 
-mClass(Basic) ProgressMeter
+mExpClass(Basic) ProgressMeter
 {
 public:
     virtual		~ProgressMeter()		{}
@@ -44,11 +43,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Textual progress indicator for batch programs.
 */
 
-mClass(Basic) TextStreamProgressMeter : public ProgressMeter
+mExpClass(Basic) TextStreamProgressMeter : public ProgressMeter
 {
 public:
 			TextStreamProgressMeter(std::ostream&,

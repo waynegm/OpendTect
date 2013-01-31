@@ -20,12 +20,11 @@ template <class T> class ValueSeries;
 
 
 /*!
-\ingroup Algo
 \brief Base class for a tracker that tracks something (e.g. min, max,
 a certain value)++ from one ValueSeries<float> to another.
 */
 
-mClass(Algo) ValSeriesTracker
+mExpClass(Algo) ValSeriesTracker
 {
 public:
     			ValSeriesTracker();
@@ -60,11 +59,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Tracker that tracks Min/Max & Zero crossings between valueseries.
 */
 
-mClass(Algo) EventTracker : public ValSeriesTracker
+mExpClass(Algo) EventTracker : public ValSeriesTracker
 {
 public:
     				EventTracker();

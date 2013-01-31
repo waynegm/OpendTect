@@ -19,11 +19,10 @@ ________________________________________________________________________
 #include "polygon.h"
 
 /*!
-\ingroup Algo
 \brief Tracing the z-level contour of a 2D scalar field.
 */
 
-mClass(Algo) IsoContourTracer
+mExpClass(Algo) IsoContourTracer
 {
 public:
 		

@@ -18,7 +18,6 @@ namespace Interpolate
 {
 
 /*!
-\ingroup Algo
 \brief specification for a 2D interpolator
 
   The 'set' method accepts values arranged like this:
@@ -40,11 +39,10 @@ namespace Interpolate
   The 'apply' method needs the relative distance in x and y direction from
   the origin (where v[0] is located), and should therefore generally be between
   0 and 1, although you can also use the classes for near extrapolation.
-  
 */
     
 template <class T>
-class Applier2D
+mClass(Algo) Applier2D
 {
 public:
     virtual		~Applier2D()				{}
@@ -54,12 +52,11 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief Linear 2D interpolation.
 */
 
 template <class T>
-class LinearReg2D : public Applier2D<T>
+mClass(Algo) LinearReg2D : public Applier2D<T>
 {
 public:
 
@@ -83,12 +80,11 @@ inline T linearReg2D( T v00, T v01, T v10, T v11, float x, float y )
 
 
 /*!
-\ingroup Algo
 \brief Linear 2D interpolation with standard undef handling.
 */
 
 template <class T>
-class LinearReg2DWithUdf : public Applier2D<T>
+mClass(Algo) LinearReg2DWithUdf : public Applier2D<T>
 {
 public:
 
@@ -119,7 +115,6 @@ inline T linearReg2DWithUdf( T v00, T v01, T v10, T v11, float x, float y )
 
 
 /*!
-\ingroup Algo
 \brief Interpolate 2D regularly sampled, using a 2nd order surface.
   
   Contrary to teh linear approach it does matter whether deltaX is different
@@ -128,7 +123,7 @@ inline T linearReg2DWithUdf( T v00, T v01, T v10, T v11, float x, float y )
 */
 
 template <class T>
-class PolyReg2D : public Applier2D<T>
+mClass(Algo) PolyReg2D : public Applier2D<T>
 {
 public:
 
@@ -168,7 +163,6 @@ inline T polyReg2D( T vm10, T vm11, T v0m1, T v00, T v01, T v02,
 
 
 /*!
-\ingroup Algo
 \brief PolyReg2D which smoothly handles undefined values.
 
   Note that this class _requires_ x and y to be between 0 and 1 for correct
@@ -177,7 +171,7 @@ inline T polyReg2D( T vm10, T vm11, T v0m1, T v00, T v01, T v02,
 */
 
 template <class T>
-class PolyReg2DWithUdf : public Applier2D<T>
+mClass(Algo) PolyReg2DWithUdf : public Applier2D<T>
 {
 public:
 

@@ -19,11 +19,10 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief Use VolStats instead.
 */
 
-mClass(Attributes) VolStatsBase : public Provider
+mExpClass(Attributes) VolStatsBase : public Provider
 {
 public:
     static void			initDesc(Desc&);
@@ -80,7 +79,6 @@ protected:
 
 
 /*!
-\ingroup Attributes
 \brief Volume Statistics Attribute
 
   VolumeStatistics collects all samples within the timegate from all traces
@@ -112,7 +110,7 @@ protected:
 </pre> 
 */
 
-mClass(Attributes) VolStats : public VolStatsBase
+mExpClass(Attributes) VolStats : public VolStatsBase
 {
 public:
     static void			initClass();

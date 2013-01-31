@@ -24,12 +24,11 @@ ________________________________________________________________________
 #endif
 
 /*!
-\ingroup Basic
 \brief Use TypeSet instead.
 */
 
 template <class T, class I>
-class TypeSetBase : public OD::Set
+mClass(Basic) TypeSetBase : public OD::Set
 {
 public:
     inline virtual		~TypeSetBase();
@@ -105,7 +104,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Set of (small) copyable elements.
 
   TypeSet is meant for simple types or small objects that have a copy
@@ -119,7 +117,7 @@ protected:
 */
 
 template <class T>
-class TypeSet : public TypeSetBase<T,int>
+mClass(Basic) TypeSet : public TypeSetBase<T,int>
 {
     	typedef int size_type;
 public:
@@ -131,11 +129,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief We need this because STL has a crazy specialisation of the vector<bool>.
 */
 
-class BoolTypeSetType
+mClass(Basic) BoolTypeSetType
 {
 public:
    BoolTypeSetType(bool v=false) : val_( v ){}
@@ -150,12 +147,11 @@ typedef TypeSet<BoolTypeSetType> BoolTypeSet;
 
 
 /*!
-\ingroup Basic
 \brief Large Value Vector. Publicly derived from TypeSetBase.
 */
 
 template <class T>
-class LargeValVec : public TypeSetBase<T,od_int64>
+mClass(Basic) LargeValVec : public TypeSetBase<T,od_int64>
 {
 	typedef od_int64 size_type;
 public:

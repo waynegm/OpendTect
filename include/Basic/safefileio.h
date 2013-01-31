@@ -19,7 +19,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Protects file IO when you can't afford to have partly written things
 after write errors or have a file garbled by multiple access.
  
@@ -44,7 +43,7 @@ after write errors or have a file garbled by multiple access.
   flags. Otherwise, don't specify these.
 */
 
-mClass(Basic) SafeFileIO
+mExpClass(Basic) SafeFileIO
 {
 public:
 

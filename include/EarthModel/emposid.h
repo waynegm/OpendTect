@@ -28,7 +28,6 @@ typedef od_int16 SectionID;
 typedef od_int64 SubID;
 
 /*!
-\ingroup EarthModel
 \brief Is an identifier for each position in the earthmodel.
 
 It has three parts,
@@ -37,7 +36,7 @@ It has three parts,
 - a SubID, which identifies the position on the section. 
 */
 
-mClass(EarthModel) PosID
+mExpClass(EarthModel) PosID
 {
 public:
     				PosID( ObjectID emobjid=0,

@@ -44,9 +44,10 @@ class uiToolButton;
 class uiToolButtonSetup;
 namespace Strat { class LayerModel; }
 namespace FlatView { class AuxData; }
+namespace PreStackView { class uiSyntheticViewer2DMainWin; }
 
 
-mClass(uiWellAttrib) uiStratSynthDisp : public uiGroup
+mExpClass(uiWellAttrib) uiStratSynthDisp : public uiGroup
 {
 public:
 
@@ -125,8 +126,8 @@ protected:
     uiSynthGenDlg*	synthgendlg_;
     uiSynthSlicePos*	offsetposfld_;
     uiSynthSlicePos*	modelposfld_;
-    uiFlatViewMainWin*	prestackwin_;
     PtrMan<TaskRunner>	taskrunner_;
+    PreStackView::uiSyntheticViewer2DMainWin*	prestackwin_;
 
     void		setCurrentSynthetic();
     void		setCurrentWavelet();
@@ -157,7 +158,7 @@ protected:
 };
 
 
-mClass(uiWellAttrib) uiSynthSlicePos : public uiGroup
+mExpClass(uiWellAttrib) uiSynthSlicePos : public uiGroup
 {
 public:
     			uiSynthSlicePos(uiParent*,const char* lbltxt);
@@ -182,7 +183,7 @@ protected:
 };
 
 
-mClass(uiWellAttrib) uiStackGrp : public uiGroup
+mExpClass(uiWellAttrib) uiStackGrp : public uiGroup
 {
 public:
     			uiStackGrp(uiParent*);
@@ -201,7 +202,7 @@ protected:
 };
 
 
-mClass(uiWellAttrib) uiSynthGenDlg : public uiDialog
+mExpClass(uiWellAttrib) uiSynthGenDlg : public uiDialog
 {
 public:
 				uiSynthGenDlg(uiParent*,StratSynth&);

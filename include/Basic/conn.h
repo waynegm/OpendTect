@@ -19,7 +19,6 @@ ________________________________________________________________________
 class IOObj;
 
 /*!
-\ingroup Basic
 \brief Data connection.
   
   Data can be found in files and data stores. To access these data sources,
@@ -27,7 +26,7 @@ class IOObj;
   interface common to these connections.
 */
 
-mClass(Basic) Conn
+mExpClass(Basic) Conn
 {
 public:
 
@@ -60,11 +59,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Connection implemented in terms of another Conn object.
 */
 
-mClass(Basic) XConn  : public Conn
+mExpClass(Basic) XConn  : public Conn
 {
 
     friend class	IOX;

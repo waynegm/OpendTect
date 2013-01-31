@@ -20,12 +20,11 @@ template <class T> class TypeSet;
 
 
 /*!
-\ingroup Basic
 \brief Color is an RGB color object, with a transparancy. The storage is in
 a 4-byte integer, similar to Qt.
 */
 
-mClass(Basic) Color
+mExpClass(Basic) Color
 {
 public:
 
@@ -94,12 +93,11 @@ protected:
 namespace Values {
 
 /*!
-\ingroup Basic
 \brief Undefined Color.
 */
 
 template<>
-class Undef<Color>
+mClass(Basic) Undef<Color>
 {
 public:
     static Color	val()			{ return Color::NoColor(); }

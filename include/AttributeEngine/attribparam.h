@@ -24,8 +24,7 @@ namespace Attrib
 {
 
 /*!
-  \ingroup AttributeEngine
-  \brief A parameter that is used by an attribute.
+\brief A parameter that is used by an attribute.
   
   Each attribute has a definition string that defines how the attribute is
   computed. The definition string has the format:
@@ -38,7 +37,7 @@ namespace Attrib
   of each and every type.
 */
 
-mClass(AttributeEngine) BinIDParam : public ValParam
+mExpClass(AttributeEngine) BinIDParam : public ValParam
 {
 public:
     				BinIDParam(const char*);
@@ -63,11 +62,10 @@ public:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Bool parameter that is used by an attribute.
+\brief Bool parameter that is used by an attribute.
 */
 
-mClass(AttributeEngine) BoolParam : public ValParam
+mExpClass(AttributeEngine) BoolParam : public ValParam
 {
 public:
     				BoolParam(const char*);
@@ -83,11 +81,10 @@ public:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Enum parameter that is used by an attribute.
+\brief Enum parameter that is used by an attribute.
 */
 
-mClass(AttributeEngine) EnumParam : public ValParam
+mExpClass(AttributeEngine) EnumParam : public ValParam
 {
 public:
     				EnumParam(const char*);
@@ -106,11 +103,10 @@ public:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief String parameter that is used by an attribute.
+\brief String parameter that is used by an attribute.
 */
 
-mClass(AttributeEngine) StringParam : public ValParam
+mExpClass(AttributeEngine) StringParam : public ValParam
 {
 public:
     				StringParam(const char* key);
@@ -126,13 +122,12 @@ public:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Numerical parameter that is used by an attribute.
-  For example: IntParam, FloatParam and DoubleParam.
+\brief Numerical parameter that is used by an attribute.
+For example: IntParam, FloatParam and DoubleParam.
 */
 
 template <class T>
-class NumParam : public ValParam
+mClass(AttributeEngine) NumParam : public ValParam
 {
 public:
     				NumParam(const char* key)
@@ -241,13 +236,12 @@ typedef NumParam<double>	DoubleParam;
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Gate parameter that is used by an attribute.
-  For example: IntGateParam, FloatGateParam, DoubleGateParam and ZGateParam.
+\brief Gate parameter that is used by an attribute.
+For example: IntGateParam, FloatGateParam, DoubleGateParam and ZGateParam.
 */
 
 template <class T>
-class NumGateParam : public ValParam
+mClass(AttributeEngine) NumGateParam : public ValParam
 {
 public:
     				NumGateParam(const char* key)
@@ -412,11 +406,10 @@ typedef NumGateParam<float>		ZGateParam;
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Stored seismic input parameter used by an attribute.
+\brief Stored seismic input parameter used by an attribute.
 */
 
-mClass(AttributeEngine) SeisStorageRefParam : public StringParam
+mExpClass(AttributeEngine) SeisStorageRefParam : public StringParam
 {
 public:
 				SeisStorageRefParam(const char* key);

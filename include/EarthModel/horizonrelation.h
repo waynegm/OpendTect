@@ -25,16 +25,15 @@ namespace EM
 {
 
 /*!
-\ingroup EarthModel
 \brief A Relation tree where a parent-child relationship means a top-bottom
 relationship for the horizons.
 */
 
-mClass(EarthModel) RelationTree
+mExpClass(EarthModel) RelationTree
 {
 public:
 
-    mClass(EarthModel) Node
+    mExpClass(EarthModel) Node
     {
     public:
 				Node(const MultiID&);

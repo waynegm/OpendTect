@@ -27,7 +27,6 @@ template <class T> class LineParameters;
 
 
 /*!
-\ingroup Algo
 \brief Multidimensional Mathematical function.
   
   A MathFunctionND must deliver a value at any position: F(x*).
@@ -36,7 +35,7 @@ template <class T> class LineParameters;
 */
 
 template <class RT,class PT>
-class MathFunctionND
+mClass(Algo) MathFunctionND
 {
 public:
     virtual	~MathFunctionND() {}
@@ -59,7 +58,6 @@ typedef MathFunctionND<float,float> FloatMathFunctionND;
 
 
 /*!
-\ingroup Algo
 \brief Mathematical function
   
   A MathFunction must deliver a value at any position: F(x).
@@ -68,7 +66,7 @@ typedef MathFunctionND<float,float> FloatMathFunctionND;
 */
 
 template <class RT,class PT>
-class MathFunction : public MathFunctionND<RT,PT>
+mClass(Algo) MathFunction : public MathFunctionND<RT,PT>
 {
 public:
 
@@ -83,12 +81,11 @@ typedef MathFunction<float,float> FloatMathFunction;
 
 
 /*!
-\ingroup Algo
 \brief Makes a MathFunction indexable through an operator[].
 */
 
 template <class RT,class PT>
-class MathFunctionSampler
+mClass(Algo) MathFunctionSampler
 {
 public:
 			MathFunctionSampler( const MathFunction<RT,PT>& f )
@@ -107,12 +104,11 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief A Math Function as in F(x,y).
 */
 
 template <class RT,class PT>
-class MathXYFunction : public MathFunctionND<RT,PT>
+mClass(Algo) MathXYFunction : public MathFunctionND<RT,PT>
 {
 public:
 
@@ -126,11 +122,10 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief A Math Function as in F(x,y,z).
 */
 template <class RT,class PT>
-class MathXYZFunction : public MathFunctionND<RT,PT>
+mClass(Algo) MathXYZFunction : public MathFunctionND<RT,PT>
 {
 public:
 
@@ -145,7 +140,6 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief MathFunction based on bend points
   
   The object maintains sorted positions (in X), so you cannot bluntly stuff
@@ -159,7 +153,7 @@ public:
   return). Undef sections are therefore supported.
 */
 
-mClass(Algo) PointBasedMathFunction : public FloatMathFunction
+mExpClass(Algo) PointBasedMathFunction : public FloatMathFunction
 {
 public:
 
@@ -203,7 +197,6 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief A MathFunction that cuts through another mathfunction with
 higher number of dimensions.
   
@@ -214,7 +207,7 @@ higher number of dimensions.
 */
 
 template <class RT,class PT>
-class AlongVectorFunction : public MathFunction<RT,PT>
+mClass(Algo) AlongVectorFunction : public MathFunction<RT,PT>
 {
 public:
     			AlongVectorFunction( const MathFunctionND<RT,PT>& func_,
@@ -245,11 +238,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief A class for 2nd order polynomials of the form: a x^2 + b x + c
 */
 
-mClass(Algo) SecondOrderPoly : public FloatMathFunction
+mExpClass(Algo) SecondOrderPoly : public FloatMathFunction
 {
 public:
     			SecondOrderPoly( float a_=0, float b_=0, float c_=0 )
@@ -315,11 +307,10 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief A class for 3rd order polynomials on the form: a x^3 + b x^2 + c x + d
 */
 
-mClass(Algo) ThirdOrderPoly : public FloatMathFunction
+mExpClass(Algo) ThirdOrderPoly : public FloatMathFunction
 {
 public:
     			ThirdOrderPoly( float a_=0, float b_=0,

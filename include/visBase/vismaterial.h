@@ -31,7 +31,7 @@ namespace visBase
 
 */
 
-mClass(visBase) Material : public NodeState
+mExpClass(visBase) Material : public NodeState
 {
 public:
     			Material();

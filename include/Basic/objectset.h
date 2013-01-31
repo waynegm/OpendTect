@@ -25,7 +25,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Set of pointers to objects.
 
   The ObjectSet does not manage the objects, it is just a collection of
@@ -33,7 +32,7 @@ ________________________________________________________________________
 */
 
 template <class T>
-class ObjectSet : public OD::Set
+mClass(Basic) ObjectSet : public OD::Set
 {
 public:
     				typedef int size_type;

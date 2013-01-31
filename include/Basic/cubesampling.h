@@ -17,7 +17,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Hor+Vert sampling in 3D surveys.
 
   When slices are to be taken from a CubeSampling, they should be ordered
@@ -32,7 +31,7 @@ ________________________________________________________________________
   See also the direction() and dimension() free functions.
 */
 
-mClass(Basic) CubeSampling
+mExpClass(Basic) CubeSampling
 {
 public:
 

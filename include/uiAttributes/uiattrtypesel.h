@@ -24,7 +24,7 @@ class uiComboBox;
 
   */
 
-mClass(uiAttributes) uiAttrTypeSel : public uiGroup
+mExpClass(uiAttributes) uiAttrTypeSel : public uiGroup
 {
 public:
 				uiAttrTypeSel(uiParent*,bool sorted=true);
@@ -47,8 +47,8 @@ public:
 
 protected:
 
-    uiComboBox*			grpfld;
-    uiComboBox*			attrfld;
+    uiComboBox*			grpfld_;
+    uiComboBox*			attrfld_;
 
     BufferStringSet		grpnms_;
     BufferStringSet		attrnms_;

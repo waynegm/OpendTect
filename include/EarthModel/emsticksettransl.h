@@ -23,11 +23,10 @@ ________________________________________________________________________
 typedef EM::StickSet EMStickSet;
 
 /*!
-\ingroup EarthModel
 \brief EMStickSet TranslatorGroup
 */
 
-mClass(EarthModel) EMStickSetTranslatorGroup : public TranslatorGroup
+mExpClass(EarthModel) EMStickSetTranslatorGroup : public TranslatorGroup
 {				  isTranslatorGroup(EMStickSet)
 public:
     				mDefEmptyTranslatorGroupConstructor(EMStickSet)
@@ -39,11 +38,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief EMStickSet Translator
 */
 
-mClass(EarthModel) EMStickSetTranslator : public Translator
+mExpClass(EarthModel) EMStickSetTranslator : public Translator
 {
 public:
 			mDefEmptyTranslatorBaseConstructor(EMStickSet)
@@ -64,7 +62,7 @@ public:
 };
 
 
-mClass(EarthModel) lmkEMStickSetTranslator : public EMStickSetTranslator
+mExpClass(EarthModel) lmkEMStickSetTranslator : public EMStickSetTranslator
 {				isTranslator(lmk,EMStickSet)
 public:
     			mDefEmptyTranslatorConstructor(lmk,EMStickSet)
@@ -91,7 +89,7 @@ public:
 };
 
 
-mClass(EarthModel) lmkEMStickSetReader : public Executor
+mExpClass(EarthModel) lmkEMStickSetReader : public Executor
 {
 public:
 			lmkEMStickSetReader(EM::StickSet&, Conn*,
@@ -128,7 +126,7 @@ protected:
 };
 
 
-mClass(EarthModel) lmkEMStickSetWriter : public Executor
+mExpClass(EarthModel) lmkEMStickSetWriter : public Executor
 {
 public:
 			lmkEMStickSetWriter(const EM::StickSet&,

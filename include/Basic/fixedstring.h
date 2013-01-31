@@ -20,13 +20,12 @@ class BufferString;
 
 
 /*!
-\ingroup Basic
 \brief Class that holds a text string, and provides basic services around it.
 The string is assumed to be owned by someone else or be static. In any case, it
 is assumed be be alive and well for the lifetime of the FixedString.
 */
 
-mClass(Basic) FixedString
+mExpClass(Basic) FixedString
 {
 public:
 		FixedString(const char* p = 0 ) : ptr_(p) {}
@@ -56,7 +55,7 @@ protected:
 namespace Values
 {
     template<>
-    class Undef<FixedString>
+    mClass(Basic) Undef<FixedString>
     {
     public:
 	static FixedString	val()			{ return FixedString();}

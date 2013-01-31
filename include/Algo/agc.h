@@ -18,12 +18,11 @@ ________________________________________________________________________
 #include "valseries.h"
 
 /*!
-\ingroup Algo
 \brief Computes an AGC over a ValueSeries.
 */
 
 template <class T>
-class AGC : public ParallelTask
+mClass(Algo) AGC : public ParallelTask
 {
 public:
     			AGC();

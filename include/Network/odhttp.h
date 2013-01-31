@@ -20,7 +20,7 @@ ________________________________________________________________________
 class MyHttp;
 class QHttpConnector;
 
-mClass(Network) ODHttp : public CallBacker
+mExpClass(Network) ODHttp : public CallBacker
 {
 friend class QHttpConnector;
 
@@ -53,6 +53,7 @@ public:
     int			post( const char* cmd,
 			      const IOPar& postvars );
     			//!<Returns -1 on error
+    int			postFile(const char* cmd,const char* filename);
     BufferString	readBuffer() const;
     wchar_t*		readWCharBuffer() const; //!< Buffer becomes yours
     const char*		readCharBuffer() const;

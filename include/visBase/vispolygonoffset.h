@@ -22,7 +22,7 @@ namespace visBase
 {
 /*!Class that manipulates the zbuffer. See coin for details. */
 
-mClass(visBase) PolygonOffset : public NodeState
+mExpClass(visBase) PolygonOffset : public NodeState
 {
 public:
 				PolygonOffset();

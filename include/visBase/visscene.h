@@ -33,7 +33,7 @@ namespace visBase
     be common for the whole scene.
 */
 
-mClass(visBase) Scene : public DataObjectGroup
+mExpClass(visBase) Scene : public DataObjectGroup
 {
 public:
     static Scene*	create()

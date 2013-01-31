@@ -33,11 +33,10 @@ class PosID;
 
 
 /*!
-\ingroup EarthModel
 \brief Surface data
 */
 
-mClass(EarthModel) SurfaceAuxData 
+mExpClass(EarthModel) SurfaceAuxData 
 {
 public:
 			SurfaceAuxData(Horizon3D&);

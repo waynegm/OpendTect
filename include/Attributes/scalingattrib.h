@@ -20,7 +20,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Scaling Attribute
   Calculates the squared sum of the gate's samples divided by the number of
   samples in the gate.
@@ -36,7 +35,7 @@ namespace Attrib
 </pre>
 */
 
-mClass(Attributes) Scaling: public Provider
+mExpClass(Attributes) Scaling: public Provider
 {
 public:
     static void		initClass();

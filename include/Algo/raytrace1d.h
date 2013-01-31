@@ -27,11 +27,10 @@ class TimeDepthModel;
 
 
 /*!
-\ingroup Algo
 \brief Ray tracer in 1D.
 */
 
-mClass(Algo) RayTracer1D : public ParallelTask
+mExpClass(Algo) RayTracer1D : public ParallelTask
 { 
 public:
     mDefineFactoryInClass( RayTracer1D, factory );
@@ -40,7 +39,7 @@ public:
 
 			~RayTracer1D();
 
-    mClass(Algo) Setup
+    mExpClass(Algo) Setup
     {
     public:
 			Setup() 
@@ -124,11 +123,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Ray tracer in 1D based on Vrms.
 */
 
-mClass(Algo) VrmsRayTracer1D : public RayTracer1D
+mExpClass(Algo) VrmsRayTracer1D : public RayTracer1D
 { 
 public:
 

@@ -30,11 +30,10 @@ class LatLong2Coord;
 
 
 /*!
-\ingroup Basic
 \brief Scaled down survey geometry for an inl/crl geometry.
 */
 
-mClass(Basic) InlCrlSystem : public Survey::Geometry
+mExpClass(Basic) InlCrlSystem : public Survey::Geometry
 {
 public:
     friend		class SurveyInfo;
@@ -93,7 +92,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Holds survey general information.
 
   The surveyinfo is the primary source for ranges and steps.It also provides the  transformation between inline/xline <-> coordinates and lat/long estimates.
@@ -108,7 +106,7 @@ protected:
   at the bottom part of the class too for some more public functions.
 */
 
-mClass(Basic) SurveyInfo : public NamedObject
+mExpClass(Basic) SurveyInfo : public NamedObject
 {
 
     mGlobal(Basic) friend const SurveyInfo&	SI();

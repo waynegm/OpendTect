@@ -27,12 +27,11 @@ template <class T> class ValueSeries;
 
 
 /*!
-\ingroup Basic
 \brief Sets large amounts of values to a constant using multiple threads.
 */
 
 template <class T>
-class MemSetter : public ParallelTask
+mClass(Basic) MemSetter : public ParallelTask
 {
 public:
     		MemSetter();
@@ -61,12 +60,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief ValueSeries Copier
 */
 
 template <class T>
-class MemCopier : public ParallelTask
+mClass(Basic) MemCopier : public ParallelTask
 {
 public:
 
@@ -102,12 +100,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Goes through some mem or a ValSeries and replaces one value with another.
 */
 
 template <class T>
-class MemValReplacer : public ParallelTask
+mClass(Basic) MemValReplacer : public ParallelTask
 {
 public:
 		MemValReplacer();

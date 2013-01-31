@@ -5,7 +5,7 @@
 #	RCS :		$Id$
 #_______________________________________________________________________________
 
-# OD_INIT_MODULE - Marcro that setups a number of variables for compiling
+# OD_INIT_MODULE - Macro that setups a number of variables for compiling
 #		   OpendTect.
 #
 # Input variables:
@@ -92,9 +92,8 @@ if(OD_USECOIN)
     OD_SETUP_COIN()
 endif()
 
-if( (UNIX OR WIN32)  AND OD_USEZLIB )
-    list(APPEND OD_MODULE_INCLUDESYSPATH ${ZLIB_INCLUDE_DIR} )
-    list(APPEND OD_MODULE_EXTERNAL_LIBS ${ZLIB_LIBRARY} )
+if(OD_USEBREAKPAD)
+    OD_SETUP_BREAKPAD()
 endif()
 
 if(OD_USEOSG)
@@ -105,6 +104,14 @@ endif()
 if(OD_USEQT)
    OD_SETUP_QT()
 endif(OD_USEQT)
+
+#Must be after QT
+if( (UNIX OR WIN32)  AND OD_USEZLIB )
+    #OD_SETUP_ZLIB()
+    list(APPEND OD_MODULE_INCLUDESYSPATH ${ZLIB_INCLUDE_DIR} )
+    list(APPEND OD_MODULE_EXTERNAL_LIBS ${ZLIB_LIBRARY} )
+endif()
+
 
 #Add current module to include-path
 if ( OD_MODULE_HAS_LIBRARY )
@@ -220,13 +227,21 @@ if ( OD_MODULE_HAS_LIBRARY )
 	    ${OD_MODULE_EXTERNAL_LIBS}
 	 )
 
-    set_target_properties( ${OD_MODULE_NAME}
+    set ( TARGET_PROPERTIES ${OD_MODULE_NAME}
 	    PROPERTIES 
 	    LINK_FLAGS "${OD_PLATFORM_LINK_OPTIONS} ${OD_MODULE_LINK_OPTIONS}"
 	    LABELS ${OD_MODULE_NAME}
 	    ARCHIVE_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}" 
 	    LIBRARY_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}"
 	    RUNTIME_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}")
+
+    if ( OD_SET_TARGET_PROPERTIES )
+	list ( APPEND TARGET_PROPERTIES 
+	    VERSION ${OD_BUILD_VERSION}
+	    SOVERSION ${OD_API_VERSION} )
+    endif( OD_SET_TARGET_PROPERTIES )
+
+    set_target_properties( ${TARGET_PROPERTIES} )
 
     install(TARGETS
 	    ${OD_MODULE_NAME}
@@ -270,11 +285,18 @@ if( OD_MODULE_PROGS OR OD_MODULE_GUI_PROGS )
 
 	add_executable( ${TARGET_NAME} ${OD_EXEC_GUI_SYSTEM} ${EXEC} 
 			${OD_${EXEC}_RESOURCE} )
-	set_target_properties( ${TARGET_NAME}
+	set( TARGET_PROPERTIES ${TARGET_NAME}
 	    PROPERTIES 
 	    LINK_FLAGS "${OD_PLATFORM_LINK_OPTIONS} ${OD_MODULE_LINK_OPTIONS}"
 	    LABELS ${OD_MODULE_NAME}
 	    RUNTIME_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}")
+
+	if ( OD_SET_TARGET_PROPERTIES )
+	    list ( APPEND TARGET_PROPERTIES 
+		VERSION ${OD_BUILD_VERSION} )
+	endif( OD_SET_TARGET_PROPERTIES )
+
+	set_target_properties( ${TARGET_PROPERTIES} )
 	target_link_libraries(
 	    ${TARGET_NAME}
 	    ${OD_EXEC_DEP_LIBS}
@@ -313,12 +335,21 @@ if(OD_MODULE_BATCHPROGS)
 	    ${TARGET_NAME}
 	    ${OD_EXEC_DEP_LIBS}
 	    ${OD_RUNTIMELIBS} )
-	set_target_properties( ${TARGET_NAME}
+
+	set( TARGET_PROPERTIES ${TARGET_NAME}
 	    PROPERTIES 
 	    COMPILE_DEFINITIONS __prog__
 	    LINK_FLAGS "${OD_PLATFORM_LINK_OPTIONS} ${OD_MODULE_LINK_OPTIONS}"
 	    LABELS ${OD_MODULE_NAME}
 	    RUNTIME_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}")
+
+	if ( OD_SET_TARGET_PROPERTIES )
+	    list ( APPEND TARGET_PROPERTIES 
+		VERSION ${OD_BUILD_VERSION} )
+	endif( OD_SET_TARGET_PROPERTIES )
+
+	set_target_properties( ${TARGET_PROPERTIES} )
+
 	if( OD_CREATE_LAUNCHERS )
 	    create_target_launcher( ${TARGET_NAME}
 		RUNTIME_LIBRARY_DIRS
@@ -336,7 +367,8 @@ endif( OD_MODULE_BATCHPROGS )
 foreach ( TEST_FILE ${OD_TEST_PROGS} )
     get_filename_component( TEST_NAME ${TEST_FILE} NAME_WE )
     add_executable( ${TEST_NAME} ${OD_EXEC_GUI_SYSTEM} ${TEST_FILE} )
-	 set_target_properties( ${TEST_NAME}
+
+    set_target_properties( ${TEST_NAME}
 	    PROPERTIES 
 	    LINK_FLAGS "${OD_PLATFORM_LINK_OPTIONS} ${OD_MODULE_LINK_OPTIONS}"
 	    LABELS ${OD_MODULE_TEST_LABEL}

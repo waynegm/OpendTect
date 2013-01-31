@@ -13,6 +13,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "debug.h"
 #include "sighndl.h"
 #include "surv2dgeom.h"
+#include "errh.h"
+#include "filepath.h"
 
 #define OD_EXT_KEYSTR_EXPAND 1
 
@@ -22,6 +24,6 @@ mDefModInitFn(Basic)
 {
     mIfNotFirstTime( return );
     SignalHandling::initClass();
-    od_debug_init();
     PosInfo::Survey2D::initClass();
+    initCrashDumper( FilePath::getTempDir(), sSenderAppl() ); 
 }

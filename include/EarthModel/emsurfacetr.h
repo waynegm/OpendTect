@@ -39,12 +39,11 @@ typedef EM::FaultStickSet	EMFaultStickSet;
 
 
 /*!
-\ingroup EarthModel
 \brief TranslatorGroup for EM::Horizon3D. Reads/writes 3D EM::Horizon3D to
 storage.
 */
 
-mClass(EarthModel) EMHorizon3DTranslatorGroup : public TranslatorGroup
+mExpClass(EarthModel) EMHorizon3DTranslatorGroup : public TranslatorGroup
 {				   isTranslatorGroup(EMHorizon3D)
 public:
 				mDefEmptyTranslatorGroupConstructor(EMHorizon3D)
@@ -56,11 +55,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief TranslatorGroup for EM::Horizon2D.
 */
 
-mClass(EarthModel) EMHorizon2DTranslatorGroup : public TranslatorGroup
+mExpClass(EarthModel) EMHorizon2DTranslatorGroup : public TranslatorGroup
 {				   isTranslatorGroup(EMHorizon2D)
 public:
 				mDefEmptyTranslatorGroupConstructor(EMHorizon2D)
@@ -72,11 +70,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief TranslatorGroup for EM::Horizon.
 */
 
-mClass(EarthModel) EMAnyHorizonTranslatorGroup : public TranslatorGroup
+mExpClass(EarthModel) EMAnyHorizonTranslatorGroup : public TranslatorGroup
 {				    isTranslatorGroup(EMAnyHorizon)
 public:
 			    mDefEmptyTranslatorGroupConstructor(EMAnyHorizon)
@@ -86,11 +83,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief TranslatorGroup for EM::Fault3D.
 */
 
-mClass(EarthModel) EMFault3DTranslatorGroup : public TranslatorGroup
+mExpClass(EarthModel) EMFault3DTranslatorGroup : public TranslatorGroup
 {			       isTranslatorGroup(EMFault3D)
 public:
     			mDefEmptyTranslatorGroupConstructor(EMFault3D)
@@ -102,11 +98,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief TranslatorGroup for EM::FaultStickSet.
 */
 
-mClass(EarthModel) EMFaultStickSetTranslatorGroup : public TranslatorGroup
+mExpClass(EarthModel) EMFaultStickSetTranslatorGroup : public TranslatorGroup
 {				       isTranslatorGroup(EMFaultStickSet)
 public:
     			mDefEmptyTranslatorGroupConstructor(EMFaultStickSet)
@@ -118,11 +113,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief Translator for EM::Surface.
 */
 
-mClass(EarthModel) EMSurfaceTranslator : public Translator
+mExpClass(EarthModel) EMSurfaceTranslator : public Translator
 {
 public:
     				EMSurfaceTranslator(const char* nm,
@@ -171,11 +165,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief dgb EMSurfaceTranslator
 */
 
-mClass(EarthModel) dgbEMSurfaceTranslator : public EMSurfaceTranslator
+mExpClass(EarthModel) dgbEMSurfaceTranslator : public EMSurfaceTranslator
 {
 public:
     				dgbEMSurfaceTranslator(const char*,const char*);
@@ -202,11 +195,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief dgbEMSurfaceTranslator for EM::Horizon3D.
 */
 
-mClass(EarthModel) dgbEMHorizon3DTranslator : public dgbEMSurfaceTranslator
+mExpClass(EarthModel) dgbEMHorizon3DTranslator : public dgbEMSurfaceTranslator
 {				 isTranslator(dgb,EMHorizon3D)
 public:
     				dgbEMHorizon3DTranslator(const char* unm,
@@ -222,11 +214,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief dgbEMSurfaceTranslator for EM::Horizon2D.
 */
 
-mClass(EarthModel) dgbEMHorizon2DTranslator : public dgbEMSurfaceTranslator
+mExpClass(EarthModel) dgbEMHorizon2DTranslator : public dgbEMSurfaceTranslator
 {				 isTranslator(dgb,EMHorizon2D)
 public:
     				dgbEMHorizon2DTranslator(const char* unm,
@@ -242,11 +233,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief dgbEMSurfaceTranslator for EM::Fault3D.
 */
 
-mClass(EarthModel) dgbEMFault3DTranslator : public dgbEMSurfaceTranslator
+mExpClass(EarthModel) dgbEMFault3DTranslator : public dgbEMSurfaceTranslator
 {			       isTranslator(dgb,EMFault3D)
 public:
     				dgbEMFault3DTranslator(const char* unm,
@@ -262,11 +252,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief dgbEMSurfaceTranslator for EM::FaultStickSet.
 */
 
-mClass(EarthModel) dgbEMFaultStickSetTranslator : public dgbEMSurfaceTranslator
+mExpClass(EarthModel) dgbEMFaultStickSetTranslator : public dgbEMSurfaceTranslator
 {				     isTranslator(dgb,EMFaultStickSet)
 public:
     				dgbEMFaultStickSetTranslator(const char* unm,

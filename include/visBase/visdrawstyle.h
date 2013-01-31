@@ -30,7 +30,7 @@ namespace visBase
 */
     
     
-mClass(visBase) DrawStyle : public NodeState
+mExpClass(visBase) DrawStyle : public NodeState
 {
 public:
 			DrawStyle();

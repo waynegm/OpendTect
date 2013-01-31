@@ -20,7 +20,7 @@ ________________________________________________________________________
 #include "samplingdata.h"
 #include "valseries.h"
 
-mClass(Algo) VSEvent
+mExpClass(Algo) VSEvent
 {
 public:
     enum Type	{ None, Extr, Max, Min, ZC, ZCNegPos, ZCPosNeg,
@@ -30,7 +30,6 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief Event in value series.
   
   Template args are: Value Type, Position Type.
@@ -38,7 +37,7 @@ public:
 */
 
 template <class VT,class PT>
-class ValueSeriesEvent : public VSEvent
+mClass(Algo) ValueSeriesEvent : public VSEvent
 {
 public:
 
@@ -52,7 +51,6 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief Event finder in gate.
 
   The gate is absolute. The finder will start at the 'start' and stop at the
@@ -64,7 +62,7 @@ public:
 */
 
 template <class VT,class PT>
-class ValueSeriesEvFinder
+mClass(Algo) ValueSeriesEvFinder
 {
 public:
 				ValueSeriesEvFinder( const ValueSeries<VT>& v,

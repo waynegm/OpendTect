@@ -39,7 +39,7 @@ class TextureChannels;
 
 */
 
-mClass(visBase) RandomTrack : public VisualObjectImpl
+mExpClass(visBase) RandomTrack : public VisualObjectImpl
 {
 public:
     static RandomTrack*		create()

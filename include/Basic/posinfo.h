@@ -41,12 +41,11 @@ namespace PosInfo
 {
 
 /*!
-\ingroup Basic
 \brief Position info for a line - in a 3D cube, that would be an inline.
 Stored as (crossline-)number segments.
 */
 
-mClass(Basic) LineData
+mExpClass(Basic) LineData
 {
 public:
     typedef StepInterval<int>	Segment;
@@ -69,11 +68,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Position in a CubeData.
 */
 
-mClass(Basic) CubeDataPos
+mExpClass(Basic) CubeDataPos
 {
 public:
     		CubeDataPos( int iln=0, int isn=0, int sidx=-1 )
@@ -91,12 +89,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Position info for an entire 3D cube.
 The LineData's are not sorted.
 */
 
-mClass(Basic) CubeData : public ManagedObjectSet<LineData>
+mExpClass(Basic) CubeData : public ManagedObjectSet<LineData>
 {
 public:
 
@@ -150,12 +147,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Position info for an entire 3D cube.
 The LineData's are sorted.
 */
 
-mClass(Basic) SortedCubeData : public CubeData
+mExpClass(Basic) SortedCubeData : public CubeData
 {
 public:
     			SortedCubeData()				{}
@@ -184,11 +180,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Fills CubeData object. Requires inline- and crossline-sorting.
 */
 
-mClass(Basic) CubeDataFiller
+mExpClass(Basic) CubeDataFiller
 {
 public:
     			CubeDataFiller(CubeData&);
@@ -212,11 +207,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Iterates through CubeData. 
 */
 
-mClass(Basic) CubeDataIterator
+mExpClass(Basic) CubeDataIterator
 {
 public:
 

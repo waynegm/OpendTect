@@ -53,7 +53,7 @@ class Transformation;
 Base class for well display
 */
 
-mClass(visBase) Well : public VisualObjectImpl
+mExpClass(visBase) Well : public VisualObjectImpl
 {
 public:
 

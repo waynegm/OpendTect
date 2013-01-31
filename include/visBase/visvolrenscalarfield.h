@@ -33,7 +33,7 @@ namespace osg { class Switch; class Image; class TransferFunction1D; }
 namespace visBase
 {
 
-mClass(visBase) VolumeRenderScalarField : public DataObject
+mExpClass(visBase) VolumeRenderScalarField : public DataObject
 {
 public:
 

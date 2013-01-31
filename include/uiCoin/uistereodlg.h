@@ -13,10 +13,15 @@ ________________________________________________________________________
 
 #include "uicoinmod.h"
 #include "uidialog.h"
+
 class uiSliderExtra;
 class ui3DViewer;
 
-mClass(uiCoin) uiStereoDlg : public uiDialog
+/*!
+\brief Dialog for stereo.
+*/
+
+mExpClass(uiCoin) uiStereoDlg : public uiDialog
 {
 public:
 			uiStereoDlg(uiParent*,ObjectSet<ui3DViewer>&);

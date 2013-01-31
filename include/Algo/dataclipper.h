@@ -21,7 +21,6 @@ template <class T> class ValueSeries;
 template <class T> class ArrayND;
 
 /*!
-\ingroup Algo
 \brief A DataClipper gets a bunch of data and determines at what value to
 clip if a certain clip percentage is desired.
   
@@ -72,7 +71,7 @@ clip if a certain clip percentage is desired.
   
 */
 
-mClass(Algo) DataClipper
+mExpClass(Algo) DataClipper
 {
 public:
     				DataClipper();
@@ -130,11 +129,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Data clipping sampler.
 */
 
-mClass(Algo) DataClipSampler
+mExpClass(Algo) DataClipSampler
 {
 public:
 			DataClipSampler(int bufsz=10000);

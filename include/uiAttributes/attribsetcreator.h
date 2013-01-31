@@ -16,8 +16,11 @@ ________________________________________________________________________
 namespace Attrib { class Desc; class DescSet; };
 class uiParent;
 
+/*!
+\brief Creates attribute set.
+*/
 
-mClass(uiAttributes) AttributeSetCreator
+mExpClass(uiAttributes) AttributeSetCreator
 {
 public:
 			AttributeSetCreator(uiParent*,

@@ -43,13 +43,12 @@ class Mutex;
 
 
 /*!
-\ingroup Basic
 \brief Atomic variable where an operation (add, subtract) can be done without
 locking in a multithreaded environment. Only available for long, unsigned long.
 */
 
 template <class T>
-class Atomic
+mClass(Basic) Atomic
 {
 public:
     		Atomic(T val=0);
@@ -92,13 +91,12 @@ protected:
 
     
 /*!
-\ingroup Basic
 \brief Atomic instantiated with a pointer. The class really only handles the
 casting from a void* to a T*.
 */
 
 template <class T>
-class AtomicPointer
+mClass(Basic) AtomicPointer
 {
 public:
     inline	AtomicPointer(T* newptr = 0);
@@ -130,7 +128,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Is a lock that allows a thread to have exlusive rights to something.
 
   It is guaranteed that once locked, no one else will be able to lock it before
@@ -138,7 +135,7 @@ protected:
   the thread that has locked it will unlock it.
 */
 
-mClass(Basic) Mutex
+mExpClass(Basic) Mutex
 {
 public:
 			Mutex( bool recursive=false );
@@ -164,13 +161,12 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Is an alternative to Mutex. It is a lock which causes a thread trying to acquire it to simply wait in a loop ("spin") while repeatedly checking if the
 lock is available. Because they avoid overhead from operating system process
 re-scheduling or context switching, spinlocks are efficient if threads are only likely to be blocked for a short period.
 */
 
-mClass(Basic) SpinLock
+mExpClass(Basic) SpinLock
 {
 public:
 			SpinLock();
@@ -191,7 +187,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Is an object that faciliates many threads to wait for something to
 happen.
 
@@ -221,7 +216,7 @@ happen.
 */
 
 
-mClass(Basic) ConditionVar : public Mutex
+mExpClass(Basic) ConditionVar : public Mutex
 {
 public:
 				ConditionVar();
@@ -245,13 +240,12 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Lock that permits multiple readers to lock the object at the same time,
 but it will not allow any readers when writelocked, and no writelock is allowed
 when readlocked.
 */
 
-mClass(Basic) ReadWriteLock
+mExpClass(Basic) ReadWriteLock
 {
 public:
     			ReadWriteLock();
@@ -310,7 +304,7 @@ locked and unlocked automatically when returning.
 */
 
 #define mLockerClassImpl( mod, clssnm, clss, lockfn, unlockfn, trylockfn ) \
-mClass(mod) clssnm \
+mExpClass(mod) clssnm \
 { \
 public: \
 		clssnm( clss& thelock, bool wait=true ) \
@@ -347,12 +341,11 @@ mLockerClassImpl( Basic, WriteLockLocker, ReadWriteLock,
 
 
 /*!
-\ingroup Basic
 \brief Waits for a number of threads to reach a certain point (i.e. the call to
 Barrier::waitForAll). Once everyone has arrived, everyone is released.
 */
 
-mClass(Basic) Barrier
+mExpClass(Basic) Barrier
 {
 public:
     			Barrier(int nrthreads=-1,bool immediatrelease=true);
@@ -389,14 +382,13 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Is the base class for all threads. Start it by creating it and give it
 the function or CallBack to execute. 
 
   The process that has created the thread must call destroy() or detach().
 */
 
-mClass(Basic) Thread
+mExpClass(Basic) Thread
 {
 public:
 

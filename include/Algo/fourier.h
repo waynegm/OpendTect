@@ -24,11 +24,10 @@ namespace Fourier
 class FFTCC1D;
 
 /*!
-\ingroup Algo
 \brief Does Fourier Transforms of any size.
 */
 
-mClass(Algo) CC : public GenericTransformND
+mExpClass(Algo) CC : public GenericTransformND
 {
 public:
     mDefaultFactoryInstantiation( CC, CC, "PFAFFT", "FFT" );
@@ -69,7 +68,7 @@ protected:
     bool		normalize_;
 
     Transform1D*	createTransform() const;
-    class CC1D : public GenericTransformND::Transform1D, public ParallelTask
+    mClass(Algo) CC1D : public GenericTransformND::Transform1D, public ParallelTask
     {
 	public:
 			CC1D();
@@ -96,11 +95,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Computes FFT for any size of data.
 */
 
-mClass(Algo) FFTCC1D
+mExpClass(Algo) FFTCC1D
 {
 public:
     			FFTCC1D();

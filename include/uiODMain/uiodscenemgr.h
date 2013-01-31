@@ -30,6 +30,7 @@ class uiMdiAreaWindow;
 class uiODTreeTop;
 class uiSliderExtra;
 class ui3DViewer;
+class uiThumbWheel;
 class uiTreeFactorySet;
 class uiTreeItem;
 class uiWindowGrabber;
@@ -42,7 +43,7 @@ class ZAxisTransform;
 
  */
 
-mClass(uiODMain) uiODSceneMgr : public CallBacker
+mExpClass(uiODMain) uiODSceneMgr : public CallBacker
 {
 public:
 
@@ -96,6 +97,14 @@ public:
     void			soloMode(CallBacker*);
     void			doDirectionalLight(CallBacker*);
 
+    void			setZoomValue(float);
+    void			zoomChanged(CallBacker*);
+    void			anyWheelStart(CallBacker*);
+    void			anyWheelStop(CallBacker*);
+    void			hWheelMoved(CallBacker*);
+    void			vWheelMoved(CallBacker*);
+    void			dWheelMoved(CallBacker*);
+
     int				askSelectScene() const; // returns sceneid
     const ui3DViewer*		getSoViewer(int sceneid) const;
     ui3DViewer*			getSoViewer(int sceneid);
@@ -146,6 +155,14 @@ protected:
 				~uiODSceneMgr();
     void			initMenuMgrDepObjs();
 
+    void			afterFinalise(CallBacker*);
+    uiThumbWheel*		dollywheel;
+    uiThumbWheel*		hwheel;
+    uiThumbWheel*		vwheel;
+    uiLabel*			dollylbl;
+    uiLabel*			dummylbl;
+    uiLabel*			rotlbl;
+
     uiODMain&			appl_;
     uiMdiArea*			mdiarea_;
     void			mdiAreaChanged(CallBacker*);
@@ -162,7 +179,7 @@ protected:
     inline uiODMenuMgr&		menuMgr()     { return appl_.menuMgr(); }
     inline uiVisPartServer&	visServ()     { return *applMgr().visServer(); }
 
-    mClass(uiODMain) Scene
+    mExpClass(uiODMain) Scene
     {
     public:
 				Scene(uiMdiArea*);

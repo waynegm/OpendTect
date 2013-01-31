@@ -23,7 +23,6 @@ namespace Attrib
 class DataHolder;
 
 /*!
-\ingroup Attributes
 \brief Spectral Decomposition Attribute
 
 Calculates the frequency spectrum of a trace
@@ -45,7 +44,7 @@ N
 </pre>
 */
 
-mClass(Attributes) SpecDecomp : public Provider
+mExpClass(Attributes) SpecDecomp : public Provider
 {
 public:
     static void		initClass();

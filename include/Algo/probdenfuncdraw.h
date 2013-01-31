@@ -18,11 +18,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Algo
 \brief Stores one draw of a probability density function.
 */
 
-mClass(Algo) ProbDenFuncDraw
+mExpClass(Algo) ProbDenFuncDraw
 {
 public:
 

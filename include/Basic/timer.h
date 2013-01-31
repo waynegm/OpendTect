@@ -19,11 +19,10 @@ mFDQtclass(QTimer)
 mFDQtclass(QTimerComm)
 
 /*!
-\ingroup Basic
 \brief Timer class.
 */
 
-mClass(Basic) Timer : public NamedObject
+mExpClass(Basic) Timer : public NamedObject
 {
 public :
 			Timer(const char* nm="Timer");

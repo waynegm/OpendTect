@@ -26,7 +26,7 @@ namespace osg { class Drawable; class Vec3f; class Geode; }
 namespace visBase
 {
 
-mClass(visBase) Text
+mExpClass(visBase) Text
 {
 public:
 				Text();
@@ -61,7 +61,7 @@ protected:
 };
     
     
-mClass(visBase) OsgFontCreator
+mExpClass(visBase) OsgFontCreator
 {
 public:
     virtual			~OsgFontCreator() 			{}
@@ -72,7 +72,7 @@ protected:
 };
     
     
-mClass(visBase) Text2 : public VisualObjectImpl
+mExpClass(visBase) Text2 : public VisualObjectImpl
 {
 public:
     static Text2*		create()

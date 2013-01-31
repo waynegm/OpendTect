@@ -21,11 +21,10 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Math Attribute
 */
 
-mClass(Attributes) Math : public Provider
+mExpClass(Attributes) Math : public Provider
 {
 public:
     static void			initClass();

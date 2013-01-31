@@ -20,7 +20,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Shift Attribute
   %Shift takes the input at a specified position and outputs it at other
   relative positions.
@@ -38,7 +37,7 @@ namespace Attrib
 */
 
 
-mClass(Attributes) Shift : public Provider
+mExpClass(Attributes) Shift : public Provider
 {
 public:
     static void			initClass();

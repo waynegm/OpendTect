@@ -45,7 +45,7 @@ getPos.
 set
 */
 
-mClass(visBase) Coordinates : public DataObject
+mExpClass(visBase) Coordinates : public DataObject
 {
 public:
 
@@ -103,7 +103,7 @@ protected:
 };
 
     
-mClass(visBase) CoinFloatVertexAttribList : public FloatVertexAttribList
+mExpClass(visBase) CoinFloatVertexAttribList : public FloatVertexAttribList
 {
 public:
     			CoinFloatVertexAttribList(Coordinates&,Normals*);
@@ -131,7 +131,7 @@ protected:
 /*!Adapter between a CoordList and Coordinates. */
 
 
-mClass(visBase) CoordListAdapter : public Coord3List
+mExpClass(visBase) CoordListAdapter : public Coord3List
 {
 public:
     		CoordListAdapter(Coordinates&);

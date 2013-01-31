@@ -26,11 +26,10 @@ namespace EM
 class Horizon3D;
 
 /*!
-\ingroup EarthModel
 \brief Writes auxdata to file.
 */
 
-mClass(EarthModel) dgbSurfDataWriter : public Executor
+mExpClass(EarthModel) dgbSurfDataWriter : public Executor
 {
 public:
     				dgbSurfDataWriter(const EM::Horizon3D& surf,
@@ -91,11 +90,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Reads auxdata from file.
 */
 
-mClass(EarthModel) dgbSurfDataReader : public Executor
+mExpClass(EarthModel) dgbSurfDataReader : public Executor
 {
 public:
     				dgbSurfDataReader(const char* filename);

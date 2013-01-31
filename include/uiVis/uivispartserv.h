@@ -57,7 +57,7 @@ namespace ZDomain   { class Info; }
 \brief The Visualisation Part Server
 */
 
-mClass(uiVis) uiVisPartServer : public uiApplPartServer
+mExpClass(uiVis) uiVisPartServer : public uiApplPartServer
 {
     friend class 	uiMenuHandler;
     friend class        uiVisModeMgr;
@@ -79,7 +79,7 @@ public:
     visBase::DataObject* getObject( int id ) const;
     int			highestID() const;
     void		addObject( visBase::DataObject*, int sceneid,
-				   bool saveinsession);
+				   bool saveinsessions);
     void		shareObject(int sceneid,int id);
     void		findObject(const std::type_info&,TypeSet<int>&);
     void		findObject(const MultiID&, TypeSet<int>& );
@@ -478,7 +478,7 @@ protected:
 };
 
 
-class uiVisModeMgr 
+mClass(uiVis) uiVisModeMgr 
 {
 public:
 				uiVisModeMgr(uiVisPartServer*);

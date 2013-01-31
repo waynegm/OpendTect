@@ -26,11 +26,10 @@ namespace EM
 class Horizon3D;
 
 /*!
-\ingroup EarthModel
 \brief A subclass of ParallelTask that merges horizons.
 */
 
-mClass(EarthModel) HorizonMerger : public ParallelTask
+mExpClass(EarthModel) HorizonMerger : public ParallelTask
 {
 public:
     enum Mode		{ Average, Top, Base };
@@ -47,11 +46,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief 3D HorizonMerger
 */
 
-mClass(EarthModel) Horizon3DMerger : public HorizonMerger
+mExpClass(EarthModel) Horizon3DMerger : public HorizonMerger
 {
 public:
 			Horizon3DMerger(const TypeSet<ObjectID>&);

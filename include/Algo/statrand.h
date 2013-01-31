@@ -19,11 +19,10 @@ namespace Stats
 {
 
 /*!
-\ingroup Algo
 \brief Random Generator
 */
 
-mClass(Algo) RandGen
+mExpClass(Algo) RandGen
 {
 public:
 

@@ -32,7 +32,7 @@ class uiToolButton;
 /*! \brief Dialog letting the user select an object.
            It returns an IOObj* after successful go(). */
 
-mClass(uiIo) uiIOObjRetDlg : public uiDialog
+mExpClass(uiIo) uiIOObjRetDlg : public uiDialog
 {
 public:
 
@@ -48,7 +48,7 @@ public:
 /*! \brief Basic group for letting the user select an object. It 
 	   can be used standalone in a dialog, or as a part of dialogs. */
 
-mClass(uiIo) uiIOObjSelGrp : public uiGroup
+mExpClass(uiIo) uiIOObjSelGrp : public uiGroup
 {
 public:
 				uiIOObjSelGrp(uiParent*,const CtxtIOObj& ctio,
@@ -76,8 +76,9 @@ public:
     Notifier<uiIOObjSelGrp>	newStatusMsg;
     				/*!< Triggers when there is a new message for
 				     statusbars and similar */
-    
+
     void			setSurveyDefaultSubsel(const char* subsel);
+
     void			setContext(const IOObjContext&);
     const CtxtIOObj&		getCtxtIOObj() const	{ return ctio_; }
     uiGroup*			getTopGroup()		{ return topgrp_; }
@@ -113,7 +114,7 @@ protected:
     uiGenInput*		nmfld_;
     uiGenInput*		filtfld_;
     uiGroup*		topgrp_;
-    
+
     uiToolButton*	mkdefbut_;
 
     void		fullUpdate(int);
@@ -133,7 +134,7 @@ protected:
 
 /*! \brief Dialog for selection of IOObjs */
 
-mClass(uiIo) uiIOObjSelDlg : public uiIOObjRetDlg
+mExpClass(uiIo) uiIOObjSelDlg : public uiIOObjRetDlg
 {
 public:
 			uiIOObjSelDlg(uiParent*,const CtxtIOObj&,
@@ -146,8 +147,9 @@ public:
     uiIOObjSelGrp*	selGrp()		{ return selgrp_; }
     bool		fillPar( IOPar& i ) const {return selgrp_->fillPar(i);}
     void		usePar( const IOPar& i ) { selgrp_->usePar(i); }
-    
+
     void		setSurveyDefaultSubsel(const char*);
+
 protected:
 
     bool		acceptOK(CallBacker*)	{return selgrp_->processInput();}
@@ -169,11 +171,11 @@ true. This is the default. Thus, you can simply do, in acceptOK():
 
 */
 
-mClass(uiIo) uiIOObjSel : public uiIOSelect
+mExpClass(uiIo) uiIOObjSel : public uiIOSelect
 {
 public:
 
-    mClass(uiIo) Setup : public uiIOSelect::Setup
+    mExpClass(uiIo) Setup : public uiIOSelect::Setup
     {
     public:
 			Setup( const char* seltext=0 )

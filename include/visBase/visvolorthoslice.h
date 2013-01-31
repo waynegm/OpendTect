@@ -27,7 +27,7 @@ class DepthTabPlaneDragger;
 Slice that cuts orthogonal through a VolumeData.
 */
 
-mClass(visBase) OrthogonalSlice : public visBase::VisualObjectImpl
+mExpClass(visBase) OrthogonalSlice : public visBase::VisualObjectImpl
 {
 public:
     static OrthogonalSlice*	create()

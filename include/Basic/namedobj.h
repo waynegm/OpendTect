@@ -18,7 +18,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Object with a name.
 
   The NamedObject has a name and it can notify another NamedObject when it is
@@ -27,7 +26,7 @@ ________________________________________________________________________
   but allows for names that are fundamentally linked.
 */
 
-mClass(Basic) NamedObject : public CallBacker
+mExpClass(Basic) NamedObject : public CallBacker
 {
 public:
 			NamedObject(const char* nm=0)

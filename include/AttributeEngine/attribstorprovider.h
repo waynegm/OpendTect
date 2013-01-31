@@ -26,11 +26,10 @@ namespace Attrib
 class DataHolder;
 
 /*!
-  \ingroup AttributeEngine
-  \brief Attribute storage provider.
+\brief Attribute storage provider.
 */
 
-mClass(AttributeEngine) StorageProvider : public Provider
+mExpClass(AttributeEngine) StorageProvider : public Provider
 {
 public:
 

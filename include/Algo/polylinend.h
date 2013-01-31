@@ -18,13 +18,12 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Algo
 \brief (Closed) sequence(s) of connected n-D coordinates.
 Undefined coordinates separate consecutive sequences.
 */
 
 template <class T>
-class PolyLineND : public TypeSet<T>
+mClass(Algo) PolyLineND : public TypeSet<T>
 {
 public:
 		PolyLineND(bool closed=false)
@@ -78,7 +77,6 @@ int PolyLineND<T>::nextIdx( int idx ) const
 
 
 /*!
-\ingroup Algo
 \brief Point-to-segment distance:
 
 	     . pt

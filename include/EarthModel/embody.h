@@ -25,11 +25,10 @@ namespace EM
 {
 
 /*!
-\ingroup EarthModel
 \brief Implicit representation of a body.
 */
 
-mClass(EarthModel) ImplicitBody
+mExpClass(EarthModel) ImplicitBody
 {
 public:
     				ImplicitBody();
@@ -44,11 +43,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief A body that can deliver an implicit body.
 */
 
-mClass(EarthModel) Body
+mExpClass(EarthModel) Body
 { 
 public:
 

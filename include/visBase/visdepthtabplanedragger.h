@@ -33,7 +33,7 @@ class PlaneDraggerCallbackHandler;
 
 */
 
-mClass(visBase) DepthTabPlaneDragger : public VisualObjectImpl
+mExpClass(visBase) DepthTabPlaneDragger : public VisualObjectImpl
 {
     friend class PlaneDraggerCallbackHandler;
 

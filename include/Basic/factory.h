@@ -19,12 +19,11 @@ ________________________________________________________________________
 #include "errh.h"
 
 /*!
-\ingroup Basic
 \brief Base class for Factories ( Factory, Factory1Param, Factory2Param
 and Factory3Param. )
 */
 
-mClass(Basic) FactoryBase
+mExpClass(Basic) FactoryBase
 {
 public:
     virtual			~FactoryBase();
@@ -57,7 +56,6 @@ private:
 
 
 /*!
-\ingroup Basic
 \brief Generalized static factory that can deliver instances of T, when no
 variable is needed in the creation.
   
@@ -101,7 +99,7 @@ variable is needed in the creation.
 */
 
 template <class T>
-class Factory : public FactoryBase
+mClass(Basic) Factory : public FactoryBase
 {
 public:
     typedef			T* (*Creator)();
@@ -123,7 +121,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Generalized static factory that can deliver instances of T, when a
 variable is needed in the creation.
   
@@ -159,20 +156,20 @@ variable is needed in the creation.
   
   Two macros are available to make a static accessfuncion for the factory:
   \code
-  mDefineFactory1Param( Module, ClassName, ParamClass, FunctionName );
+  mDefineFactory1Param( Module, ClassName, ParamExpClass, FunctionName );
   \endcode
   
   that will create a static function that returns an instance to
-  Factory1Param<ClassName,ParamClass>. The static function must be implemented
+  Factory1Param<ClassName,ParamExpClass>. The static function must be implemented
   in a src-file with the macro.
   
   \code
-  mImplFactory1Param( ClassName, ParamClass, FunctionName );
+  mImplFactory1Param( ClassName, ParamExpClass, FunctionName );
   \endcode
 */
 
 template <class T, class P>
-class Factory1Param : public FactoryBase
+mClass(Basic) Factory1Param : public FactoryBase
 {
 public:
     typedef			T* (*Creator)(P);
@@ -194,12 +191,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Subclass of FactoryBase.
 */
 
 template <class T, class P0, class P1>
-class Factory2Param : public FactoryBase
+mClass(Basic) Factory2Param : public FactoryBase
 {
 public:
     typedef			T* (*Creator)(P0,P1);
@@ -222,12 +218,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Subclass of FactoryBase.
 */
 
 template <class T, class P0, class P1, class P2>
-class Factory3Param : public FactoryBase
+mClass(Basic) Factory3Param : public FactoryBase
 {
 public:
     typedef			T* (*Creator)(P0,P1,P2);

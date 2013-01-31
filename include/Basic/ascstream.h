@@ -23,7 +23,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief OpendTect standard ascii format file writing.
   
   An ascostream puts data in an OpendTect standard ascii format file. That means
@@ -31,7 +30,7 @@ ________________________________________________________________________
   a colon.
 */
 
-mClass(Basic) ascostream
+mExpClass(Basic) ascostream
 {
 
 public:
@@ -77,7 +76,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief OpendTect standard ascii format file reading.
   
   An ascistream gets data from a OpendTect standard ascii format file. This
@@ -85,7 +83,7 @@ protected:
   a number of 'paragraphs', each separated by a single '!' on a line.
 */
 
-mClass(Basic) ascistream
+mExpClass(Basic) ascistream
 {
 public:
 			ascistream( std::istream& strm, bool rdhead=true )

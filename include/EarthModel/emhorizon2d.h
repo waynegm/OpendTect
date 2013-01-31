@@ -32,11 +32,10 @@ namespace EM
 class EMManager;
 
 /*!
-\ingroup EarthModel
 \brief 2D HorizonGeometry
 */
 
-mClass(EarthModel) Horizon2DGeometry : public HorizonGeometry
+mExpClass(EarthModel) Horizon2DGeometry : public HorizonGeometry
 {
 public:
 				Horizon2DGeometry(Surface&);
@@ -94,13 +93,12 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief 2D Horizon. The Horizon is only present along 2d lines, set by addLine.
 Each position's subid is formed by RowCol( lineid, tracenr ).getInt64(). If
 multiple z-values per trace is needed, multiple sections can be added.
 */
 
-mClass(EarthModel) Horizon2D : public Horizon
+mExpClass(EarthModel) Horizon2D : public Horizon
 { mDefineEMObjFuncs( Horizon2D );
 public:
 
@@ -154,11 +152,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Ascii I/O for Horizon2D.
 */
 
-mClass(EarthModel) Horizon2DAscIO : public Table::AscIO
+mExpClass(EarthModel) Horizon2DAscIO : public Table::AscIO
 {
 public:
     				Horizon2DAscIO( const Table::FormatDesc& fd,

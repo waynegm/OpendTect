@@ -19,11 +19,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Specifies velocity type and statics for a velocity.
 */
 
-mClass(Basic) VelocityDesc
+mExpClass(Basic) VelocityDesc
 {
 public:
     enum Type		{ Unknown, Interval, RMS, Avg, Delta, Epsilon, Eta };

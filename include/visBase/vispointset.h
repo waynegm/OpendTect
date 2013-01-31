@@ -26,7 +26,7 @@ namespace visBase
 
 class DrawStyle;
 
-mClass(visBase) PointSet	: public VertexShape
+mExpClass(visBase) PointSet	: public VertexShape
 {
 public:
     static PointSet*	create()

@@ -24,11 +24,10 @@ class BufferStringSet;
 class HorSamplingIterator;
 
 /*!
-\ingroup EarthModel
 \brief Modifies horizons.
 */
 
-mClass(EarthModel) HorizonModifier
+mExpClass(EarthModel) HorizonModifier
 {
 public:
 

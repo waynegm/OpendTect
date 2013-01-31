@@ -27,11 +27,10 @@ class HorSamplingIterator;
 class BufferStringSet;
 
 /*!
-\ingroup EarthModel
 \brief Executor to sort horizons.
 */
 
-mClass(EarthModel) HorizonSorter : public Executor
+mExpClass(EarthModel) HorizonSorter : public Executor
 {
 public:
 

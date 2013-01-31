@@ -29,11 +29,10 @@ class Output;
 class Provider;
 
 /*!
-  \ingroup AttributeEngine
-  \brief Attribute Processor
+\brief Attribute Processor
 */
 
-mClass(AttributeEngine) Processor : public Executor
+mExpClass(AttributeEngine) Processor : public Executor
 {
 public:
 				Processor(Desc&,const char* linenm,

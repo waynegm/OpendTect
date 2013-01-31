@@ -19,11 +19,10 @@ namespace OD
 {
 
 /*!
-\ingroup Basic
 \brief Module Dependency
 */
 
-mClass(Basic) ModDep
+mExpClass(Basic) ModDep
 {
 public:
     			ModDep( const char* m )
@@ -38,12 +37,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Dependency manager - provides tools for the dependencies between the
 different OpendTect 'modules'.
 */
 
-mClass(Basic) ModDepMgr
+mExpClass(Basic) ModDepMgr
 {
 public:
 				ModDepMgr(const char* fnm=0);

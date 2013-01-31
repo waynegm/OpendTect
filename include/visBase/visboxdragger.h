@@ -28,7 +28,7 @@ namespace visBase
 
 class BoxDraggerCallbackHandler;
 
-mClass(visBase) BoxDragger : public DataObject
+mExpClass(visBase) BoxDragger : public DataObject
 {
 public:
     friend class BoxDraggerCallbackHandler;

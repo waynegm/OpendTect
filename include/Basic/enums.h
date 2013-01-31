@@ -19,11 +19,10 @@ ________________________________________________________________________
 #include "namedobj.h"
 
 /*!
-\ingroup Basic
 \brief Holds data pertinent to a certain enum.
 */
 
-mClass(Basic) EnumDef : public NamedObject
+mExpClass(Basic) EnumDef : public NamedObject
 {
 public:
 		EnumDef( const char* nm, const char* s[], short nrs=0 );

@@ -19,14 +19,13 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief Sample Value Attribute
   
   Shortcut for dummies (like us) to Shift or Mathematics or ... attribute's
   functionality.
 */
 
-mClass(Attributes) SampleValue : public Provider
+mExpClass(Attributes) SampleValue : public Provider
 {
 public:
     static void			initClass();

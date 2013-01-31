@@ -34,7 +34,6 @@ class RowColSurfaceGeometry;
 
 
 /*!
-\ingroup EarthModel
 \brief Surface Reader
 
 1. Construct (no changes are made to the surface in mem)
@@ -42,7 +41,7 @@ class RowColSurfaceGeometry;
 3. Do NextStep
 */
 
-mClass(EarthModel) dgbSurfaceReader : public ExecutorGroup
+mExpClass(EarthModel) dgbSurfaceReader : public ExecutorGroup
 {
 public:
 			dgbSurfaceReader(const IOObj& ioobj,
@@ -228,7 +227,6 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Surface Writer
 
 1. Construct (no changes are made to filesystem) 
@@ -236,7 +234,7 @@ protected:
 3. Do NextStep
 */
 
-mClass(EarthModel) dgbSurfaceWriter : public ExecutorGroup
+mExpClass(EarthModel) dgbSurfaceWriter : public ExecutorGroup
 {
 public:
 			dgbSurfaceWriter( const IOObj* ioobj,

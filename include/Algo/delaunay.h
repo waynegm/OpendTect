@@ -23,7 +23,6 @@ ________________________________________________________________________
 
 #define mDAGTriangleForceSingleThread
 /*!
-\ingroup Algo
 \brief Reference: "Parallel Incremental Delaunay Triangulation",
 by Kohout J.2005.
 
@@ -34,7 +33,7 @@ by Kohout J.2005.
    disabled with a macro.
 */
 
-mClass(Algo) DAGTriangleTree
+mExpClass(Algo) DAGTriangleTree
 {
 public:
     			DAGTriangleTree();
@@ -145,11 +144,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief The parallel triangulation works for only one processor now.
 */
 
-mClass(Algo) DelaunayTriangulator : public ParallelTask
+mExpClass(Algo) DelaunayTriangulator : public ParallelTask
 {
 public:
 			DelaunayTriangulator(DAGTriangleTree&);
@@ -180,14 +178,13 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief For a given triangulated geometry(set of points), interpolating any
 point located in or nearby the goemetry. If the point is located outside of
 the boundary of the geometry, we compare azimuth to find related points and
 then apply inverse distance to calculate weights.
 */
 
-mClass(Algo) Triangle2DInterpolator
+mExpClass(Algo) Triangle2DInterpolator
 {
 public:
     			Triangle2DInterpolator(const DAGTriangleTree&);

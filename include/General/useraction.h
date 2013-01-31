@@ -16,10 +16,10 @@ ________________________________________________________________________
 #include "callback.h"
 #include "bufstring.h"
 
-class UserAction : public CallBacker
+mClass(General) UserAction : public CallBacker
 {
 public:
-    mClass(General) Setup
+    mExpClass(General) Setup
     {
     public:
 		    Setup();
@@ -44,7 +44,7 @@ public:
 };
 
 
-class UserActionGroup
+mClass(General) UserActionGroup
 {
 public:
     virtual		~UserActionGroup();
@@ -63,7 +63,7 @@ protected:
 };
 
 
-class UserActionHandler : public UserActionGroup
+mClass(General) UserActionHandler : public UserActionGroup
 {
 public:
     int					visID() const;

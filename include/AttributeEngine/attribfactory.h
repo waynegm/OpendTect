@@ -24,11 +24,10 @@ class Provider;
 typedef Provider* (*ProviderCreater)(Desc&);
 
 /*!
-  \ingroup AttributeEngine
-  \brief Factory for attribute providers.
+\brief Factory for attribute providers.
 */
 
-mClass(AttributeEngine) ProviderFactory
+mExpClass(AttributeEngine) ProviderFactory
 {
 public:
 			ProviderFactory();

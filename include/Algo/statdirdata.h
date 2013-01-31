@@ -20,11 +20,10 @@ namespace Stats
 {
 
 /*!
-\ingroup Algo
 \brief Part of a data sector. 
 */
 
-class SectorPartData
+mClass(Algo) SectorPartData
 {
 public:
 
@@ -44,7 +43,6 @@ typedef TypeSet<SectorPartData> SectorData;
 
 
 /*!
-\ingroup Algo
 \brief A circle of data.
  
   The circle is subdivided in sectors, which are subdivided in sector parts.
@@ -54,11 +52,11 @@ typedef TypeSet<SectorPartData> SectorData;
   Angles are implicit: we always expect 360 degrees of data.
 */
 
-class DirectionalData : public ManagedObjectSet<SectorData>
+mClass(Algo) DirectionalData : public ManagedObjectSet<SectorData>
 {
 public:
 
-    class Setup
+    mClass(Algo) Setup
     {
     public:
     			Setup()

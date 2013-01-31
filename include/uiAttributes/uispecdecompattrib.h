@@ -30,7 +30,7 @@ class BinID;
 
 /*! \brief Spectral Decomposition Attribute description editor */
 
-mClass(uiAttributes) uiSpecDecompAttrib : public uiAttrDescEd
+mExpClass(uiAttributes) uiSpecDecompAttrib : public uiAttrDescEd
 {
 public:
 
@@ -93,7 +93,7 @@ protected:
 };
 
 
-class uiSpecDecompPanel	: public uiAttribPanel
+mClass(uiAttributes) uiSpecDecompPanel	: public uiAttribPanel
 {
 public:
     				uiSpecDecompPanel( uiParent* p )

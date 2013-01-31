@@ -20,13 +20,12 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Algo
 \brief Finds extreme values in FloatMathFunctions.
 
   Implementation of Brent's Method in one dimension.
 */
 
-mClass(Algo) ExtremeFinder1D : public SequentialTask
+mExpClass(Algo) ExtremeFinder1D : public SequentialTask
 {
 public:
     			ExtremeFinder1D( const FloatMathFunction& func,
@@ -96,11 +95,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Bisection Extreme Finder
 */
 
-mClass(Algo) BisectionExtremeFinder1D : public SequentialTask
+mExpClass(Algo) BisectionExtremeFinder1D : public SequentialTask
 {
 public:
     			BisectionExtremeFinder1D(
@@ -171,13 +169,12 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Finds the nearest local extreme position in ND's.  
 Implementation of Powell's Quadratically Convergent Method
 \note The implementation is not tested (yet) 030512.
 */
 
-mClass(Algo) ExtremeFinderND : public SequentialTask
+mExpClass(Algo) ExtremeFinderND : public SequentialTask
 {
 
 public:

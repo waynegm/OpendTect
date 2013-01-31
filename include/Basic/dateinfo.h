@@ -17,7 +17,6 @@ ________________________________________________________________________
 class BufferString;
 
 /*!
-\ingroup Basic
 \brief A date info class.
   
   Class does not work before 1900. Non-default constructors are for dates
@@ -30,7 +29,7 @@ class BufferString;
   The class has some kewl 'relative' printouts.
 */
 
-mClass(Basic) DateInfo
+mExpClass(Basic) DateInfo
 {
 public:
     enum DayOfWeek	{ Su=0, Mo, Tu, We, Th, Fr, Sa };

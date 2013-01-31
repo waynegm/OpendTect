@@ -33,11 +33,11 @@ inline T dePeriodize( T val, T period )
 
 
 /*!
-\ingroup Algo
 \brief PeriodicValue handles periodic data through mathematical operations.
 */
+
 template <class T,int P>
-class PeriodicValue
+mClass(Algo) PeriodicValue
 {
 public:
     T				val(bool positive=true) const

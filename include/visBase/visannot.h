@@ -50,7 +50,7 @@ class DataObjectGroup;
     axis.
 */
 
-mClass(visBase) Annotation : public VisualObjectImpl
+mExpClass(visBase) Annotation : public VisualObjectImpl
 {
 public:
     static Annotation*		create()

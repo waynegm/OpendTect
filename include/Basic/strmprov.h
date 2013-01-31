@@ -22,7 +22,6 @@ class BufferStringSet;
 
 
 /*!
-\ingroup Basic
 \brief Provides I/O stream for file or system command.
 
   StreamProvider provides a stream with requested source attached:
@@ -39,7 +38,7 @@ class BufferStringSet;
   A null string or StreamProvider::sStdIO will select std input and output.
 */
 
-mClass(Basic) StreamProvider
+mExpClass(Basic) StreamProvider
 {
 public:
 		StreamProvider(const char* nm=0);

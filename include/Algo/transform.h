@@ -24,12 +24,11 @@ template <class T> class ArrayND;
 typedef std::complex<float> float_complex;
 
 /*!
-\ingroup Algo
 \brief Lets any 1D orthogonal transform (GenericTransformND::GenericTransform1D)be extended to ND. Most transform fftw can be implemented as a subclass of
 GenericTransformND.
 */
 
-mClass(Algo) GenericTransformND : public SequentialTask
+mExpClass(Algo) GenericTransformND : public SequentialTask
 {
 public:
 			GenericTransformND();
@@ -84,7 +83,7 @@ mProtected:
     float_complex*		coutput_;
     float*			routput_;
 
-    mClass(Algo) Transform1D
+    mExpClass(Algo) Transform1D
     {
     public:
 	virtual		~Transform1D()				{}

@@ -25,7 +25,7 @@ namespace visBase
 {
 
 
-mClass(visBase) TopBotImage : public VisualObjectImpl
+mExpClass(visBase) TopBotImage : public VisualObjectImpl
 {
 public:
     static TopBotImage*		create()

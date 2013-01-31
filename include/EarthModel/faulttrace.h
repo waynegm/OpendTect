@@ -14,6 +14,7 @@ ________________________________________________________________________
 
 #include "earthmodelmod.h"
 #include "executor.h"
+#include "horsampling.h"
 #include "multiid.h"
 #include "positionlist.h"
 #include "sets.h"
@@ -24,14 +25,12 @@ namespace EM { class Fault; class Horizon; }
 class IOObj;
 class MultiID;
 class BinIDValueSet;
-class HorSampling;
 
 /*!
-\ingroup EarthModel
 \brief Subclass of Coord3List that represents a fault trace.
 */
 
-mClass(EarthModel) FaultTrace : public Coord3List
+mExpClass(EarthModel) FaultTrace : public Coord3List
 {
 public:
 
@@ -50,10 +49,12 @@ public:
     FaultTrace*		clone();
 
     bool		isInl() const			{ return isinl_; }
+    bool		isEditedOnCrl() const		{ return editedoncrl_; }
     int			lineNr() const			{ return nr_; }
     const Interval<int>& trcRange() const		{ return trcrange_; }
     const Interval<float>& zRange() const		{ return zrange_; }
     void		setIsInl(bool yn)		{ isinl_ = yn; }
+    void		setEditedOnCrl(bool yn)		{ editedoncrl_ = yn; }
     void		setLineNr(int nr)		{ nr_ = nr; }
 
     bool		isCrossing(const BinID&,float,const BinID&,float) const;
@@ -91,6 +92,7 @@ protected:
 	    				const BinID&,const BinID&,bool) const;
 
     bool		isinl_;
+    bool		editedoncrl_;
     int			nr_;
     TypeSet<Coord3>	coords_;
     TypeSet<int>	coordindices_;
@@ -106,44 +108,69 @@ public:
 
 
 /*!
-\ingroup EarthModel
-\brief FaultTrace extractor 
+\brief FaultTrace holder 
 */
 
-mClass(EarthModel) FaultTraceExtractor
+mExpClass(EarthModel) FaultTrcHolder
 {
 public:
-    				FaultTraceExtractor(EM::Fault*,int,bool);
-    				FaultTraceExtractor(EM::Fault*,
-						    const PosInfo::GeomID&);
-				~FaultTraceExtractor();
+			FaultTrcHolder(const HorSampling& hs)
+			    : hs_(hs), editedoncrl_(false)
+			{ traces_.allowNull( true ); }
+			~FaultTrcHolder()
+			{ deepErase( traces_ ); }
 
-    bool			execute();
-    ObjectSet<FaultTrace>&	getFaultTraces()	{ return flttrcs_; }
+    const FaultTrace*	getTrc(int linenr,bool isinl) const;
+    bool		isEditedOnCrl() const;
 
-protected:
+    ObjectSet<FaultTrace>	traces_;
+			    /*For 3D: one for each inline followed by
+				      one for each crossline.
+			      For 2D: One for each stick.*/
 
-    bool			get2DFaultTrace();
-
-    bool			isinl_;
-    int				nr_;
-    PosInfo::GeomID		geomid_;	// For 2D
-    EM::Fault*			fault_;
-    ObjectSet<FaultTrace>	flttrcs_;
-    bool			is2d_;
+    HorSampling		hs_;
+    MultiID		id_;
+    bool		editedoncrl_;
 };
 
 
 /*!
-\ingroup EarthModel
+\brief FaultTrace extractor 
+*/
+
+mExpClass(EarthModel) FaultTraceExtractor
+{
+public:
+    			FaultTraceExtractor(EM::Fault*,int,bool);
+    			FaultTraceExtractor(EM::Fault*,const PosInfo::GeomID&);
+			~FaultTraceExtractor();
+
+    bool		execute();
+    ObjectSet<FaultTrace>&	getFaultTraces()	{ return flttrcs_; }
+
+protected:
+
+    bool		get2DFaultTrace();
+
+    ObjectSet<FaultTrace>	flttrcs_;
+
+    int			nr_;
+    PosInfo::GeomID	geomid_;	// For 2D
+    EM::Fault*		fault_;
+    bool		is2d_;
+    bool		isinl_;
+    bool		editedoncrl_;
+};
+
+
+/*!
 \brief FaultTrace calculator
 */
 
-mClass(EarthModel) FaultTraceCalc : public Executor
+mExpClass(EarthModel) FaultTraceCalc : public Executor
 {
 public:
-			FaultTraceCalc(EM::Fault*,const HorSampling&,
-				       ObjectSet<FaultTrace>&);
+			FaultTraceCalc(EM::Fault*,FaultTrcHolder&);
 			~FaultTraceCalc();
 
     od_int64		nrDone() const;
@@ -153,21 +180,19 @@ public:
 
 protected:
 
-    HorSampling&		hs_;
-    int				curnr_;
-    bool			isinl_;
-    EM::Fault*			flt_;
-    ObjectSet<FaultTrace>&	flttrcs_;
-    od_int64			nrdone_;
+    int			curnr_;
+    EM::Fault*		flt_;
+    FaultTrcHolder&	holder_;
+    od_int64		nrdone_;
+    bool		isinl_;
 };
 
 
 /*!
-\ingroup EarthModel
 \brief FaultTrace data provider
 */
 
-mClass(EarthModel) FaultTrcDataProvider
+mExpClass(EarthModel) FaultTrcDataProvider
 {
 public:
 			FaultTrcDataProvider()
@@ -182,9 +207,11 @@ public:
     bool		is2D() const		{ return is2d_; }
     int			nrFaults() const;
     const HorSampling&	range(int) const;
+    int			nrSticks(int fltidx) const;
+    bool		isEditedOnCrl(int fltidx) const;
+
     bool		hasFaults(const BinID&) const;
     const FaultTrace*	getFaultTrace(int,int,bool) const;
-    int			nrSticks(int fltidx) const;
     const FaultTrace*	getFaultTrace2D(int fltidx,int stickidx) const;
     bool		isCrossingFault(const BinID& b1,float z1,
 	    				const BinID& b2,float z2) const;
@@ -195,19 +222,16 @@ public:
     bool		isEmpty() const;
     const char*		errMsg() const;
 
-    const TypeSet<MultiID>& getFaultIds() const { return multiids_; }
-    				
 protected:
 
     bool		calcFaultBBox(const EM::Fault&,HorSampling&) const;
     bool		get2DTraces(const TypeSet<MultiID>&);
 
-    bool				is2d_;
-    ObjectSet<ObjectSet<FaultTrace> >   flttrcs_;
-    TypeSet<HorSampling>                flths_;
-    TypeSet<MultiID> 			multiids_;
-    PosInfo::GeomID			geomid_;
-    BufferString			errmsg_;
+    ObjectSet<FaultTrcHolder>	holders_;
+
+    PosInfo::GeomID	geomid_;
+    BufferString	errmsg_;
+    bool		is2d_;
 };
 
 #endif

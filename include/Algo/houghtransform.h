@@ -28,7 +28,6 @@ class Coord3;
 namespace Threads { class Mutex; };
 
 /*!
-\ingroup Algo
 \brief Finds planes in Array3D<float>'s regions with high values. All
 positions in the array above a threshold (defined by cliprate) are used to
 find the planes.
@@ -46,7 +45,7 @@ find the planes.
   
 */
 
-mClass(Algo) PlaneFrom3DSpaceHoughTransform
+mExpClass(Algo) PlaneFrom3DSpaceHoughTransform
 {
 public:
     				PlaneFrom3DSpaceHoughTransform();
@@ -111,11 +110,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Finds lines in Array2D<float>'s regions with high values.
 */
 
-mClass(Algo) LineFrom2DSpaceHoughTransform
+mExpClass(Algo) LineFrom2DSpaceHoughTransform
 {
 public:
     				LineFrom2DSpaceHoughTransform(

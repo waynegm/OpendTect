@@ -46,12 +46,11 @@ namespace Values
 {
 
 /*!
-\ingroup Basic
 \brief Templatized undefined values.
 */
 
 template<class T>
-class Undef
+mClass(Basic) Undef
 {
 public:
     static T		val();
@@ -62,12 +61,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined od_int16.
 */
 
 template<>
-class Undef<od_int16>
+mClass(Basic) Undef<od_int16>
 {
 public:
     static od_int16	val()			{ return -32767; }
@@ -78,12 +76,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined od_uint16.
 */
 
 template<>
-class Undef<od_uint16>
+mClass(Basic) Undef<od_uint16>
 {
 public:
     static od_uint16	val()			{ return 65534; }
@@ -94,12 +91,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined od_int32.
 */
 
 template<>
-class Undef<od_int32>
+mClass(Basic) Undef<od_int32>
 {
 public:
     static od_int32	val()			{ return __mUndefIntVal; }
@@ -110,12 +106,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined od_uint32.
 */
 
 template<>
-class Undef<od_uint32>
+mClass(Basic) Undef<od_uint32>
 {
 public:
     static od_uint32	val()			{ return __mUndefIntVal; }
@@ -126,12 +121,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined od_int64.
 */
 
 template<>
-class Undef<od_int64>
+mClass(Basic) Undef<od_int64>
 {
 public:
     static od_int64	val()			{ return __mUndefIntVal64; }
@@ -142,12 +136,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined od_uint64.
 */
 
 template<>
-class Undef<od_uint64>
+mClass(Basic) Undef<od_uint64>
 {
 public:
     static od_uint64	val()			{ return __mUndefIntVal64; }
@@ -158,12 +151,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined bool.
 */
 
 template<>
-class Undef<bool>
+mClass(Basic) Undef<bool>
 {
 public:
     static bool		val()			{ return false; }
@@ -174,12 +166,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined float.
 */
 
 template<>
-class Undef<float>
+mClass(Basic) Undef<float>
 {
 public:
     static float	val()			{ return (float)__mUndefValue; }
@@ -190,12 +181,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined double.
 */
 
 template<>
-class Undef<double>
+mClass(Basic) Undef<double>
 {
 public:
     static double	val()			{ return __mUndefValue; }
@@ -206,12 +196,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined const char*.
 */
 
 template<>
-class Undef<const char*>
+mClass(Basic) Undef<const char*>
 {
 public:
     static const char*	val()			{ return ""; }
@@ -222,12 +211,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined char*.
 */
 
 template<>
-class Undef<char*>
+mClass(Basic) Undef<char*>
 {
 public:
     static const char*	val()			{ return ""; }

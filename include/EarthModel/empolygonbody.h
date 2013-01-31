@@ -29,11 +29,10 @@ namespace EM
 class PolygonBody;
 
 /*!
-\ingroup EarthModel
 \brief PolygonBody SurfaceGeometry
 */
 
-mClass(EarthModel) PolygonBodyGeometry : public SurfaceGeometry
+mExpClass(EarthModel) PolygonBodyGeometry : public SurfaceGeometry
 {
 public:
     			PolygonBodyGeometry(PolygonBody&);
@@ -74,11 +73,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief A Surface polygon Body.
 */
 
-mClass(EarthModel) PolygonBody : public Surface, public Body
+mExpClass(EarthModel) PolygonBody : public Surface, public Body
 { mDefineEMObjFuncs( PolygonBody );
 public:
     PolygonBodyGeometry&	geometry();

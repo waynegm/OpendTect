@@ -17,7 +17,6 @@ ________________________________________________________________________
 #include <string.h>
 
 /*!
-\ingroup Basic
 \brief Updates a variable when changes occur.
   
   Use if you need to keep track of whether a variable changes when it is
@@ -25,7 +24,7 @@ ________________________________________________________________________
   facilitates giving unique change stamps.
 */
 
-class ChangeTracker
+mClass(Basic) ChangeTracker
 {
 public:
 			ChangeTracker( bool* c=0 )

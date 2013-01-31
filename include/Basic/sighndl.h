@@ -19,11 +19,10 @@ ________________________________________________________________________
 namespace DBG { mGlobal(Basic) void forceCrash(bool); }
 
 /*!
-\ingroup Basic
 \brief Asynchronous event handling and notification.
 */
 
-mClass(Basic) SignalHandling : public CallBacker
+mExpClass(Basic) SignalHandling : public CallBacker
 {
 public:
     static void			initClass();

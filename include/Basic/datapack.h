@@ -24,7 +24,6 @@ class IOPar;
 
 
 /*!
-\ingroup Basic
 \brief A data packet: data+positioning and more that needs to be shared.
 
   The 'category' is meant like:
@@ -33,7 +32,7 @@ class IOPar;
   'Fault surface'
 */
 
-mClass(Basic) DataPack : public NamedObject
+mExpClass(Basic) DataPack : public NamedObject
 {
 public:
 
@@ -83,11 +82,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Simple DataPack based on an unstructured char array buffer.
 */
 
-mClass(Basic) BufferDataPack : public DataPack
+mExpClass(Basic) BufferDataPack : public DataPack
 {
 public:
 
@@ -115,7 +113,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Manages DataPacks.
   
   DataPacks will be managed with everything in it. If you add a Pack, you
@@ -132,7 +129,7 @@ protected:
  You can get an appropriate DataPackMgr from the DPM() function.
 */
 
-mClass(Basic) DataPackMgr : public CallBacker
+mExpClass(Basic) DataPackMgr : public CallBacker
 {
 public:
 			// You can, but normally should not, construct

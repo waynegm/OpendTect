@@ -34,7 +34,7 @@ class NodeState;
 \brief Base class for all objects that are visual on the scene.
 */
 
-mClass(visBase) VisualObject : public DataObject
+mExpClass(visBase) VisualObject : public DataObject
 {
 public:
     virtual void		turnOn(bool)				= 0;
@@ -84,7 +84,7 @@ private:
 };
 
 
-mClass(visBase) VisualObjectImpl : public VisualObject
+mExpClass(visBase) VisualObjectImpl : public VisualObject
 {
 public:
 

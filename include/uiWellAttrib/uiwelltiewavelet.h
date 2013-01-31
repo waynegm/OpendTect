@@ -30,7 +30,7 @@ namespace WellTie
 
 class uiWavelet;
 
-mClass(uiWellAttrib) uiWaveletView : public uiGroup
+mExpClass(uiWellAttrib) uiWaveletView : public uiGroup
 {
 public:
 
@@ -55,7 +55,7 @@ protected:
 };
 
 
-class uiWavelet : public uiGroup
+mClass(uiWellAttrib) uiWavelet : public uiGroup
 {
 
 public: 

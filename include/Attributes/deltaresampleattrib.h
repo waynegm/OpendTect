@@ -19,11 +19,10 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief Resamples the trace at shifted locations.
 */
 
-class DeltaResample : public Provider
+mClass(Attributes) DeltaResample : public Provider
 {
 public:
 

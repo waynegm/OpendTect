@@ -17,7 +17,6 @@ ________________________________________________________________________
 #include "varlenarray.h"
 
 /*!
-\ingroup Basic
 \brief Base class of Array1DSlice and Array2DSlice. Access-tool to another
 ArrayND with higher dimensionality.
 
@@ -30,7 +29,7 @@ ArrayND with higher dimensionality.
   called prior to dataaccesing functions.
 */
 
-mClass(Basic) ArrayNDSliceBase
+mExpClass(Basic) ArrayNDSliceBase
 {
 public:				
     virtual			~ArrayNDSliceBase();
@@ -54,12 +53,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Subclass of Array1D and ArrayNDSliceBase.
 */
 
 template <class T>
-class Array1DSlice : public Array1D<T>, public ArrayNDSliceBase
+mClass(Basic) Array1DSlice : public Array1D<T>, public ArrayNDSliceBase
 {
 public:
 				Array1DSlice(ArrayND<T>&);
@@ -83,12 +81,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Subclass of Array2D and ArrayNDSliceBase.
 */
 
 template <class T>
-class Array2DSlice : public Array2D<T>, public ArrayNDSliceBase
+mClass(Basic) Array2DSlice : public Array2D<T>, public ArrayNDSliceBase
 {
 public:
 				Array2DSlice(ArrayND<T>&);

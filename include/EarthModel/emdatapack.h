@@ -29,11 +29,10 @@ class Fault;
 
 
 /*!
-\ingroup EarthModel
 \brief Mixing to provide general services to Earth Model data packs.
 */
 
-mClass(EarthModel) DataPackCommon : 	public ::FlatDataPack
+mExpClass(EarthModel) DataPackCommon : 	public ::FlatDataPack
 {
 public:
     			DataPackCommon(const EMObject&,Array2D<float>*);
@@ -56,11 +55,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Flat data pack class for Horizons.
 */
 
-mClass(EarthModel) HorDataPack : public DataPackCommon
+mExpClass(EarthModel) HorDataPack : public DataPackCommon
 {
 public:
     			HorDataPack(const EM::Horizon&,Array2D<float>*);
@@ -82,11 +80,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Flat data pack from attribute extraction on faults.
 */ 
 
-mClass(EarthModel) FaultDataPack : public DataPackCommon
+mExpClass(EarthModel) FaultDataPack : public DataPackCommon
 {
 public:
 

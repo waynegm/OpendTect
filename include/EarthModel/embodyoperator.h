@@ -36,12 +36,11 @@ class Body;
 class ImplicitBody;    
 
 /*!
-\ingroup EarthModel
 \brief Operators for implicit body. Each BodyOperator has two children, either
 a Body or a BodyOperator.
 */
 
-mClass(EarthModel) BodyOperator
+mExpClass(EarthModel) BodyOperator
 { 
 public:
     			BodyOperator();
@@ -100,7 +99,6 @@ protected:
 
 
 /*
-\ingroup EarthModel
 \brief Converts an explicit body to implicit.
 
    Given a triangulated body, extract position value on each trace based on 
@@ -109,7 +107,7 @@ protected:
    outside to be positive.
 */
 
-mClass(EarthModel) Expl2ImplBodyExtracter : public ParallelTask
+mExpClass(EarthModel) Expl2ImplBodyExtracter : public ParallelTask
 {
 public:
 			Expl2ImplBodyExtracter( const DAGTetrahedraTree& tree, 

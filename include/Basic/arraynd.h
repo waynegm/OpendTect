@@ -24,7 +24,6 @@ ________________________________________________________________________
 #define mPolyArray3DInfoTp mPolyRet(ArrayNDInfo,Array3DInfo)
 
 /*!
-\ingroup Basic
 \brief An ArrayND is an array with a given number of dimensions and a size.
 
   The ArrayND can be accessed via set() and get().
@@ -36,7 +35,7 @@ ________________________________________________________________________
 */
 
 template <class T>
-class ArrayND 
+mClass(Basic) ArrayND 
 {
 public:
 
@@ -100,12 +99,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Array1D ( Subclass of ArrayND ) is a one dimensional array.
 */
 
 template <class T>
-class Array1D : public ArrayND<T>
+mClass(Basic) Array1D : public ArrayND<T>
 	      , public ValueSeries<T>
 {
 public: 
@@ -129,12 +127,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Array2D ( Subclass of ArrayND ) is a two dimensional array.
 */
 
 template <class T>
-class Array2D : public ArrayND<T>
+mClass(Basic) Array2D : public ArrayND<T>
 {
 public: 
     virtual void		set( int, int, T ) 			= 0;
@@ -149,11 +146,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Array3D ( Subclass of ArrayND ) is a three dimensional array.
 */
 
-template <class T> class Array3D : public ArrayND<T>
+template <class T>
+mClass(Basic) Array3D : public ArrayND<T>
 {
 public: 
 
@@ -169,7 +166,6 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Iterates through all samples in an ArrayND.
   
   ArrayNDIter will be on the first position when initiated, and move to
@@ -177,7 +173,7 @@ public:
   no more positions are available.
 */
 
-mClass(Basic) ArrayNDIter
+mExpClass(Basic) ArrayNDIter
 {
 public:
 				ArrayNDIter( const ArrayNDInfo& );
@@ -203,14 +199,13 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Adapter that makes any ArrayND to a (slow) value series.
 
   Try using other methods (like getting the storage) as this is slow.
 */
 
 template <class T>
-class ArrayNDValseriesAdapter : public ValueSeries<T>
+mClass(Basic) ArrayNDValseriesAdapter : public ValueSeries<T>
 {
 public:
 			ArrayNDValseriesAdapter( const ArrayND<T>& a )
@@ -386,12 +381,11 @@ void ArrayND<T>::setAll( const T& val )
 }
 
 /*!
-  \ingroup Basic
-  \brief Gets a one dimensional array from an ArrayND.
+\brief Gets a one dimensional array from an ArrayND.
 */
 
 template <class T>
-class ArrayNDGetAll : public ParallelTask
+mClass(Basic) ArrayNDGetAll : public ParallelTask
 {
 public:
     		ArrayNDGetAll( T* ptr, const ArrayND<T>& arr )

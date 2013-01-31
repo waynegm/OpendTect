@@ -24,7 +24,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Frequency filtering attribute.
 
 <pre>
@@ -40,7 +39,7 @@ namespace Attrib
 </pre>
 */
 
-mClass(Attributes) FreqFilter: public Provider
+mExpClass(Attributes) FreqFilter: public Provider
 {
 public:
     static void		initClass();

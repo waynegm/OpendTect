@@ -23,7 +23,7 @@ namespace visBase
 {
 
     
-mClass(visBase) Axes : public DataObject
+mExpClass(visBase) Axes : public DataObject
 {
 public:
     static Axes*		create()

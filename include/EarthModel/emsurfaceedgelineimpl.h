@@ -20,11 +20,10 @@ namespace EM
 {
 
 /*!
-\ingroup EarthModel
 \brief Termination EdgeLineSegment
 */
 
-mClass(EarthModel) TerminationEdgeLineSegment : public EdgeLineSegment
+mExpClass(EarthModel) TerminationEdgeLineSegment : public EdgeLineSegment
 {
 public:
 		    mEdgeLineSegmentClone(TerminationEdgeLineSegment, TermLine);
@@ -38,11 +37,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief Surface connecting EdgeLineSegment.
 */
 
-mClass(EarthModel) SurfaceConnectLine : public EdgeLineSegment
+mExpClass(EarthModel) SurfaceConnectLine : public EdgeLineSegment
 {
 public:
     			mEdgeLineSegmentClone(SurfaceConnectLine,ConnLine);

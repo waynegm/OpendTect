@@ -33,7 +33,7 @@ mFDQtclass(QWidget)
 
 #define USE_DISPLAY_TIMER 1
 
-mClass(uiBase) uiObjectBody : public uiBody, public NamedObject
+mExpClass(uiBase) uiObjectBody : public uiBody, public NamedObject
 {
 friend class 		i_uiLayoutItem; 
 
@@ -232,7 +232,7 @@ private:
 */
 
 template <class C, class T>
-class uiObjBodyImpl : public uiObjectBody, public T
+mClass(uiBase) uiObjBodyImpl : public uiObjectBody, public T
 {
 public:
 

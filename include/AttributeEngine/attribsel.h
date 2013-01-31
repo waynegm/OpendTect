@@ -30,8 +30,7 @@ class Desc;
 class DescSet;
 
 /*!
-  \ingroup AttributeEngine
-  \brief Specifies an attribute selection (ID or output number of NN).
+\brief Specifies an attribute selection (ID or output number of NN).
 
   When attrib sets and NLAs change, the IDs may be no longer valid. Thus, the
   user reference is stored, so you can try to get a valid ID in that situation.
@@ -41,7 +40,7 @@ class DescSet;
   output is to be expected.
 */
 
-mClass(AttributeEngine) SelSpec
+mExpClass(AttributeEngine) SelSpec
 {
 public:
 			SelSpec( const char* r=0, DescID i=cAttribNotSel(),
@@ -123,11 +122,10 @@ protected:
 
 
 /*
-   \ingroup AttributeEngine
-   \brief Specifies current attribute choices (ID or output nr of NLA model).
+\brief Specifies current attribute choices (ID or output nr of NLA model).
 */
 
-mClass(AttributeEngine) CurrentSel
+mExpClass(AttributeEngine) CurrentSel
 {
 public:
 			CurrentSel()
@@ -141,11 +139,10 @@ public:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Supplies lists of available attribute input.
+\brief Supplies lists of available attribute input.
 */
 
-mClass(AttributeEngine) SelInfo
+mExpClass(AttributeEngine) SelInfo
 {
 public:
 

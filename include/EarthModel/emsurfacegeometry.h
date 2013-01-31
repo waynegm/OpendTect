@@ -38,11 +38,10 @@ class Surface;
 class SurfaceIODataSelection;
 
 /*!
-\ingroup EarthModel
 \brief Surface geometry
 */
 
-mClass(EarthModel) SurfaceGeometry : public CallBacker
+mExpClass(EarthModel) SurfaceGeometry : public CallBacker
 {
 public:
     			SurfaceGeometry(Surface&);
@@ -122,11 +121,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief RowCol SurfaceGeometry
 */
 
-mClass(EarthModel) RowColSurfaceGeometry : public SurfaceGeometry
+mExpClass(EarthModel) RowColSurfaceGeometry : public SurfaceGeometry
 {
 public:
     			RowColSurfaceGeometry(Surface&);

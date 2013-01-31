@@ -25,11 +25,10 @@ namespace EM
 class Fault3D;
 
 /*!
-\ingroup EarthModel
 \brief Writes auxdata to file.
 */
 
-mClass(EarthModel) dgbFaultDataWriter : public Executor
+mExpClass(EarthModel) dgbFaultDataWriter : public Executor
 {
 public:
     				dgbFaultDataWriter(const EM::Fault3D& surf,
@@ -89,11 +88,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Reads auxdata from file.
 */
 
-mClass(EarthModel) dgbFaultDataReader : public Executor
+mExpClass(EarthModel) dgbFaultDataReader : public Executor
 {
 public:
     				dgbFaultDataReader(const char* filename);

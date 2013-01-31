@@ -20,14 +20,13 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Holds data to use and close an iostream.
 
   Usually created by StreamProvider.
   Need to find out what to do with the pipe in windows.
 */
 
-mClass(Basic) StreamData
+mExpClass(Basic) StreamData
 {
 public:
 

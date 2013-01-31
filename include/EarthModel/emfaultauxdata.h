@@ -31,11 +31,10 @@ class Fault3D;
 class PosID;
 
 /*!
-\ingroup EarthModel
 \brief Fault surface data
 */
 
-mClass(EarthModel) FaultAuxData 
+mExpClass(EarthModel) FaultAuxData 
 {
 public:
 			FaultAuxData(const Fault3D&);

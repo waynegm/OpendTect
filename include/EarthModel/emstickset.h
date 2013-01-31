@@ -35,11 +35,10 @@ typedef SubID KnotID;
 class EMManager;
 
 /*!
-\ingroup EarthModel
 \brief Stick set
 */
 
-mClass(EarthModel) StickSet : public EMObject
+mExpClass(EarthModel) StickSet : public EMObject
 {
 public:
     static const char*	typeStr();

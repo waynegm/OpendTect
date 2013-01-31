@@ -24,9 +24,14 @@ namespace Vel { class FunctionSource; }
 
 namespace PreStack
 {
+
 class Gather;
 
-mClass(PreStackProcessing) AngleComputer
+/*!
+\brief Computes angles for PreStack::Gather.
+*/
+
+mExpClass(PreStackProcessing) AngleComputer
 { mRefCountImpl(AngleComputer);
 public:
 				AngleComputer();
@@ -44,9 +49,7 @@ protected:
 };
 
 
-
 }; //namespace
 
 #endif
-
 

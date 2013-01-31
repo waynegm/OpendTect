@@ -25,12 +25,11 @@ namespace Attrib
 {
 
 /*!
-  \ingroup AttributeEngine
-  \brief A class for holding cubes with attribute data. All the cubes have
-  the same sampling and size.
+\brief A class for holding cubes with attribute data. All the cubes have
+the same sampling and size.
 */
 
-mClass(AttributeEngine) DataCubes
+mExpClass(AttributeEngine) DataCubes
 { mRefCountImpl(DataCubes);
 public:
     				DataCubes();

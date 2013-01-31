@@ -19,11 +19,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Acoustic Impedance layer.
 */
 
-class AILayer
+mClass(Basic) AILayer
 {
 public:
 		AILayer( float thkness, float vel, float den )
@@ -50,11 +49,10 @@ inline float getLayerDepth( const AIModel& mod, int layer )
 
 
 /*!
-\ingroup Basic
 \brief A table of elastic prop layers.
 */
 
-class ElasticLayer : public AILayer
+mClass(Basic) ElasticLayer : public AILayer
 {
 public:
 		ElasticLayer( float thkness, float pvel, float svel, float den )

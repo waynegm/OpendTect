@@ -19,13 +19,18 @@ class uiGenInput;
 class uiLabeledComboBox;
 class ui3DViewer;
 
-mClass(uiCoin) uiPrintSceneDlg : public uiSaveImageDlg
+/*!
+\brief Print scene dialog box.
+*/
+
+mExpClass(uiCoin) uiPrintSceneDlg : public uiSaveImageDlg
 {
 public:
 			uiPrintSceneDlg(uiParent*,const ObjectSet<ui3DViewer>&);
 protected:
 
     uiLabeledComboBox*	scenefld_;
+    uiGenInput*		dovrmlfld_;
     uiGenInput*		selfld_;
 
     const char*		getExtension();

@@ -20,7 +20,7 @@ ________________________________________________________________________
 namespace visBase
 {
 
-mClass(visBase) Lines : public VertexShape
+mExpClass(visBase) Lines : public VertexShape
 {
 public:
     static Lines*		create()

@@ -25,11 +25,10 @@ namespace EM
 {
 
 /*!
-\ingroup EarthModel
 \brief %Horizon preloader
 */
 
-mClass(EarthModel) HorizonPreLoader : public CallBacker
+mExpClass(EarthModel) HorizonPreLoader : public CallBacker
 {
 public:
 				HorizonPreLoader();

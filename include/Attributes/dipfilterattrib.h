@@ -20,7 +20,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief Dip filtering Attribute
 
   %DipFilter convolves a signal with the on the command-line specified signal.
@@ -77,7 +76,7 @@ Inputs:
 </pre>
 */
 
-mClass(Attributes) DipFilter : public Provider
+mExpClass(Attributes) DipFilter : public Provider
 {
 public:
     static void		initClass();

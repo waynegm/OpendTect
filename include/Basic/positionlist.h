@@ -17,11 +17,10 @@ ________________________________________________________________________
 #include "position.h"
 
 /*!
-\ingroup Basic
 \brief Base class for vertex attribute list.
 */
 
-mClass(Basic) FloatVertexAttribList
+mExpClass(Basic) FloatVertexAttribList
 { mRefCountImpl(FloatVertexAttribList)
 public:
     
@@ -45,11 +44,10 @@ protected:
 class Coord3;
 
 /*!
-\ingroup Basic
 \brief Use Coord3ListImpl instead.
 */
 
-mClass(Basic) Coord3List
+mExpClass(Basic) Coord3List
 { mRefCountImplNoDestructor(Coord3List);
 public:
     virtual int		nextID(int previd) const			= 0;
@@ -67,11 +65,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Use Coord2ListImpl instead.
 */
 
-mClass(Basic) Coord2List
+mExpClass(Basic) Coord2List
 { mRefCountImplNoDestructor(Coord2List);
 public:
     virtual int		nextID(int previd) const			= 0;
@@ -88,11 +85,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief A list of Coord where each coord has a unique id.
 */
 
-mClass(Basic) Coord2ListImpl : public Coord2List
+mExpClass(Basic) Coord2ListImpl : public Coord2List
 { 
 public:			
     			Coord2ListImpl();
@@ -112,11 +108,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief A list of Coord3 where each coord has a unique id. 
 */
 
-mClass(Basic) Coord3ListImpl : public Coord3List
+mExpClass(Basic) Coord3ListImpl : public Coord3List
 {
 public:
     			Coord3ListImpl();

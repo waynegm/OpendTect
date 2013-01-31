@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "ranges.h"
 
 /*!
-\ingroup Algo
 \brief Fits values into a pre-defined range.
  
   The Squeezer has 2 ranges:
@@ -41,7 +40,7 @@ ________________________________________________________________________
 */
 
 template <class T>
-class DataSqueezer
+mClass(Algo) DataSqueezer
 {
 public:
 

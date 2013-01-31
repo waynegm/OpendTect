@@ -22,10 +22,11 @@ class uiTextEdit;
 uiODSysAdm& ODSysAdmMainWin();
 //!< Top-level access
 
+/*!
+\brief OpendTect System Administration application top level object.
+*/
 
-/*!\brief OpendTect sysadm application top level object */
-
-mClass(uiSysAdm) uiODSysAdm : public uiDialog
+mExpClass(uiSysAdm) uiODSysAdm : public uiDialog
 {
 public:
 

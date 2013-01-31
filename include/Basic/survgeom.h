@@ -22,11 +22,10 @@ namespace Survey
 {
 
 /*!
-\ingroup Basic
 \brief A Geometry which holds trace positions.
 */
 
-mClass(Basic) Geometry
+mExpClass(Basic) Geometry
 { mRefCountImpl(Geometry);
 public:
     virtual bool	is2D() const					= 0;
@@ -51,11 +50,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Makes geometries accessible from a geometry id, or a multi id.
 */
 
-mClass(Basic) GeometryManager
+mExpClass(Basic) GeometryManager
 {
 public:
 			GeometryManager();
@@ -93,11 +91,10 @@ inline mGlobal(Basic) const GeometryManager& GM()
 
 
 /*!
-\ingroup Basic
 \brief Geometry Reader
 */
 
-mClass(Basic) GeometryReader
+mExpClass(Basic) GeometryReader
 {
 public:
 			GeometryReader(){};
@@ -106,11 +103,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Geometry Writer
 */
 
-mClass(Basic) GeometryWriter
+mExpClass(Basic) GeometryWriter
 {
 public:
 			GeometryWriter(){};

@@ -19,11 +19,10 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Instantaneous Attribute
 */
 
-mClass(Attributes) Instantaneous : public Provider
+mExpClass(Attributes) Instantaneous : public Provider
 {
 public:
     static void			initClass();

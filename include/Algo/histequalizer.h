@@ -18,11 +18,10 @@ template <class T> class TypeSet;
 
 
 /*!
-\ingroup Algo
 \brief Class to do histogram equalization of datasets.
 */
 
-mClass(Algo) HistEqualizer
+mExpClass(Algo) HistEqualizer
 {
 public:
     			HistEqualizer(const int nrseg=256);

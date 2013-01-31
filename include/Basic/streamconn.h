@@ -19,11 +19,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Connection with an underlying iostream.
 */
 
-mClass(Basic) StreamConn : public Conn
+mExpClass(Basic) StreamConn : public Conn
 {
 public:
 			StreamConn();

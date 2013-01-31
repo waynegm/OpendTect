@@ -33,11 +33,10 @@ namespace SqlDB
 class Access;
 
 /*!
-\ingroup Database
 \brief Execution of SQL Query.
 */
 
-mClass(Database) Query
+mExpClass(Database) Query
 {
 public:
 
@@ -93,12 +92,11 @@ protected:
 
 
 /*!
-\ingroup Database
 \brief Helper class that creates conditions that can be put after WHERE in a
 query.
 */
 
-mClass(Database) Condition
+mExpClass(Database) Condition
 {
 public:
     virtual			~Condition() {}
@@ -107,11 +105,10 @@ public:
 
 
 /*!
-\ingroup Database
 \brief Condition to check for a value in a Query.
 */
 
-mClass(Database) ValueCondition : public Condition
+mExpClass(Database) ValueCondition : public Condition
 {
 public:
 			enum Operator { Equals, Less, Greater, LessOrEqual,
@@ -133,11 +130,10 @@ protected:
 
 
 /*!
-\ingroup Database
 \brief Condition with multiple logics in a Query.
 */
 
-mClass(Database) MultipleLogicCondition : public Condition
+mExpClass(Database) MultipleLogicCondition : public Condition
 {
 public:
     			MultipleLogicCondition(bool isand)
@@ -154,11 +150,10 @@ protected:
 
 
 /*!
-\ingroup
 \brief Condition to string check in a Query.
 */
 
-mClass(Database) StringCondition : public Condition
+mExpClass(Database) StringCondition : public Condition
 {
 public:
     			StringCondition( const char* col,
@@ -174,11 +169,10 @@ protected:
 
 
 /*!
-\ingroup
 \brief Condition to check for fulltext in a Query.
 */
 
-mClass(Database) FullTextCondition : public Condition
+mExpClass(Database) FullTextCondition : public Condition
 {
 public:
 			FullTextCondition( BufferStringSet& cols,

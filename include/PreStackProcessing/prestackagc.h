@@ -20,8 +20,11 @@ ________________________________________________________________________
 namespace PreStack
 {
 
+/*!
+\brief %AGC
+*/
 
-mClass(PreStackProcessing) AGC : public Processor
+mExpClass(PreStackProcessing) AGC : public Processor
 {
 public:
     				mDefaultFactoryInstantiation( Processor, AGC,

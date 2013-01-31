@@ -23,7 +23,7 @@ namespace visBase
     
 /*!Baseclass for objects manipulating the osg::StateSet. */
 
-mClass(visBase) NodeState : public CallBacker
+mExpClass(visBase) NodeState : public CallBacker
 { mRefCountImpl(NodeState);
 public:
 

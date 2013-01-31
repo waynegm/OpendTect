@@ -19,7 +19,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %FingerPrint Attribute
   Calculates the match with a definite vector.
  
@@ -40,7 +39,7 @@ namespace Attrib
 </pre>
 */
 
-mClass(Attributes) FingerPrint : public Provider
+mExpClass(Attributes) FingerPrint : public Provider
 {
 public:
     static void			initClass();

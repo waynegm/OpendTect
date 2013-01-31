@@ -21,7 +21,6 @@ ________________________________________________________________________
 #include <iostream>
 
 /*!
-\ingroup Basic
 \brief Concatenated short keys separated by dots.
   
   Usage is for Object identifiers in the Object Manager, or UnitIDs.
@@ -30,7 +29,7 @@ ________________________________________________________________________
   It is similar to a UNIX-type glob expression.
 */
 
-mClass(Basic) CompoundKey
+mExpClass(Basic) CompoundKey
 {
 public:
 

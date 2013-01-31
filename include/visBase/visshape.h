@@ -42,7 +42,7 @@ public: \
     void		   set##clssname(clssname*)
 
 
-mClass(visBase) Shape : public VisualObject
+mExpClass(visBase) Shape : public VisualObject
 {
 public:
     void			turnOn(bool);
@@ -82,7 +82,7 @@ protected:
 };
 
 
-mClass(visBase) VertexShape : public Shape
+mExpClass(visBase) VertexShape : public Shape
 {
 public:
     static VertexShape*	create()
@@ -166,7 +166,7 @@ protected:
 #undef mDeclSetGetItem
     
     
-mClass(visBase) IndexedShape : public VertexShape
+mExpClass(visBase) IndexedShape : public VertexShape
 {
 public:
     

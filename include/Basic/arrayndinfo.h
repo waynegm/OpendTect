@@ -16,12 +16,11 @@ ________________________________________________________________________
 #include "gendefs.h"
 
 /*!
-\ingroup Basic
 \brief Contains the information about the size of ArrayND, and
 in what order the data is stored (if accessable via a pointer).
 */
 
-mClass(Basic) ArrayNDInfo
+mExpClass(Basic) ArrayNDInfo
 {
 public:
 
@@ -64,12 +63,11 @@ inline bool operator !=( const ArrayNDInfo& a1, const ArrayNDInfo& a2 )
 
 
 /*!
-\ingroup Basic
 \brief Contains the information about the size of Array1D, and
 in what order the data is stored (if accessable via a pointer).
 */
 
-mClass(Basic) Array1DInfo : public ArrayNDInfo
+mExpClass(Basic) Array1DInfo : public ArrayNDInfo
 {
 public:
 
@@ -89,12 +87,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Contains the information about the size of Array2D, and
 in what order the data is stored (if accessable via a pointer).
 */
 
-mClass(Basic) Array2DInfo : public ArrayNDInfo
+mExpClass(Basic) Array2DInfo : public ArrayNDInfo
 {
 public:
 
@@ -113,12 +110,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Contains the information about the size of Array3D, and
 in what order the data is stored (if accessable via a pointer).
 */
 
-mClass(Basic) Array3DInfo : public ArrayNDInfo
+mExpClass(Basic) Array3DInfo : public ArrayNDInfo
 {
 public:
 
@@ -137,11 +133,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Implementation of Array1DInfo.
 */
 
-mClass(Basic) Array1DInfoImpl : public Array1DInfo
+mExpClass(Basic) Array1DInfoImpl : public Array1DInfo
 {
 public:
     Array1DInfo*	clone() const
@@ -162,11 +157,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Implementation of Array2DInfo.
 */
 
-mClass(Basic) Array2DInfoImpl : public Array2DInfo
+mExpClass(Basic) Array2DInfoImpl : public Array2DInfo
 {
 public:
 
@@ -190,11 +184,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Implementation of Array3DInfo.
 */
 
-mClass(Basic) Array3DInfoImpl : public Array3DInfo
+mExpClass(Basic) Array3DInfoImpl : public Array3DInfo
 {
 public:
 
@@ -218,11 +211,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Implementation of ArrayNDInfo.
 */
 
-mClass(Basic) ArrayNDInfoImpl : public ArrayNDInfo
+mExpClass(Basic) ArrayNDInfoImpl : public ArrayNDInfo
 {
 public:
 

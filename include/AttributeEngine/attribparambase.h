@@ -22,8 +22,7 @@ namespace Attrib
 {
 
 /*!
-  \ingroup AttributeEngine
-  \brief A parameter that is used by an attribute.
+\brief A parameter that is used by an attribute.
   
   Each attribute has a definition string that defines how the attribute is
   computed. The definition string has the format:
@@ -33,7 +32,7 @@ namespace Attrib
   The parameter thus has a key (e.g. param1) and one or more associated values.
 */
 
-mClass(AttributeEngine) Param
+mExpClass(AttributeEngine) Param
 {
 public:
     				Param(const char* key);
@@ -88,11 +87,10 @@ protected:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Attribute Value Parameter
+\brief Attribute Value Parameter
 */
 
-mClass(AttributeEngine) ValParam : public Param
+mExpClass(AttributeEngine) ValParam : public Param
 {
 public:
     				ValParam(const char* key,DataInpSpec*);

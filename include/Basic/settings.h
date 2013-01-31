@@ -18,7 +18,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Settings class holds the user settings. It is an IOPar.
 
   The common() settings are basic, global user settings.
@@ -32,7 +31,7 @@ ________________________________________________________________________
   filename.
 */
 
-mClass(Basic) Settings : public IOPar
+mExpClass(Basic) Settings : public IOPar
 {
 public:
 

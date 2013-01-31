@@ -31,11 +31,10 @@ namespace EM
 class Fault3D;
 
 /*!
-\ingroup EarthModel
 \brief 3D fault painter.
 */
 
-mClass(EarthModel) Fault3DPainter : public CallBacker
+mExpClass(EarthModel) Fault3DPainter : public CallBacker
 {
 public:
     			Fault3DPainter(FlatView::Viewer&,const EM::ObjectID&);

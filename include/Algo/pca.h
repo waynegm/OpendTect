@@ -24,7 +24,6 @@ class SequentialTask;
 class PCACovarianceCalculator;
 
 /*!
-\ingroup Algo
 \brief Performs Pricipal Component Analysis on samples with N variables.
   
   Example of usage:
@@ -70,7 +69,7 @@ class PCACovarianceCalculator;
   \endcode
 */
 
-mClass(Algo) PCA
+mExpClass(Algo) PCA
 {
 public:
     					PCA( int nrvars );

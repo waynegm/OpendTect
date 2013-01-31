@@ -25,7 +25,7 @@ namespace visBase
 class ThumbWheelMess;
     
     
-mClass(visBase) ThumbWheel : public DataObject
+mExpClass(visBase) ThumbWheel : public DataObject
 {
 public:
     static ThumbWheel*		create()

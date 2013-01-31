@@ -32,12 +32,11 @@ inline bool filterUndef(const ValueSeries<T>& input,ValueSeries<T>& output,int);
 
 
 /*!
-\ingroup Basic
 \brief Class that handles undefvalues in arrays that are in a format described
 by a BinDataDesc.
 */
 
-mClass(Basic) UndefArrayHandler
+mExpClass(Basic) UndefArrayHandler
 {
 public:
 		UndefArrayHandler(const BinDataDesc& desc);

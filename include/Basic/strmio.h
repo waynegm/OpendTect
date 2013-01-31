@@ -20,11 +20,10 @@ ________________________________________________________________________
 class IOPar;
 
 /*!
-\ingroup Basic
 \brief Class for simple ascii/binary stream read/write.
 */
 
-mClass(Basic) StreamIO
+mExpClass(Basic) StreamIO
 {
 public:
     				StreamIO( std::ostream& s,bool binary )

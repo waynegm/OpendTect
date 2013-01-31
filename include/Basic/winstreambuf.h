@@ -22,7 +22,6 @@ namespace std
 {
 
 /*!
-\ingroup Basic
 \brief Adapter to seek in filebuffers on win64.
 
   Usage like:
@@ -34,7 +33,7 @@ namespace std
   Only change is: feek -> _fseeki64
 */
 
-class winfilebuf : public filebuf
+mClass(Basic) winfilebuf : public filebuf
 {
 public:
 winfilebuf( const char* fnm, ios_base::openmode om )
@@ -97,11 +96,10 @@ od_int64    realpos_;
 
 
 /*!
-\ingroup Basic
 \brief Adapter for input streams on win64.
 */
 
-class winifstream : public istream
+mClass(Basic) winifstream : public istream
 {
 public:
 
@@ -131,11 +129,10 @@ bool is_open()
 
 
 /*!
-\ingroup Basic
 \brief Adapter for output streams on win64.
 */
 
-class winofstream : public ostream
+mClass(Basic) winofstream : public ostream
 {
 public:
 

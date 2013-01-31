@@ -19,8 +19,11 @@ class uiTextEdit;
 class uiFileInput;
 namespace Attrib { class DescSet; }
 
+/*!
+\brief 
+*/
 
-mClass(uiAttributes) uiGetFileForAttrSet : public uiDialog
+mExpClass(uiAttributes) uiGetFileForAttrSet : public uiDialog
 {
 public:
 			uiGetFileForAttrSet(uiParent*,bool isads,bool is2d);

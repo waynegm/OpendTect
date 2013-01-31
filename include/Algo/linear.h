@@ -19,12 +19,11 @@ namespace Geom { template <class T> class Point2D; }
 
 
 /*!
-\ingroup Algo
 \brief Steepness and intercept.
 */
 
 template <class T>
-class LineParameters : public MathFunction<T,T>
+mClass(Algo) LineParameters : public MathFunction<T,T>
 {
 public:
 		LineParameters( T i0=0, T i1=0 )
@@ -46,12 +45,11 @@ typedef LineParameters<float> LinePars;
 
 
 /*!
-\ingroup Algo
 \brief Steepnesses and intercept.
 */
 
 template <class T>
-class PlaneParameters : public MathXYFunction<T,T>
+mClass(Algo) PlaneParameters : public MathXYFunction<T,T>
 {
 public:
 		PlaneParameters( T i0=0, T i1=0, T i2=0 )
@@ -70,11 +68,10 @@ typedef PlaneParameters<float> PlanePars;
 
 
 /*!
-\ingroup Algo
 \brief linear stats in 2D.
 */
 
-mClass(Algo) LinStats2D
+mExpClass(Algo) LinStats2D
 {
 public:
 		LinStats2D() : corrcoeff(0)	{}
@@ -89,11 +86,10 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief linear stats in 3D.
 */
 
-mClass(Algo) LinStats3D
+mExpClass(Algo) LinStats3D
 {
 public:
 		LinStats3D() : corrcoeff(0)	{}

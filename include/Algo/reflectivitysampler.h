@@ -20,12 +20,11 @@ ________________________________________________________________________
 namespace Fourier { class CC; };
 
 /*!
-\ingroup Algo
 \brief Takes a ReflectivityModel and samples it in either frequency or
 time domain.
 */
 
-mClass(Algo) ReflectivitySampler : public ParallelTask
+mExpClass(Algo) ReflectivitySampler : public ParallelTask
 {
 public:
     			ReflectivitySampler(const ReflectivityModel&,

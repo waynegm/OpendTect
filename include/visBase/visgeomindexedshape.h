@@ -34,10 +34,11 @@ namespace visBase
 class Coordinates;
 class Normals;
 class TextureCoords;
+class ForegroundLifter;
 
 /*!Visualisation for Geometry::IndexedShape. */
 
-mClass(visBase) GeomIndexedShape : public VisualObjectImpl
+mExpClass(visBase) GeomIndexedShape : public VisualObjectImpl
 {
 public:
     static GeomIndexedShape*	create()
@@ -81,13 +82,15 @@ public:
     void			setMaterial(Material*);
     void			updateMaterialFrom(const Material*);
 
+    void			turnOnForegroundLifter(bool);
+
 protected:
 				~GeomIndexedShape();
     void			reClip();
     void			reMap(TaskRunner*);
     void			matChangeCB(CallBacker*);
 
-    mClass(visBase)			ColTabMaterial
+    mExpClass(visBase)			ColTabMaterial
     {
     public:
 					ColTabMaterial();
@@ -123,6 +126,9 @@ protected:
     ObjectSet<const Geometry::IndexedGeometry>	fangeoms_;
 
     Geometry::IndexedShape*			shape_;
+    
+    ForegroundLifter*				lifter_;
+    SoSwitch*					lifterswitch_;   
 };
 
 };

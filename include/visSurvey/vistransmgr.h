@@ -24,7 +24,7 @@ namespace visSurvey
 
 class Scene;
 
-mClass(visSurvey) SceneTransformManager
+mExpClass(visSurvey) SceneTransformManager
 {
 public:
     			SceneTransformManager()

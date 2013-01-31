@@ -22,11 +22,10 @@ namespace Threads { class Mutex; }
 
 
 /*!
-\ingroup Algo
 \brief Volume estimate for implicit body in meter.
 */
 
-mClass(Algo) BodyVolumeCalculator: public ParallelTask
+mExpClass(Algo) BodyVolumeCalculator: public ParallelTask
 {
 public:
     			BodyVolumeCalculator(const CubeSampling& cs,

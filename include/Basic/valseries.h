@@ -23,14 +23,13 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Interface to a series of values.
 
   If the values are in contiguous memory, arr() should return non-null. 
 */
 
 template <class T>
-class ValueSeries
+mClass(Basic) ValueSeries
 {
 public:
 
@@ -64,12 +63,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief ValueSeries of offsets.
 */
 
 template <class T>
-class OffsetValueSeries : public ValueSeries<T>
+mClass(Basic) OffsetValueSeries : public ValueSeries<T>
 {
 public:
     inline		OffsetValueSeries( ValueSeries<T>& src, od_int64 off );
@@ -101,14 +99,13 @@ protected:
 { return typeid(RT)==typeid(AT) ? (RT*) ptr_ : (RT*) 0;}
 
 /*!
-\ingroup Basic
 \brief Series of values from a pointer to some kind of array.
   If a more advanced conversion between the return type and the array type is
   wanted, use ConvValueSeries instead.
 */
 
 template <class RT, class AT>
-class ArrayValueSeries : public ValueSeries<RT>
+mClass(Basic) ArrayValueSeries : public ValueSeries<RT>
 {
 public:
 
@@ -149,12 +146,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Valueseries that allocates its data in smaller chunks (default is 512MB).By doing this, it performs better in environments where the memory is fragmented(i.e. windows 32 bit).
 */
 
 template <class RT, class AT>
-class MultiArrayValueSeries : public ValueSeries<RT>
+mClass(Basic) MultiArrayValueSeries : public ValueSeries<RT>
 {
 public:
     		MultiArrayValueSeries(od_int64);
@@ -189,12 +185,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Gets ValueSeries.
 */
 
 template <class T>
-class ValueSeriesGetAll : public ParallelTask
+mClass(Basic) ValueSeriesGetAll : public ParallelTask
 {
 public:
 		ValueSeriesGetAll(const ValueSeries<T>& from,

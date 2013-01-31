@@ -46,7 +46,6 @@ typedef void (*StaticCallBackFunction)(CallBacker*);
 
 
 /*!
-\ingroup Basic
 \brief CallBacks object-oriented (object + method).
   
   CallBack is nothing more than a function pointer + optionally an object to
@@ -55,7 +54,7 @@ typedef void (*StaticCallBackFunction)(CallBacker*);
   CallBacker* (usually 'this').
 */
 
-mClass(Basic) CallBack
+mExpClass(Basic) CallBack
 {
 public:
 			CallBack( CallBacker* o=0, CallBackFunction f=0 )
@@ -86,11 +85,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief TypeSet of CallBacks with a few extras.
 */
 
-mClass(Basic) CallBackSet : public TypeSet<CallBack>
+mExpClass(Basic) CallBackSet : public TypeSet<CallBack>
 {
 public:
 
@@ -107,11 +105,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Interface class for Notifier. See comments there.
 */
 
-mClass(Basic) NotifierAccess
+mExpClass(Basic) NotifierAccess
 {
 
     friend class	NotifyStopper;
@@ -142,7 +139,6 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Class to help setup a callback handling.
   
   What we have discovered is that the two things:
@@ -178,7 +174,7 @@ protected:
 */
 
 template <class T>
-class Notifier : public NotifierAccess
+mClass(Basic) Notifier : public NotifierAccess
 {
 public:
 
@@ -195,11 +191,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief To be able to send and/or receive CallBacks, inherit from this class.
 */
 
-mClass(Basic) CallBacker
+mExpClass(Basic) CallBacker
 {
 public:
 				CallBacker();
@@ -232,7 +227,6 @@ detachCB( notifier, clss, func )
 
 
 /*!
-\ingroup Basic
 \brief Capsule class to wrap any class into a CallBacker.
   
   Callback functions are defined as:
@@ -244,7 +238,7 @@ detachCB( notifier, clss, func )
 */
 
 template <class T>
-class CBCapsule : public CallBacker
+mClass(Basic) CBCapsule : public CallBacker
 {
 public:
     CBCapsule( T d, CallBacker* c )
@@ -292,7 +286,6 @@ CallBacker* cber = cb##caps->caller
 
 
 /*!
-\ingroup Basic
 \brief Notifier with automatic capsule creation.
   
   When non-callbacker data needs to be passed, you can put it in a capsule.
@@ -305,7 +298,7 @@ CallBacker* cber = cb##caps->caller
 */
 
 template <class T,class C>
-class CNotifier : public NotifierAccess
+mClass(Basic) CNotifier : public NotifierAccess
 {
 public:
 
@@ -330,7 +323,6 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Temporarily disables a Notifier.
   
   Notifiers can be disabled. To do that temporarily, use NotifyStopper.
@@ -344,7 +336,7 @@ public:
   }
 */
 
-mClass(Basic) NotifyStopper 
+mExpClass(Basic) NotifyStopper 
 {
 public:
 			NotifyStopper( NotifierAccess& na ) 

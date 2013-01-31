@@ -19,7 +19,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Reference Attribute
 
 Provides the reference indication at every position :
@@ -48,7 +47,7 @@ Outputs 2D:
 </pre>
 */
 
-mClass(Attributes) Reference: public Provider
+mExpClass(Attributes) Reference: public Provider
 {
 public:
     static void		initClass();

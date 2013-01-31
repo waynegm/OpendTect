@@ -376,11 +376,9 @@ bool uiViewer3DMgr::add3DViewer( const uiMenuHandler* menu,
 
     //set viewer angle.
     const ui3DViewer*  sovwr = ODMainWin()->sceneMgr().getSoViewer( sceneid );
-    const Coord3 campos = sovwr->getCameraPosition();
-    Coord3 displaycampos;
-    viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos,
-								displaycampos );
-    const BinID dir0 = SI().transform(displaycampos)-SI().transform(pickedpos);
+    Coord3 campos = sovwr->getCameraPosition();
+    viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos );
+    const BinID dir0 = SI().transform(campos)-SI().transform(pickedpos);
     const Coord dir( dir0.inl, dir0.crl );
     viewer->displaysOnPositiveSide( viewer->getBaseDirection().dot(dir)>0 );
     
@@ -485,7 +483,7 @@ uiFlatViewMainWin* uiViewer3DMgr::create2DViewer( const BufferString& title,
 }
 
 
-uiViewer2DMainWin* uiViewer3DMgr::createMultiGather2DViewer( 
+uiStoredViewer2DMainWin* uiViewer3DMgr::createMultiGather2DViewer( 
 				    const visSurvey::PreStackDisplay& psv )
 {
     const MultiID mid = psv.getMultiID();
@@ -501,7 +499,8 @@ uiViewer2DMainWin* uiViewer3DMgr::createMultiGather2DViewer(
 	title += ioobj->name();
     title += "]";
 
-    uiViewer2DMainWin* viewwin = new uiViewer2DMainWin( ODMainWin(), title ); 
+    uiStoredViewer2DMainWin* viewwin =
+	new uiStoredViewer2DMainWin( ODMainWin(), title ); 
     viewwin->show();
     const StepInterval<int>& trcrg = psv.getTraceRange( psv.getBinID() );
     viewwin->init( mid, psv.getDataPackID(), psv.isOrientationInline(), trcrg,
@@ -515,7 +514,7 @@ uiViewer2DMainWin* uiViewer3DMgr::createMultiGather2DViewer(
 
 void uiViewer3DMgr::viewer2DSelDataCB( CallBacker* cb )
 {
-    mDynamicCastGet( uiViewer2DMainWin*, win, cb )
+    mDynamicCastGet( uiStoredViewer2DMainWin*, win, cb )
     if ( !win )
 	{ pErrMsg( "Can not find viewer" ); return; }
 

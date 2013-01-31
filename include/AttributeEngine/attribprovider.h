@@ -42,11 +42,10 @@ class Desc;
 class ProviderTask;
 
 /*!
-  \ingroup AttributeEngine
-  \brief Provides the actual output to ...
+\brief Provides the actual output to ...
 */
 
-mClass(AttributeEngine) Provider
+mExpClass(AttributeEngine) Provider
 {				mRefCountImpl(Provider);
 
     friend class		ProviderTask;

@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "periodicvalue.h"
 
 /*!
-\ingroup Algo
 \brief Make any sampled series comply with MathFunction.
 
   If the sampled values are periodic (i.e. phase), set the periodic flag and
@@ -24,7 +23,7 @@ ________________________________________________________________________
 */
 
 template <class RT,class T>
-class SampledFunction : public MathFunction<RT,RT>
+mClass(Algo) SampledFunction : public MathFunction<RT,RT>
 {
 public:
 				SampledFunction( bool periodic_= false )
@@ -88,12 +87,11 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Implementation for array-type of SampledFunction.
 */
 
 template <class RT, class T>
-class SampledFunctionImpl : public SampledFunction<RT,T>
+mClass(Algo) SampledFunctionImpl : public SampledFunction<RT,T>
 {
 public:
 			SampledFunctionImpl(const T& idxabl,int sz,

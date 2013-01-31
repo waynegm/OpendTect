@@ -19,12 +19,11 @@ ________________________________________________________________________
 #include <math.h>
 
 /*!
-\ingroup Algo
 \brief (Closed) sequence of connected 2-D coordinates.
 */
 
 template <class T>
-class ODPolygon
+mClass(Algo) ODPolygon
 {
 public:
 		ODPolygon()

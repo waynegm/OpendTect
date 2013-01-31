@@ -19,11 +19,10 @@ namespace OD
 {
 
 /*!
-\ingroup Basic
 \brief Class for Red, Green, Blue image.
 */
 
-mClass(Basic) RGBImage
+mExpClass(Basic) RGBImage
 {
 public:
     virtual			~RGBImage()			{}

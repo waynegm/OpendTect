@@ -18,11 +18,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief A reflectivity spike.
 */
 
-class ReflectivitySpike
+mClass(Basic) ReflectivitySpike
 {
 public:
     			ReflectivitySpike()

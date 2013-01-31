@@ -19,11 +19,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Zip Utilities
 */
 
-mClass(Basic) ZipUtils
+mExpClass(Basic) ZipUtils
 {
 public:
 				ZipUtils(const char* filelistnm=0);
@@ -75,12 +74,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief It is an Executor class which compresses files into zip format but user
 should not use it directly instead use ZipUtils::makeZip.
 */
 
-mClass(Basic) Zipper : public Executor
+mExpClass(Basic) Zipper : public Executor
 {
 public:
 				Zipper(ZipHandler& zh)
@@ -104,13 +102,12 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief It is an Executor class which uncompresses files of zip format but user
 should instead use ZipUtils::UnZipArchive() to unzip complete archive or
 ZipUtils::UnZipFile() to take one file out of zip archive.
 */
 
-mClass(Basic) UnZipper : public Executor
+mExpClass(Basic) UnZipper : public Executor
 {
 public:
 				UnZipper(ZipHandler& zh)

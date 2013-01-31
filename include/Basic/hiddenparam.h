@@ -18,7 +18,6 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Workaround manager when you cannot add class members to a class due to
 binary compability issues.
 
@@ -49,7 +48,7 @@ binary compability issues.
 */
 
 template <class O, class V>
-class HiddenParam 
+mClass(Basic) HiddenParam 
 {
 public:
     		HiddenParam( const V& def )

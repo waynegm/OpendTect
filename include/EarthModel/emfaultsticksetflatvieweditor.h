@@ -24,11 +24,10 @@ namespace EM
 {
 
 /*!
-\ingroup EarthModel
 \brief %Fault stick set flat view editor.
 */
 
-mClass(EarthModel) FaultStickSetFlatViewEditor : public CallBacker
+mExpClass(EarthModel) FaultStickSetFlatViewEditor : public CallBacker
 {
 public:
     			FaultStickSetFlatViewEditor(FlatView::AuxDataEditor*);

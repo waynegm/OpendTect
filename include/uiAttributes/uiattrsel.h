@@ -30,8 +30,11 @@ class uiListBox;
 class uiRadioButton;
 class uiLabeledComboBox;
 
+/*!
+\brief User interface for attribute selection data.
+*/
 
-mClass(uiAttributes) uiAttrSelData
+mExpClass(uiAttributes) uiAttrSelData
 {
 public:
 
@@ -57,22 +60,22 @@ protected:
 };
 
 
-/*! \brief UI element for selection of Attributes from an attribute set
+/*!
+\brief User Interface (UI) element for selection of Attributes from an
+attribute set.
 
-This dialog gets an attribute ID from the set. It can be used to select
-an attribute or NLA output. When it is used to select the input for
-another attribute, you'll need to specify the attrib ID of that attribute as
-'ignoreid'.
-Because stored cubes can also be considered attributes, the user can also
-select any cube, which is then automatically added to the set.
-
+  This dialog gets an attribute ID from the set. It can be used to select an
+  attribute or NLA output. When it is used to select the input for another
+  attribute, you'll need to specify the attrib ID of that attribute as
+  'ignoreid'. Because stored cubes can also be considered attributes, the user
+  can also select any cube, which is then automatically added to the set.
 */
 
-mClass(uiAttributes) uiAttrSelDlg : public uiDialog
+mExpClass(uiAttributes) uiAttrSelDlg : public uiDialog
 {
 public:
 
-    mClass(uiAttributes) Setup
+    mExpClass(uiAttributes) Setup
     {
     public:
 		Setup( const char* txt )
@@ -147,14 +150,14 @@ protected:
 };
 
 
-/*!\brief ui element for storing attribute desc selection.
+/*!
+\brief User interface element for storing attribute desc selection.
 
-It can be used to select an attribute or the input for an attribute. In the
-latter case you must provide the attrib desc and the input number.
-
+  It can be used to select an attribute or the input for an attribute. In the
+  latter case you must provide the attrib desc and the input number.
 */
 
-mClass(uiAttributes) uiAttrSel : public uiIOSelect
+mExpClass(uiAttributes) uiAttrSel : public uiIOSelect
 {
 public:
 			uiAttrSel(uiParent*,const Attrib::DescSet&,
@@ -215,9 +218,12 @@ protected:
 };
 
 
-/*!\brief ui element for getting attribute with both real and imag part. */
+/*!
+\brief User interface element for getting attribute with both real and
+imaginary part.
+*/
 
-mClass(uiAttributes) uiImagAttrSel : public uiAttrSel
+mExpClass(uiAttributes) uiImagAttrSel : public uiAttrSel
 {
 public:
 			uiImagAttrSel( uiParent* p, const char* txt,

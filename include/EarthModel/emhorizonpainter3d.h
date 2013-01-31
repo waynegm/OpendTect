@@ -26,11 +26,10 @@ namespace EM
 class Horizon3D;
 
 /*!
-\ingroup EarthModel
 \brief 3D horizon painter
 */
 
-mClass(EarthModel) HorizonPainter3D : public CallBacker
+mExpClass(EarthModel) HorizonPainter3D : public CallBacker
 {
 public:
     			HorizonPainter3D(FlatView::Viewer&,const EM::ObjectID&);

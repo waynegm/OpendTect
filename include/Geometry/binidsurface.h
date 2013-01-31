@@ -25,7 +25,7 @@ namespace Geometry
 {
 
 
-mClass(Geometry) BinIDSurface : public ParametricSurface
+mExpClass(Geometry) BinIDSurface : public ParametricSurface
 {
 public:
     			BinIDSurface(const BinID& step);
@@ -51,6 +51,8 @@ public:
     bool		removeRow(int,int);
     bool		removeCol(int,int);
 
+    StepInterval<int>	rowRange() const;
+    StepInterval<int>	rowRange(int col) const;
     StepInterval<int>	colRange() const;
     StepInterval<int>	colRange(int row) const;
 

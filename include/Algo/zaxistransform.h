@@ -27,7 +27,6 @@ class TaskRunner;
 namespace ZDomain { class Def; class Info; }
 
 /*!
-\ingroup Algo
 \brief Base class for z-axis transforms.
 
   ZAxisTransform is the base class for z stretching in different ways.
@@ -35,7 +34,7 @@ namespace ZDomain { class Def; class Info; }
   The various transforms can be retrieved from factory ZATF().
 */
 
-mClass(Algo) ZAxisTransform
+mExpClass(Algo) ZAxisTransform
 { mRefCountImpl(ZAxisTransform);
 public:
 				mDefineFactoryInClass(ZAxisTransform,factory);
@@ -123,11 +122,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Samples Z-axis transformed data
 */
 
-mClass(Algo) ZAxisTransformSampler
+mExpClass(Algo) ZAxisTransformSampler
 {
 public:
     				ZAxisTransformSampler(const ZAxisTransform&,

@@ -22,7 +22,7 @@ class BufferString;
 class BufferStringSet;
 template <class T> class ObjectSet;
 
-mClass(General) UserInputObj
+mExpClass(General) UserInputObj
 {
 public:
 
@@ -81,7 +81,7 @@ protected:
 
 
 template<class T>
-class UserInputObjImpl : public UserInputObj
+mClass(General) UserInputObjImpl : public UserInputObj
 {
 public:
                         UserInputObjImpl()

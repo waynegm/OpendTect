@@ -20,11 +20,10 @@ namespace Pick	{ class Set; }
 namespace EM	{ class Horizon3D; }
 
 /*!
-\ingroup EarthModel
 \brief Calculate volume between horizon and polygon.
 */
 
-mClass(EarthModel) Poly2HorVol
+mExpClass(EarthModel) Poly2HorVol
 {
 public:
 

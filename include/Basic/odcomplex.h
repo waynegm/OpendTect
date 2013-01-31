@@ -30,12 +30,11 @@ namespace Values
 {
 
 /*!
-\ingroup Basic
 \brief Undefined float_complex.
 */
 
 template<>
-class Undef<float_complex>
+mClass(Basic) Undef<float_complex>
 {
 public:
 

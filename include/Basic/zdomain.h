@@ -35,11 +35,10 @@ mGlobal(Basic) void		setTime(IOPar&);
 
 
 /*!
-\ingroup Basic
 \brief Definition of z-domain.
 */
 
-mClass(Basic) Def
+mExpClass(Basic) Def
 {
 public:
 
@@ -80,11 +79,10 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Information of z-domain.
 */
 
-mClass(Basic) Info
+mExpClass(Basic) Info
 {
 public:
     			Info(const Def&);

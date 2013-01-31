@@ -22,10 +22,12 @@ class uiVisPartServer;
 namespace visSurvey { class PointSetDisplay; }
 
 
-/*Implementation of DataPointSetDisplayMgr that enables display of
-  datapointsets in 3d visualization scenes. */
+/*!
+\brief Implementation of DataPointSetDisplayMgr that enables display of
+datapointsets in 3d visualization scenes.
+*/
 
-mClass(uiVis) uiVisDataPointSetDisplayMgr : public DataPointSetDisplayMgr
+mExpClass(uiVis) uiVisDataPointSetDisplayMgr : public DataPointSetDisplayMgr
 {
 public:
     		uiVisDataPointSetDisplayMgr(uiVisPartServer&);
@@ -52,7 +54,7 @@ public:
     void	getIconInfo(BufferString& fnm,BufferString& tooltip) const;
 
     CNotifier<uiVisDataPointSetDisplayMgr,int>	treeToBeAdded;
-    class DisplayInfo
+    mClass(uiVis) DisplayInfo
     {
     public:
 	TypeSet<int>		sceneids_;

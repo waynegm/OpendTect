@@ -30,11 +30,10 @@ class EMManager;
 class FaultAuxData;
 
 /*!
-\ingroup EarthModel
 \brief 3D FaultGeometry.
 */
 
-mClass(EarthModel) Fault3DGeometry : public FaultGeometry
+mExpClass(EarthModel) Fault3DGeometry : public FaultGeometry
 {
 public:
     			Fault3DGeometry(Surface&);
@@ -54,6 +53,7 @@ public:
 	    			   bool addtohistory);
     
     bool		areSticksVertical(const SectionID&) const;
+    bool		areEditPlanesMostlyCrossline() const;
 
     Geometry::FaultStickSurface*
 			sectionGeometry(const SectionID&);
@@ -72,11 +72,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief 3D Fault
 */
 
-mClass(EarthModel) Fault3D : public Fault
+mExpClass(EarthModel) Fault3D : public Fault
 { mDefineEMObjFuncs( Fault3D );
 public:
     Fault3DGeometry&		geometry();
@@ -96,11 +95,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Ascii I/O for Fault.
 */
 
-mClass(EarthModel) FaultAscIO : public Table::AscIO
+mExpClass(EarthModel) FaultAscIO : public Table::AscIO
 {
 public:
     				FaultAscIO( const Table::FormatDesc& fd )

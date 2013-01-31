@@ -23,11 +23,10 @@ namespace EM
 class Surface;
 
 /*!
-\ingroup EarthModel
 \brief Data interesting for Surface I/O.
 */
 
-mClass(EarthModel) SurfaceIOData
+mExpClass(EarthModel) SurfaceIOData
 {
 public:
     			~SurfaceIOData()	{ clear(); }
@@ -52,11 +51,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief Surface I/O data selection
 */
 
-mClass(EarthModel) SurfaceIODataSelection
+mExpClass(EarthModel) SurfaceIODataSelection
 {
 public:
 

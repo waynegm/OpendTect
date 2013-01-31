@@ -23,11 +23,10 @@ namespace Pos
 {
 
 /*!
-\ingroup Algo
 \brief Set of Filters. Owns the Filters.
 */
 
-mClass(Algo) FilterSet : public virtual Filter
+mExpClass(Algo) FilterSet : public virtual Filter
 {
 public:
 
@@ -77,11 +76,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief 3D FilterSet
 */
 
-mClass(Algo) FilterSet3D : public FilterSet
+mExpClass(Algo) FilterSet3D : public FilterSet
 		  , public Filter3D
 {
 public:
@@ -95,11 +93,10 @@ public:
 
 
 /*!
-\ingroup Algo
 \brief 2D FilterSet
 */
 
-mClass(Algo) FilterSet2D : public FilterSet
+mExpClass(Algo) FilterSet2D : public FilterSet
 		  , public Filter2D
 {
 public:

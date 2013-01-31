@@ -21,7 +21,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Energy Attribute
 
 Calculates the squared sum of the gate's samples divided by the number of
@@ -42,7 +41,7 @@ if Gradient is selected outputs will be : grad(Energy), grad(SQRT(Energy)), ...
 </pre>
 */
 
-mClass(Attributes) Energy: public Provider
+mExpClass(Attributes) Energy: public Provider
 {
 public:
     static void		initClass();

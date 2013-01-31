@@ -18,7 +18,6 @@ namespace std
 {
 
 /*!
-\ingroup Basic
 \brief Adapter to use a fixed buffer as a stream.
 
   Usage like:
@@ -27,10 +26,9 @@ namespace std
   std::istream strm( &fsb );
 
   Tested for istream with char* only.
-
 */
 
-class fixedstreambuf : public streambuf
+mClass(Basic) fixedstreambuf : public streambuf
 {
 public:
 

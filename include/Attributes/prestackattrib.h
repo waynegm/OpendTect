@@ -28,7 +28,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief "Pre-Stack Attribute"
 
   Outputs a standard attribute from pre-stack data.
@@ -48,7 +47,7 @@ namespace Attrib
 </pre>
 */
     
-mClass(Attributes) PSAttrib : public Provider
+mExpClass(Attributes) PSAttrib : public Provider
 {
 public:
 

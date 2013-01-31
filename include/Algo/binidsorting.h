@@ -18,13 +18,12 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Algo
 \brief BinID sorting parameters
 
   Note that in 2D, inl == line number, crl == trace number.
 */
 
-mClass(Algo) BinIDSorting
+mExpClass(Algo) BinIDSorting
 {
 public:
     			BinIDSorting( bool is2d )
@@ -62,11 +61,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Analyses whether input BinIDs are sorted.
 */
 
-mClass(Algo) BinIDSortingAnalyser
+mExpClass(Algo) BinIDSortingAnalyser
 {
 public:
     			BinIDSortingAnalyser(bool is2d);

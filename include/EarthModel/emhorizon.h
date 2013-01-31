@@ -25,11 +25,10 @@ namespace EM
 class EMManager;
 
 /*!
-\ingroup EarthModel
 \brief Horizon RowColSurfaceGeometry
 */
 
-mClass(EarthModel) HorizonGeometry : public RowColSurfaceGeometry
+mExpClass(EarthModel) HorizonGeometry : public RowColSurfaceGeometry
 {
 protected:
     				HorizonGeometry( Surface& surf )
@@ -38,11 +37,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Horizon Surface
 */
 
-mClass(EarthModel) Horizon : public Surface
+mExpClass(EarthModel) Horizon : public Surface
 {
 public:
     virtual HorizonGeometry&		geometry()			= 0;

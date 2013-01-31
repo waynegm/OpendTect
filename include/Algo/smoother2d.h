@@ -19,12 +19,11 @@ ________________________________________________________________________
 #include "windowfunction.h"
 
 /*!
-\ingroup Algo
 \brief Smoothes a 2d signal with an operator.
 */
 
 template <class T>
-class Smoother2D : public Task
+mClass(Algo) Smoother2D : public Task
 {
 public:
 

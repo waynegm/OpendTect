@@ -21,13 +21,12 @@ namespace EM
 class Horizon;
 
 /*!
-\ingroup EarthModel
 \brief Z-transform that flattens a horizon. Everything else will also be
 flattened accordingly. In case of reverse faulting, the area between the two
 patches will not be included.
 */
 
-mClass(EarthModel) HorizonZTransform : public ZAxisTransform
+mExpClass(EarthModel) HorizonZTransform : public ZAxisTransform
 			 , public CallBacker
 {
 public:

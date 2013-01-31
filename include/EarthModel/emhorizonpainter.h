@@ -28,11 +28,10 @@ namespace EM
 {
 
 /*!
-\ingroup EarthModel
 \brief EM object painter callback data.
 */
   
-mClass(EarthModel) EMObjPainterCallbackData
+mExpClass(EarthModel) EMObjPainterCallbackData
 {
 public:
     		    EMObjPainterCallbackData() 
@@ -45,11 +44,10 @@ public:
     
 
 /*!
-\ingroup EarthModel
 \brief %Horizon painter
 */
 
-mClass(EarthModel) HorizonPainter : public CallBacker
+mExpClass(EarthModel) HorizonPainter : public CallBacker
 {
 public:
     			HorizonPainter(FlatView::Viewer&);

@@ -19,11 +19,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Compound key consisting of ints.
 */
 
-mClass(Basic) MultiID : public CompoundKey
+mExpClass(Basic) MultiID : public CompoundKey
 {
 public:
 			MultiID(const FixedString& s)

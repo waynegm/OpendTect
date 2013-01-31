@@ -38,7 +38,7 @@ class Seis2DDisplay;
 /*!\brief Display class for FaultStickSets
 */
 
-mClass(visSurvey) FaultStickSetDisplay : public visBase::VisualObjectImpl,
+mExpClass(visSurvey) FaultStickSetDisplay : public visBase::VisualObjectImpl,
 			     public SurveyObject
 {
 public:

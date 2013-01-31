@@ -17,12 +17,11 @@ ________________________________________________________________________
 template <class T> class StepInterval;
 
 /*!
-\ingroup Basic
 \brief Holds the fundamental sampling info: start and interval.
 */
 
 template <class T>
-class SamplingData
+mClass(Basic) SamplingData
 {
 public:
 

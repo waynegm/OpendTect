@@ -28,11 +28,10 @@ namespace PosInfo
 {
 
 /*!
-\ingroup Basic
 \brief Geometry ID. 
 */
 
-mClass(Basic) GeomID
+mExpClass(Basic) GeomID
 {
 public:
     		GeomID( int lsid=-1, int lineid=-1 )
@@ -54,13 +53,12 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Repository for 2D line geometries.
 
   You can access it using S2DPOS() (or PosInfo::POS2DAdmin()).
 */
 
-mClass(Basic) Survey2D : public CallBacker
+mExpClass(Basic) Survey2D : public CallBacker
 {
 public:
 
@@ -159,11 +157,10 @@ namespace Survey
 {
 
 /*!
-\ingroup Basic
 \brief Geometry of a 2D Line.
 */
 
-mClass(Basic) Geometry2D : public Geometry
+mExpClass(Basic) Geometry2D : public Geometry
 {
 public:
                    		Geometry2D();

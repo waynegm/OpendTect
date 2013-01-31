@@ -25,7 +25,6 @@ namespace Stats
 
 
 /*!
-\ingroup Algo
 \brief Setup for the Stats::RunCalc and Stats::ParallelCalc objects.
   
   medianEvenHandling() is tied to OD_EVEN_MEDIAN_AVERAGE, OD_EVEN_MEDIAN_LOWMID,
@@ -34,7 +33,7 @@ namespace Stats
   hi mid (>0), or avg the two middles. By default, hi mid is used.
 */
 
-mClass(Algo) CalcSetup
+mExpClass(Algo) CalcSetup
 { 
 public:
     			CalcSetup( bool weighted=false )
@@ -78,7 +77,6 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Base class to calculate mean, min, max, etc.. can be used either as
 running values (Stats::RunCalc) or in parallel (Stats::ParallelCalc).
   
@@ -97,7 +95,7 @@ running values (Stats::RunCalc) or in parallel (Stats::ParallelCalc).
 -*/
 
 template <class T>
-class BaseCalc
+mClass(Algo) BaseCalc
 {
 public:
 
@@ -177,7 +175,6 @@ bool BaseCalc<T>::isZero( const T& val ) const
 
 
 /*!
-\ingroup Algo
 \brief Calculates mean, min, max etc., as running values.
   
   The idea is that you simply add values and ask for a stat whenever needed.
@@ -189,7 +186,7 @@ bool BaseCalc<T>::isZero( const T& val ) const
 -*/
 
 template <class T>
-class RunCalc : public BaseCalc<T>
+mClass(Algo) RunCalc : public BaseCalc<T>
 {
 public:
     			RunCalc( const CalcSetup& s )
@@ -226,7 +223,6 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief RunCalc manager which buffers a part of the data.
  
   Allows calculating running stats on a window only. Once the window is full,
@@ -234,7 +230,7 @@ protected:
 */
 
 template <class T>
-class WindowedCalc
+mClass(Algo) WindowedCalc
 {
 public:
 			WindowedCalc( const CalcSetup& rcs, int sz )

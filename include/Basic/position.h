@@ -24,11 +24,10 @@ class RowCol;
 
 
 /*!
-\ingroup Basic
 \brief A cartesian coordinate in 2D space.
 */
 
-mClass(Basic) Coord : public Geom::Point2D<double>
+mExpClass(Basic) Coord : public Geom::Point2D<double>
 {
 public:
 		Coord( const Geom::Point2D<double>& p )
@@ -68,11 +67,10 @@ bool getDirectionStr( const Coord&, BufferString& );
 
 
 /*!
-\ingroup Basic
 \brief A cartesian coordinate in 3D space.
 */
 
-mClass(Basic) Coord3 : public Coord
+mExpClass(Basic) Coord3 : public Coord
 {
 public:
 
@@ -138,11 +136,10 @@ inline Coord3 operator*( double f, const Coord3& b )
 
 
 /*!
-\ingroup Basic
 \brief 2D coordinate and a value.
 */
 
-mClass(Basic) CoordValue
+mExpClass(Basic) CoordValue
 {
 public:
 		CoordValue( double x=0, double y=0, float v=mUdf(float) )
@@ -160,11 +157,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief 3D coordinate and a value.
 */
 
-mClass(Basic) Coord3Value
+mExpClass(Basic) Coord3Value
 {
 public:
     		Coord3Value( double x=0, double y=0, double z=0, 
@@ -183,12 +179,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Positioning in a seismic survey: inline/crossline. Most functions are
 identical to RowCol.
 */
 
-mClass(Basic) BinID
+mExpClass(Basic) BinID
 {
 public:
     inline			BinID(int r,int c);
@@ -238,12 +233,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Represents a trace position, with the geometry (2D or 3D) and position in
 the geometry.
 */
 
-class TraceID
+mClass(Basic) TraceID
 {
 public:
 				TraceID(const BinID& bid)
@@ -277,11 +271,10 @@ class BinIDValues;
 
 
 /*!
-\ingroup Basic
 \brief BinID and a value.
 */
 
-class BinIDValue
+mClass(Basic) BinIDValue
 {
 public:
 		BinIDValue( int inl=0, int crl=0, float v=mUdf(float) )
@@ -304,11 +297,10 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief BinID and values. If one of the values is Z, make it the first one.
 */
 
-mClass(Basic) BinIDValues
+mExpClass(Basic) BinIDValues
 {
 public:
 			BinIDValues( int inl=0, int crl=0, int n=2 )
@@ -351,12 +343,11 @@ namespace Values {
     
 
 /*!
-\ingroup Basic
 \brief Undefined Coord.
 */
 
 template<>
-class Undef<Coord>
+mClass(Basic) Undef<Coord>
 {
 public:
     static Coord	val()			{ return Coord::udf(); }
@@ -367,12 +358,11 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Undefined Coord3.
 */
 
 template<>
-class Undef<Coord3>
+mClass(Basic) Undef<Coord3>
 {
 public:
     static Coord3	val()			{ return Coord3::udf(); }

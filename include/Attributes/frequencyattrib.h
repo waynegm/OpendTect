@@ -33,7 +33,6 @@ namespace Attrib
 class DataHolder;
 
 /*!
-\ingroup Attributes
 \brief Frequency Attribute
   
   Calculates a number of attributes (see below) from the frequency domain
@@ -66,7 +65,7 @@ class DataHolder;
 </pre>
 */
 
-mClass(Attributes) Frequency : public Provider
+mExpClass(Attributes) Frequency : public Provider
 {
 public:
     static void			initClass();
@@ -123,7 +122,7 @@ protected:
     Array1DImpl<float_complex>*	timedomain_;
     Array1DImpl<float_complex>*	freqdomain_;
 
-    mClass(Attributes) FreqFunc : public FloatMathFunction
+    mExpClass(Attributes) FreqFunc : public FloatMathFunction
     {
     public:
 			FreqFunc(const ValueSeries<float>& func, int sz)

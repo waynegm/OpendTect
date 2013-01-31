@@ -19,7 +19,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief %Event attribute
   
   EventAttrib  singleevent = 
@@ -35,7 +34,7 @@ namespace Attrib
   Can optionally return the amplitude value at event exact position.
 */
 
-mClass(Attributes) Event : public Provider
+mExpClass(Attributes) Event : public Provider
 {
 public:
     static void			initClass();

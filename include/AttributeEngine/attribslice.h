@@ -21,15 +21,14 @@ namespace Attrib
 {
 
 /*!
-  \ingroup AttributeEngine
-  \brief Slice containing attribute values.
+\brief Slice containing attribute values.
   
   The sliceidx determines the position of the slice in the requested cube,
   see AttribSliceSet for details.    
 */
 
 
-mClass(AttributeEngine) Slice : public Array2DImpl<float>
+mExpClass(AttributeEngine) Slice : public Array2DImpl<float>
 { mRefCountImplNoDestructor(Slice);
 public:
 
@@ -45,8 +44,7 @@ protected:
 
 
 /*!
-  \ingroup AttributeEngine
-  \brief Set of attrib slices.
+\brief Set of attrib slices.
   
   The two array2d directions shall be filled following the CubeSampling
   convention. The slices will be in order of increasing inl, crl or Z.
@@ -54,7 +52,7 @@ protected:
   Slices can be null!
 */
 
-mClass(AttributeEngine) SliceSet : public ObjectSet<Slice>
+mExpClass(AttributeEngine) SliceSet : public ObjectSet<Slice>
 { mRefCountImpl(SliceSet);
 public:
 

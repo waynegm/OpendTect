@@ -22,7 +22,6 @@ namespace Attrib
 {
     
 /*!
-\ingroup Attributes
 \brief %Similarity Attribute
 
 Calculates the gates' distance between each other in hyperspace normalized
@@ -63,7 +62,7 @@ and if dip-browser chosen:
 </pre>
 */
 
-mClass(Attributes) Similarity : public Provider
+mExpClass(Attributes) Similarity : public Provider
 {
 public:
     static void			initClass();
@@ -132,7 +131,7 @@ protected:
     ObjectSet<const DataHolder>	inputdata_;
     const DataHolder*		steeringdata_;
 
-    mClass(Attributes) SimiFunc : public FloatMathFunction
+    mExpClass(Attributes) SimiFunc : public FloatMathFunction
     {
     public:
 				SimiFunc(const ValueSeries<float>& func, int sz)

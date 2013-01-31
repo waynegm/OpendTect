@@ -27,11 +27,10 @@ namespace Attrib
 class Desc; class DescSetup; class SelSpec;
 
 /*!
-  \ingroup AttributeEngine
-  \brief Set of attribute descriptions.
+\brief Set of attribute descriptions.
 */
 
-mClass(AttributeEngine) DescSet : public CallBacker
+mExpClass(AttributeEngine) DescSet : public CallBacker
 {
 public:
     			DescSet(bool is2d);

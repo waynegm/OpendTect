@@ -24,11 +24,10 @@ namespace EM
 class EMManager;
 
 /*!
-\ingroup EarthModel
 \brief FaultStickSet geometry.
 */
 
-mClass(EarthModel) FaultStickSetGeometry : public FaultGeometry
+mExpClass(EarthModel) FaultStickSetGeometry : public FaultGeometry
 {
 public:
     			FaultStickSetGeometry(Surface&);
@@ -86,11 +85,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Fault stick set.
 */
 
-mClass(EarthModel) FaultStickSet: public Fault
+mExpClass(EarthModel) FaultStickSet: public Fault
 { mDefineEMObjFuncs( FaultStickSet );
 public:
     FaultStickSetGeometry&		geometry();

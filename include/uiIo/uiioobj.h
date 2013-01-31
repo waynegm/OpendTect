@@ -19,12 +19,11 @@ class CtxtIOObj;
 
 
 /*!
-\ingroup uiIo
 \brief Dialog letting the user select an object.
 It returns an IOObj* after successful go().
 */
 
-mClass(uiIo) uiIOObj
+mExpClass(uiIo) uiIOObj
 {
 public:
 				uiIOObj( IOObj& i, bool silent=false )

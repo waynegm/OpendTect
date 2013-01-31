@@ -16,14 +16,13 @@ ________________________________________________________________________
 #include "ranges.h"
 
 /*!
-\ingroup Basic
 \brief Interface for classes that select on basis of a key.
 
   Some Selectors may be extensible: you can ask them to include a key value.
 */
 
 template <class T>
-class Selector
+mClass(Basic) Selector
 {
 public:
 
@@ -55,12 +54,11 @@ private:
 
 
 /*!
-\ingroup Basic
 \brief Selector selecting only a single value.
 */
 
 template <class T>
-class SingleSelector : public Selector<T>
+mClass(Basic) SingleSelector : public Selector<T>
 {
 public:
 
@@ -89,12 +87,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Selector based on range specification (an Interval).
 */
 
 template <class T>
-class RangeSelector : public Selector<T>
+mClass(Basic) RangeSelector : public Selector<T>
 {
 public:
 
@@ -121,12 +118,11 @@ protected:
 
 
 /*!
-\ingroup Basic
 \brief Selector based on array.
 */
 
 template <class T>
-class ArraySelector : public Selector<T>
+mClass(Basic) ArraySelector : public Selector<T>
 {
 public:
 

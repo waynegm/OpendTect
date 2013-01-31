@@ -22,7 +22,6 @@ class IOPar;
 
 
 /*!
-\ingroup Algo
 \brief Base class for Probability Density Functions.
   
   The values may not be normalized; if you need them to be: multiply with
@@ -31,7 +30,7 @@ class IOPar;
   positive values.
 */
 
-mClass(Algo) ProbDenFunc : public NamedObject
+mExpClass(Algo) ProbDenFunc : public NamedObject
 {
 public:
 
@@ -73,11 +72,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Probability Density Function for one dimensional datasets.
 */
 
-mClass(Algo) ProbDenFunc1D : public ProbDenFunc
+mExpClass(Algo) ProbDenFunc1D : public ProbDenFunc
 {
 public:
 
@@ -120,11 +118,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Probability Density Function for two dimensional datasets.
 */
 
-mClass(Algo) ProbDenFunc2D : public ProbDenFunc
+mExpClass(Algo) ProbDenFunc2D : public ProbDenFunc
 {
 public:
 

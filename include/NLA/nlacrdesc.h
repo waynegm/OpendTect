@@ -18,12 +18,15 @@ ________________________________________________________________________
 #include "bufstringset.h"
 #include "iopar.h"
 #include "enums.h"
+
 class BinIDValueSet;
 class DataPointSet;
 
-/*\brief Description of how an NLA analysis Feature set is to be created */
+/*!
+\brief Description of how a NLA analysis Feature set is to be created.
+*/
 
-mClass(NLA) NLACreationDesc
+mExpClass(NLA) NLACreationDesc
 {
 public:
     			NLACreationDesc()	{ clear(); }

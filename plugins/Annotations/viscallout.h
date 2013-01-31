@@ -34,7 +34,7 @@ namespace Annotations
   Callout
 */
 
-class CalloutDisplay : public visSurvey::LocationDisplay
+mClass(Annotations) CalloutDisplay : public visSurvey::LocationDisplay
 {
 public:
     static CalloutDisplay*	create()
@@ -75,7 +75,7 @@ protected:
 };
 
 
-class Callout : public visBase::VisualObjectImpl
+mClass(Annotations) Callout : public visBase::VisualObjectImpl
 {
 public:
     static Callout*		create()
@@ -119,7 +119,7 @@ protected:
     visBase::Marker*		marker_; //In normal space
 
     visBase::Transformation*	object2display_; //Trans to object space
-    visBase::Transformation*	rotation_;
+    visBase::Rotation*		rotation_; 
     visBase::Transformation*	scale_;	 
 
     visBase::PolygonOffset*	calloutoffset_;	//In object space
@@ -137,7 +137,7 @@ protected:
     Coord3			dragstarttextpos_;
     Coord3			dragstartdraggerpos_;
 
-    visBase::Transformation*	backtextrotation_; //In backtext space
+    visBase::Rotation*		backtextrotation_; //In backtext space
     visBase::TextBox*		backtext_;
 
     bool			isdragging_;

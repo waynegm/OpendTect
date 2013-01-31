@@ -19,11 +19,10 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief Calculates %Hilbert transform.
 */
 
-mClass(Attributes) Hilbert : public Provider
+mExpClass(Attributes) Hilbert : public Provider
 {
 public:
     static void			initClass();

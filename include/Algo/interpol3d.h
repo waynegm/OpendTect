@@ -19,12 +19,11 @@ namespace Interpolate
 {
 
 /*!
-\ingroup Algo
 \brief Linear 3D interpolation.
 */
 
 template <class T>
-class LinearReg3D
+mClass(Algo) LinearReg3D
 {
 public:
 
@@ -76,12 +75,11 @@ inline T linearReg3D( T v000, T v100, T v010, T v110,
 
 
 /*!
-\ingroup Algo
 \brief Linear 3D interpolation with standard undef handling.
 */
 
 template <class T>
-class LinearReg3DWithUdf
+mClass(Algo) LinearReg3DWithUdf
 {
 public:
 
@@ -200,7 +198,6 @@ inline T linearReg3DWithUdf( T v000, T v100, T v010, T v110,
 
 
 /*!
-\ingroup Algo
 \brief Interpolate 3D regularly sampled, using a 3rd order surface.
   
   Current implementation takes the average of the outer squares.
@@ -219,7 +216,7 @@ inline T linearReg3DWithUdf( T v000, T v100, T v010, T v110,
 */
 
 template <class T>
-class PolyReg3D
+mClass(Algo) PolyReg3D
 {
 public:
 

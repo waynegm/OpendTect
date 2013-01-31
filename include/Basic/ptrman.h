@@ -18,43 +18,38 @@ ________________________________________________________________________
 // We have to make 3 macros because of compiler restrictions
 // concerning the total length of macros
 
-#define mDefPtrMan1(Clss, PtrType,PostSet, EraseFunc) \
+#define mDefPtrMan1(Clss,PostSet, EraseFunc) \
 \
 template<class T> \
-class Clss \
+mClass(Basic) Clss \
 { \
 public: \
 \
-			Clss( T* p=0 ) : ptr_( 0 )	{ set(p); } \
-			~Clss()		{ erase(); } \
-    inline Clss<T>&	operator=( T* p ) \
-			{ set(p); return *this; } \
+				Clss( T* p=0 ) : ptr_( 0 )	{ set(p); } \
+				~Clss()		{ erase(); } \
+    inline Clss<T>&		operator=( T* p ) \
+				{ set(p); return *this; } \
 \
-    inline T*		ptr()			{ return (T*) ptr_; } \
-    inline const T*	ptr() const		{ return (const T*) ptr_; } \
-    inline		operator T*()		{ return (T*) ptr_; } \
-    inline		operator const T*() const { return (const T*) ptr_; } \
-    inline T*		operator ->()		{ return (T*) ptr_; } \
-    inline const T*	operator ->() const	{ return (const T*) ptr_; } \
-    inline T&		operator *()		{ return (T&)(*ptr_); } \
+    inline T*			ptr()			{ return ptr_; } \
+    inline const T*		ptr() const		{ return ptr_; } \
+    inline			operator T*()		{ return ptr_; } \
+    inline			operator const T*() const { return ptr_; } \
+    inline T*			operator ->()		{ return ptr_; } \
+    inline const T*		operator ->() const	{ return ptr_; } \
+    inline T&			operator *()		{ return *ptr_; } \
 
-#define mDefPtrMan2(Clss, PtrType, PostSet, EraseFunc) \
+#define mDefPtrMan2(Clss,PostSet, EraseFunc) \
     inline bool			operator !() const { return !ptr_; } \
 \
-    inline void			erase() \
+    void			erase() \
 				{ EraseFunc; ptr_ = 0; } \
-    inline void			set( T* p, bool doerase=true ) \
-				{ \
-				    if ( doerase ) \
-					erase(); \
-				    ptr_=(PtrType*) p; \
-				    PostSet; \
-				}
+    void			set( T* p, bool doerase=true ) \
+				{ if ( doerase ) erase(); ptr_=p; PostSet; }
 
-#define mDefPtrMan3(Clss, PtrType, PostSet, EraseFunc) \
+#define mDefPtrMan3(Clss,PostSet, EraseFunc) \
 private: \
 \
-    PtrType*				ptr_; \
+    T*				ptr_; \
 \
     Clss<T>&			operator=(const T& p) const; \
 \
@@ -68,21 +63,21 @@ the responsibility for its deletion.
 For Arrays, use the ArrPtrMan class.
 
 */
-mDefPtrMan1(PtrMan, T, , delete ptr_ )
+mDefPtrMan1(PtrMan, , delete ptr_ )
 inline PtrMan<T>& operator=(const PtrMan<T>& p ); //Will give linkerror is used
-mDefPtrMan2(PtrMan, T, , delete ptr_ )
-mDefPtrMan3(PtrMan, T, , delete ptr_ )
+mDefPtrMan2(PtrMan, , delete ptr_ )
+mDefPtrMan3(PtrMan, , delete ptr_ )
 
 /*!\brief a simple autopointer for arrays.
 
 For Non-arrays, use the PtrMan class.
 
 */
-mDefPtrMan1(ArrPtrMan, T, , delete [] ptr_)
+mDefPtrMan1(ArrPtrMan, , delete [] ptr_)
 //Will give linkerror is used
 inline ArrPtrMan<T>& operator=(const ArrPtrMan<T>& p );
-mDefPtrMan2(ArrPtrMan, T, , delete [] ptr_)
-mDefPtrMan3(ArrPtrMan, T, , delete [] ptr_)
+mDefPtrMan2(ArrPtrMan, , delete [] ptr_)
+mDefPtrMan3(ArrPtrMan, , delete [] ptr_)
 
 
 #endif

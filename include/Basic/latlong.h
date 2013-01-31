@@ -18,11 +18,10 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief Geographical coordinates, decimal but with conv to deg, min, sec.
 */
 
-mClass(Basic) LatLong
+mExpClass(Basic) LatLong
 {
 public:
     			LatLong( double la=0, double lo=0 )
@@ -46,13 +45,12 @@ public:
 
 
 /*!
-\ingroup Basic
 \brief Estimates to/from LatLong coordinates.
 
   Needs both survey coordinates and lat/long for an anchor point in the survey.
 */
 
-mClass(Basic) LatLong2Coord
+mExpClass(Basic) LatLong2Coord
 {
 public:
 

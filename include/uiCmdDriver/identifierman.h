@@ -20,7 +20,7 @@ ________________________________________________________________________
 namespace CmdDrive
 {
 
-mClass(uiCmdDriver) IdentifierManager
+mExpClass(uiCmdDriver) IdentifierManager
 {
 public:
     			IdentifierManager();
@@ -49,7 +49,7 @@ public:
 
 protected:
 
-    class Identifier
+    mClass(uiCmdDriver) Identifier
     {
 	public:
 			Identifier(const char* name,const char* val="",

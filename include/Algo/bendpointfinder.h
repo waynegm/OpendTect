@@ -20,12 +20,11 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Algo
 \brief Base class that does the majority of the work finding bendpoints.
 Adaptions to different data-types are done in subclasses.
 */
 
-mClass(Algo) BendPointFinderBase : public ParallelTask
+mExpClass(Algo) BendPointFinderBase : public ParallelTask
 {
 public:
 
@@ -58,11 +57,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Used to find bendpoints in two dimensional datasets.
 */
 
-mClass(Algo) BendPointFinder2D : public BendPointFinderBase
+mExpClass(Algo) BendPointFinder2D : public BendPointFinderBase
 {
 public:
     		BendPointFinder2D(const TypeSet<Coord>&, float eps);
@@ -75,11 +73,10 @@ protected:
 
 
 /*!
-\ingroup Algo
 \brief Used to find bendpoints in three dimensional datasets.
 */
 
-mClass(Algo) BendPointFinder3D : public BendPointFinderBase
+mExpClass(Algo) BendPointFinder3D : public BendPointFinderBase
 {
 public:
     		BendPointFinder3D(const TypeSet<Coord3>&,

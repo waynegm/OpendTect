@@ -18,11 +18,10 @@ ______________________________________________________________________
 #include "bufstring.h"
 
 /*!
-\ingroup Basic
 \brief Data needed to make an actual font.
 */
 
-mClass(Basic) FontData
+mExpClass(Basic) FontData
 {			
 public:    
 

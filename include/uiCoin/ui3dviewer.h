@@ -25,7 +25,7 @@ class BufferStringSet;
 
 namespace visBase { class Scene; };
 
-mClass(uiCoin) ui3DViewer : public uiObject
+mExpClass(uiCoin) ui3DViewer : public uiObject
 {
 friend class		uiSoViewerBody;
 friend class		ui3DViewerBody;

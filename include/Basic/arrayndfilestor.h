@@ -20,12 +20,11 @@ ________________________________________________________________________
 
 
 /*!
-\ingroup Basic
 \brief ArrayND I/O from/to a file.
 */
 
 template <class T>
-class ArrayNDFileStor : public ValueSeries<T>
+mClass(Basic) ArrayNDFileStor : public ValueSeries<T>
 {
 public:
 

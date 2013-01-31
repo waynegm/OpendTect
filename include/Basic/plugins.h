@@ -40,7 +40,6 @@ int LoadPlugin(const char* libnm);
 }
 
 /*!
-\ingroup Basic
 \brief Plugin manager - loads plugins: shared libs or DLLs.
 
   Note: there are macros making most of the below stuff not interesting.
@@ -89,7 +88,7 @@ int LoadPlugin(const char* libnm);
   You can change the source_ to None before calling loadAuto().
 */
 
-mClass(Basic) PluginManager
+mExpClass(Basic) PluginManager
 {
 public:
 

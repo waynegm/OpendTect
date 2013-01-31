@@ -36,7 +36,7 @@ Class for all lights. More options are available in osg, but only what we
 
 */
 
-mClass(visBase) Light
+mExpClass(visBase) Light
 { mRefCountImplNoDestructor(Light)
 public:
 			Light();

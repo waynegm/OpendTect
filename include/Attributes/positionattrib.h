@@ -21,7 +21,6 @@ namespace Attrib
 {
 
 /*!
-\ingroup Attributes
 \brief Position Attribute
 
   Calculates 'attribute 0' on every position within the cube defined by
@@ -40,7 +39,7 @@ namespace Attrib
 \endcode
 */
 
-mClass(Attributes) Position : public Provider
+mExpClass(Attributes) Position : public Provider
 {
 public:
     static void			initClass();

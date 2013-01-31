@@ -16,11 +16,13 @@ ________________________________________________________________________
 #include "interpol2d.h"
 #include "simpnumer.h"
 
-/*!Adaptor to make an Array2D behave like a MathXYFunction. Will do linear
-interpolation at the edges, and polynomial interpolation inside. */
+/*!
+\brief Adaptor to make an Array2D behave like a MathXYFunction. Will do linear
+interpolation at the edges, and polynomial interpolation inside.
+*/
 
 template <class RT,class PT,class T>
-class Array2DFunc : public MathXYFunction<RT,PT>
+mClass(General) Array2DFunc : public MathXYFunction<RT,PT>
 {
 public:
     inline void		set( const Array2D<T>& t, bool hasudfs )
@@ -42,8 +44,6 @@ protected:
     int			ysize_;
     bool		hasudfs_;
 };
-
-
 
 
 template <class RT,class PT,class T> inline

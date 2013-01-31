@@ -30,7 +30,7 @@ namespace visBase
 class DraggerCallbackHandler;
 class Transformation;
     
-mClass(visBase) DraggerBase : public DataObject
+mExpClass(visBase) DraggerBase : public DataObject
 {
 public:
     
@@ -57,7 +57,7 @@ private:
 };
 
 
-mClass(visBase) Dragger : public DraggerBase
+mExpClass(visBase) Dragger : public DraggerBase
 {
 public:
     static Dragger*		create()

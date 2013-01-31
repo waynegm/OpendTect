@@ -192,7 +192,7 @@ void ui3DViewerBody::setupAxes()
 	return;
     
     axescamera_ = new osg::Camera;
-    axescamera_->setProjectionMatrixAsPerspective( 45.0f, 1.0f, 1.0f, 10.0f );
+    axescamera_->setProjectionMatrixAsPerspective( 30.0f, 1.0f, 1.0f, 10.0f );
     axescamera_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     axescamera_->setViewMatrix(osg::Matrix::identity());
     axescamera_->setClearMask(GL_DEPTH_BUFFER_BIT);
@@ -212,7 +212,7 @@ void ui3DViewerBody::setupAxes()
 		    { 
 			osg::Camera* masterCam = camera->getView()->getCamera(); 
 			osg::Vec3 eye, center, up; 
-			masterCam->getViewMatrixAsLookAt( eye, center, up, 32 ); 
+			masterCam->getViewMatrixAsLookAt( eye, center, up, 45 ); 
 			osg::Matrixd matrix; 
 			matrix.makeLookAt( eye-center, osg::Vec3(0, 0, 0), up ); 
 			camera->setViewMatrix( matrix ); 
@@ -231,7 +231,7 @@ void ui3DViewerBody::setupAxes()
 	axes_ = visBase::Axes::create();
 	axescamera_->addChild( axes_->osgNode() );
     }
-    axescamera_->setViewport( viewport_->width()-100, 0,  110, 110 );
+    axescamera_->setViewport( viewport_->width()-140, 0,  140, 140 );
     getOsgCamera()->addChild( axescamera_ );
     view_->addSlave( axescamera_, false );
 }
@@ -343,7 +343,7 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
     horthumbwheel_->setPosition( true, 20, 10, 100, 15, -1 );
     verthumbwheel_->setPosition( false, 10, 20, 100, 15, -1 );
     if ( axescamera_ )
-	axescamera_->setViewport( viewport_->width()-100, 0,  110, 110 );
+	axescamera_->setViewport( viewport_->width()-140, 0,  140, 140 );
 }
 
 

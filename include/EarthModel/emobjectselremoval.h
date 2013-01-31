@@ -27,11 +27,10 @@ namespace EM
 class EMObject;    
 
 /*!
-\ingroup EarthModel
 \brief EMObject RowCol selection removal.
 */
 
-mClass(EarthModel) EMObjectRowColSelRemoval : public ParallelTask
+mExpClass(EarthModel) EMObjectRowColSelRemoval : public ParallelTask
 {
 public:
     			EMObjectRowColSelRemoval(EMObject& emobj,

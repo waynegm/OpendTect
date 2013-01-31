@@ -18,12 +18,11 @@ ________________________________________________________________________
 #include "math2.h"
 
 /*!
-\ingroup Algo
 \brief Convolves (or correlates) two 3D signals.
 */
 
 template <class T>
-class Convolver3D : public ParallelTask
+mClass(Algo) Convolver3D : public ParallelTask
 {
 public:
     inline		Convolver3D();

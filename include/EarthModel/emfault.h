@@ -26,11 +26,10 @@ class Fault;
 class FaultStickSetGeometry;
 
 /*!
-\ingroup EarthModel
 \brief FaultGeometry base class.
 */
 
-mClass(EarthModel) FaultGeometry : public SurfaceGeometry
+mExpClass(EarthModel) FaultGeometry : public SurfaceGeometry
 {
 public:
     virtual bool	insertStick(const SectionID&,int sticknr,int firstcol,
@@ -79,11 +78,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Fault Surface base class.
 */
 
-mClass(EarthModel) Fault : public Surface
+mExpClass(EarthModel) Fault : public Surface
 {
 public:
     virtual void		removeAll();
@@ -100,11 +98,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Fault stick UndoEvent.
 */
 
-mClass(EarthModel) FaultStickUndoEvent : public UndoEvent
+mExpClass(EarthModel) FaultStickUndoEvent : public UndoEvent
 {
 public:
 			//Interface for insert
@@ -126,11 +123,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Fault knot UndoEvent.
 */
 
-mClass(EarthModel) FaultKnotUndoEvent : public UndoEvent
+mExpClass(EarthModel) FaultKnotUndoEvent : public UndoEvent
 {
 public:
 			//Interface for insert

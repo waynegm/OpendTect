@@ -21,7 +21,6 @@ namespace Stats
 {
 
 /*!
-\ingroup Algo
 \brief Stats computation running in parallel. 
   
   The difference with the running values (Stats::RunCalc) is that you have to 
@@ -31,7 +30,7 @@ namespace Stats
 */
 
 template <class T>
-class ParallelCalc : public ParallelTask, public BaseCalc<T>
+mClass(Algo) ParallelCalc : public ParallelTask, public BaseCalc<T>
 {
 public:
 				ParallelCalc(const CalcSetup& s,const T* data, 

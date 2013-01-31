@@ -28,11 +28,10 @@ class Horizon3D;
 class Hor2DTo3DSectionData;
 
 /*!
-\ingroup EarthModel
 \brief Horizon2D to Horizon3D.
 */
 
-mClass(EarthModel) Hor2DTo3D : public Executor
+mExpClass(EarthModel) Hor2DTo3D : public Executor
 {
 public:
 				Hor2DTo3D(const Horizon2D&,Array2DInterpol*,

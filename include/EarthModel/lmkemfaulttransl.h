@@ -21,11 +21,10 @@ ________________________________________________________________________
 namespace EM { class Fault3D; };
 
 /*!
-\ingroup EarthModel
 \brief Landmark EM::Fault3D EMSurfaceTranslator.
 */
 
-mClass(EarthModel) lmkEMFault3DTranslator : public EMSurfaceTranslator
+mExpClass(EarthModel) lmkEMFault3DTranslator : public EMSurfaceTranslator
 {			isTranslator(lmk,EMFault3D)
 public:
     			lmkEMFault3DTranslator(const char* nm,
@@ -58,11 +57,10 @@ public:
 
 
 /*!
-\ingroup EarthModel
 \brief Landmark EM::Fault3D reader.
 */
 
-mClass(EarthModel) lmkEMFault3DReader : public Executor
+mExpClass(EarthModel) lmkEMFault3DReader : public Executor
 {
 public:
 			lmkEMFault3DReader(EM::Fault3D&,Conn*,
@@ -98,11 +96,10 @@ protected:
 
 
 /*!
-\ingroup EarthModel
 \brief Landmark EM::Fault3D writer. 
 */
 
-class lmkEMFault3DWriter : public Executor
+mClass(EarthModel) lmkEMFault3DWriter : public Executor
 {
 public:
 			lmkEMFault3DWriter(const EM::Fault3D&,

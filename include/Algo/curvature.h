@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "general.h"
 
 /*!
-\ingroup Algo
 \brief Class to calculate curvature from 9 regularly sampled points.
 
   Equations are derived from "Wood, J.D. (1996) The geomorphological
@@ -24,10 +23,10 @@ ________________________________________________________________________
   Leicester, UK, http://www.soi.city.ac.uk/~jwo/phd"
 */
 
-mClass(Algo) Curvature
+mExpClass(Algo) Curvature
 {
 public:
-    mClass(Algo) Setup
+    mExpClass(Algo) Setup
     {
 	public:
 	    		Setup();

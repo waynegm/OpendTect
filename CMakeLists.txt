@@ -11,7 +11,7 @@ SET (OpendTect_VERSION_MAJOR 4)
 SET (OpendTect_VERSION_MINOR 5)
 SET (OpendTect_VERSION_DETAIL 0)
 
-PROJECT( "OpendTect_${OpendTect_VERSION_MAJOR}_${OpendTect_VERSION_MINOR}_osg" )
+PROJECT( "osg_OpendTect" )
 
 
 INCLUDE(CTest)

@@ -44,7 +44,7 @@ public:
 
 protected:
 
-    void			constrain(bool translatedinline);
+    void			constrain(bool translated);
 
     DepthTabPlaneDragger&	dragger_;
 
@@ -87,7 +87,7 @@ bool PlaneDraggerCallbackHandler::receive(
     }
     else if ( cmd.getStage()==osgManipulator::MotionCommand::MOVE )
     {
-	constrain( translatedinline );
+	constrain( translatedinline || translatedinplane );
 	dragger_.motion.trigger();
     }
     else if ( cmd.getStage()==osgManipulator::MotionCommand::FINISH )
@@ -101,68 +101,59 @@ bool PlaneDraggerCallbackHandler::receive(
 }
 
 
-void PlaneDraggerCallbackHandler::constrain( bool translatedinline )
+void PlaneDraggerCallbackHandler::constrain( bool translated )
 {
-    Coord3 scale = dragger_.size();
     Coord3 center = dragger_.center();
+    Coord3 scale = dragger_.size();
 
     for ( int dim=0; dim<3; dim++ )
     {
-	if ( translatedinline && dim==dragger_.dim_ )
+	if ( dragger_.spaceranges_[dim].width(false) > 0.0 )
 	{
-	    if ( dragger_.spaceranges_[dim].width(false) > 0.0 )
+	    double diff = center[dim] - dragger_.spaceranges_[dim].start;
+	    diff -= dim==dragger_.dim_ ? 0.0 : 0.5*scale[dim];
+	    if ( diff < 0.0 )
 	    {
-		if ( center[dim] < dragger_.spaceranges_[dim].start )
-		    center[dim] = dragger_.spaceranges_[dim].start;
-		if ( center[dim] > dragger_.spaceranges_[dim].stop )
-		    center[dim] = dragger_.spaceranges_[dim].stop;
+		center[dim] -= translated ? diff : 0.5*diff;
+		if ( !translated )
+		    scale[dim] += diff;
+	    }
+
+	    diff = center[dim] - dragger_.spaceranges_[dim].stop;
+	    diff += dim==dragger_.dim_ ? 0.0 : 0.5*scale[dim];
+	    if ( diff > 0.0 )
+	    {
+		center[dim] -= translated ? diff : 0.5*diff;
+		if ( !translated )
+		    scale[dim] -= diff;
 	    }
 	}
-		
-	if ( !translatedinline && dim!=dragger_.dim_ )
-	{
-	    if ( dragger_.spaceranges_[dim].width(false) > 0.0 )
-	    {
-		double diff = center[dim] - 0.5*scale[dim] -
-			      dragger_.spaceranges_[dim].start;
-		if ( diff < 0.0 )
-		{
-		    center[dim] -= 0.5*diff;
-		    scale[dim] += diff;
-		}
 
-		diff = center[dim] + 0.5*scale[dim] -
-		       dragger_.spaceranges_[dim].stop;
-		if ( diff > 0.0 )
-		{
+	if ( translated || dim==dragger_.dim_ )
+	    continue;
+
+	if ( dragger_.widthranges_[dim].width(false) > 0.0 )
+	{
+	    double diff = scale[dim] - dragger_.widthranges_[dim].start;
+	    if ( diff < 0 )
+	    {
+		if ( center[dim] < initialcenter_[dim] )
 		    center[dim] -= 0.5*diff;
-		    scale[dim] -= diff;
-		}
+		else
+		    center[dim] += 0.5*diff;
+
+		scale[dim] -= diff;
 	    }
 
-	    if ( dragger_.widthranges_[dim].width(false) > 0.0 )
+	    diff = scale[dim] - dragger_.widthranges_[dim].stop;
+	    if ( diff > 0 )
 	    {
-		double diff = scale[dim] - dragger_.widthranges_[dim].start;
-		if ( diff < 0 )
-		{
-		    if ( center[dim] < initialcenter_[dim] )
-			center[dim] -= 0.5*diff;
-		    else
-			center[dim] += 0.5*diff;
+		if ( center[dim] > initialcenter_[dim] )
+		    center[dim] -= 0.5*diff;
+		else
+		    center[dim] += 0.5*diff;
 
-		    scale[dim] -= diff;
-		}
-
-		diff = scale[dim] - dragger_.widthranges_[dim].stop;
-		if ( diff > 0 )
-		{
-		    if ( center[dim] > initialcenter_[dim] )
-			center[dim] -= 0.5*diff;
-		    else
-			center[dim] += 0.5*diff;
-
-		    scale[dim] -= diff;
-		}
+		scale[dim] -= diff;
 	    }
 	}
     }
@@ -224,7 +215,7 @@ void DepthTabPlaneDragger::initOsgDragger()
     osgdragger_->addDraggerCallback( osgcallbackhandler_ );
 
     osgdragger_->getOrCreateStateSet()->setAttributeAndModes(
-	    	new osg::PolygonOffset(-1.0,1.0), osg::StateAttribute::ON );
+	    	new osg::PolygonOffset(-1.0,-1.0), osg::StateAttribute::ON );
     osgdragger_->getOrCreateStateSet()->setRenderingHint(
 					    osg::StateSet::TRANSPARENT_BIN );
 
@@ -272,6 +263,8 @@ void DepthTabPlaneDragger::initOsgDragger()
     geode->getStateSet()->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
     geode->getStateSet()->setAttributeAndModes(
 	    	new osg::PolygonOffset(1.0,1.0), osg::StateAttribute::ON );
+    geode->setNodeMask( geode->getNodeMask() &
+			~visBase::cIntersectionTraversalMask() );
 
     osgdraggerplane_ = new osg::Switch();
     osgdraggerplane_->addChild( geode.get() );
@@ -515,10 +508,13 @@ void DepthTabPlaneDragger::showDraggerBorder( bool yn )
 			 osgdragger_->getDragger(idx) );
 	if ( tpd )
 	{
-	    tpd->getTranslate2DDragger()->setColor(
-				    osg::Vec4(0.5,0.5,0.5,borderopacity) );
-	    tpd->getTranslate2DDragger()->setPickColor(
-				    osg::Vec4(1.0,1.0,1.0,borderopacity) );
+	    const osg::Vec4 col( 0.5, 0.5, 0.5, borderopacity );
+	    if ( col != tpd->getTranslate2DDragger()->getColor() )
+		tpd->getTranslate2DDragger()->setColor( col );
+
+	    const osg::Vec4 pickcol( 1.0, 1.0, 1.0, borderopacity );
+	    if ( pickcol != tpd->getTranslate2DDragger()->getPickColor() )
+		tpd->getTranslate2DDragger()->setPickColor( pickcol );
 	}
     }
 }

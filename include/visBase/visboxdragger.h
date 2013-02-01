@@ -19,6 +19,7 @@ ________________________________________________________________________
 
 
 namespace osgManipulator { class TabBoxDragger; }
+namespace osg { class ShapeDrawable; }
 
 
 template <class T> class Interval;
@@ -56,6 +57,8 @@ public:
     bool			turnOn(bool yn);
     bool			isOn() const;
 
+    void			showDraggerBorder(bool yn=true);
+    bool			isDraggerBorderShown() const;
 
     bool			selectable() const { return selectable_; }
     void			setSelectable(bool yn) { selectable_ = yn; }
@@ -78,6 +81,7 @@ protected:
 
     osgManipulator::TabBoxDragger*	osgboxdragger_;
     osg::Switch*			osgdraggerroot_;
+    osg::ShapeDrawable*			osgdraggerbox_;
     BoxDraggerCallbackHandler*		osgcallbackhandler_;
 
     Interval<float>			widthranges_[3];

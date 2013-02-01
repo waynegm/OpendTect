@@ -18,6 +18,9 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <osgManipulator/TabBoxDragger>
 #include <osg/Switch>
+#include <osg/Geode>
+#include <osg/ShapeDrawable>
+#include <osg/Version>
 
 mCreateFactoryEntry( visBase::BoxDragger );
 
@@ -39,7 +42,8 @@ public:
 
 protected:
 
-    void			constrain();
+    void			adjustPolygonOffset(bool start);
+    void			constrain(bool translated);
 
     BoxDragger&			dragger_;
     osg::Matrix			initialosgmatrix_;
@@ -69,15 +73,17 @@ bool BoxDraggerCallbackHandler::receive(
 
     if ( cmd.getStage()==osgManipulator::MotionCommand::START )
     {
+	adjustPolygonOffset( true );
 	dragger_.started.trigger();
     }
     else if ( cmd.getStage()==osgManipulator::MotionCommand::MOVE )
     {
-	constrain();
+	constrain( translatedinplane );
 	dragger_.motion.trigger();
     }
     else if ( cmd.getStage()==osgManipulator::MotionCommand::FINISH )
     {
+	adjustPolygonOffset( false );
 	dragger_.finished.trigger();
 	if ( initialosgmatrix_ != dragger_.osgboxdragger_->getMatrix() )
 	    dragger_.changed.trigger();
@@ -87,7 +93,38 @@ bool BoxDraggerCallbackHandler::receive(
 }
 
 
-void BoxDraggerCallbackHandler::constrain()
+void BoxDraggerCallbackHandler::adjustPolygonOffset( bool start )
+{
+    for ( int idx=dragger_.osgboxdragger_->getNumDraggers()-1; idx>=0; idx-- )
+    {
+	mDynamicCastGet( osgManipulator::TabPlaneDragger*, tpd,
+			 dragger_.osgboxdragger_->getDragger(idx) );
+	if ( !tpd )
+	    continue;
+
+	for ( int idy=tpd->getNumDraggers()-1; idy>=0; idy-- )
+	{
+	    mDynamicCastGet( osgManipulator::TranslatePlaneDragger*, dragger,
+			     tpd->getDragger(idy) );
+	    if ( !dragger )
+		continue;
+
+	    osg::StateSet* ss =
+		    dragger->getTranslate2DDragger()->getOrCreateStateSet();
+
+	    if ( !start )
+		ss->removeAttribute( osg::StateAttribute::POLYGONOFFSET );
+	    else if ( !ss->getAttribute(osg::StateAttribute::POLYGONOFFSET) )
+	    {
+		ss->setAttributeAndModes(                
+		    new osg::PolygonOffset(0.0,0.0),osg::StateAttribute::ON );
+	    }
+	}
+    }
+}
+
+
+void BoxDraggerCallbackHandler::constrain( bool translated )
 {
     Coord3 scale = dragger_.width();
     Coord3 center = dragger_.center();
@@ -100,20 +137,22 @@ void BoxDraggerCallbackHandler::constrain()
 			  dragger_.spaceranges_[dim].start;
 	    if ( diff < 0.0 )
 	    {
-		center[dim] -= 0.5*diff;
-		scale[dim] += diff;
+		center[dim] -= translated ? diff : 0.5*diff;
+		if ( !translated )
+		    scale[dim] += diff;
 	    }
 
 	    diff = center[dim] + 0.5*scale[dim] -
 		   dragger_.spaceranges_[dim].stop;
 	    if ( diff > 0.0 )
 	    {
-		center[dim] -= 0.5*diff;
-		scale[dim] -= diff;
+		center[dim] -= translated ? diff : 0.5*diff;
+		if ( !translated )
+		    scale[dim] -= diff;
 	    }
 	}
 
-	if ( dragger_.widthranges_[dim].width(false) > 0.0 )
+	if ( !translated && dragger_.widthranges_[dim].width(false)>0.0 )
 	{
 	    double diff = scale[dim] - dragger_.widthranges_[dim].start;
 	    if ( diff < 0 )
@@ -167,12 +206,12 @@ BoxDragger::BoxDragger()
     osgcallbackhandler_ = new BoxDraggerCallbackHandler( *this );
     osgboxdragger_->addDraggerCallback( osgcallbackhandler_ );
 
-    setBoxTransparency( 0.0 );
-
     for ( int idx=osgboxdragger_->getNumDraggers()-1; idx>=0; idx-- )
     {
 	mDynamicCastGet( osgManipulator::TabPlaneDragger*, tpd,
 			 osgboxdragger_->getDragger(idx) );
+	if ( !tpd )
+	    continue;
 
 	for ( int idy=tpd->getNumDraggers()-1; idy>=0; idy-- )
 	{
@@ -193,7 +232,31 @@ BoxDragger::BoxDragger()
     }
 
     osgboxdragger_->getOrCreateStateSet()->setAttributeAndModes(
-	    new osg::PolygonOffset(-1.0,1.0), osg::StateAttribute::ON );
+	    new osg::PolygonOffset(-1.0,-1.0),osg::StateAttribute::ON );
+
+#if OSG_MIN_VERSION_REQUIRED(3,1,3)
+    osgboxdragger_->setIntersectionMask( cIntersectionTraversalMask() );
+#endif
+
+    osgboxdragger_->getOrCreateStateSet()->setRenderingHint(
+					    osg::StateSet::TRANSPARENT_BIN );
+
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    osgdraggerbox_ = new osg::ShapeDrawable;             
+    osgdraggerbox_->setShape( new osg::Box(osg::Vec3(0.0,0.0,0.0), 1.0) );
+
+    geode->addDrawable( osgdraggerbox_ );
+    geode->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
+    geode->getStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
+    geode->getStateSet()->setAttributeAndModes(
+		    new osg::PolygonOffset(1.0,1.0), osg::StateAttribute::ON );
+    geode->getStateSet()->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
+    geode->setNodeMask( geode->getNodeMask() &
+	    		~visBase::cIntersectionTraversalMask() );
+
+    osgboxdragger_->addChild( geode );
+
+    showDraggerBorder( true );
 }
 
 
@@ -220,7 +283,7 @@ void BoxDragger::setOsgMatrix( const Coord3& worldscale,
 
 void BoxDragger::setBoxTransparency( float transparency )
 {
-    osgboxdragger_->setPlaneColor( osg::Vec4(0.7,0.7,0.7,1.0-transparency) );
+    osgdraggerbox_->setColor( osg::Vec4(0.7,0.7,0.7,1.0-transparency) );
 }
 
 
@@ -311,6 +374,57 @@ void BoxDragger::setDisplayTransformation( const mVisTrans* nt )
 const mVisTrans* BoxDragger::getDisplayTransformation() const
 {
     return transform_;
+}
+
+
+void BoxDragger::showDraggerBorder( bool yn )
+{
+    const float borderopacity = yn ? 1.0 : 0.0;
+    for ( int idx=osgboxdragger_->getNumDraggers()-1; idx>=0; idx-- )
+    {
+	mDynamicCastGet( osgManipulator::TabPlaneDragger*, tpd,
+			 osgboxdragger_->getDragger(idx) );
+	if ( !tpd )
+	    continue;
+
+	for ( int idy=tpd->getNumDraggers()-1; idy>=0; idy-- )
+	{
+	    mDynamicCastGet( osgManipulator::TranslatePlaneDragger*, dragger,
+			     tpd->getDragger(idy) );
+	    if ( !dragger )
+		continue;
+
+	    const osg::Vec4 col( 0.5, 0.5, 0.5, borderopacity );
+	    if ( col != dragger->getTranslate2DDragger()->getColor() )
+		dragger->getTranslate2DDragger()->setColor( col );
+
+	    const osg::Vec4 pickcol( 1.0, 1.0, 1.0, borderopacity );
+	    if ( pickcol != dragger->getTranslate2DDragger()->getPickColor() )
+		dragger->getTranslate2DDragger()->setPickColor( pickcol );
+	}
+    }
+}
+
+
+bool BoxDragger::isDraggerBorderShown() const
+{
+    for ( int idx=osgboxdragger_->getNumDraggers()-1; idx>=0; idx-- )
+    {
+	mDynamicCastGet( osgManipulator::TabPlaneDragger*, tpd,
+			 osgboxdragger_->getDragger(idx) );
+	if ( !tpd )
+	    continue;
+
+	for ( int idy=tpd->getNumDraggers()-1; idy>=0; idy-- )
+	{
+	    mDynamicCastGet( osgManipulator::TranslatePlaneDragger*, dragger,
+		    	     tpd->getDragger(idy) );
+	    if ( dragger )
+		return dragger->getTranslate2DDragger()->getColor()[3];
+	}
+    }
+
+    return false;
 }
 
 

@@ -361,7 +361,7 @@ void uiVisPartServer::triggerTreeUpdate()
 
 void uiVisPartServer::findObject( const std::type_info& ti, TypeSet<int>& res )
 {
-    visBase::DM().getIds( ti, res );
+    visBase::DM().getIDs( ti, res );
 }
 
 

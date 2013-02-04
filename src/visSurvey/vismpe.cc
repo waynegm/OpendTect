@@ -68,7 +68,7 @@ MPEDisplay::MPEDisplay()
     channels_->ref();  // will be added in getInventorNode
     channels_->setChannels2RGBA( visBase::TextureChannel2VolData::create() );
     
-    visBase::DM().getObject( channels_->getInventorNode() );
+    //visBase::DM().getObject( channels_->getInventorNode() );
     
     engine_.activevolumechange.notify( mCB(this,MPEDisplay,updateBoxPosition) );
 

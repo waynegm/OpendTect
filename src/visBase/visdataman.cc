@@ -17,8 +17,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ptrman.h"
 #include <iostream>
 
-#include <osg/Node>
-
 namespace visBase
 {
 
@@ -84,21 +82,18 @@ const DataObject* DataManager::getObject( int id ) const
 { return const_cast<DataManager*>(this)->getObject(id); }
 
 
-DataObject* DataManager::getObject( const SoNode* node )
+int DataManager::getID( const osg::Node* node ) const
 {
-    if ( !node ) return 0;
-
-    for ( int idx=0; idx<objects_.size(); idx++ )
+    if ( node )
     {
-	if ( objects_[idx]->getInventorNode()==node ) return objects_[idx];
+	for ( int idx=0; idx<objects_.size(); idx++ )
+	{
+	    if ( objects_[idx]->osgNode()==node ) return objects_[idx]->id();
+	}
     }
 
-    return 0;
+    return -1;
 }
-
-
-const DataObject* DataManager::getObject( const SoNode* node ) const
-{ return const_cast<DataManager*>(this)->getObject(node); }
 
 
 void DataManager::addObject( DataObject* obj )
@@ -111,15 +106,8 @@ void DataManager::addObject( DataObject* obj )
 }
 
 
-void DataManager::getIds( const SoPath* path, TypeSet<int>& res ) const
-{
-    pErrMsg("Find osg equivalent if necessary");
-    res.erase();
-}
-
-
-void DataManager::getIds( const std::type_info& ti,
-				   TypeSet<int>& res) const
+void DataManager::getIDs( const std::type_info& ti,
+			  TypeSet<int>& res) const
 {
     res.erase();
 

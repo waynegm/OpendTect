@@ -22,9 +22,6 @@ namespace osg { class Node; }
 
 class IOPar;
 
-class SoPath;
-class SoNode;
-
 namespace visBase
 {
 class DataObject;
@@ -45,17 +42,13 @@ public:
 
     const char*		errMsg() const;
 
-    void		getIds(const SoPath*,TypeSet<int>&) const;
-    			/*!< Gets the ids from lowest level to highest
-			     (i.e. scene ) */
-
-    void		getIds(const std::type_info&,TypeSet<int>&) const;
+    void		getIDs(const std::type_info&,TypeSet<int>&) const;
     int			highestID() const;
 
     DataObject*		getObject(int id);
     const DataObject*	getObject(int id) const;
-    DataObject*		getObject(const SoNode*);
-    const DataObject*	getObject(const SoNode*) const;
+    int			getID(const osg::Node*) const;
+			//!<Returns -1 if not found
 
     int			nrObjects() const;
     DataObject*		getIndexedObject(int idx);

@@ -324,7 +324,7 @@ void MPEClickCatcher::sendUnderlying2DSeis(
     float mindisttoseis2d = mUdf(float);
 
     TypeSet<int> seis2dinscene;
-    visBase::DM().getIds( typeid(visSurvey::Seis2DDisplay), seis2dinscene ); 
+    visBase::DM().getIDs( typeid(visSurvey::Seis2DDisplay), seis2dinscene );
 
     for ( int idx=0; idx<seis2dinscene.size(); idx++ )
     {
@@ -425,7 +425,7 @@ void MPEClickCatcher::sendUnderlyingPlanes(
     const BinID nodebid = SI().transform( nodepos );
 
     TypeSet<int> mpedisplays;
-    visBase::DM().getIds( typeid(visSurvey::MPEDisplay), mpedisplays ); 
+    visBase::DM().getIDs( typeid(visSurvey::MPEDisplay), mpedisplays );
     
     CubeSampling trkplanecs(false);
     for ( int idx=0; idx<mpedisplays.size(); idx++ )
@@ -450,7 +450,7 @@ void MPEClickCatcher::sendUnderlyingPlanes(
     }
 
     TypeSet<int> planesinscene;
-    visBase::DM().getIds( typeid(visSurvey::PlaneDataDisplay), planesinscene ); 
+    visBase::DM().getIDs( typeid(visSurvey::PlaneDataDisplay), planesinscene );
     
     for ( int idx=0; idx<planesinscene.size(); idx++ )
     {

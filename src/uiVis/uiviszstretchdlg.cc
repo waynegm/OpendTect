@@ -32,7 +32,7 @@ uiZStretchDlg::uiZStretchDlg( uiParent* p )
     , scenefld(0)
     , sliderfld(0)
 {
-    visBase::DM().getIds( typeid(visSurvey::Scene), sceneids );
+    visBase::DM().getIDs( typeid(visSurvey::Scene), sceneids );
     if ( sceneids.size() == 0 )
     {
 	new uiLabel( this, "No scenes available" );

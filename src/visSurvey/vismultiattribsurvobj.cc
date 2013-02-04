@@ -57,7 +57,8 @@ MultiTextureSurveyObject::MultiTextureSurveyObject( bool dochannels )
 	channels_->setChannels2RGBA( 
 		visBase::ColTabTextureChannel2RGBA::create() );
 
-	visBase::DM().getObject( channels_->getInventorNode() );
+	// visBase::DM().getObject( channels_->getInventorNode() );
+	// Feb 13, Kristofer: Cannot se the purpose of this
     }
 	
     getMaterial()->setColor( Color::White() );

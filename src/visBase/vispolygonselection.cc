@@ -266,15 +266,16 @@ bool PolygonSelection::rayPickThrough( const Coord3& worldpos,
 				       int depthidx ) const
 {
     pickedobjids.erase();
-    Coord3 pos;
-    mVisTrans::transform( transformation_, worldpos, pos );
+    pErrMsg( "Not implemented");
+    //Coord3 pos;
+    //mVisTrans::transform( transformation_, worldpos, pos );
 
-    const SbVec3f displaypos( (float) pos.x, (float) pos.y, (float) pos.z );
-    const SoPath* path = selector_->rayPickThrough( displaypos, depthidx );
-    if ( !path )
-	return false;
+    //const SbVec3f displaypos( (float) pos.x, (float) pos.y, (float) pos.z );
+    //const SoPath* path = selector_->rayPickThrough( displaypos, depthidx );
+    //if ( !path )
+	//	return false;
 
-    DM().getIds( path, pickedobjids );
+    //DM().getIds( path, pickedobjids );
     return true;
 }
 

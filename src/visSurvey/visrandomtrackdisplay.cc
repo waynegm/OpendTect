@@ -80,7 +80,7 @@ RandomTrackDisplay::RandomTrackDisplay()
     , voiidx_(-1)  
 {
     TypeSet<int> randomlines;
-    visBase::DM().getIds( typeid(*this), randomlines );
+    visBase::DM().getIDs( typeid(*this), randomlines );
     int highestnamenr = 0;
     for ( int idx=0; idx<randomlines.size(); idx++ )
     {

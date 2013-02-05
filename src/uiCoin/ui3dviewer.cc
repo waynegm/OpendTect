@@ -120,6 +120,7 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     viewport_->ref();
     eventfilter_.addEventType( uiEventFilter::KeyPress );
     eventfilter_.addEventType( uiEventFilter::Resize );
+    eventfilter_.addEventType( uiEventFilter::Show );
     
     mAttachCB( eventfilter_.eventhappened, uiDirectViewBody, qtEventCB );
 }
@@ -231,6 +232,7 @@ void ui3DViewerBody::setupAxes()
 	axes_ = visBase::Axes::create();
 	axescamera_->addChild( axes_->osgNode() );
     }
+    
     axescamera_->setViewport( viewport_->width()-140, 0,  140, 140 );
     getOsgCamera()->addChild( axescamera_ );
     view_->addSlave( axescamera_, false );
@@ -343,7 +345,7 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
     horthumbwheel_->setPosition( true, 20, 10, 100, 15, -1 );
     verthumbwheel_->setPosition( false, 10, 20, 100, 15, -1 );
     if ( axescamera_ )
-	axescamera_->setViewport( viewport_->width()-140, 0,  140, 140 );
+	axescamera_->setViewport( widget->width()-140, 0,  140, 140 );
 }
 
 
@@ -393,7 +395,8 @@ uiDirectViewBody::uiDirectViewBody( ui3DViewer& hndl, uiParent* parnt )
 
 void ui3DViewerBody::qtEventCB( CallBacker* )
 {
-    if ( eventfilter_.getCurrentEventType()==uiEventFilter::Resize )
+    if ( eventfilter_.getCurrentEventType()==uiEventFilter::Resize ||
+	 eventfilter_.getCurrentEventType()==uiEventFilter::Show )
     {
 	reSizeEvent( 0 );
     }

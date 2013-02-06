@@ -18,26 +18,28 @@ class uiCheckBox;
 class uiLabeledComboBox;
 class uiSliderExtra;
 
+/*!Dialog to set the z-stretch of a scene. */
+
 mExpClass(uiVis) uiZStretchDlg : public uiDialog
 {
 public:
 			uiZStretchDlg(uiParent*);
 
-    bool		valueChanged() const	{ return valchgd; }
+    bool		valueChanged() const	{ return valchgd_; }
 
     CallBack		vwallcb; //!< If not set -> no button
     CallBack		homecb; //!< If not set -> no button
 
 protected:
 
-    uiLabeledComboBox*	scenefld;
-    uiSliderExtra*	sliderfld;
-    uiCheckBox*		savefld;
-    uiButton*		vwallbut;
+    uiLabeledComboBox*	scenefld_;
+    uiSliderExtra*	sliderfld_;
+    uiCheckBox*		savefld_;
+    uiButton*		vwallbut_;
 
-    TypeSet<int>	sceneids;
-    float		initslval;
-    bool		valchgd;
+    TypeSet<int>	sceneids_;
+    float		initslval_;
+    bool		valchgd_;
 
     void		setZStretch(float,bool permanent);
     float		getCurrentZStretch() const;

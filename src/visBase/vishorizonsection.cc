@@ -1394,8 +1394,6 @@ void HorizonSection::updateTileArray()
 
 void HorizonSection::updateTileTextureOrigin( const RowCol& textureorigin )
 {
-    const int nrrows = tiles_.info().getSize(0);
-    const int nrcols = tiles_.info().getSize(1);
     mDefineRCRange;
  
     std::vector<float> sOrigins, tOrigins;
@@ -1857,7 +1855,6 @@ void HorizonSectionTile::updateGlue()
 void HorizonSectionTile::tesselateGlue()
 {
     const int res = getActualResolution();
-    const short nrcoordspertile = section_.mnrcoordspertileside_;
 
     if( res==-1 || ( !neighbors_[mGlueRight] && !neighbors_[mGlueBottom] ) ) 
 	return;
@@ -1900,7 +1897,7 @@ void HorizonSectionTile::tesselateNeigborGlue( HorizonSectionTile* neighbor,
 
     HorizonSectionTile* gluetile = res < nbres ? this : neighbor ;
     const int hgres = res < nbres ? res : nbres;
-    osg::StateSet* stateset = 
+    osg::ref_ptr<osg::StateSet> stateset = 
 			res < nbres ? stateset_ : neighbor->getOsgStateSet();
 
     const HorizonSection& section = gluetile->getSection();

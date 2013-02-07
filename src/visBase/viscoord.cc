@@ -311,7 +311,15 @@ void Coordinates::setPositions( const Coord3* pos, int sz, int start )
 	setPosWithoutLock(idx+start, pos[idx] );
 }
 
-    
+
+void Coordinates::setAllPositions( const Coord3 pos, int sz, int start )
+{
+    Threads::MutexLocker lock( mutex_ );
+
+    for ( int idx=0; idx<sz; idx++ )
+	setPosWithoutLock(idx+start, pos );
+}
+
     
 CoinFloatVertexAttribList::CoinFloatVertexAttribList(Coordinates& c, Normals* n)
     : coords_( c )

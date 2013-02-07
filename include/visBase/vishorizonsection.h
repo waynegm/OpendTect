@@ -23,19 +23,20 @@ ________________________________________________________________________
 class BinIDValueSet;
 class Color;
 class DataPointSet;
-class SbVec2f;
-class SoAction;
-class SoCallback;
-class SoGetBoundingBoxAction;
-class SoShapeHints;
-class SoState;
-class SoTextureCoordinate2;
+
 class ZAxisTransform;
 class TaskRunner;
 
+namespace osg
+{
+    class Group;
+    class CullStack;
+}
+
+
 namespace Geometry { class BinIDSurface; }
 namespace ColTab { class Sequence; class MapperSetup; }
-namespace osgGeo { class Horizon3DNode; }
+namespace osgGeo { class LayeredTexture;  }
 
 namespace visBase
 {
@@ -49,7 +50,7 @@ namespace visBase
   would only turn on wireframe or lines and points depends if you use wireframe
   or not. */
 
-mExpClass(visBase) HorizonSection : public VisualObjectImpl
+mClass(visBase) HorizonSection : public VisualObjectImpl
 {
 public:
     static HorizonSection*	create() mCreateDataObj(HorizonSection);
@@ -113,11 +114,17 @@ public:
     void			setResolution(int,TaskRunner*);
 
     void			setWireframeColor(Color col);
+    osgGeo::LayeredTexture*	getOsgTexture() const;
+    void			updateAutoResolution( osg::CullStack* );
+    void			updatePrimitiveSets();
+    void			turnOsgOn( bool );
+
 
 protected:
     				~HorizonSection();
     friend class		HorizonSectionTile;			
-    friend class		HorizonTileRenderPreparer;			
+    friend class		HorizonTileRenderPreparer;
+    friend class		TileResolutionData;
     void			surfaceChangeCB(CallBacker*);
     void			surfaceChange(const TypeSet<GeomPosID>*,
 	    				      TaskRunner*);
@@ -126,18 +133,18 @@ protected:
 
     void			updateTexture(int channel,const DataPointSet*,
 	    				      int sectionid);
-    void			updateAutoResolution(SoState*,TaskRunner*);
-    static void			updateAutoResolution(void*,SoAction*);
+
     void			updateTileTextureOrigin(const RowCol& texorig);
     void			updateTileArray();
-    void			updateBBox(SoGetBoundingBoxAction* action);
     HorizonSectionTile*		createTile(int rowidx,int colidx);
 
-    void			setTextureCoords();
     void			resetAllTiles(TaskRunner*);
     void			updateNewPoints(const TypeSet<GeomPosID>*,
 	    					TaskRunner*);
     void			setSizeParameters();
+
+
+
 
     Geometry::BinIDSurface*	geometry_;
     RowCol			origin_;
@@ -150,11 +157,7 @@ protected:
 
     TextureChannels*		channels_;
     TextureChannel2RGBA*	channel2rgba_;
-    SoTextureCoordinate2*	texturecrds_;
-
-    SoCallback*			callbacker_;
-    SoShapeHints*		shapehints_;
-
+ 
     Array2DImpl<HorizonSectionTile*> tiles_;
     bool			usewireframe_;
 
@@ -173,13 +176,13 @@ protected:
 
     bool			tesselationlock_;
 
-    int				mNrCoordsPerTileSide;
-    int 			mTotalNrCoordsPerTile;
-    int 			mTileSideSize;
-    int 			mTileLastIdx;
-    int 			mTotalNormalSize;
-    unsigned char 		mLowestResIdx;
-    int 			mHorSectNrRes;
+    int				mnrcoordspertileside_;
+    int 			mtotalnrcoordspertile_;
+    int 			mtilesidesize_;
+    int 			mtilelastidx_;
+    int 			mtotalnormalsize_;
+    unsigned char 		mlowestresidx_;
+    int 			mhorsectnrres_;
 
     int*			spacing_;
     int*			nrcells_;
@@ -188,8 +191,9 @@ protected:
 
     int				tesselationqueueid_;
 
-    osgGeo::Horizon3DNode*	osghorizon_;
-    
+    osg::Group*		    	osghorizon_;
+    Threads::SpinLock		lock_;
+
     static const char*		sKeySectionID()	{ return "Section ID"; }
 };
 
@@ -197,4 +201,3 @@ protected:
 
 
 #endif
-

@@ -2,8 +2,8 @@
 ________________________________________________________________________
 
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
- Author:        K. Tingdahl
- Date:          May 2002
+ Author:        D. Zheng
+ Date:          Feb 2013
 ________________________________________________________________________
 
 -*/
@@ -119,9 +119,9 @@ HorizonDisplay::~HorizonDisplay()
     setSceneEventCatcher( 0 );
     curshiftidx_.erase();
 
-    if ( translation_ )
+   if ( translation_ )
     {
-	removeChild( translation_->getInventorNode() );
+	removeChild( translation_->osgNode() );
 	translation_->unRef();
 	translation_ = 0;
     }
@@ -285,7 +285,7 @@ void HorizonDisplay::removeEMStuff()
 {
     for ( int idx=0; idx<sections_.size(); idx++ )
     {
-	removeChild( sections_[idx]->getInventorNode() );
+	removeChild( sections_[idx]->osgNode() );
 	sections_[idx]->unRef();
     }
 
@@ -314,7 +314,7 @@ void HorizonDisplay::removeEMStuff()
 	edgelinedisplays_ -= elsd;
 	elsd->rightClicked()->remove(
 		 mCB(this,HorizonDisplay,edgeLineRightClickCB) );
-	removeChild( elsd->getInventorNode() );
+	removeChild( elsd->osgNode() );
 	elsd->unRef();
     }
 
@@ -356,7 +356,6 @@ bool HorizonDisplay::updateFromEM( TaskRunner* tr )
 { 
     if ( !EMObjectDisplay::updateFromEM( tr ) )
 	return false;
-
     updateSingleColor();
     return true;
 }
@@ -397,7 +396,7 @@ bool HorizonDisplay::addEdgeLineDisplay( const EM::SectionID& sid )
 	    elsd->setConnect(true);
 	    elsd->setEdgeLineSet(els);
 	    elsd->setRadius(edgelineradius_);
-	    addChild( elsd->getInventorNode() );
+	    addChild( elsd->osgNode() );
 	    elsd->setDisplayTransformation(transformation_);
 	    elsd->rightClicked()->notify(
 		    mCB(this,HorizonDisplay,edgeLineRightClickCB));
@@ -870,7 +869,7 @@ void HorizonDisplay::setTranslation( const Coord3& nt )
     {
 	translation_ = visBase::Transformation::create();
 	translation_->ref();
-	insertChild( 0, translation_->getInventorNode() );
+	insertChild( 0, translation_->osgNode() );
     }
 
     Coord3 shift( nt ); shift.z *= -1;
@@ -909,7 +908,7 @@ void HorizonDisplay::removeSectionDisplay( const EM::SectionID& sid )
     const int idx = sids_.indexOf( sid );
     if ( idx<0 ) return;
 
-    removeChild( sections_[idx]->getInventorNode() );
+    removeChild( sections_[idx]->osgNode() );
     sections_.removeSingle( idx )->unRef();
     sids_.removeSingle( idx );
 };
@@ -923,9 +922,6 @@ bool HorizonDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
     surf->setZAxisTransform( zaxistransform_, tr );
     if ( scene_ ) surf->setRightHandSystem( scene_->isRightHandSystem() );
 
-    mDynamicCastGet( EM::Horizon3D*, horizon, emobject_ );
-    surf->setSurface( horizon->geometry().sectionGeometry(sid), true, tr );
-   
     while ( surf->nrChannels()<nrAttribs() ) 
 	surf->addChannel();
 
@@ -942,6 +938,9 @@ bool HorizonDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
 	EMObjectDisplay::setChannels2RGBA( 0 );
     }
 
+    mDynamicCastGet( EM::Horizon3D*, horizon, emobject_ );
+    surf->setSurface( horizon->geometry().sectionGeometry(sid), true, tr );
+
     surf->getChannels2RGBA()->allowShading( allowshading_ );
     surf->getChannels2RGBA()->enableInterpolation( enabletextureinterp_ );
     surf->useWireframe( useswireframe_ );
@@ -949,14 +948,15 @@ bool HorizonDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
 
     surf->setMaterial( 0 );
 
-    addChild( surf->getInventorNode() );
+    addChild( surf->osgNode() );
     surf->turnOn( !displayonlyatsections_ );
 
     sections_ += surf;
     sids_ += sid;
     hasmoved.trigger();
-
+    
     return addEdgeLineDisplay( sid );
+
 }
 
 
@@ -1059,7 +1059,7 @@ void HorizonDisplay::emEdgeLineChangeCB( CallBacker* cb )
 		edgelinedisplays_ -= elsd;
 		elsd->rightClicked()->remove(
 			 mCB( this, HorizonDisplay, edgeLineRightClickCB ));
-		removeChild( elsd->getInventorNode() );
+		removeChild( elsd->osgNode() );
 		elsd->unRef();
 		break;
 	    }
@@ -1641,8 +1641,8 @@ void HorizonDisplay::updateIntersectionLines(
     {
 	if ( !lineshouldexist[idx] )
 	{
-	    removeChild( intersectionlines_[idx]->getInventorNode() );
-	    removeChild( intersectionpointsets_[idx]->getInventorNode() );
+	    removeChild( intersectionlines_[idx]->osgNode() );
+	    removeChild( intersectionpointsets_[idx]->osgNode() );
 
 	    lineshouldexist.removeSingle(idx);
 	    intersectionlines_.removeSingle(idx)->unRef();
@@ -1735,7 +1735,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    if ( intersectionlinematerial_ ) 
 		newline->setMaterial( intersectionlinematerial_ );
 	    intersectionlines_ += newline;
-	    addChild( newline->getInventorNode() );
+	    addChild( newline->osgNode() );
 
 	    visBase::DataObjectGroup* pointgroup =
 				visBase::DataObjectGroup::create();
@@ -1747,7 +1747,7 @@ void HorizonDisplay::updateIntersectionLines(
 
 	    intersectionpointsets_ += pointgroup;
 	    pointgroup->ref();
-	    addChild( pointgroup->getInventorNode() );
+	    addChild( pointgroup->osgNode() );
 	}
 
 	if ( zaxistransform_ )
@@ -1834,8 +1834,8 @@ void HorizonDisplay::setLineStyle( const LineStyle& lst )
 	    if ( intersectionlinematerial_ ) 
 		newline->setMaterial( intersectionlinematerial_ );
 
-	    removeChild( intersectionlines_[idx]->getInventorNode() );
-	    addChild( newline->getInventorNode() );
+	    removeChild( intersectionlines_[idx]->osgNode() );
+	    addChild( newline->osgNode() );
 
 	    intersectionlines_.replace( idx, newline )->unRef();
 
@@ -2073,7 +2073,7 @@ const visBase::HorizonSection* HorizonDisplay::getSection( int horsecid ) const
 HorizonDisplay* HorizonDisplay::getHorizonDisplay( const MultiID& mid )
 {
     TypeSet<int> ids;
-    visBase::DM().getIDs( typeid(visSurvey::HorizonDisplay), ids );
+    visBase::DM().getIds( typeid(visSurvey::HorizonDisplay), ids );
 
     for ( int idx=0; idx<ids.size(); idx++ )
     {

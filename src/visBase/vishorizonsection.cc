@@ -237,7 +237,7 @@ public:
    const RowCol&		getOrigin()  { return origin_;	}
 
    const HorizonSectionTile*	getNeighbor( int idx ) {return neighbors_[idx];}
-   osg::StateSet*		getOsgStateSet() { return stateset_; }
+   osg::StateSet*		getOsgStateSet() { return stateset_.get(); }
 
    bool				getUseWireframe() { return usewireframe_; }
    void				setDisplayItem( unsigned int dispitem );
@@ -1897,8 +1897,8 @@ void HorizonSectionTile::tesselateNeigborGlue( HorizonSectionTile* neighbor,
 
     HorizonSectionTile* gluetile = res < nbres ? this : neighbor ;
     const int hgres = res < nbres ? res : nbres;
-    osg::ref_ptr<osg::StateSet> stateset = 
-			res < nbres ? stateset_ : neighbor->getOsgStateSet();
+    osg::StateSet* stateset = res < nbres ? 
+			    stateset_.get() : neighbor->getOsgStateSet();
 
     const HorizonSection& section = gluetile->getSection();
     const int spacing = section.spacing_[hgres];

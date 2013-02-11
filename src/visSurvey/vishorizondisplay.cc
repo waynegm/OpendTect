@@ -2073,7 +2073,7 @@ const visBase::HorizonSection* HorizonDisplay::getSection( int horsecid ) const
 HorizonDisplay* HorizonDisplay::getHorizonDisplay( const MultiID& mid )
 {
     TypeSet<int> ids;
-    visBase::DM().getIds( typeid(visSurvey::HorizonDisplay), ids );
+    visBase::DM().getIDs( typeid(visSurvey::HorizonDisplay), ids );
 
     for ( int idx=0; idx<ids.size(); idx++ )
     {

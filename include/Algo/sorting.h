@@ -68,6 +68,39 @@ mDoSort(IT itmp,itmp = idxs[j]; idxs[j] = idxs[j+d]; idxs[j+d] = itmp,int)
 #undef mDoSort
 
 
+/*!> Sorting for data with many duplicates. */
+template <class T,class I>
+inline void duplicate_sort( T* arr, I sz )
+{
+    TypeSet<T> vals;
+    TypeSet<int> count;
+    for ( I idx=0; idx<sz; ++idx )
+    {
+	const int vidx = vals.indexOf( arr[idx] );
+	if ( vidx<0 )
+	{
+	    count += 1;
+	    vals += arr[idx];
+	}
+	else
+	    count[vidx] += 1;
+    }
+
+    const int vsize = mCast(int,vals.size());
+    TypeSet<int> idxs;
+    for ( int idx=0; idx<vsize; idx++ )
+    	idxs += idx;
+    sort_coupled( vals.arr(), idxs.arr(), vsize );
+
+    I index = -1;
+    for ( int idx=0; idx<vsize; ++idx )
+    {
+	for ( int idy=count[idxs[idx]]-1; idy>=0; --idy )
+	    arr[++index] = vals[idx];
+    }
+}
+
+
 /*!
 \brief Sorting in parallel. Code is still experimental.
 
@@ -567,7 +600,6 @@ bool ParallelSorter<T>::mergeLists( const T* valptr, T* result,
 
     return true;
 }
-
 
 
 #endif

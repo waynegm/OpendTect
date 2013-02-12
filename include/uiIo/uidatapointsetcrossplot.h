@@ -42,8 +42,9 @@ class uiColTabItem;
 class uiRect;
 template <class T> class Array1D;
 
-/*!\brief Data Point Set Cross Plotter */
-
+/*!
+\brief DataPointSet crossplotter.
+*/
 
 mExpClass(uiIo) uiDataPointSetCrossPlotter : public uiRGBArrayCanvas
 {
@@ -79,6 +80,8 @@ public:
     void		setOverlayY2Cols(DataPointSet::ColID y3);
 
     Notifier<uiDataPointSetCrossPlotter>	lineDrawn;
+    Notifier<uiDataPointSetCrossPlotter>	mouseReleased;
+    Notifier<uiDataPointSetCrossPlotter>        dataChgd;
     Notifier<uiDataPointSetCrossPlotter>	pointsSelected;
     Notifier<uiDataPointSetCrossPlotter>	removeRequest;
     Notifier<uiDataPointSetCrossPlotter>	selectionChanged;
@@ -355,7 +358,7 @@ protected:
     void 			reSizeDraw(CallBacker*);
     void                        mouseClicked(CallBacker*);
     void                        mouseMove(CallBacker*);
-    void                        mouseReleased(CallBacker*);
+    void                        mouseReleasedCB(CallBacker*);
     void                        removeSelections(CallBacker*);
 };
 

@@ -44,7 +44,7 @@ DataPlayer::DataPlayer( Data& data, const MultiID& seisid, const LineKey* lk )
     dispsz_ = disprg_.nrSteps();
 
     workrg_ = disprg_; workrg_.step /= cDefTimeResampFac;
-    worksz_ = workrg_.nrSteps();
+    worksz_ = workrg_.nrSteps()+1;
 }
 
 
@@ -116,15 +116,24 @@ bool DataPlayer::setAIModel()
     if ( data_.isSonic() )
 	{ GeoCalculator gc; gc.son2Vel( pslog, true ); }
 
+    float prev_depth = -1.f * data_.wd_->info().srdelev;
+    // Now we take srd from well; we should get it from SI() if it is set there
+    float thickness = 0;
     for ( int idx=0; idx<worksz_; idx++ )
     {
-	const float dah0 = d2t_->getDah( workrg_.atIndex( idx ) );
-	const float dah1 = d2t_->getDah( workrg_.atIndex( idx+1 ) );
-	const bool inside = data_.dahrg_.includes( dah1, true );
-	const float vel = inside ? pslog.getValue( dah1, true ) : mUdf(float);
-	const float den = inside ? pdlog.getValue( dah1, true ) : mUdf(float);
-	aimodel_ += AILayer( fabs( dah1-dah0 ), vel, den );
+	const float twt = workrg_.atIndex( idx );
+	const float dah = d2t_->getDah( twt );
+	const float depth = (float) wd_->track().getPos(dah).z;
+	if ( depth < 0 )
+	    continue;
+	const bool inside = data_.dahrg_.includes( dah, true );
+	const float vel = inside ? pslog.getValue( dah, true ) : mUdf(float);
+	const float den = inside ? pdlog.getValue( dah, true ) : mUdf(float);
+	thickness = depth - prev_depth;
+	aimodel_ += AILayer( thickness, vel, den );
+	prev_depth = depth;
     }
+
     return true;
 }
 
@@ -148,11 +157,6 @@ bool DataPlayer::doFullSynthetics()
     gen.setWavelet( &wvlt, OD::UsePtr );
     gen.setOutSampling( disprg_ );
     IOPar par;
-    const float replveldz = wd_->info().srdelev - wd_->track().getKbElev();
-    const float sourrecz = replveldz > 0 ? 
-			   -1.f * data_.wd_->info().srdelev :
-			   -1.f * data_.wd_->track().getKbElev();
-    par.set(RayTracer1D::sKeySRDepth(),sourrecz,sourrecz);
     gen.usePar( par ); 
     TaskRunner* tr = data_.trunner_;
     if ( !TaskRunner::execute( tr, gen ) )
@@ -285,7 +289,7 @@ void DataPlayer::createLog( const char* nm, float* dah, float* vals, int sz )
 bool DataPlayer::computeAdditionalInfo( const Interval<float>& zrg )  
 {
     const float step = disprg_.step;
-    const int nrsamps =  mNINT32( zrg.width()/step )+1;
+    const int nrsamps = mNINT32( zrg.width()/step )+1;
     const int istart = mNINT32( zrg.start/step );
 
     if ( data_.seistrc_.size() < nrsamps || data_.synthtrc_.size() < nrsamps )

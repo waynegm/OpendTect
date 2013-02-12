@@ -42,7 +42,10 @@ SynthGenParams::SynthGenParams()
 
     RayTracer1D::setIOParsToZeroOffset( raypars_ );
     raypars_.setYN( RayTracer1D::sKeyVelBlock(), true );
-    raypars_.set( RayTracer1D::sKeyVelBlockVal(), 20 );
+    raypars_.set( RayTracer1D::sKeyVelBlockVal(),
+	    	  RayTracer1D::cDefaultVelBlockVal() );
+    raypars_.set( RayTracer1D::sKeyDensBlockVal(), 
+	    	  RayTracer1D::cDefaultDensBlockVal() );
 }
 
 
@@ -256,6 +259,12 @@ bool StratSynth::generate( const Strat::LayerModel& lm, SeisTrcBuf& trcbuf )
 }
 
 
+float StratSynth::cMaximumVpWaterVel()
+{
+    return 1510.f;
+}
+
+
 SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 				       TaskRunner* tr )
 { return generateSD( lm, genparams_, tr ); }
@@ -463,16 +472,31 @@ bool StratSynth::fillElasticModel( const Strat::LayerModel& lm,
 	return false; 
 
     ElasticPropGen elpgen( eps, props );
+    const float srddepth = -1*0; // SHOULD COME from SI() - depth, not elevation
     const Strat::Layer* lay = 0;
-    for ( int idx=0; idx<seq.size(); idx++ )
+    const int firstidx = seq.startDepth() >= srddepth ? 0 :
+					seq.layerIdxAtZ( srddepth, false );
+    for ( int idx=firstidx; idx<seq.size(); idx++ )
     {
 	lay = seq.layers()[idx];
+	float thickness = lay->thickness();
+	if ( idx == firstidx )
+	{
+	    thickness -= srddepth - lay->zTop();
+	    if ( mIsZero( thickness, 1e-4 ) )
+		continue;
+	}
+
 	float dval, pval, sval;
 	elpgen.getVals( dval, pval, sval, lay->values(), props.size() );
 
-	ElasticLayer ail ( lay->thickness(), pval, sval, dval );
+	// Detect water - reset Vs
+	if ( pval < cMaximumVpWaterVel() )
+	    sval = 0;
+
+	ElasticLayer ail ( thickness, pval, sval, dval );
 	BufferString msg( "Can not derive synthetic layer property " );
-	bool isudf = mIsUdf( dval ) || mIsUdf( pval );
+	bool isudf = mIsUdf( dval ) || mIsUdf( pval ) || mIsUdf( sval );
 	if ( mIsUdf( dval ) )
 	{
 	    msg += "'Density'";
@@ -480,6 +504,10 @@ bool StratSynth::fillElasticModel( const Strat::LayerModel& lm,
 	if ( mIsUdf( pval ) )
 	{
 	    msg += "'P-Wave'";
+	}
+	if ( mIsUdf( sval ) )
+	{
+	     msg += "'S-Wave'";
 	}
 	msg += ". \n Please check its definition.";
 	if ( isudf )

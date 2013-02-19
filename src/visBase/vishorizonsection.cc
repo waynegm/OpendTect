@@ -535,8 +535,8 @@ HorizonSection::HorizonSection()
     else 
 	cache_ += 0;
 
-    channels_->getOsgTexture()->assignTextureUnits();
-    channels_->getOsgTexture()->allowBorderedTextures();
+    channels_->getOsgTexture()->setTextureSizePolicy(
+					osgGeo::LayeredTexture::AnySize );
     
     wireframematerial_->ref();
     osghorizon_->ref();
@@ -1397,12 +1397,13 @@ void HorizonSection::updateTileTextureOrigin( const RowCol& textureorigin )
     mDefineRCRange;
  
     std::vector<float> sOrigins, tOrigins;
-    const osgGeo::LayeredTexture* texture = getOsgTexture();
+    osgGeo::LayeredTexture* texture = getOsgTexture();
 
     const osg::Vec2f imgsize = texture->imageEnvelopeSize();
     if ( !imgsize.length())
-	return ;
+	return;
 
+    texture->reInitTiling();
     texture->planTiling( mnrcoordspertileside_ - 1, sOrigins, tOrigins );
 
     const int nrs = sOrigins.size()-1;

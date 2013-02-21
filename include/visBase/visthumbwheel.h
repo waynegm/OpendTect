@@ -43,8 +43,6 @@ public:
 protected:
     				~ThumbWheel();
     
-    osg::Node*			gtOsgNode();
-    
     osgGeo::ThumbWheel*	    	thumbwheel_;
     ThumbWheelMess*		messenger_;
 };

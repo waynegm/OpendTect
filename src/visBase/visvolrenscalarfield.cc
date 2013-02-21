@@ -53,6 +53,7 @@ VolumeRenderScalarField::VolumeRenderScalarField()
     , osgvoldata_( new osg::Image() )
     , osgtransfunc_( new osg::TransferFunction1D() )
 {
+    setOsgNode( osgvolroot_ );
     osgvolroot_->ref();
     osgvoltile_->ref();
     osgvolume_->ref();
@@ -288,12 +289,6 @@ SoNode* VolumeRenderScalarField::gtInvntrNode()
     return root_;
 }
 */
-
-osg::Node* VolumeRenderScalarField::gtOsgNode()
-{
-    return osgvolroot_;
-}
-
 
 void VolumeRenderScalarField::clipData( TaskRunner* tr )
 {

@@ -32,21 +32,13 @@ const char* Camera::sKeyFocalDistance()	{ return "Focal Distance"; }
 Camera::Camera()
     : camera_( new osg::Camera )
 {
-    camera_->ref();
+    setOsgNode( camera_ );
 }
 
 
 Camera::~Camera()
 {
-    camera_->unref();
 }
-
-
-osg::Node* Camera::gtOsgNode()
-{
-    return camera_;
-}
-
 
 void Camera::setPosition(const Coord3& pos)
 {

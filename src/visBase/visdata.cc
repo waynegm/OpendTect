@@ -60,13 +60,12 @@ FixedString DataObject::name() const
 
 void DataObject::setName( const char* nm )
 {
-    osg::ref_ptr<osg::Node> osgnode = osgNode();
-    
-    if ( osgnode )
-	osgnode->setName( nm );
+    if ( osgnode_ )
+	osgnode_->setName( nm );
     else if ( nm )
     {
-	if ( !name_ ) name_ = new BufferString;
+	if ( !name_ )
+	    name_ = new BufferString;
     }
     
     if ( name_ ) (*name_) = nm;
@@ -77,6 +76,7 @@ DataObject::DataObject()
     : id_( -1 )
     , name_( 0 )
     , enabledmask_( cAllTraversalMask() )
+    , osgnode_( 0 )
 {
     DM().addObject( this );
 }
@@ -86,6 +86,7 @@ DataObject::~DataObject()
 {
     DM().removeObject( this );
     delete name_;
+    if ( osgnode_ ) osgnode_->unref();
 }
 
 
@@ -94,6 +95,21 @@ void DataObject::setID( int nid )
     id_ = nid;
     updateOsgNodeData();
 }
+
+std::string idstr( sKey::ID() );
+
+int DataObject::getID( const osg::Node* node )
+{
+    if ( node )
+    {
+	int objid;
+	if ( node->getUserValue(idstr, objid) && objid>=0 )
+	    return objid;
+    }
+
+    return -1;
+}
+
     
     
 bool DataObject::turnOn( bool yn )
@@ -127,16 +143,23 @@ bool DataObject::isPickable() const
 }
 
 
+void DataObject::setOsgNodeInternal( osg::Node* osgnode )
+{
+    //Do this reverse order as osgnode may be a child of osgnode_
+    if ( osgnode ) osgnode->ref();
+    if ( osgnode_ ) osgnode_->unref();
+    osgnode_ = osgnode;
+    updateOsgNodeData();
+}
+
+
 void DataObject::updateOsgNodeData()
 {
-    osg::Node* osgnode = gtOsgNode();
-    if ( !osgnode )
-	return;
-
-    osgnode->setName( name_ ? name_->buf() : sKey::EmptyString().str() );
-
-    static std::string idstr( sKey::ID() );
-    osgnode->setUserValue( idstr, id() );
+    if ( osgnode_ )
+    {
+	osgnode_->setName( name_ ? name_->buf() : sKey::EmptyString().str() );
+	osgnode_->setUserValue( idstr, id() );
+    }
 }
 
 

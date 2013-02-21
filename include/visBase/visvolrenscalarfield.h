@@ -84,8 +84,6 @@ protected:
 //    Color			blendcolor_;
     bool			useshading_;
 
-    virtual osg::Node*		gtOsgNode();
-
     osgVolume::VolumeTile*	osgvoltile_;
     osg::Switch*		osgvolroot_;
     osgVolume::Volume*		osgvolume_;

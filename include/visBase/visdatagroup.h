@@ -78,8 +78,6 @@ protected:
 
     bool			righthandsystem_;
 
-    virtual osg::Node*		gtOsgNode();
-
 protected:
 
     ObjectSet<DataObject>	objects_;

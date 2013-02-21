@@ -9,7 +9,6 @@ ________________________________________________________________________
 -*/
 static const char* rcsID mUsedVar = "$Id$";
 
-#include "keystrs.h"
 #include "visevent.h"
 #include "visdetail.h"
 #include "visdataman.h"
@@ -224,9 +223,8 @@ bool EventCatchHandler::handle( const osgGA::GUIEventAdapter& ea,
 	    osg::NodePath::const_reverse_iterator it = pick.nodePath.rbegin();
 	    for ( ; it!=pick.nodePath.rend(); it++ )
 	    {
-		int objid;
-		static std::string idstr( sKey::ID() );
-		if ( (*it)->getUserValue(idstr, objid) && objid>=0 )
+		const int objid = DataObject::getID( *it );
+		if ( objid>=0 )
 		    eventinfo.pickedobjids += objid;
 	    }
 
@@ -422,8 +420,7 @@ EventCatcher::EventCatcher()
     , osgnode_( 0 )
     , eventcatchhandler_( 0 )
 {
-    osgnode_ = new osg::Node;
-    osgnode_->ref();
+    osgnode_ = setOsgNode( new osg::Node );
     eventcatchhandler_ = new EventCatchHandler( *this );
     osgnode_->setEventCallback( eventcatchhandler_ );
 }
@@ -448,7 +445,6 @@ EventCatcher::~EventCatcher()
     deepUnRef( utm2display_ );
 
     osgnode_->removeEventCallback( eventcatchhandler_ );
-    osgnode_->unref();
 }
 
 
@@ -476,10 +472,6 @@ void EventCatcher::reHandle( const EventInfo& eventinfo )
     rehandled_ = true;
     rehandling_ = false;
 }
-
-
-osg::Node* EventCatcher::gtOsgNode()
-{ return osgnode_; }
-
+    
 
 }; // namespace visBase

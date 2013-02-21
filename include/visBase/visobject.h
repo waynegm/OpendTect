@@ -139,8 +139,6 @@ protected:
     Material*		material_;
     bool		righthandsystem_;
 
-    osg::Node*		gtOsgNode();
-
 private:
     
     osg::Switch*	osgroot_;

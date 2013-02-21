@@ -26,7 +26,7 @@ DataObjectGroup::DataObjectGroup()
     , change( this )
     , righthandsystem_( true )
 {
-    osggroup_->ref();
+    setOsgNode( osggroup_ );
 }
 
 
@@ -35,8 +35,6 @@ DataObjectGroup::~DataObjectGroup()
     mObjectSetApplyToAll( objects_, objects_[idx]->setParent( 0 ));
     
     deepUnRef( objects_ );
-
-    osggroup_->unref();
 }
 
 
@@ -145,12 +143,6 @@ void DataObjectGroup::removeObject( int idx )
 void DataObjectGroup::removeAll()
 {
     while ( size() ) removeObject( 0 );
-}
-
-
-osg::Node* DataObjectGroup::gtOsgNode()
-{
-    return osggroup_;
 }
 
 

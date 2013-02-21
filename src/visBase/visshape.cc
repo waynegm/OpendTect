@@ -48,8 +48,7 @@ Shape::Shape( SoNode* shape )
     , material_( 0 )
     , osgswitch_( new osg::Switch )
 {
-    
-    osgswitch_->ref();
+    setOsgNode( osgswitch_ );
 }
 
 
@@ -58,8 +57,6 @@ Shape::~Shape()
     if ( texture2_ ) texture2_->unRef();
     if ( texture3_ ) texture3_->unRef();
     if ( material_ ) material_->unRef();
-
-    if ( osgswitch_ ) osgswitch_->unref();
 }
 
 
@@ -166,11 +163,7 @@ int Shape::usePar( const IOPar& par )
     return 1;
 }
 
-	
-osg::Node* Shape::gtOsgNode()
-{ return osgswitch_; }
-
-
+    
 #define mVertexShapeConstructor( shp, geode ) \
     Shape( shp ) \
     , normals_( 0 ) \
@@ -244,7 +237,7 @@ void VertexShape::removeSwitch()
 {
     if ( osgswitch_ )
     {
-	osgswitch_->unref();
+	setOsgNode( geode_ );
 	osgswitch_ = 0;
     }
     else
@@ -262,13 +255,6 @@ void VertexShape::dirtyCoordinates()
 	osggeom_->dirtyBound();
     }
 }
-
-    
-osg::Node* VertexShape::gtOsgNode()
-{
-    return osgswitch_ ? (osg::Node*) osgswitch_ : (osg::Node*) node_;
-}
-    
 
 
 void VertexShape::setDisplayTransformation( const mVisTrans* tr )

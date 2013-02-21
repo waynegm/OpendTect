@@ -26,21 +26,13 @@ namespace visBase
 Axes::Axes()
     : axesnode_(new osgGeo::AxesNode)
 {
-    axesnode_->ref();
+    setOsgNode( axesnode_ );
 }
 
 
 Axes::~Axes()
 {
-    axesnode_->unref();
 }
-
-
-osg::Node* Axes::gtOsgNode()
-{
-    return axesnode_;
-}
-
 
 float Axes::getRadius() const
 {

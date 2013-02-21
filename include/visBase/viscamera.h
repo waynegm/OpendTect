@@ -82,8 +82,6 @@ protected:
     static const char*	sKeyNearDistance();
     static const char*	sKeyFarDistance();
     static const char*	sKeyFocalDistance();
-
-    osg::Node*		gtOsgNode();
 };
 
 

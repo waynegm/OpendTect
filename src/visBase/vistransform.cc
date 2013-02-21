@@ -31,10 +31,7 @@ Transformation::Transformation()
     , curscale_( *new osg::Vec3d )
     , curso_( *new osg::Quat )
 {
-    if ( osggroup_ ) osggroup_->unref();
-    
-    osggroup_ = node_ = new osg::MatrixTransform;
-    osggroup_->ref();
+    osggroup_ = node_ = setOsgNode( new osg::MatrixTransform );
 
     reset();
 }

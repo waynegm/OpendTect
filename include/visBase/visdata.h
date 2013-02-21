@@ -66,16 +66,16 @@ public:
     virtual bool		isOK() const		{ return true; }
 
     int				id() const		{ return id_; }
+    
     void			setID(int nid);
+    static int			getID(const osg::Node*);
 
     FixedString			name() const;
     virtual void		setName(const char*);
 
-    osg::Node*			osgNode()		{return gtOsgNode();}
-    const osg::Node*		osgNode() const
-				    { return const_cast<DataObject*>(this)->
-							gtOsgNode(); }
-
+    osg::Node*			osgNode()		{ return osgnode_; }
+    const osg::Node*		osgNode() const		{ return osgnode_; }
+    
     void			enableTraversal(unsigned int mask,bool yn=true);
     bool			isTraversalEnabled(unsigned int mask) const;
 
@@ -141,8 +141,8 @@ public:
     void			setParent(DataObjectGroup* g) { parent_ = g; }
 
 protected:
-    virtual bool		init()			{ return true; }
-				//!<Called from create()
+
+    virtual bool		init() { return true; }
 
     friend class		SelectionManager;
     friend class		Scene;
@@ -154,13 +154,20 @@ protected:
     
 				DataObject();
     
-    virtual osg::Node*		gtOsgNode()		{ return 0; }
-
-    void			updateOsgNodeData();
-    
     DataObjectGroup*		parent_;
+    
+    template <class T>
+    T*				setOsgNode(T* t)
+				{
+				    setOsgNodeInternal( (osg::Node*) t );
+				    return t;
+				}
 
 private:
+    void			setOsgNodeInternal( osg::Node* t );
+    void			updateOsgNodeData();
+    
+    osg::Node*			osgnode_;
     int				id_;
     BufferString*		name_;
     unsigned int		enabledmask_;

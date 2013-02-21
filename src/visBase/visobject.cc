@@ -73,7 +73,7 @@ visBase::NodeState* VisualObject::removeNodeState( visBase::NodeState* ns )
     
 osg::StateSet* VisualObject::getStateSet()
 {
-    return gtOsgNode() ? gtOsgNode()->getOrCreateStateSet() : 0;
+    return osgNode() ? osgNode()->getOrCreateStateSet() : 0;
 }
 
 
@@ -92,14 +92,13 @@ VisualObjectImpl::VisualObjectImpl( bool issel )
     , material_( 0 )
     , righthandsystem_( true )
 {
-    osgroot_->ref();
+    setOsgNode( osgroot_ );
 }
 
 
 VisualObjectImpl::~VisualObjectImpl()
 {
     if ( material_ ) material_->unRef();
-    osgroot_->unref();
 }
 
 
@@ -224,12 +223,6 @@ void VisualObjectImpl::removeSwitch()
 }
 
 
-osg::Node* VisualObjectImpl::gtOsgNode()
-{
-    return osgroot_;
-}
-    
-    
 void VisualObjectImpl::addChild( SoNode* nn )
 {  }
 

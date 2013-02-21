@@ -112,8 +112,6 @@ protected:
     bool			rehandling_;
     bool			rehandled_;
 
-    virtual osg::Node*		gtOsgNode();
-
     osg::Node*			osgnode_;
     EventCatchHandler*		eventcatchhandler_;
 };

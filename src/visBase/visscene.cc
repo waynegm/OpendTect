@@ -70,9 +70,10 @@ Scene::Scene()
 
 
     osgsceneroot_ = new osg::Group;
-    osgsceneroot_->addChild( DataObjectGroup::gtOsgNode() );
+    osgsceneroot_->addChild( osgNode() );
     osgsceneroot_->addChild( events_.osgNode() );
     osgsceneroot_->ref();
+    setOsgNode( osgsceneroot_ );
     polygonoffset_->attachStateSet( osgsceneroot_->getOrCreateStateSet() );
 }
 
@@ -136,12 +137,6 @@ bool Scene::blockMouseSelection( bool yn )
     const bool res = blockmousesel_;
     blockmousesel_ = yn;
     return res;
-}
-
-
-osg::Node* Scene::gtOsgNode()
-{
-    return osgsceneroot_;
 }
 
 

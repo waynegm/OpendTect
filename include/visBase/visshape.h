@@ -74,7 +74,6 @@ protected:
     Material*			material_;
     
     osg::Switch*		osgswitch_;
-    osg::Node*			gtOsgNode();
 
     static const char*		sKeyOnOff();
     static const char*		sKeyTexture();
@@ -147,8 +146,6 @@ protected:
     
     virtual void	addPrimitiveSetToScene(osg::PrimitiveSet*);
     virtual void	removePrimitiveSetFromScene(const osg::PrimitiveSet*);
-    
-    osg::Node*		gtOsgNode();
 
     Normals*		normals_;
     Coordinates*	coords_;

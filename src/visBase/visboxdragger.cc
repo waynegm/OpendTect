@@ -195,8 +195,8 @@ BoxDragger::BoxDragger()
     , osgcallbackhandler_( 0 )
 {
     osgdraggerroot_ = new osg::Switch();
-    osgdraggerroot_->ref();
-
+    setOsgNode( osgdraggerroot_ );
+    
     osgboxdragger_ = new osgManipulator::TabBoxDragger();
     osgdraggerroot_->addChild( osgboxdragger_ );
 
@@ -263,7 +263,6 @@ BoxDragger::BoxDragger()
 BoxDragger::~BoxDragger()
 {
     osgboxdragger_->removeDraggerCallback( osgcallbackhandler_ );
-    osgdraggerroot_->unref();
 }
 
 
@@ -351,11 +350,7 @@ bool BoxDragger::isOn() const
     return osgdraggerroot_->getValue(0);
 }
 
-
-osg::Node* BoxDragger::gtOsgNode()
-{ return osgdraggerroot_; }
-
-
+    
 void BoxDragger::setDisplayTransformation( const mVisTrans* nt )
 {
     if ( transform_ == nt )

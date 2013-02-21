@@ -70,8 +70,6 @@ protected:
 
     void		fillOffsetPar( IOPar& ) const;
 
-    virtual osg::Node*	gtOsgNode();
-
 private:
     int			mousedownid_;
 

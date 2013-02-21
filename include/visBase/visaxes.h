@@ -33,7 +33,6 @@ public:
 
 protected:
     				~Axes();
-    osg::Node*			gtOsgNode();
 
     osgGeo::AxesNode*		axesnode_;
     bool			ison_;

@@ -88,8 +88,6 @@ protected:
     Interval<float>			spaceranges_[3];
 
     bool				selectable_;
-
-    virtual osg::Node*			gtOsgNode();
 };
 
 };

@@ -20,7 +20,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osgViewer/View>
 #include <osgViewer/CompositeViewer>
 #include <osgViewer/ViewerEventHandlers>
-#include <osgGA/TrackballManipulator>
+#include <osgGeo/TrackballManipulator>
 #include <osg/ComputeBoundsVisitor>
 #include <osg/MatrixTransform>
 #include <osgGeo/ThumbWheel>
@@ -257,10 +257,11 @@ void ui3DViewerBody::setupView()
     // Unlike Coin, default OSG headlight has zero ambiance
     view_->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
     
-    osg::ref_ptr<osgGA::TrackballManipulator> manip =
-	new osgGA::TrackballManipulator(
+    osg::ref_ptr<osgGeo::TrackballManipulator> manip =
+	new osgGeo::TrackballManipulator(
 	    osgGA::StandardManipulator::DEFAULT_SETTINGS |
 	    osgGA::StandardManipulator::SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT );
+    manip->enableDragging( isViewMode() );
     
     manip->setAutoComputeHomePosition( false );
     
@@ -462,6 +463,11 @@ static unsigned char rotate_mask_bitmap[ROTATE_BYTES] = {
 
 void ui3DViewerBody::setViewMode( bool yn, bool trigger )
 {
+    osg::ref_ptr<osgGeo::TrackballManipulator> manip =
+	    static_cast<osgGeo::TrackballManipulator*>(
+						view_->getCameraManipulator() );
+    manip->enableDragging( yn );
+
     if ( scene_ )
 	scene_->enableTraversal( visBase::cEventTraversalMask(), !yn );
     
@@ -490,7 +496,6 @@ void ui3DViewerBody::setViewMode( bool yn, bool trigger )
     
     if ( trigger )
 	handle_.viewmodechanged.trigger( handle_ );
-
 }
 
 

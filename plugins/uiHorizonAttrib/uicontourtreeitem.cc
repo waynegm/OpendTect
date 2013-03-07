@@ -192,6 +192,7 @@ uiContourTreeItem::uiContourTreeItem( const char* parenttype )
     , zshift_(mUdf(float))
     , color_(0,0,0)
     , showlabels_(true)
+    , labels_( 0 )
 {
     optionsmenuitem_.iconfnm = "disppars";
 

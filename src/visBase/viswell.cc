@@ -34,6 +34,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Material>
 #include <osg/Node>
 #include <osgGeo/MarkerSet>
+#include <osgGeo/WellLog>
 #include <osgGeo/PlaneWellLog>
 #include <osgText/Text>
 
@@ -277,9 +278,9 @@ void Well::setMarkerSet(const MarkerParams& mp)
     markerset_->setRadius(mp.size_*10);
     markerset_->setShape(shape);
     markerset_->setDetail(0.5f);
-    markerset_->setMinimumScale(0);
-    markerset_->setMaximumScale(1.5f);
-    markerset_->setAutoTransformRotateMode(osg::AutoTransform::NO_ROTATION);
+    markerset_->setMinScale(0);
+    markerset_->setMaxScale(1.5f);
+    markerset_->setRotateMode(osg::AutoTransform::NO_ROTATION);
 }
 
 
@@ -764,7 +765,7 @@ void Well::setLogConstantSize( bool yn )
 
 bool Well::logConstantSize() const
 {
-   return  leftlog_->getDisplayStatus() ? leftlog_->logConstantSize() : true;
+   return  leftlog_->getDisplayStatus() ? leftlog_->getLogConstantSize() : true;
 }
 
 void Well::showLogName( bool yn )

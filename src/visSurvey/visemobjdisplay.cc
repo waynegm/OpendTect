@@ -339,10 +339,9 @@ void EMObjectDisplay::showPosAttrib( int attr, bool yn )
 	    posattribs_ += attr;
 	    visBase::DataObjectGroup* group= visBase::DataObjectGroup::create();
 	    group->ref();
-	    addChild( group->getInventorNode() );
+	    addChild( group->osgNode() );
 	    posattribmarkers_ += group;
-
-	    //group->addObject( new visBase::Material );
+	    group->addNodeState( new visBase::Material );
 	    attribindex = posattribs_.size()-1;
 	}
 
@@ -357,7 +356,7 @@ void EMObjectDisplay::showPosAttrib( int attr, bool yn )
     else if ( attribindex!=-1 && !yn )
     {
 	posattribs_ -= attr;
-	removeChild(posattribmarkers_[attribindex]->getInventorNode());
+	removeChild(posattribmarkers_[attribindex]->osgNode());
 	posattribmarkers_.removeSingle(attribindex)->unRef();
     }
 }
@@ -631,8 +630,11 @@ void EMObjectDisplay::updatePosAttrib( int attrib )
     const int attribindex = posattribs_.indexOf(attrib);
     if ( attribindex==-1 ) return;
 
-    mDynamicCastGet(visBase::Material*, posattrmat,
-		    posattribmarkers_[attribindex]->getObject(0) );
+    mDynamicCastGet( visBase::Material*, posattrmat,
+		    posattribmarkers_[attribindex]->getNodeState( 0 ) );
+
+    if( !posattrmat )
+	return;
     posattrmat->setColor( emobject_->getPosAttrMarkerStyle(attrib).color_ );
 
     int markeridx = 1;		// element 0 contains material, start at 1

@@ -20,14 +20,13 @@ ________________________________________________________________________
 
 class Coord3;
 
-namespace osg { class Switch; class StateSet; }
+namespace osg { class Switch; }
 
 namespace visBase
 {
 class Material;
 class Transformation;
 class EventCatcher;
-class NodeState;
 
 /*!
 \ingroup visBase
@@ -56,15 +55,8 @@ public:
     virtual NotifierAccess*	rightClicked()		{ return &rightClick; }
     const EventInfo*		rightClickedEventInfo() const{return rcevinfo;}
     const TypeSet<int>*		rightClickedPath() const;
-    
-    template <class T> T*	addNodeState(T* ns)
-				{ doAddNodeState(ns); return ns; }
-    NodeState*			removeNodeState(NodeState*);
 
 protected:
-    void			doAddNodeState(NodeState* ns);
-    virtual osg::StateSet*	getStateSet();
-    
     void			triggerSel()
     				{ if (isselectable) selnotifier.trigger(); }
     void			triggerDeSel()
@@ -74,8 +66,6 @@ protected:
 				~VisualObject();
 
 private:
-    
-    ObjectSet<NodeState>	nodestates_;
     bool			isselectable;
     Notifier<VisualObject>	selnotifier;
     Notifier<VisualObject>	deselnotifier;

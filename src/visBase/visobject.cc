@@ -16,7 +16,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistransform.h"
 
 #include <osg/Switch>
-#include <osg/Material>
 #include <osg/BlendFunc>
 
 namespace visBase
@@ -38,44 +37,9 @@ VisualObject::VisualObject( bool issel )
 
 VisualObject::~VisualObject()
 {
-    while ( nodestates_.size() )
-	removeNodeState( nodestates_[0] );
+ 
 }
     
-    
-    
-void VisualObject::doAddNodeState(visBase::NodeState* ns)
-{
-    ns->ref();
-    nodestates_ += ns;
-    osg::ref_ptr<osg::StateSet> stateset = getStateSet();
-    if ( !stateset )
-    {
-	pErrMsg("Setting nodestate on class without stateset.");
-    }
-    else
-	ns->attachStateSet( stateset );
-}
-
-    
-visBase::NodeState* VisualObject::removeNodeState( visBase::NodeState* ns )
-{
-    const int idx = nodestates_.indexOf( ns );
-    if ( nodestates_.validIdx(idx) )
-    {
-	ns->detachStateSet( getStateSet() );
-	nodestates_.removeSingle( idx )->unRef();
-    }
-    
-    return ns;
-}
-    
-    
-osg::StateSet* VisualObject::getStateSet()
-{
-    return osgNode() ? osgNode()->getOrCreateStateSet() : 0;
-}
-
 
 void VisualObject::setPickable( bool yn )
 { enableTraversal( visBase::cIntersectionTraversalMask(), yn ); }
@@ -98,7 +62,8 @@ VisualObjectImpl::VisualObjectImpl( bool issel )
 
 VisualObjectImpl::~VisualObjectImpl()
 {
-    if ( material_ ) material_->unRef();
+    if ( material_ )
+	material_->unRef();
 }
 
 
@@ -115,6 +80,7 @@ void VisualObjectImpl::readLock()
 void VisualObjectImpl::readUnLock()
 {
 }
+
 
 bool VisualObjectImpl::tryReadLock()
 {
@@ -177,7 +143,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
     if ( material_ )
     {
 	material_->ref();
-	material_->change.notify( mCB(this,VisualObjectImpl,materialChangeCB) );
+	mAttachCB( material_->change, VisualObjectImpl, materialChangeCB );
 	ss->setDataVariance( osg::Object::DYNAMIC );
 	addNodeState( material_ );
     }

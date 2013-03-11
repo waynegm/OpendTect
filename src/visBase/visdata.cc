@@ -12,6 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "keystrs.h"
 #include "visdataman.h"
 #include "visselman.h"
+#include "vismaterial.h"
 
 #include <osg/Node>
 #include <osg/ValueObject>
@@ -87,6 +88,47 @@ DataObject::~DataObject()
     DM().removeObject( this );
     delete name_;
     if ( osgnode_ ) osgnode_->unref();
+    while ( nodestates_.size() )
+	removeNodeState( nodestates_[0] );
+}
+
+
+void DataObject::doAddNodeState(visBase::NodeState* ns)
+{
+    ns->ref();
+    nodestates_ += ns;
+    osg::ref_ptr<osg::StateSet> stateset = getStateSet();
+    if ( !stateset )
+    {
+	pErrMsg("Setting nodestate on class without stateset.");
+    }
+    else
+	ns->attachStateSet( stateset );
+}
+
+
+visBase::NodeState* DataObject::removeNodeState( visBase::NodeState* ns )
+{
+    const int idx = nodestates_.indexOf( ns );
+    if ( nodestates_.validIdx(idx) )
+    {
+	ns->detachStateSet( getStateSet() );
+	nodestates_.removeSingle( idx )->unRef();
+    }
+
+    return ns;
+}
+
+
+NodeState* DataObject::getNodeState( int idx )
+{
+    return idx<=nodestates_.size() ? nodestates_[idx] : 0;
+}
+
+
+osg::StateSet* DataObject::getStateSet()
+{
+    return osgNode() ? osgNode()->getOrCreateStateSet() : 0;
 }
 
 

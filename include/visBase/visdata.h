@@ -30,7 +30,7 @@ namespace osg { class Node; }
 
 #define mVisTrans visBase::Transformation
 
-
+namespace osg { class Switch; class StateSet; }
 namespace visBase
 {
 
@@ -39,6 +39,7 @@ class SelectionManager;
 class DataManager;
 class Scene;
 class DataObjectGroup;
+class NodeState;
 
 
 // OSG traversal bitmasks defined by OpendTect
@@ -139,8 +140,15 @@ public:
 	    				  bool binary=false);
     
     void			setParent(DataObjectGroup* g) { parent_ = g; }
+   
+    template <class T> T*	addNodeState(T* ns)
+				{ doAddNodeState(ns); return ns; }
+    NodeState*			removeNodeState(NodeState*);
+    NodeState*			getNodeState( int idx );
 
 protected:
+    virtual osg::StateSet*	getStateSet();
+    void			doAddNodeState(NodeState* ns);
 
     virtual bool		init() { return true; }
 
@@ -167,6 +175,7 @@ private:
     void			setOsgNodeInternal( osg::Node* t );
     void			updateOsgNodeData();
     
+    ObjectSet<NodeState>	nodestates_;
     osg::Node*			osgnode_;
     int				id_;
     BufferString*		name_;

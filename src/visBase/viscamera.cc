@@ -32,6 +32,8 @@ const char* Camera::sKeyFocalDistance()	{ return "Focal Distance"; }
 Camera::Camera()
     : camera_( new osg::Camera )
 {
+    camera_->setProjectionResizePolicy(osg::Camera
+				      ::ProjectionResizePolicy::FIXED);
     setOsgNode( camera_ );
 }
 

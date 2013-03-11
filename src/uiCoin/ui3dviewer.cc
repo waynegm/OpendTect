@@ -156,8 +156,7 @@ void ui3DViewerBody::setupHUD()
     hudcamera->setClearMask(GL_DEPTH_BUFFER_BIT);
     hudcamera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
     hudcamera->setViewMatrix(osg::Matrix::identity());
-    hudcamera->setProjectionResizePolicy(osg::Camera
-					::ProjectionResizePolicy::FIXED);
+    hudcamera->setProjectionResizePolicy( osg::Camera::FIXED );
     
     //draw subgraph after main camera view.
     hudcamera->setRenderOrder(osg::Camera::POST_RENDER, mHudCameraOrder );

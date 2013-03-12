@@ -28,18 +28,6 @@ namespace osg { class Vec3f; class Array; class Referenced; }
 #define mGetOsgVec3Arr(ptr) ((osg::Vec3Array*) ptr )
 #define mGetOsgVec4Arr(ptr) ((osg::Vec4Array*) ptr )
 
-
-namespace  visBase
-{
-
-//!Calls obj->ref(). obj must inherit osg::Referenced
-mExternC(visBase) void refOsgObj(osg::Referenced* obj);
-
-//!Calls obj->unref(). obj must inherit osg::Referenced
-mExternC(visBase) void unrefOsgObj(osg::Referenced*);
-    
-} //Namespace
-
 #if defined(visBase_EXPORTS) || defined(VISBASE_EXPORTS)
 //Only available in visBase
 #include <osg/Vec3>

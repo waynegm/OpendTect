@@ -18,19 +18,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/ValueObject>
 #include <osgDB/WriteFile>
 
-
-mExternC(visBase) void refOsgObj( osg::Object* obj )
-{
-    obj->ref();
-}
-
-
-mExternC(visBase) void unrefOsgObj( osg::Object* obj )
-{
-    obj->unref();
-}
-
-
 using namespace visBase;
 
 

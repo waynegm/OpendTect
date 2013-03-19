@@ -20,6 +20,7 @@ ________________________________________________________________________
 #include "multiid.h"
 #include "cubesampling.h"
 #include "uipsviewer2dposdlg.h"
+#include "uipsviewer2dposdlg.h"
 
 class uiSlicePos2DView;
 

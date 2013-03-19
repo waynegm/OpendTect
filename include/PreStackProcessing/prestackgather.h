@@ -36,12 +36,12 @@ namespace PreStack
 mExpClass(PreStackProcessing) Gather : public FlatDataPack
 {
 public:
-    				Gather();
-    				Gather(const Gather&);
+				Gather();
+				Gather(const Gather&);
+				Gather(const FlatPosData&);
     				~Gather();
 
     bool			is3D() const { return linename_.isEmpty(); }				
-    bool			setSize( int nroff, int nrz );
 
     bool			readFrom(const MultiID&, const BinID&,
 	    				 int component=0,
@@ -68,6 +68,9 @@ public:
 
     				//for 3d only
     const BinID&		getBinID() const 	{ return binid_; }
+    const StepInterval<float>&	zRange() const 		{ return zrg_; }
+    void			setZRange( const StepInterval<float>& zrg )
+    				{ zrg_ = zrg; }
 
 				//for 2D only.
     bool			readFrom(const MultiID&, const int tracenr, 
@@ -124,6 +127,7 @@ protected:
     BinID			binid_;
     Coord			coord_;
     TypeSet<float>		azimuths_;
+    StepInterval<float>		zrg_;
 
     BufferString		linename_;
 

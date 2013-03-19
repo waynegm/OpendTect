@@ -68,6 +68,7 @@ uiTieWinMGRDlg::uiTieWinMGRDlg( uiParent* p, WellTie::Setup& wtsetup )
 	, seis3dfld_(0)
 	, seislinefld_(0)
 	, seisextractfld_(0)
+	, setupwasused_(false)
 	, typefld_(0)
 	, extractwvltdlg_(0)
 	, wd_(0)
@@ -88,7 +89,7 @@ uiTieWinMGRDlg::uiTieWinMGRDlg( uiParent* p, WellTie::Setup& wtsetup )
     
     const bool has2d = SI().has2D();
     const bool has3d = SI().has3D();
-    setupwasused_ = false;
+    is2d_ = has3d ? false : true;
 
     if ( has2d && has3d )
     {
@@ -97,6 +98,7 @@ uiTieWinMGRDlg::uiTieWinMGRDlg( uiParent* p, WellTie::Setup& wtsetup )
 	seistypes.add( Seis::nameOf(Seis::Vol) );
 	typefld_ = new uiGenInput( seisgrp, "Seismic", 
 					StringListInpSpec( seistypes ) );
+	typefld_->setValue( !is2d_ );
 	typefld_->valuechanged.notify( mCB(this,uiTieWinMGRDlg,seisSelChg) );
     }
 
@@ -116,6 +118,7 @@ uiTieWinMGRDlg::uiTieWinMGRDlg( uiParent* p, WellTie::Setup& wtsetup )
 						uiSeisSel::Setup(Seis::Vol));
 	if ( typefld_ )
 	    seis3dfld_->attach( alignedBelow, typefld_ );
+	seis3dfld_->selectionDone.notify( mCB(this,uiTieWinMGRDlg,seisSelChg) );
     }
     seisgrp->setHAlignObj( typefld_ ? (uiGroup*)typefld_ 
 				    : (uiGroup*)seis2dfld_ ? 
@@ -150,6 +153,7 @@ uiTieWinMGRDlg::uiTieWinMGRDlg( uiParent* p, WellTie::Setup& wtsetup )
 	    			mCB(this,uiTieWinMGRDlg,extrWvlt), false );
     crwvltbut->attach( rightOf, wvltfld_ );
 
+    seisSelChg(0);
     postFinalise().notify( mCB(this,uiTieWinMGRDlg,wellSelChg) );
 }
 
@@ -157,8 +161,6 @@ uiTieWinMGRDlg::uiTieWinMGRDlg( uiParent* p, WellTie::Setup& wtsetup )
 uiTieWinMGRDlg::~uiTieWinMGRDlg()
 {
     delete &wtsetup_;
-    if ( wd_ )
-	delete wd_;
     delete seisctio3d_.ioobj; delete &seisctio3d_;
     delete seisctio2d_.ioobj; delete &seisctio2d_;
     if ( extractwvltdlg_ )
@@ -188,7 +190,15 @@ void uiTieWinMGRDlg::wellSelChg( CallBacker* )
     wtsetup_.wellid_ = wllctio_.ioobj->key();
 
     logsfld_->wellid_ = wtsetup_.wellid_;
-    logsfld_->setLogs( wd_->logs() );
+
+    if ( !logsfld_->setLogs(wd_->logs()) )
+    {
+	BufferString errmsg = "This well has no valid log to use as input";
+	errmsg += "\n";
+	errmsg += "Use well manager to either import or create your logs";
+	uiMSG().error( errmsg );
+	return;
+    }
 
     used2tmbox_->display( wr.getD2T() && !mIsUnvalidD2TM((*wd_)) );
     used2tmbox_->setChecked( wr.getD2T() && !mIsUnvalidD2TM((*wd_)) );
@@ -199,7 +209,8 @@ void uiTieWinMGRDlg::wellSelChg( CallBacker* )
 
 void uiTieWinMGRDlg::seisSelChg( CallBacker* )
 {
-    setTypeFld();
+    if ( typefld_ )
+	setTypeFld();
 
     if ( seis3dfld_ )
 	seis3dfld_->display( !is2d_ );
@@ -252,6 +263,8 @@ void uiTieWinMGRDlg::extractWvltDone( CallBacker* )
 
 #undef mErrRet
 #define mErrRet(s) { if ( s ) uiMSG().error(s); return false; }
+#define mDensityIdx 0
+#define mPwaveIdx 1
 bool uiTieWinMGRDlg::getDefaults()
 {
     PtrMan<IOObj> ioobj = IOM().get( wtsetup_.wellid_ );
@@ -269,16 +282,14 @@ bool uiTieWinMGRDlg::getDefaults()
     {
 	Well::Log* den = wd_->logs().getLog( wtsetup_.denlognm_ );
 	const PropertyRef::StdType tp = PropertyRef::Den;
-	bool dummy = false;
+	bool reverted = false;
 	if ( !den ) mErrRet( "No valid density log selected" );
-	if ( !units.getDenFactor( *den ) )
-	    logsfld_->setLog( tp, wtsetup_.denlognm_, dummy, 0, 0 );
-	else
-	{
-	    BufferString denuom = den->unitMeasLabel();
-	    logsfld_->setLog( tp, wtsetup_.denlognm_, dummy,
-		    	      UnitOfMeasure::getGuessed(denuom), 0 );
-	}
+	const BufferString denuomlbl = den->unitMeasLabel();
+	const UnitOfMeasure* denuom = mIsUdf(units.getDenFactor(*den))
+	    			    ? UoMR().getInternalFor(tp)
+				    : UnitOfMeasure::getGuessed(denuomlbl);
+
+	logsfld_->setLog( tp, wtsetup_.denlognm_, reverted, denuom,mDensityIdx);
     }
 
     if ( !wtsetup_.vellognm_.isEmpty() )
@@ -286,18 +297,23 @@ bool uiTieWinMGRDlg::getDefaults()
 	Well::Log* vp = wd_->logs().getLog( wtsetup_.vellognm_ );
 	const PropertyRef::StdType tp = PropertyRef::Vel;
 	if ( !vp ) mErrRet( "No valid velocity log selected" );
-	if ( !units.getVelFactor( *vp, wtsetup_.issonic_ ) )
-	    logsfld_->setLog( tp, wtsetup_.vellognm_, wtsetup_.issonic_, 0, 1 );
-	else
-	{
-	    BufferString veluom = vp->unitMeasLabel();
-	    logsfld_->setLog( tp, wtsetup_.vellognm_, wtsetup_.issonic_,
-		    	      UnitOfMeasure::getGuessed(veluom), 1 );
-	}
+	const BufferString velpuomlbl = vp->unitMeasLabel();
+	const UnitOfMeasure* velpuom = mIsUdf(units.getVelFactor( *vp,
+		    					     wtsetup_.issonic_))
+	    			     ? UoMR().getInternalFor(tp)
+				     : UnitOfMeasure::getGuessed(velpuomlbl);
+
+	logsfld_->setLog( tp, wtsetup_.vellognm_, wtsetup_.issonic_, velpuom,
+								    mPwaveIdx );
     }
 
     if ( !wtsetup_.wvltid_.isEmpty() )
 	wvltfld_->setInput( wtsetup_.wvltid_ );
+
+    setupwasused_ = false;
+    mDynamicCastGet( uiSeisSel*, seisfld, is2d_ ? seis2dfld_ : seis3dfld_ );
+    if ( seisfld )
+	seisfld->setEmpty();
 
     seisSelChg(0);
     d2TSelChg(0);
@@ -350,7 +366,8 @@ bool uiTieWinMGRDlg::initSetup()
     Well::Data* loadedwd =  Well::MGR().get( wtsetup_.wellid_, false );
     if ( !loadedwd ) loadedwd = wd_;
 
-    uiPropSelFromList* psflden = logsfld_->getPropSelFromListByName("Density");
+    uiPropSelFromList* psflden = logsfld_->
+				 getPropSelFromListByIndex( mDensityIdx );
     if ( !psflden ) return false;
     wtsetup_.denlognm_ = psflden->text();
     Well::Log* den = loadedwd->logs().getLog( wtsetup_.denlognm_ );
@@ -361,7 +378,7 @@ bool uiTieWinMGRDlg::initSetup()
     else
 	den->setUnitMeasLabel( psflden->uom()->symbol() );
 
-    uiPropSelFromList* psflvp = logsfld_->getPropSelFromListByName("Velocity");
+    uiPropSelFromList* psflvp = logsfld_->getPropSelFromListByIndex( mPwaveIdx);
     if ( !psflvp ) return false;
     wtsetup_.vellognm_ = psflvp->text();
     wtsetup_.issonic_  = psflvp->isUseAlternate();
@@ -469,16 +486,12 @@ void uiTieWinMGRDlg::set3DSeis() const
     if ( !wtsetup_.seisid_.isEmpty() )
     {
 	if ( seisIDIs3D( wtsetup_.seisid_ ) )
-	{
 	    seis3dfld_->setInput( wtsetup_.seisid_ );
-	}
-	return;
+	else
+	    seis3dfld_->setInput( defaultid );
     }
     else
-    {
 	seis3dfld_->setInput( defaultid );
-	return;
-    }
 }
 
 
@@ -496,15 +509,17 @@ void uiTieWinMGRDlg::set2DSeis() const
     if ( !wtsetup_.seisid_.isEmpty() )
     {
 	if ( !seisIDIs3D( wtsetup_.seisid_ ) )
-	{
 	    seis2dfld_->setInput( wtsetup_.seisid_ );
-	}
-	return;
+	else
+	    seis2dfld_->setInput( defaultid );
     }
     else
     {
 	BufferString lineidstr;
 	PtrMan<IOObj> lsobj = IOM().get( MultiID(lsid) );
+	if ( !lsobj )
+	    return;
+
 	BufferString attrnm = mGetPar( sKeyDefaultAttrib );
 	if ( lsobj && attrnm.isEmpty() )
 	{
@@ -518,7 +533,6 @@ void uiTieWinMGRDlg::set2DSeis() const
 	lineidstr = LineKey( lsid, attrnm );
 	const MultiID seisid = lineidstr.buf();
 	seis2dfld_->setInput( seisid );
-	return;
     }
 }
 
@@ -528,13 +542,9 @@ void uiTieWinMGRDlg::setLine() const
     BufferString linekey = "";
 
     if ( wtsetup_.linekey_ != 0 )
-    {
 	linekey = wtsetup_.linekey_;
-    }
     else if ( seislinefld_->getInput() )
-    {
 	return;
-    }
 
     seislinefld_->setInput( linekey );
 }
@@ -542,23 +552,14 @@ void uiTieWinMGRDlg::setLine() const
 
 void uiTieWinMGRDlg::setTypeFld()
 {
+    is2d_ = !typefld_->getIntValue();
     if ( !setupwasused_ )
-    {
-	is2d_ = SI().has2D();
-    }
-    else if ( typefld_ )
-    {
-	is2d_ = !typefld_->getIntValue();
-    }
-
-    if ( !wtsetup_.seisid_.isEmpty() && !setupwasused_ )
-    {
-	is2d_ = !seisIDIs3D( wtsetup_.seisid_ );
-	setupwasused_ = true;
-    }
-
-    if ( typefld_ )
-	typefld_->setValue( !is2d_ );
+	if ( !wtsetup_.seisid_.isEmpty() )
+	{
+	    is2d_ = !seisIDIs3D( wtsetup_.seisid_ );
+	    setupwasused_ = true;
+	}
+    typefld_->setValue( !is2d_ );
 }
 
 

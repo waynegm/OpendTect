@@ -17,11 +17,13 @@ ________________________________________________________________________
 #include "welldahobj.h"
 #include "ranges.h"
 #include "iopar.h"
+#include "unitofmeasure.h"
 
 namespace Well
 {
 
-/*!\brief Well log
+/*!
+\brief Well log
  
   No regular sampling required, as in all DahObjs. 
 
@@ -36,8 +38,7 @@ namespace Well
   The IOPar pars() will be retrieved and stored with each log; it is not
   really used; moreover, it's intended for plugins to dump their extra info
   about this log.
- 
- */
+*/
 
 mExpClass(Well) Log : public DahObj
 {
@@ -63,7 +64,8 @@ public:
     Interval<float>&	valueRange() 			{ return range_; }
     const Interval<float>& valueRange() const 		{ return range_; }
 
-    const char*		unitMeasLabel() const		{ return unitmeaslbl_; }
+    const char*		unitMeasLabel() const		{ return unitmeaslbl_;}
+    const UnitOfMeasure* unitOfMeasure() const;
     void		setUnitMeasLabel( const char* s ) { unitmeaslbl_ = s; }
     static const char*	sKeyUnitLbl();
     static const char*	sKeyHdrInfo();

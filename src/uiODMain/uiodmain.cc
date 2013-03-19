@@ -83,7 +83,7 @@ int ODMain( int argc, char** argv )
 {
     OD::ModDeps().ensureLoaded( "AllNonUi" );
 
-    PIM().setArgs( argc, argv );
+    //PIM().setArgs( argc, argv );
     PIM().loadAuto( false );
 
     uiDialog::setTitlePos( -1 );

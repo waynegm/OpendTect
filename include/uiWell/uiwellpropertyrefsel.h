@@ -76,7 +76,7 @@ mExpClass(uiWell) uiWellPropSel : public uiGroup
 public:
 			uiWellPropSel(uiParent*,const PropertyRefSelection&);
 
-    void		setLogs(const Well::LogSet&);
+    bool		setLogs(const Well::LogSet&);
 
     bool		setLog(const PropertyRef::StdType,const char*,
 	    			bool check,const UnitOfMeasure*, int idx);
@@ -84,8 +84,9 @@ public:
 	    			bool&, BufferString& uom, int idx) const;
 
     uiPropSelFromList*	getPropSelFromListByName(const BufferString&);
+    uiPropSelFromList*	getPropSelFromListByIndex(int);
     virtual bool	isOK() const;
-    void		setWellID(const MultiID& wid) { wellid_ = wid; }
+    void		setWellID( const MultiID& wid ) { wellid_ = wid; }
 
     MultiID		wellid_;
 

@@ -39,6 +39,9 @@ public:
     void		addScene(visSurvey::Scene*);
     void		removeScene(visSurvey::Scene*);
 
+    int			unTransformedSceneID() const;
+    const ZAxisTransform* getZAxisTransform() const;
+
 protected:
 				~uiVisPickRetriever();
     void			pickCB(CallBacker*);

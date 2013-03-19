@@ -12,13 +12,11 @@ ________________________________________________________________________
 -*/
 
 #include "generalmod.h"
-#include "generalmod.h"
 #include "array2dbitmap.h"
 #include "task.h"
 
-
 /*!
-\brief Common pars for A2DBitMapGenerators.
+\brief Common parameters for A2DBitMapGenerators.
 */
 
 mStruct(General) WVAA2DBitMapGenPars : public A2DBitMapGenPars
@@ -45,12 +43,11 @@ mStruct(General) WVAA2DBitMapGenPars : public A2DBitMapGenPars
     static char		cWiggFill();		// => -125
     static char		cLeftFill();		// => -124
     static char		cRightFill();		// => -123
-
 };
 
 
 /*!
-\brief Wiggles/Variable Area Drawing on A2DBitMap's.
+\brief Wiggles/Variable Area drawing on A2DBitMap.
 */
 
 mExpClass(General) WVAA2DBitMapGenerator : public A2DBitMapGenerator
@@ -87,9 +84,8 @@ protected:
 
 namespace Interpolate { template <class T> class Applier2D; }
 
-
 /*!
-\brief
+\brief Variable density A2DBitMap generation parameters.
 */
 
 mStruct(General) VDA2DBitMapGenPars : public A2DBitMapGenPars
@@ -103,12 +99,11 @@ mStruct(General) VDA2DBitMapGenPars : public A2DBitMapGenPars
     static char		cMaxFill();	// => 120
 
     static float	offset(char);	//!< cMinFill -> 0, 0 -> 0.5
-
 };
 
 
 /*!
-\brief Wiggles/Variable Area Drawing on A2DBitMap's.
+\brief Variable density drawing on A2DBitMap.
 */
 
 mExpClass(General) VDA2DBitMapGenerator : public A2DBitMapGenerator, ParallelTask
@@ -153,5 +148,4 @@ protected:
 
 
 #endif
-
 

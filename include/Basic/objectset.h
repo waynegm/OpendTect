@@ -45,12 +45,12 @@ public:
 
     inline bool			nullAllowed() const	{ return allow0_; }
     inline void			allowNull(bool yn=true);
-    inline size_type			size() const		{ return vec_.size(); }
+    inline size_type		size() const		{ return vec_.size(); }
     inline virtual od_int64	nrItems() const		{ return size(); }
 
     inline virtual bool		validIdx(od_int64) const;
     inline virtual bool		isPresent(const T*) const;
-    inline virtual size_type		indexOf(const T*) const;
+    inline virtual size_type	indexOf(const T*) const;
     inline virtual T*		operator[](size_type);
     inline virtual const T*	operator[](size_type) const;
     inline virtual T*		operator[](const T*) const; //!< check & unconst
@@ -82,7 +82,7 @@ public:
 
 protected:
 
-    VectorAccess<void*,size_type>	vec_;
+    VectorAccess<void*,size_type> vec_;
     bool			allow0_;
 
 public:
@@ -157,7 +157,8 @@ inline void deepCopyClone( ObjectSet<T>& to, const ObjectSet<S>& from )
 
 //! Locate object in set
 template <class T,class S>
-inline typename ObjectSet<T>::size_type indexOf( const ObjectSet<T>& os, const S& val )
+inline typename ObjectSet<T>::size_type indexOf( const ObjectSet<T>& os,
+						 const S& val )
 {
     for ( int idx=0; idx<os.size(); idx++ )
     {
@@ -288,17 +289,14 @@ T* ObjectSet<T>::operator[]( const T* t ) const
 template <class T> inline
 typename ObjectSet<T>::size_type ObjectSet<T>::indexOf( const T* ptr ) const
 {
-    const size_type sz = size();
-    for ( size_type idx=0; idx<sz; idx++ )
-	if ( (const T*)vec_[idx] == ptr ) return idx;
-	    return -1;
+    return vec_.indexOf( (void*) ptr, true );
 }
 
 
 template <class T> inline
 bool ObjectSet<T>::isPresent( const T* ptr ) const
 {
-    return indexOf(ptr) >= 0;
+    return vec_.isPresent( (void*) ptr );
 }
 
 
@@ -323,11 +321,11 @@ ObjectSet<T>& ObjectSet<T>::operator -=( T* ptr )
 template <class T> inline
 void ObjectSet<T>::swap( od_int64 idx0, od_int64 idx1 )
 {
-    if ( idx0<0 || idx0>=size() || idx1<0 || idx1>=size() )
-	return;
-    void* tmp = vec_[(size_type)idx0];
-    vec_[(size_type)idx0] = vec_[(size_type)idx1];
-    vec_[(size_type)idx1] = tmp;
+#ifdef __debug__
+    if ( !validIdx(idx0) || !validIdx(idx1) )
+	DBG::forceCrash(true);
+#endif
+    vec_.swap( mCast(size_type,idx0), mCast(size_type,idx1) );
 }
 
 
@@ -344,9 +342,15 @@ void ObjectSet<T>::reverse()
 template <class T> inline
 T* ObjectSet<T>::replace( size_type idx, T* newptr )
 {
-    if ( idx<0 || idx>=size() ) return 0;
+    if ( !validIdx(idx) )
+#ifdef __debug__
+	DBG::forceCrash(true);
+#else
+	return 0;
+#endif
     T* ptr = (T*)vec_[idx];
-    vec_[idx] = (void*)newptr; return ptr;
+    vec_[idx] = (void*)newptr;
+    return ptr;
 }
 
 
@@ -397,15 +401,11 @@ void ObjectSet<T>::push( T* ptr )
 
 template <class T> inline
 T* ObjectSet<T>::pop()
-{
-    size_type sz = size();
-    if ( !sz ) return 0;
-    return removeSingle( sz-1 );
-}
+{ return (T*)vec_.pop_back(); }
 
 
 template <class T> inline
-T* ObjectSet<T>::removeSingle( size_type idx, bool kporder)
+T* ObjectSet<T>::removeSingle( size_type idx, bool kporder )
 {
     T* res = (T*)vec_[idx];
     if ( kporder )

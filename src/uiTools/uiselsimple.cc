@@ -48,6 +48,12 @@ uiSelectFromList::uiSelectFromList( uiParent* p, const Setup& sup )
 }
 
 
+uiObject* uiSelectFromList::bottomFld()
+{
+    return selfld_;
+}
+
+
 void uiSelectFromList::filtChg( CallBacker* )
 {
     const char* filt = filtfld_->text();
@@ -122,6 +128,12 @@ const char* uiGetObjectName::text() const
 }
 
 
+uiGroup* uiGetObjectName::bottomFld()
+{
+    return inpfld_;
+}
+
+
 bool uiGetObjectName::acceptOK( CallBacker* )
 {
     const char* txt = text();
@@ -151,6 +163,12 @@ uiGetChoice::uiGetChoice( uiParent* p, uiDialog::Setup s,
 void uiGetChoice::setDefaultChoice( int nr )
 {
     inpfld_->setChecked( nr, true );
+}
+
+
+uiGroup* uiGetChoice::bottomFld()
+{
+    return inpfld_;
 }
 
 

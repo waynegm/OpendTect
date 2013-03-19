@@ -11,9 +11,11 @@ ________________________________________________________________________
 
 -*/
 
-#include "generalmod.h"
 #include "callback.h"
+#include "generalmod.h"
+#include "keyenum.h"
 #include "refcount.h"
+#include "zaxistransform.h"
 
 class Coord3;
 namespace PosInfo { class GeomID; }
@@ -51,6 +53,10 @@ public:
     static void			setInstance(PickRetriever*);
     				/*!<Should normally only be called from
 				    application initiation. */
+    OD::ButtonState		buttonstate_;
+    virtual int			unTransformedSceneID() const		= 0;
+    virtual const ZAxisTransform* getZAxisTransform() const		= 0;
+
 protected:
     static RefMan<PickRetriever> instance_;
 };

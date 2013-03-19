@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ascstream.h"
 #include "file.h"
 #include "filepath.h"
+#include "keystrs.h"
 #include "oddirs.h"
 #include "safefileio.h"
 #include "settings.h"
@@ -660,7 +661,12 @@ bool PosInfo::Survey2D::setGeometry( const PosInfo::Line2DData& l2dd )
 
     ascostream astrm( sfio.ostrm() );
     astrm.putHeader( "Line2D Geometry" );
-    astrm.put( sKeyStor, cWriteAscii ? "Ascii" : "Binary" );
+
+    float max, median;
+    l2dd.compDistBetwTrcsStats( max, median );
+    astrm.put( sKey::TrcDist(), max, median );
+
+    astrm.put( sKeyStor, cWriteAscii ? sKey::Ascii() : sKey::Binary() );
     astrm.newParagraph();
     if ( l2dd.write(sfio.ostrm(),cWriteAscii,true) )
     {
@@ -886,6 +892,34 @@ BufferString PosInfo::Survey2D::getIdxTimeStamp( const char* lsnm ) const
 }
 
 
+bool PosInfo::Survey2D::readDistBetwTrcsStats( const char* linenm,
+					       float& max, float& median ) const
+{
+    if ( !linenm )
+	return false;
+
+    SafeFileIO sfio( FilePath(lsfp_,linenm).fullPath() );
+    if ( !sfio.open(true) )
+	return false;
+		    
+    ascistream astrm( sfio.istrm() ); // read header
+    while ( !atEndOfSection(astrm.next()) )
+    {   
+	if ( FixedString(astrm.keyWord()) == sKey::TrcDist() )
+	{
+	    float buf[2];
+	    sfio.istrm().read( (char*) buf, 2 * sizeof(float) );
+	    max = buf[0];
+	    median = buf[1];
+	    sfio.closeSuccess();
+	    return true;
+	}
+    }   
+    sfio.closeSuccess();
+    return false;
+}
+
+
 // New Stuff
 
 Survey::Geometry2D::Geometry2D()
@@ -893,11 +927,17 @@ Survey::Geometry2D::Geometry2D()
 {
 }
 
+
+Survey::Geometry2D::Geometry2D( PosInfo::Line2DData* l2d )
+    : data_( *l2d )
+{}
+
+
 Survey::Geometry2D::~Geometry2D()
 { delete &data_; }
 
 
-Coord Survey::Geometry2D::toCoord( int line, int trcnr ) const
+Coord Survey::Geometry2D::toCoord( int, int trcnr ) const
 {
     PosInfo::Line2DPos pos;
     return data_.getPos(trcnr,pos) ? pos.coord_ : Coord::udf();
@@ -918,7 +958,7 @@ bool Survey::Geometry2D::includes( int line, int tracenr ) const
 
 
 BufferString Survey::Geometry2D::makeUniqueLineName( const char* lsnm,
-													 const char* lnm )
+						     const char* lnm )
 {
     BufferString newlnm( lsnm );
     newlnm.add( "-" );

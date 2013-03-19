@@ -8,6 +8,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "posinfo2d.h"
 #include "math2.h"
+#include "surv2dgeom.h"
 #include "survinfo.h"
 #include "cubesampling.h"
 #include <iostream>
@@ -332,25 +333,31 @@ void PosInfo::Line2DData::compDistBetwTrcsStats( float& max,
 {
     max = 0;
     median = 0;
-    TypeSet<float> medset;
+    if ( S2DPOS().readDistBetwTrcsStats( lnm_, max, median ) )
+	return;
+
+    double maxsq = 0;
+    TypeSet<double> medset;
     const TypeSet<PosInfo::Line2DPos>& posns = positions();
     for ( int pidx=1; pidx<posns.size(); pidx++ )
     {
 	const double distsq =
 			posns[pidx].coord_.sqDistTo( posns[pidx-1].coord_ );
 
-	float dist = (float)Math::Sqrt(distsq);
-	if ( !mIsUdf(dist) )
+	if ( !mIsUdf(distsq) )
 	{
-	    if ( dist > max )
-		max = dist;
-	    medset += dist;
+	    if ( distsq > maxsq )
+		maxsq = distsq;
+	    medset += distsq;
 	}
     }
 
     if ( medset.size() )
     {
 	sort( medset );
-	median = medset[ mCast(int, medset.size()/2) ];
+	median = mCast( float,
+			Math::Sqrt( medset[ mCast(int, medset.size()/2) ] ) );
     }
+   
+    max = mCast( float, Math::Sqrt(maxsq) );
 }

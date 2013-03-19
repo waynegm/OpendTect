@@ -20,11 +20,12 @@ static const char* rcsID mUsedVar = "$Id$";
 
 int main( int argc, char ** argv )
 {
+    SetProgramArgs( argc, argv );
     uiMain app( argc, argv );
     
     uiIssueReporterDlg* dlg = new uiIssueReporterDlg( 0 );
 
-    if ( !dlg->reporter().parseCommandLine( argc, argv ) )
+    if ( !dlg->reporter().parseCommandLine() )
     {
 	uiMSG().error( dlg->reporter().errMsg() );
 	ExitProgram( 1 );	

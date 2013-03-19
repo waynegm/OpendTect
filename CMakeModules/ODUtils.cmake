@@ -5,25 +5,30 @@
 #	RCS :		$Id$
 #_______________________________________________________________________________
 
-if ( (CMAKE_GENERATOR STREQUAL "Unix Makefiles") OR (CMAKE_GENERATOR STREQUAL "Ninja") )
+if ( (CMAKE_GENERATOR STREQUAL "Unix Makefiles") OR
+     (CMAKE_GENERATOR STREQUAL "Ninja") )
     if ( CMAKE_BUILD_TYPE STREQUAL "" )
 	set ( DEBUGENV $ENV{DEBUG} )
 	if ( DEBUGENV AND
 	    ( (${DEBUGENV} MATCHES "yes" ) OR
 	      (${DEBUGENV} MATCHES "Yes" ) OR
 	      (${DEBUGENV} MATCHES "YES" ) ) )
-	    set ( CMAKE_BUILD_TYPE "Debug" CACHE STRING "Debug or Release" FORCE )
+	    set ( CMAKE_BUILD_TYPE "Debug"
+		  CACHE STRING "Debug or Release" FORCE )
 	else()
-	    set ( CMAKE_BUILD_TYPE "Release" CACHE STRING "Debug or Release" FORCE)
+	    set ( CMAKE_BUILD_TYPE "Release"
+		  CACHE STRING "Debug or Release" FORCE)
 	endif()
 
-	MESSAGE( STATUS "Setting CMAKE_BUILD_TYPE to ${CMAKE_BUILD_TYPE}" )
+	message( STATUS "Setting CMAKE_BUILD_TYPE to ${CMAKE_BUILD_TYPE}" )
     endif()
 
     set( OD_BUILDSUBDIR "/${CMAKE_BUILD_TYPE}" )
 endif()
 
-ADD_DEFINITIONS("-D__cmake__")
+set ( OD_TESTDATA_DIR "" CACHE FILEPATH "Test data location" )
+
+add_definitions("-D__cmake__")
 
 set ( OD_SOURCELIST_FILE ${CMAKE_BINARY_DIR}/CMakeModules/sourcefiles.txt )
 file ( REMOVE ${OD_SOURCELIST_FILE} )
@@ -51,7 +56,6 @@ macro ( OD_ADD_MODULES )
     endforeach()
 endmacro()
 
-
 # Macro for going through a list of modules and adding them
 # as optional targets
 macro ( OD_ADD_OPTIONAL_MODULES )
@@ -62,4 +66,10 @@ macro ( OD_ADD_OPTIONAL_MODULES )
 	    add_subdirectory( ${DIR}/${OD_MODULE_NAME} EXCLUDE_FROM_ALL )
 	endif()
     endforeach()
+endmacro()
+
+macro ( OD_INSTALL_LIBRARY SOURCE )
+  get_filename_component( PATH ${SOURCE} REALPATH )
+  get_filename_component( FILENAME ${SOURCE} NAME )
+  install( PROGRAMS ${PATH} DESTINATION ${OD_EXEC_OUTPUT_RELPATH} RENAME ${FILENAME} )
 endmacro()

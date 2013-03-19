@@ -15,6 +15,7 @@ ________________________________________________________________________
 #include "uitoolsmod.h"
 #include "uidialog.h"
 
+class uiGroup;
 class uiListBox;
 class uiGenInput;
 class uiCheckList;
@@ -48,6 +49,7 @@ public:
 
     uiListBox*		selFld()		{ return selfld_; }
     uiGenInput*		filtFld()		{ return filtfld_; }
+    uiObject*		bottomFld(); //!< is selFld()
 
 protected:
 
@@ -93,8 +95,8 @@ public:
     const char*		text() const;
 
     uiGenInput*		inpFld()		{ return inpfld_; }
-    			//!< Is the lowest field
     uiListBox*		selFld()		{ return listfld_; }
+    uiGroup*		bottomFld(); //!< is inpFld()
 
 protected:
 
@@ -125,6 +127,9 @@ public:
     void		setDefaultChoice(int);
     int			choice() const		{ return choice_; }
     			//!< on cancel will be -1
+
+    uiCheckList*	checkList();
+    uiGroup*		bottomFld(); //!< is checkList()
 
 protected:
 

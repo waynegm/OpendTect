@@ -25,6 +25,7 @@ const PropertyRef& Strat::Layer::thicknessRef()
 
 Strat::Layer::Layer( const LeafUnitRef& r )
     : ref_(&r)
+    , content_(0)
 {
     setValue( 0, 0 ); setValue( 1, 0 );
 }
@@ -142,33 +143,20 @@ int Strat::LayerSequence::indexOf( const Strat::Level& lvl, int startat ) const
     const RefTree& rt = refTree();
     Strat::UnitRefIter it( rt, Strat::UnitRefIter::LeavedNodes );
     const Strat::LeavedUnitRef* lvlunit = 0;
-    ObjectSet<const Strat::LeavedUnitRef> hits;
     while ( it.next() )
     {
 	const Strat::LeavedUnitRef* un
 	    	= static_cast<const Strat::LeavedUnitRef*>( it.unit() );
-	if ( !lvlunit && un->levelID() == lvl.id() )
-	    lvlunit = un;
-	if ( lvlunit )
-	    hits += un;
+	if ( un->levelID() == lvl.id() )
+	    { lvlunit = un; break; }
     }
     if ( !lvlunit ) return -1;
 
     for ( int ilay=startat; ilay<size(); ilay++ )
     {
 	const LeafUnitRef& lur = layers_[ilay]->unitRef();
-	if ( &lur == &rt.undefLeaf() )
-	    continue;
-
-	const Strat::LeavedUnitRef* leavedun
-	    = static_cast<const Strat::LeavedUnitRef*>( lur.upNode() );
-	if ( !leavedun )
-	    continue;
-	for ( int ihit=0; ihit<hits.size(); ihit++ )
-	{
-	    if ( leavedun == hits[ihit] )
-		return ilay;
-	}
+	if ( lur.upNode() == lvlunit )
+	    return ilay;
     }
     return -1;
 }
@@ -180,6 +168,49 @@ float Strat::LayerSequence::depthOf( const Strat::Level& lvl ) const
     if ( sz < 1 ) return 0;
     const int idx = indexOf( lvl, 0 );
     return idx < 0 ? layers_[sz-1]->zBot() : layers_[idx]->zTop();
+}
+
+
+int Strat::LayerSequence::positionOf( const Strat::Level& lvl ) const
+{
+    const RefTree& rt = refTree();
+    Strat::UnitRefIter it( rt, Strat::UnitRefIter::LeavedNodes );
+    ObjectSet<const Strat::UnitRef> unlist; BoolTypeSet isabove;
+    bool foundlvl = false;
+    while ( it.next() )
+	// gather all units below level into unlist
+    {
+	const Strat::LeavedUnitRef* un
+	    	= static_cast<const Strat::LeavedUnitRef*>( it.unit() );
+	if ( foundlvl || un->levelID() == lvl.id() )
+	    { foundlvl = true; unlist += un; }
+    }
+    if ( !foundlvl )
+	return -1;
+
+    for ( int ilay=0; ilay<size(); ilay++ )
+		// find first layer whose parent is in unlist
+    {
+	const LeafUnitRef& un = layers_[ilay]->unitRef();
+	for ( int iun=0; iun<unlist.size(); iun++ )
+	{
+	    if ( unlist[iun]->isParentOf(un) )
+		return ilay;
+	}
+    }
+
+    // level must be below last layer
+    return size();
+}
+
+
+float Strat::LayerSequence::depthPositionOf( const Strat::Level& lvl ) const
+{
+    const int sz = size();
+    if ( sz < 1 ) return 0;
+    const int idx = positionOf( lvl );
+    if ( idx < 0 ) return 0;
+    return idx >= sz ? layers_[sz-1]->zBot() : layers_[idx]->zTop();
 }
 
 
@@ -240,6 +271,12 @@ Strat::LayerModel& Strat::LayerModel::operator =( const Strat::LayerModel& oth )
 }
 
 
+void Strat::LayerModel::setEmpty()
+{
+    deepErase( seqs_ );
+}
+
+
 Strat::LayerSequence& Strat::LayerModel::addSequence()
 {
     LayerSequence* newseq = new LayerSequence( &props_ );
@@ -248,9 +285,28 @@ Strat::LayerSequence& Strat::LayerModel::addSequence()
 }
 
 
-void Strat::LayerModel::setEmpty()
+Strat::LayerSequence& Strat::LayerModel::addSequence(
+				const Strat::LayerSequence& inpls )
 {
-    deepErase( seqs_ );
+    LayerSequence* newls = new LayerSequence( &props_ );
+
+    const PropertyRefSelection& inpprops = inpls.propertyRefs();
+    for ( int ilay=0; ilay<inpls.size(); ilay++ )
+    {
+	const Layer& inplay = *inpls.layers()[ilay];
+	Layer* newlay = new Layer( inplay.unitRef() );
+	newlay->setThickness( inplay.thickness() );
+	for ( int iprop=1; iprop<props_.size(); iprop++ )
+	{
+	    const int idxof = inpprops.indexOf( props_[iprop] );
+	    newlay->setValue( iprop,
+		    	idxof < 0 ? mUdf(float) : inplay.value(idxof) );
+	}
+	newls->layers() += newlay;
+    }
+
+    seqs_ += newls;
+    return *newls;
 }
 
 
@@ -279,6 +335,7 @@ bool Strat::LayerModel::read( std::istream& strm )
     int nrseqs, nrprops;
     strm >> nrprops >> nrseqs;
     if ( nrprops < 1 ) return false;
+    StrmOper::wordFromLine( strm, buf, 256 ); // read newline
 
     PropertyRefSelection newprops;
     newprops += &PropertyRef::thickness(); // get current survey's thickness
@@ -301,15 +358,15 @@ bool Strat::LayerModel::read( std::istream& strm )
 
     for ( int iseq=0; iseq<nrseqs; iseq++ )
     {
-	StrmOper::wordFromLine( strm, buf, 256 ); // read away "#S"
+	StrmOper::wordFromLine( strm, buf, 256 ); // read away "#S.."
 	LayerSequence* seq = new LayerSequence( &props_ );
-	int nrlays, seqnr;
-	strm >> seqnr >> nrlays;
-	if ( !strm.good() ) return false;
+	int nrlays; strm >> nrlays;
+	StrmOper::wordFromLine( strm, buf, 256 ); // read newline
+	if ( strm.bad() ) return false;
 
 	for ( int ilay=0; ilay<nrlays; ilay++ )
 	{
-	    StrmOper::wordFromLine( strm, buf, 256 ); // read away "#L"
+	    StrmOper::wordFromLine( strm, buf, 256 ); // read away "#L.."
 	    StrmOper::wordFromLine( strm, buf, 256 );
 	    FileMultiString fms( buf );
 	    const UnitRef* ur = rt.find( fms[0] );
@@ -325,6 +382,7 @@ bool Strat::LayerModel::read( std::istream& strm )
 	    for ( int iprop=1; iprop<nrprops; iprop++ )
 		{ strm >> val; newlay->setValue( iprop, val ); }
 	    seq->layers() += newlay;
+	    StrmOper::wordFromLine( strm, buf, 256 ); // read newline
 	}
 	seqs_ += seq;
     }
@@ -350,7 +408,7 @@ bool Strat::LayerModel::write( std::ostream& strm, int modnr ) const
 	for ( int ilay=0; ilay<nrlays; ilay++ )
 	{
 	    strm << "#L" << ilay << '\t';
-	    const Layer& lay = *seq.layers()[iseq];
+	    const Layer& lay = *seq.layers()[ilay];
 	    if ( lay.content().isUnspecified() )
 		strm << lay.name();
 	    else
@@ -359,9 +417,9 @@ bool Strat::LayerModel::write( std::ostream& strm, int modnr ) const
 		fms += lay.content().name();
 		strm << fms;
 	    }
-	    strm << '\t' << lay.thickness();
+	    strm << '\t' << toString(lay.thickness());
 	    for ( int iprop=1; iprop<nrprops; iprop++ )
-		strm << '\t' << lay.value( iprop );
+		strm << '\t' << toString(lay.value(iprop));
 	    strm << std::endl;
 	}
     }
@@ -369,7 +427,7 @@ bool Strat::LayerModel::write( std::ostream& strm, int modnr ) const
 }
 
 
-void Strat::LayerModel::addElasticPropSel( const ElasticPropSelection& elp )
+void Strat::LayerModel::setElasticPropSel( const ElasticPropSelection& elp )
 {
     elasticpropsel_ = elp;
 }

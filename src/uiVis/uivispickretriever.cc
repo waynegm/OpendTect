@@ -11,12 +11,14 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uivispickretriever.h"
 
+#include "mousecursor.h"
+#include "uivispartserv.h"
 #include "visevent.h"
 #include "visseis2ddisplay.h"
 #include "vissurvscene.h"
 #include "vistransform.h"
-#include "uivispartserv.h"
-#include "mousecursor.h"
+#include "zaxistransform.h"
+
 
 uiVisPickRetriever::uiVisPickRetriever( uiVisPartServer* ps )
     : visserv_(ps)
@@ -72,8 +74,7 @@ void uiVisPickRetriever::pickCB( CallBacker* cb )
 
     mCBCapsuleUnpackWithCaller( const visBase::EventInfo&,
 	    			eventinfo, caller, cb );
-    if ( eventinfo.type!=visBase::MouseClick ||
-	 !OD::leftMouseButton(eventinfo.buttonstate_) )
+    if ( eventinfo.type!=visBase::MouseClick )
 	return;
 
     visSurvey::Scene* scene = 0;
@@ -102,6 +103,7 @@ void uiVisPickRetriever::pickCB( CallBacker* cb )
     {
 	pickedpos_ = eventinfo.worldpickedpos;
 	pickedscene_ = scene->id();
+	buttonstate_ = eventinfo.buttonstate_;
 	status_ = Success;
     }
 
@@ -123,7 +125,7 @@ void uiVisPickRetriever::pickCB( CallBacker* cb )
 	if ( res )
 	    pickedtrcnr_ = pos2d.nr_;
     }
-
+    
     MouseCursorManager::restoreOverride();
     visserv_->setWorkMode( uiVisPartServer::View );
     finished_.trigger();
@@ -153,3 +155,28 @@ void uiVisPickRetriever::resetPickedPos()
     pickedscene_ = -1;
     pickedobjids_.erase();
 }
+
+
+const ZAxisTransform* uiVisPickRetriever::getZAxisTransform() const
+{
+    for ( int idx=0; idx<scenes_.size(); idx++ )
+    {
+	if ( scenes_[idx] && scenes_[idx]->id()==pickedscene_ )
+	    return scenes_[idx]->getZAxisTransform();
+    }
+
+    return 0;
+}
+
+
+int uiVisPickRetriever::unTransformedSceneID() const
+{
+    for ( int idx=0; idx<scenes_.size(); idx++ )
+    {
+	if ( scenes_[idx] && !scenes_[idx]->getZAxisTransform() ) 
+	    return scenes_[idx]->id();
+    }
+
+    return -1;
+}
+

@@ -2,6 +2,8 @@
 #
 # Copyright (C): dGB Beheer B. V.
 #
+# $Id$
+#
 
 set progname = $0
 set exceptionfile=""
@@ -60,7 +62,7 @@ endif
 shift 
 
 (svn proplist ${filename} > ${tmpfile} ) >& ${tmperrfile}
-set errsize=`stat -c %s ${tmperrfile}`
+set errsize=`ls -la ${tmperrfile} | awk '{ print $5 }'`
 if ( ${errsize} == 0 ) then
     cat ${tmpfile} | grep -q "svn:eol-style"
     if ( ${status} == 1 ) then
@@ -71,6 +73,12 @@ if ( ${errsize} == 0 ) then
     cat ${tmpfile} | grep -q "svn:keyword"
     if ( ${status} == 1 ) then
 	echo File ${filename} misses keyword.
+	rm -rf ${tmpfile} ${tmperrfile}
+	exit 1
+    endif
+    cat ${tmpfile} | grep -q "svn:needs-lock"
+    if ( ${status} == 0 ) then
+	echo File ${filename} has lock property set.
 	rm -rf ${tmpfile} ${tmperrfile}
 	exit 1
     endif

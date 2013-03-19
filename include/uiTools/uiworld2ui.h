@@ -16,6 +16,10 @@ ________________________________________________________________________
 
 class SurveyInfo;
 
+/*!
+\brief 
+*/
+
 mExpClass(uiTools) World2UiData
 {
 public:
@@ -32,9 +36,10 @@ public:
 };
 
 
-/*!\brief Class to provide coordinate conversion between a cartesian coordinate
-  system(or any other transformed cartesian) and UI coordinate system(screen
-  coordinate system)
+/*!
+\brief Class to provide coordinate conversion between a cartesian coordinate
+system (or any other transformed cartesian) and UI coordinate system(screen
+coordinate system.)
   
   Use the constructor or call set() to set up the two coordinate systems.
   1) If the origin of UI is not at (0,0), use uiRect instead of uiSize to set
@@ -44,8 +49,8 @@ public:
      appropriate range ( 0 - 1 ) and re-map this range to the UI window. This 
      is done by calling setRemap() or setCartesianRemap(). The proper range is
      estimated by these functions and coordinate conversion will be based on
-     the new wolrd X/Y range.
- */
+     the new world X/Y range.
+*/
 
 mExpClass(uiTools) uiWorld2Ui
 {
@@ -85,7 +90,7 @@ public:
     uiWorldRect		transform( uiRect area ) const;
     uiPoint		transform( uiWorldPoint p ) const;
     uiRect		transform( uiWorldRect area ) const;
-			// Since the compiler will be comfused if two functions
+			// Since the compiler will be confused if two functions
 			// only differ in return type, Geom::Point2D<float> is
 			// set rather than be returned.
     void		transform( const uiPoint& upt,
@@ -120,7 +125,7 @@ protected:
     uiPoint		uiorigin;
 
 private:
-			void getAppopriateRange( float min, float max,
+			void getAppropriateRange( float min, float max,
 						 float& newmin, float& newmax );
 };
 

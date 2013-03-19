@@ -389,7 +389,7 @@ bool parseExp( CallBacker* cb )
 	}
 	else if ( !mathexpr.isEmpty() )
 	{
-	    msg_ = "Expression for curve Y";
+	    msg_ = "Expression for Y";
 	    msg_ += isy1 ? "1" : "2";
 	    msg_ += " is invalid.";
 	    uiMSG().error( msg() );
@@ -400,7 +400,7 @@ bool parseExp( CallBacker* cb )
 
     if ( mathobj && mathobj->nrVariables() > 1 )
     {
-	msg_ = "Expression for curve Y";
+	msg_ = "Expression for Y";
 	msg_ += isy1 ? "1" : "2";
 	msg_ += " contains more than one variable.";
 	uiMSG().error( msg() );
@@ -560,10 +560,9 @@ void computePts( bool isy2 )
 
     if ( !vert.axis_->range().includes(curvyvalrg) )
     {
-	msg_ = "Curve for Y";
-	msg_ += isy2 ? 2 : 1;
-	msg_ += " goes beyond the autoscaled range.\n";
-	msg_ += "Do you want to rescale to see the complete curve?";
+	msg_ = "Y"; msg_ += isy2 ? 2 : 1;
+	msg_ += " goes beyond the autoscaled range. ";
+	msg_ += "Do you want to rescale?";
 
 	if ( uiMSG().askGoOn(msg_) )
 	{

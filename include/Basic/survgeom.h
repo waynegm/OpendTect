@@ -17,6 +17,8 @@ ________________________________________________________________________
 #include "refcount.h"
 
 class MultiID;
+class TaskRunner;
+class IOObj;
 
 namespace Survey
 {
@@ -29,23 +31,20 @@ mExpClass(Basic) Geometry
 { mRefCountImpl(Geometry);
 public:
     virtual bool	is2D() const					= 0;
-    int			getGeomID() const { return geomid_; }
-    void		setGeomID(int id) { geomid_ = id; }
-    virtual Coord	toCoord(const TraceID& tid) const
-			{ return toCoord( tid.line_, tid.trcnr_ ); }
-    virtual Coord	toCoord(int line, int tracenr) const		= 0;
+    TraceID::GeomID	getGeomID() const { return geomid_; }
+    void		setGeomID( TraceID::GeomID id ) { geomid_ = id; }
+    Coord		toCoord(const TraceID& tid) const;
+    virtual Coord	toCoord(int linenr,int tracenr) const		= 0;
     virtual TraceID	nearestTrace(const Coord&,float* distance) const= 0;
     virtual TraceID	getTrace(const Coord&,float maxdist) const;
 			//!<returns undef if no trace found
 
-    bool		includes(const TraceID& tid) const 
-			{ return includes( tid.line_, tid.trcnr_ ); }
-    virtual bool	includes(int line, int tracenr)	const		= 0;
-
+    bool		includes(const TraceID& tid) const;
+    virtual bool	includes(int linenr,int tracenr) const		= 0;
     
 protected:
 			Geometry();
-    int			geomid_;
+    TraceID::GeomID	geomid_;
 };
 
 
@@ -56,32 +55,37 @@ protected:
 mExpClass(Basic) GeometryManager
 {
 public:
-			GeometryManager();
-			~GeometryManager();
-    const Geometry*	getGeometry(int geomid) const;
-    const Geometry*	getGeometry(const MultiID&) const;
+				GeometryManager();
+				~GeometryManager();
+    const Geometry*		getGeometry(TraceID::GeomID) const;
+    const Geometry*		getGeometry(const MultiID&) const;
 
-    int			getGeomID(const char* linename) const;
-    const char*		getName(const int geomid) const;
+    TraceID::GeomID		getGeomID(const char* linename) const;
+    const char*			getName(TraceID::GeomID) const;
     
-    Coord		toCoord(const TraceID&) const;
+    Coord			toCoord(const TraceID&) const;
 
-    bool		fetchFrom2DGeom();
+    bool			fetchFrom2DGeom();
 				//converts od4 geometries to od5 geometries.
 
-    bool		write(Geometry*);
+    bool			write(Geometry&);
 
-    int			createEntry(const char* name,const bool is2d);
+    IOObj*			createEntry(const char* name,const bool is2d);
 				// returns new GeomID.
     
-    bool		fillGeometries();
-    static int		cDefault3DGeom() { return -1; }
+    void			removeGeometry(TraceID::GeomID);    
+    
+    bool			fillGeometries(TaskRunner*);
+    static TraceID::GeomID	cDefault3DGeom() { return -1; }
+    static TraceID::GeomID	cUndefGeomID() { return mUdf(TraceID::GeomID); }
 
 protected:
-    void		addGeometry(Geometry*);
-	bool		hasDuplicateLineNames();
+    void			addGeometry(Geometry&);
+    bool			hasDuplicateLineNames();
 
-    ObjectSet<Geometry> geometries_;
+    int				indexOf(TraceID::GeomID) const;
+
+    ObjectSet<Geometry>		geometries_;
 };
 
 
@@ -102,8 +106,8 @@ public:
 			GeometryReader(){};
 			mDefineFactoryInClass(GeometryReader,factory);
 
-    virtual bool	read(ObjectSet<Geometry>&)	    {return true;};
-
+    virtual bool	read(ObjectSet<Geometry>&,TaskRunner*) const
+							{ return true; }
 };
 
 
@@ -117,8 +121,8 @@ public:
 			GeometryWriter(){};
 			mDefineFactoryInClass(GeometryWriter,factory);
 
-    virtual bool	write(Geometry*)		    {return true;};
-    virtual int		createEntry(const char*)	    {return 0;}
+    virtual bool	write(Geometry&) const		{ return true; }
+    virtual IOObj*	createEntry(const char*) const	{ return 0; }
 };
 
 } //namespace Survey

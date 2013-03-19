@@ -15,7 +15,7 @@
 # OD_MODULE_DEPS			: List of other modules that this
 #					  module is dependent on.
 # OD_MODULE_SOURCES			: Sources that should go into the library
-# OD_USEPROG				: Whether to include include/Prog 
+# OD_USEBATCH				: Whether to include include/Batch 
 # OD_USECOIN				: Dependency on Coin is enabled if set.
 # OD_USEQT				: Dependency on Qt is enabled if set.
 #					  value should be either Core, Sql, Gui
@@ -107,7 +107,7 @@ endif(OD_USEQT)
 
 #Must be after QT
 if( (UNIX OR WIN32)  AND OD_USEZLIB )
-    #OD_SETUP_ZLIB()
+    OD_SETUP_ZLIB()
     list(APPEND OD_MODULE_INCLUDESYSPATH ${ZLIB_INCLUDE_DIR} )
     list(APPEND OD_MODULE_EXTERNAL_LIBS ${ZLIB_LIBRARY} )
 endif()
@@ -260,7 +260,7 @@ endif ( OD_MODULE_HAS_LIBRARY )
 
 #Setup common things for batch-programs
 if( OD_MODULE_PROGS OR OD_MODULE_BATCHPROGS OR OD_MODULE_GUI_PROGS )
-    set ( OD_USEPROG 1 )
+    set ( OD_USEBATCH 1 )
 endif()
 set ( OD_RUNTIMELIBS ${OD_MODULE_DEPS})
 if ( OD_MODULE_HAS_LIBRARY )
@@ -365,13 +365,19 @@ if(OD_MODULE_BATCHPROGS)
 endif( OD_MODULE_BATCHPROGS )
 
 foreach ( TEST_FILE ${OD_TEST_PROGS} )
+    #Add dep on Batch if there are batch-progs
+    if ( OD_USEBATCH )
+	list( APPEND OD_RUNTIMELIBS "Batch" "Network" )
+	list( REMOVE_DUPLICATES OD_RUNTIMELIBS )
+    endif()
     get_filename_component( TEST_NAME ${TEST_FILE} NAME_WE )
-    add_executable( ${TEST_NAME} ${OD_EXEC_GUI_SYSTEM} ${TEST_FILE} )
+    set ( TEST_NAME test_${TEST_NAME} )
+    add_executable( ${TEST_NAME} ${OD_EXEC_GUI_SYSTEM} tests/${TEST_FILE} )
 
     set_target_properties( ${TEST_NAME}
 	    PROPERTIES 
 	    LINK_FLAGS "${OD_PLATFORM_LINK_OPTIONS} ${OD_MODULE_LINK_OPTIONS}"
-	    LABELS ${OD_MODULE_TEST_LABEL}
+	    LABELS ${OD_MODULE_NAME}
 	    RUNTIME_OUTPUT_DIRECTORY "${OD_EXEC_OUTPUT_PATH}")
     target_link_libraries(
 	    ${TEST_NAME}
@@ -382,21 +388,29 @@ foreach ( TEST_FILE ${OD_TEST_PROGS} )
         set ( TEST_ARGS --command ${TEST_NAME}.exe
 			--wdir ${CMAKE_BINARY_DIR}
 			--config Debug --plf ${OD_PLFSUBDIR}
-			--qtdir ${QTDIR} )
+			--qtdir ${QTDIR}
+			--quiet )
     else()
         set ( TEST_COMMAND "${OD_EXEC_OUTPUT_PATH}/${TEST_NAME}" )
+	set ( TEST_ARGS "--quiet" )
     endif()
 
-    add_test( NAME ${TEST_NAME} WORKING_DIRECTORY ${OD_EXEC_OUTPUT_PATH} COMMAND ${TEST_COMMAND} ${TEST_ARGS} )
-    set_property( TEST ${TEST_NAME} PROPERTY ${OD_MODULE_TEST_LABEL} )
+    if ( NOT (OD_TESTDATA_DIR STREQUAL "") )
+	if ( EXISTS ${OD_TESTDATA_DIR} )
+	    set ( TEST_ARGS "${TEST_ARGS} --datadir ${OD_TESTDATA_DIR}" )
+	endif()
+    endif()
+
+    add_test( NAME ${TEST_NAME} WORKING_DIRECTORY ${OD_EXEC_OUTPUT_PATH}
+	      COMMAND ${TEST_COMMAND} ${TEST_ARGS} )
+    set_property( TEST ${TEST_NAME} PROPERTY ${OD_MODULE_NAME} )
 endforeach()
 
 
-if( OD_USEPROG )
+if( OD_USEBATCH )
     list(APPEND OD_MODULE_INCLUDEPATH
-		${OpendTect_DIR}/include/Prog)
-endif( OD_USEPROG )
-
+		${OpendTect_DIR}/include/Batch)
+endif( OD_USEBATCH )
 
 #Set current include_path
 set ( CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")

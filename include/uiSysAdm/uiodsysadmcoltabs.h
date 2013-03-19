@@ -17,8 +17,11 @@ ________________________________________________________________________
 
 class uiListBox;
 
+/*!
+\brief User interface for OpendTect System Administration color tabs.
+*/
 
-mClass(uiSysAdm) uiODSysAdmColorTabs : public uiDialog
+mExpClass(uiSysAdm) uiODSysAdmColorTabs : public uiDialog
 {
 public:
 

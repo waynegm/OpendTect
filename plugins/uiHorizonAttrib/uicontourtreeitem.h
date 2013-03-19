@@ -85,7 +85,8 @@ protected:
     visBase::IndexedPolyLine*	lines_;
     visBase::DrawStyle*		drawstyle_;
     visBase::Material*		material_;
-    visBase::Text2*		labels_;
+    ObjectSet<visBase::Text2>	labels_;
+    visContourLabels*		labelgrp_;
     
     Color			color_;
     int				linewidth_;

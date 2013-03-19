@@ -250,26 +250,6 @@ void uiViewer3DMgr::handleMenuCB( CallBacker* cb )
 	menu->setIsHandled( true );
 	multiviewers2d_ += createMultiGather2DViewer( *psv );
     }
-    else if ( viewermenuitem_.itemIndex(mnuid)==0 )
-    {
-	menu->setIsHandled( true );
-	PtrMan<IOObj> ioobj = IOM().get( psv->getMultiID() );
-	if ( !ioobj )
-	    return;
-
-	BufferString title;
-	if ( psv->is3DSeis() )
-	    getSeis3DTitle( psv->getBinID(), ioobj->name(), title );
-	else
-	    getSeis2DTitle( psv->traceNr(), psv->lineName(), title );	
-
-	uiFlatViewMainWin* viewwin = create2DViewer(title,psv->getDataPackID());
-	if ( viewwin )
-	{
-	    viewers2d_ += viewwin;
-	    viewwin->start();
-	}
-    }
     else if ( mnuid==amplspectrumitem_.id )
     {
 	menu->setIsHandled( true );
@@ -377,7 +357,7 @@ bool uiViewer3DMgr::add3DViewer( const uiMenuHandler* menu,
     //set viewer angle.
     const ui3DViewer*  sovwr = ODMainWin()->sceneMgr().getSoViewer( sceneid );
     Coord3 campos = sovwr->getCameraPosition();
-    viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos );
+	viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos );
     const BinID dir0 = SI().transform(campos)-SI().transform(pickedpos);
     const Coord dir( dir0.inl, dir0.crl );
     viewer->displaysOnPositiveSide( viewer->getBaseDirection().dot(dir)>0 );
@@ -503,8 +483,8 @@ uiStoredViewer2DMainWin* uiViewer3DMgr::createMultiGather2DViewer(
 	new uiStoredViewer2DMainWin( ODMainWin(), title ); 
     viewwin->show();
     const StepInterval<int>& trcrg = psv.getTraceRange( psv.getBinID() );
-    viewwin->init( mid, psv.getDataPackID(), psv.isOrientationInline(), trcrg,
-			    is2d ? psv.lineName() : 0 );
+    viewwin->init( mid, psv.getBinID(), psv.isOrientationInline(), trcrg,
+		   is2d ? psv.lineName() : 0 );
     viewwin->setDarkBG( false );
     viewwin->seldatacalled_.notify( mCB(this,uiViewer3DMgr,viewer2DSelDataCB) );
     viewwin->windowClosed.notify( mCB(this,uiViewer3DMgr,viewer2DClosedCB) );

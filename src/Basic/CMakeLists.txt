@@ -7,9 +7,10 @@
 
 SET(OD_USEQT Core)
 SET(OD_USEBREAKPAD No)
-SET(OD_USEZLIB Yes)
+SET(OD_USEZLIB NO )
 SET(QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h i_qptr.h)
 SET(OD_MODULE_SOURCES genc.cc oddirs.cc
+	    ailayer.cc
 	    arrayndinfo.cc
 	    arrayndslice.cc
 	    ascstream.cc
@@ -18,6 +19,7 @@ SET(OD_MODULE_SOURCES genc.cc oddirs.cc
 	    callback.cc
 	    color.cc
 	    compoundkey.cc
+	    commandlineparser.cc
 	    conn.cc
 	    cubesampling.cc
 	    dateinfo.cc

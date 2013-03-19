@@ -37,17 +37,19 @@ class Step;
 class StepExecutor;
 class StepTask;
 
-
-/*!A chain of Steps that can be applied to a volume of scalars. */
+/*!
+\brief A chain of Steps that can be applied to a volume of scalars.
+*/
 
 mExpClass(VolumeProcessing) Chain
 { mRefCountImpl(Chain);
 public:
     				Chain();
 
-    void			setZStep(float z,bool zit) {zstep_=z,zit_=zit; }
-    float			getZStep() const	   { return zstep_; }
-    bool			zIsT() const		   { return zit_; }
+    void			setZStep( float z, bool zist )
+				{ zstep_=z; zist_ = zist; }
+    float			getZStep() const	{ return zstep_; }
+    bool			zIsT() const		{ return zist_; }
 
     int				nrSteps() const; 
     Step*			getStep(int);
@@ -66,6 +68,7 @@ public:
     const MultiID&		storageID() const { return storageid_; }
 
     bool			areSamplesIndependent() const;
+    bool			needsFullVolume() const;
 
     const char*			errMsg() const;
 
@@ -77,19 +80,21 @@ protected:
     ObjectSet<Step>		steps_;
 
     float			zstep_;
-    bool			zit_;
+    bool			zist_;
 
     BufferString		errmsg_;
 };
 
 
-/*!An algorithm/calculation/transoformation that takes one scalar volume as
-   input, processes it, and puts the output in another volume. */
+/*!
+\brief An algorithm/calculation/transformation that takes one scalar volume as
+input, processes it, and puts the output in another volume.
+*/
+
 mExpClass(VolumeProcessing) Step
 {
 public:
 				mDefineFactoryInClass( Step, factory );
-    				Step();
     virtual			~Step();
 
     Chain&			getChain() { return *chain_; }
@@ -112,22 +117,22 @@ public:
 				    big input is needed?*/
 
     virtual bool		setInput(const Attrib::DataCubes*);
-    				//!<\returns true if it wants to keep the data.
+    				/*!<returns true if it wants to keep the data.*/
     virtual void		setOutput(Attrib::DataCubes*,
 	    			    const StepInterval<int>& inlrg,
 				    const StepInterval<int>& crlrg,
 				    const StepInterval<int>& zrg);
 
     virtual bool		canInputAndOutputBeSame() const { return false;}
-    virtual bool		needsFullVolume() const { return true;}
+    virtual bool		needsFullVolume() const { return true; }
     const Attrib::DataCubes*	getOutput() const	{ return output_; }
     Attrib::DataCubes*		getOutput()		{ return output_; }
 
     virtual const VelocityDesc*	getVelDesc() const	{ return 0; }
 
     virtual bool		areSamplesIndependent() const { return true; }
-    				//!<\returns wether samples in the output
-				//!<	     are independent from each other
+				/*!<returns whether samples in the output
+				    are independent from each other.*/
 
     virtual Task*		createTask();
 
@@ -139,6 +144,8 @@ public:
     virtual const char*		errMsg() const { return 0; }
 
 protected:
+				Step();
+
     friend		class BinIDWiseTask;
     virtual bool	prefersBinIDWise() const		{ return false;}
     virtual bool	computeBinID(const BinID&,int threadid)	{ return false;}
@@ -159,6 +166,9 @@ protected:
 };
 
 
+/*!
+\brief Chain Executor
+*/
 
 mExpClass(VolumeProcessing) ChainExecutor : public Executor
 {

@@ -704,6 +704,9 @@ void Scene::setZAxisTransform( ZAxisTransform* zat, TaskRunner* tr )
 ZAxisTransform* Scene::getZAxisTransform()
 { return datatransform_; }
 
+const ZAxisTransform* Scene::getZAxisTransform() const
+{ return datatransform_; }
+
 
 void Scene::setMarkerPos( const Coord3& coord, int sceneid )
 {

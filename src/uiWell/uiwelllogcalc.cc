@@ -283,6 +283,8 @@ void uiWellLogCalc::inpSel( CallBacker* )
 
 #define mErrRet(s) { uiMSG().error(s); return false; }
 
+#define mErrContinue(s) { uiMSG().error(s); continue; }
+
 
 bool uiWellLogCalc::acceptOK( CallBacker* )
 {
@@ -304,24 +306,41 @@ bool uiWellLogCalc::acceptOK( CallBacker* )
     	zsampintv_ *= mFromFeetFactorF;
 
 
+    bool successfulonce = false;
     //TODO needs to be in Executor
     for ( int iwell=0; iwell<wellids_.size(); iwell++ )
     {
 	PtrMan<IOObj> ioobj = IOM().get( wellids_[iwell] );
-	if ( !ioobj ) continue; //TODO errh required
+	if ( !ioobj )
+	{
+	    BufferString msg = "Impossible to retrieve the ";
+	    msg += "selected well number ";
+	    msg += iwell;
+	    mErrContinue( msg.buf());
+	}
 	Well::Data wd;
 	const BufferString fnm( ioobj->fullUserExpr(true) );
 	Well::Reader rdr( fnm, wd );
-	if ( !rdr.getLogs() ) continue; //TODO errh required
+	if ( !rdr.getLogs() )
+	{
+	    BufferString msg = "Cannot read well logs for well ";
+	    msg += ioobj->name();
+	    mErrContinue( msg.buf());
+	}
 	Well::LogSet& wls = wd.logs();
 	setCurWls( wls );
 	TypeSet<InpData> inpdata;
 	if ( !getInpData(inpdata) || !getRecInfo() )
-	    continue; //TODO errh required
+	    continue;
 
 	Well::Log* newwl = new Well::Log( newnm );
 	if ( !calcLog(*newwl,inpdata) )
-	    { delete newwl; continue; } //TODO errh required
+	{ 
+	    delete newwl;
+	    BufferString msg = "Cannot compute well log '";
+	    msg += newnm; msg += "'";
+	    mErrContinue( msg.buf());
+	} 
 	const int unselidx = outunfld_->currentItem();
 	if ( unselidx > 0 )
 	{
@@ -344,8 +363,17 @@ bool uiWellLogCalc::acceptOK( CallBacker* )
 	wls.add( newwl );
 
 	Well::Writer wtr( fnm, wd );
-	if ( !wtr.putLogs() ) continue; //TODO errh required
+	if ( !wtr.putLogs() )
+	{
+	    BufferString msg = "Cannot write new logs to file '";
+	    msg += fnm; msg += "'";
+	    mErrContinue( msg.buf());
+	}
+	successfulonce = true;
     }
+
+    if ( !successfulonce )
+	return false;
 
     setCurWls( wls_ );
     uiMSG().message( "Successfully added this log" );
@@ -400,10 +428,12 @@ bool uiWellLogCalc::getInpData( TypeSet<uiWellLogCalc::InpData>& inpdata )
 			{ inpfld = inpdataflds_[ivar]; break; }
 		}
 		if ( !inpfld || !inpfld->getInp(inpd) )
-		    mErrRet("Internal: Can't find log")
+		    mErrRet(BufferString(
+			"Internal: Can't find log corresponding to variable: '",
+			 varnm.buf(),"'") )
 		if ( inpd.wl_ && inpd.wl_->isEmpty() )
-		    mErrRet(BufferString("Empty well log: '",
-					 inpd.wl_->name(),"'"))
+		    mErrRet(BufferString("The well log chosen for variable: '",
+					 varnm.buf(),"' is empty."))
 	    }
 	} break;
 	}
@@ -531,33 +561,27 @@ void uiWellLogCalc::getSuitableLogs( const Well::LogSet& logs,
 				     BufferStringSet& lognms,
 				     TypeSet<int>& propidx,
 				     TypeSet<int>& isaltpropref,
-       				     const PropertyRef& propref,
+				     const PropertyRef& propref,
 				     const PropertyRef* altpropref )
 {
-    for ( int idlog=0; idlog<logs.size(); idlog++ )                         
-    {                                                                       
-	const char* uomlbl = logs.getLog( idlog ).unitMeasLabel();          
-	const UnitOfMeasure* um = UnitOfMeasure::getGuessed( uomlbl );      
-	if ( ( um && ( propref.stdType() == um->propType() ) ) || !um )     
-	{                                                                   
-	    lognms.add( logs.getLog(idlog).name() );                        
-	    propidx += idlog;                                               
-	    isaltpropref += 0;                                              
-	}                                                                   
-	else if ( um && altpropref )                                        
-	    if ( altpropref->stdType() == um->propType() )                  
-	    {                                                               
-		lognms.add( logs.getLog(idlog).name() );                    
-		propidx += idlog;                                           
-		isaltpropref += 1;                                          
-	    }                                                               
-    }
-    if ( propidx.size() == 0 )
+    for ( int idlog=0; idlog<logs.size(); idlog++ )
     {
-	for ( int idlog=0; idlog<logs.size(); idlog++ )
+	const char* loguomlbl = logs.getLog( idlog ).unitMeasLabel();
+	const UnitOfMeasure* loguom = UnitOfMeasure::getGuessed( loguomlbl );
+	if ( (loguom&&loguom->propType()==propref.stdType()) || !loguom )
 	{
+	    lognms.add( logs.getLog(idlog).name() );
 	    propidx += idlog;
 	    isaltpropref += 0;
+	}
+	else if ( altpropref )
+	{
+	    if ( loguom&&(loguom->propType()==altpropref->stdType()) )
+	    {
+		lognms.add( logs.getLog(idlog).name() );
+		propidx += idlog;
+		isaltpropref += 1;
+	    }
 	}
     }
 }

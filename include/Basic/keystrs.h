@@ -114,6 +114,7 @@ namespace sKey
     inline FixedString Minimum()	{ return "Minimum"; }
     inline FixedString StdDev()		{ return "StdDev"; }
     inline FixedString Sum()		{ return "Sum"; }
+    inline FixedString Variance()	{ return "Variance"; }
 
     inline FixedString BinIDSel()	{ return "BinID selection"; }
     inline FixedString InlRange()	{ return "In-line range"; }
@@ -130,6 +131,7 @@ namespace sKey
     inline FixedString FirstTrc()	{ return "First Trace"; }
     inline FixedString LastTrc()	{ return "Last Trace"; }
     inline FixedString TrcRange()	{ return "Trace Range"; }
+    inline FixedString TrcDist()	{ return "Inter-trace Distance"; }
 
     inline FixedString TmpStor()	{ return "Temporary storage location"; }
 };

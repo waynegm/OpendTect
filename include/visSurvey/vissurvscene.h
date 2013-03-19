@@ -152,7 +152,7 @@ public:
     const mVisTrans*		getUTM2DisplayTransform() const;
     void			setZAxisTransform(ZAxisTransform*,TaskRunner*);
     ZAxisTransform*		getZAxisTransform();
-
+    const ZAxisTransform*	getZAxisTransform() const;
     void			setBaseMap(BaseMap*);
     BaseMap*			getBaseMap();
 

@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uigridder2d.h"
 #include "uiarray2dinterpol.h"
 #include "uiraytrace1d.h"
+#include "filepath.h"
 
 mDefModInitFn(uiTools)
 {
@@ -21,6 +22,9 @@ mDefModInitFn(uiTools)
     uiInverseDistanceGridder2D::initClass();
     uiInverseDistanceArray2DInterpol::initClass();
     uiTriangulationArray2DInterpol::initClass();
-    uiArray2DInterpolExtension::initClass();
+    uiExtensionArray2DInterpol::initClass();
     uiVrmsRayTracer1D::initClass();
+    
+    System::CrashDumper::getInstance().setSendAppl(
+	    				System::CrashDumper::sUiSenderAppl() );
 }

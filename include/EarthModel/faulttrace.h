@@ -114,11 +114,8 @@ public:
 mExpClass(EarthModel) FaultTrcHolder
 {
 public:
-			FaultTrcHolder(const HorSampling& hs)
-			    : hs_(hs), editedoncrl_(false)
-			{ traces_.allowNull( true ); }
-			~FaultTrcHolder()
-			{ deepErase( traces_ ); }
+			FaultTrcHolder();
+			~FaultTrcHolder();
 
     const FaultTrace*	getTrc(int linenr,bool isinl) const;
     bool		isEditedOnCrl() const;
@@ -129,8 +126,6 @@ public:
 			      For 2D: One for each stick.*/
 
     HorSampling		hs_;
-    MultiID		id_;
-    bool		editedoncrl_;
 };
 
 
@@ -141,8 +136,10 @@ public:
 mExpClass(EarthModel) FaultTraceExtractor
 {
 public:
-    			FaultTraceExtractor(EM::Fault*,int,bool);
-    			FaultTraceExtractor(EM::Fault*,const PosInfo::GeomID&);
+    			FaultTraceExtractor(const EM::Fault&,int linenumber,
+				bool isinline);
+    			FaultTraceExtractor(const EM::Fault&,
+				const PosInfo::GeomID&);
 			~FaultTraceExtractor();
 
     bool		execute();
@@ -156,7 +153,7 @@ protected:
 
     int			nr_;
     PosInfo::GeomID	geomid_;	// For 2D
-    EM::Fault*		fault_;
+    const EM::Fault&	fault_;
     bool		is2d_;
     bool		isinl_;
     bool		editedoncrl_;
@@ -170,7 +167,7 @@ protected:
 mExpClass(EarthModel) FaultTraceCalc : public Executor
 {
 public:
-			FaultTraceCalc(EM::Fault*,FaultTrcHolder&);
+			FaultTraceCalc(const EM::Fault&,FaultTrcHolder&);
 			~FaultTraceCalc();
 
     od_int64		nrDone() const;
@@ -181,7 +178,7 @@ public:
 protected:
 
     int			curnr_;
-    EM::Fault*		flt_;
+    const EM::Fault&	flt_;
     FaultTrcHolder&	holder_;
     od_int64		nrdone_;
     bool		isinl_;
@@ -195,10 +192,8 @@ protected:
 mExpClass(EarthModel) FaultTrcDataProvider
 {
 public:
-			FaultTrcDataProvider()
-			    : is2d_(false)	{}
-			FaultTrcDataProvider(const PosInfo::GeomID& geomid)
-			    : geomid_(geomid),is2d_(geomid.isOK()) {}
+			FaultTrcDataProvider();
+			FaultTrcDataProvider(const PosInfo::GeomID&);
 			~FaultTrcDataProvider();
 
     bool		init(const TypeSet<MultiID>&,const HorSampling&,
@@ -206,7 +201,7 @@ public:
 
     bool		is2D() const		{ return is2d_; }
     int			nrFaults() const;
-    const HorSampling&	range(int) const;
+    HorSampling		range(int) const;
     int			nrSticks(int fltidx) const;
     bool		isEditedOnCrl(int fltidx) const;
 

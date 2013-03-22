@@ -7,7 +7,7 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 -*/
-static const char* rcsID mUsedVar = "$Id: inituibase.cc 28408 2013-01-31 05:16:30Z ranojay.sen@dgbes.com $";
+static const char* rcsID mUsedVar = "$Id$";
 
 #include "uivismod.h"
 #include "moddepmgr.h"

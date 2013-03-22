@@ -20,6 +20,8 @@ static const char* rcsID mUsedVar = "$Id$";
 
 using namespace visBase;
 
+const void* DataObject::visualizationthread_ = 0;
+
 
 void DataObject::enableTraversal( unsigned int tt, bool yn )
 {
@@ -217,4 +219,30 @@ bool DataObject::serialize( const char* filename, bool binary )
 	return true;
     
     return osgDB::writeNodeFile( *osgNode(), std::string( filename ) );
+}
+
+
+bool DataObject::isVisualizationThread()
+{
+    if ( !visualizationthread_ )
+    {
+	pFreeFnErrMsg("Visualization thread not set",
+		      "isVisualizationThread");
+	return false;
+    }
+
+    return Threads::currentThread()==visualizationthread_;
+}
+
+
+void DataObject::setVisualizationThread(const void* thread)
+{
+    if ( visualizationthread_ )
+    {
+	pFreeFnErrMsg("Visualization thread set before.",
+		      "setVisualizationThread");
+	return;
+    }
+
+    visualizationthread_ = thread;
 }

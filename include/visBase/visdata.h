@@ -107,7 +107,7 @@ public:
     virtual void		setDisplayTransformation(const mVisTrans*);
     				/*!< All positions going from the outside
 				     world to the vis should be transformed
-				     witht this transform. This enables us
+				     with this transform. This enables us
 				     to have different coord-systems outside
 				     OI, e.g. we can use UTM coords
 				     outside the vis without loosing precision
@@ -116,7 +116,7 @@ public:
     virtual const mVisTrans*	getDisplayTransformation() const { return 0; }
     				/*!< All positions going from the outside
 				     world to the vis should be transformed
-				     witht this transform. This enables us
+				     with this transform. This enables us
 				     to have different coord-systems outside
 				     OI, e.g. we can use UTM coords
 				     outside the vis without loosing precision
@@ -146,7 +146,12 @@ public:
     NodeState*			removeNodeState(NodeState*);
     NodeState*			getNodeState( int idx );
 
+    static void			setVisualizationThread(const void*);
+				//!<Call only once from initialization
+    static bool			isVisualizationThread();
+
 protected:
+
     virtual osg::StateSet*	getStateSet();
     void			doAddNodeState(NodeState* ns);
 
@@ -180,6 +185,7 @@ private:
     int				id_;
     BufferString*		name_;
     unsigned int		enabledmask_;
+    static const void*		visualizationthread_;
 };
 
 };

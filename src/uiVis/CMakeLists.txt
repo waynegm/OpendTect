@@ -7,6 +7,7 @@
 
 SET(OD_MODULE_DEPS uiCoin uiMPE )
 SET(OD_MODULE_SOURCES
+		inituivis.cc
 		uiattribtransdlg.cc
 		uifltdispoptgrp.cc
 		uigridlinesdlg.cc

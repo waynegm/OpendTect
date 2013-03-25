@@ -393,6 +393,16 @@ bool FaultTrace::isOnPosSide( const BinID& bid, float z ) const
 }
 
 
+void FaultTrace::getAllActNames( BufferStringSet& bss )
+{
+    bss.erase();
+    bss.add( "AllowCross (Default)" );
+    bss.add( "ForbidCross (DataDriven)" );
+    bss.add( "ForbidCrossHigh (ModelDriven)" );
+    bss.add( "ForbidCrossLow (ModelDriven)" );
+}
+
+
 bool FaultTrace::includes( const BinID& bid ) const
 {
     return isinl_ ? bid.inl == nr_ && trcrange_.includes( bid.crl, true )

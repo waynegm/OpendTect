@@ -8,6 +8,8 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "callback.h"
 
+#include "errh.h"
+
 
 CallBacker::CallBacker()
 {}
@@ -35,11 +37,14 @@ void CallBacker::attachCB(NotifierAccess& notif, const CallBack& cb )
  
     if ( cb.cbObj()!=this )
 	return;
+    
+    if ( notif.cber_==this )
+	return;
 
     notif.cber_->addListener( this );
     
     Threads::SpinLockLocker lock( cblock_ );
-    if ( attachednotifiers_.indexOf( &notif )==-1 )
+    if ( !attachednotifiers_.isPresent( &notif ) )
 	attachednotifiers_ += &notif;
  
     listeners_ += notif.cber_;
@@ -48,6 +53,12 @@ void CallBacker::attachCB(NotifierAccess& notif, const CallBack& cb )
 
 void CallBacker::addListener( CallBacker* cb )
 {
+    if ( cb==this )
+    {
+	pErrMsg("Cannot listen to yourself");
+	return;
+    }
+    
     Threads::SpinLockLocker lock( cblock_ );
     listeners_ += cb;
 }
@@ -142,7 +153,7 @@ void NotifierAccess::notify( const CallBack& cb, bool first )
 
 
 void NotifierAccess::notifyIfNotNotified( const CallBack& cb )
-{ if ( cbs_.indexOf(cb)==-1 ) notify(cb); }
+{ if ( !cbs_.isPresent(cb) ) notify(cb); }
 
 
 void NotifierAccess::remove( const CallBack& cb )

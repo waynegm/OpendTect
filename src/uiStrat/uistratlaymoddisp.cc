@@ -27,7 +27,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "strmprov.h"
 #include "survinfo.h"
 #include "property.h"
-#include "envvars.h"
+#include "keystrs.h"
 
 #define mGetConvZ(var,conv) \
     if ( SI().depthsInFeet() ) var *= conv
@@ -142,6 +142,7 @@ uiStratSimpleLayerModelDisp::uiStratSimpleLayerModelDisp(
     , selseqitm_(0)
     , selectedlevel_(-1)
     , selectedcontent_(0)
+    , allcontents_(false)
 {
     gv_ = new uiGraphicsView( this, "LayerModel display" );
     gv_->setPrefWidth( 500 ); gv_->setPrefHeight( 250 );
@@ -243,6 +244,9 @@ void uiStratSimpleLayerModelDisp::usrClicked( CallBacker* )
 
 void uiStratSimpleLayerModelDisp::handleRightClick( int selidx )
 {
+    if ( selidx < 0 || selidx >= lmp_.get().size() )
+	return;
+
     Strat::LayerSequence& ls = const_cast<Strat::LayerSequence&>(
 	    				lmp_.get().sequence( selidx ) );
     ObjectSet<Strat::Layer>& lays = ls.layers();
@@ -264,13 +268,10 @@ void uiStratSimpleLayerModelDisp::handleRightClick( int selidx )
 
     uiPopupMenu mnu( parent(), "Action" );
     mnu.insertItem( new uiMenuItem("&Properties ..."), 0 );
-    mnu.insertItem( new uiMenuItem("&Remove ..."), 1 );
-    static bool wantmodeldump = GetEnvVarYN( "OD_LAYERMODEL_DUMP" );
-    if ( wantmodeldump )
-    {
-	mnu.insertItem( new uiMenuItem("&Dump model ..."), 2 );
-	mnu.insertItem( new uiMenuItem("&Add model ..."), 3 );
-    }
+    mnu.insertItem( new uiMenuItem("&Remove layer ..."), 1 );
+    mnu.insertItem( new uiMenuItem("Remove this &Well"), 2 );
+    mnu.insertItem( new uiMenuItem("&Dump all wells to file ..."), 3 );
+    mnu.insertItem( new uiMenuItem("&Add dumped wells from file ..."), 4 );
     const int mnuid = mnu.exec();
     if ( mnuid < 0 ) return;
 
@@ -281,8 +282,13 @@ void uiStratSimpleLayerModelDisp::handleRightClick( int selidx )
 	if ( dlg.go() )
 	    forceRedispAll( true );
     }
-    else if ( mnuid == 2 || mnuid == 3 )
-	doLayModIO( mnuid == 3 );
+    else if ( mnuid == 3 || mnuid == 4 )
+	doLayModIO( mnuid == 4 );
+    else if ( mnuid == 2 )
+    {
+	const_cast<Strat::LayerModel&>(lmp_.get()).removeSequence( selidx );
+	forceRedispAll( true );
+    }
     else
     {
 
@@ -300,7 +306,7 @@ void uiStratSimpleLayerModelDisp::doLayModIO( bool foradd )
 {
     const Strat::LayerModel& lm = lmp_.get();
     if ( !foradd && lm.isEmpty() )
-	{ uiMSG().error("Empty layer model"); return; }
+	{ uiMSG().error("Please generate some layer sequences"); return; }
 
     uiFileDialog dlg( this, foradd, 0, 0, "Select layer model dump file" );
     if ( !dlg.go() ) return;
@@ -313,7 +319,7 @@ void uiStratSimpleLayerModelDisp::doLayModIO( bool foradd )
     if ( !foradd )
     {
 	if ( !lm.write(*sd.ostrm) )
-	    uiMSG().error("Cannot write layer model to file.");
+	    uiMSG().error("Unknown error during write ...");
     }
     else
     {
@@ -542,6 +548,7 @@ void uiStratSimpleLayerModelDisp::doDraw()
     uselithcols_ = tools_.dispLith();
     selectedcontent_ = lmp_.get().refTree().contents()
 				.getByName(tools_.selContent());
+    allcontents_ = FixedString(tools_.selContent()) == sKey::All();
 
     getBounds();
 
@@ -595,9 +602,11 @@ void uiStratSimpleLayerModelDisp::doDraw()
 	    it->setZValue( layzlvl );
 
 	    const Color laycol = lay.dispColor( uselithcols_ );
-	    const bool isannotcont = selectedcontent_
-				  && lay.content() == *selectedcontent_;
-	    const Color pencol = isannotcont ? lay.content().color_ : laycol;
+	    bool mustannotcont = false;
+	    if ( !lay.content().isUnspecified() )
+		mustannotcont = allcontents_
+		    || (selectedcontent_ && lay.content() == *selectedcontent_);
+	    const Color pencol = mustannotcont ? lay.content().color_ : laycol;
 	    it->setPenColor( pencol );
 	    if ( pencol != laycol )
 		it->setPenStyle( LineStyle(LineStyle::Solid,2,pencol) );
@@ -605,7 +614,7 @@ void uiStratSimpleLayerModelDisp::doDraw()
 	    if ( fillmdls_ )
 	    {
 		it->setFillColor( laycol );
-		if ( isannotcont )
+		if ( mustannotcont )
 		    it->setFillPattern( lay.content().pattern_ );
 	    }
 

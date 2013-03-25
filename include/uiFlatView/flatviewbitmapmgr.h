@@ -19,6 +19,10 @@ ________________________________________________________________________
 namespace FlatView
 {
 
+/*!
+\brief Manages bitmaps of flatviewers.
+*/
+
 mExpClass(uiFlatView) BitMapMgr
 {
 public:
@@ -53,6 +57,10 @@ protected:
     void			clearAll();
 };
 
+
+/*!
+\brief Flatview bitmap generation Task.
+*/
 
 mExpClass(uiFlatView) BitMapGenTask : public Task
 {

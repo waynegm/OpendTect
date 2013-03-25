@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uicombobox.h"
 #include "uilabel.h"
 #include "stratlevel.h"
+#include "keystrs.h"
 
 const char* uiStratGenDescTools::sKeyNrModels()
 { return "Nr models"; }
@@ -123,17 +124,9 @@ uiStratLayModEditTools::uiStratLayModEditTools( uiParent* p )
     propfld_->selectionChanged.notify(
 	    			mCB(this,uiStratLayModEditTools,selPropCB) );
 
-    uiLabel* eachlbl = new uiLabel( leftgrp, "each" );
-    eachlbl->attach( rightOf, propfld_ );
-    eachfld_ = new uiSpinBox( leftgrp, 0, "DispEach" );
-    eachfld_->setInterval( 1, 1000 );
-    eachfld_->attach( rightOf, eachlbl );
-    eachfld_->valueChanging.notify(
-				mCB(this,uiStratLayModEditTools,dispEachCB) );
-
     lvlfld_ = new uiComboBox( leftgrp, "Level" );
     lvlfld_->setToolTip( "Selected stratigraphic level" );
-    lvlfld_->attach( rightOf, eachfld_ );
+    lvlfld_->attach( rightOf, propfld_ );
     lvlfld_->selectionChanged.notify(
 	    			mCB(this,uiStratLayModEditTools,selLevelCB) );
 
@@ -143,6 +136,14 @@ uiStratLayModEditTools::uiStratLayModEditTools( uiParent* p )
     contfld_->setHSzPol( uiObject::Small );
     contfld_->selectionChanged.notify(
 	    			mCB(this,uiStratLayModEditTools,selContentCB) );
+
+    eachlbl_ = new uiLabel( leftgrp, "each" );
+    eachlbl_->attach( rightOf, contfld_ );
+    eachfld_ = new uiSpinBox( leftgrp, 0, "DispEach" );
+    eachfld_->setInterval( 1, 1000 );
+    eachfld_->attach( rightOf, eachlbl_ );
+    eachfld_->valueChanging.notify(
+				mCB(this,uiStratLayModEditTools,dispEachCB) );
 
     uiGroup* rightgrp = new uiGroup( this, "Right group" );
     flattenedtb_ = new uiToolButton( rightgrp, "flattenseis",
@@ -167,8 +168,15 @@ uiStratLayModEditTools::uiStratLayModEditTools( uiParent* p )
 }
 
 
+void uiStratLayModEditTools::setNoDispEachFld()
+{
+    eachlbl_->display( false ); eachfld_->display( false );
+    eachfld_ = 0;
+}
+
+
 static void setFldNms( uiComboBox* cb, const BufferStringSet& nms, bool wnone,
-		       int def )
+			bool wall, int def )
 {
     const BufferString selnm( cb->text() );
     cb->setEmpty();
@@ -177,6 +185,8 @@ static void setFldNms( uiComboBox* cb, const BufferStringSet& nms, bool wnone,
     if ( nms.isEmpty() ) return;
 
     cb->addItems( nms );
+    if ( wall )
+	cb->addItem( sKey::All() );
     if ( !selnm.isEmpty() ) 
 	def = nms.indexOf( selnm );
     if ( wnone ) def++;
@@ -186,11 +196,11 @@ static void setFldNms( uiComboBox* cb, const BufferStringSet& nms, bool wnone,
 
 
 void uiStratLayModEditTools::setProps( const BufferStringSet& nms )
-{ setFldNms( propfld_, nms, false, 0 ); }
+{ setFldNms( propfld_, nms, false, false, 0 ); }
 void uiStratLayModEditTools::setLevelNames( const BufferStringSet& nms )
-{ setFldNms( lvlfld_, nms, true, 0 ); }
+{ setFldNms( lvlfld_, nms, true, false, 0 ); }
 void uiStratLayModEditTools::setContentNames( const BufferStringSet& nms )
-{ setFldNms( contfld_, nms, true, -1 ); }
+{ setFldNms( contfld_, nms, true, true, -1 ); }
 
 
 const char* uiStratLayModEditTools::selProp() const
@@ -239,7 +249,7 @@ Color uiStratLayModEditTools::selLevelColor() const
 
 int uiStratLayModEditTools::dispEach() const
 {
-    return eachfld_->getValue();
+    return eachfld_ ? eachfld_->getValue() : 1;
 }
 
 
@@ -281,7 +291,7 @@ void uiStratLayModEditTools::setSelContent( const char* sel )
 
 void uiStratLayModEditTools::setDispEach( int nr )
 {
-    eachfld_->setValue( nr );
+    if ( eachfld_ ) eachfld_->setValue( nr );
 }
 
 

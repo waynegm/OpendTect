@@ -310,6 +310,13 @@ Strat::LayerSequence& Strat::LayerModel::addSequence(
 }
 
 
+void Strat::LayerModel::removeSequence( int seqidx )
+{
+    if ( seqidx >= 0 && seqidx < seqs_.size() )
+	delete seqs_.removeSingle( seqidx );
+}
+
+
 void Strat::LayerModel::prepareUse() const
 {
     for ( int idx=0; idx<seqs_.size(); idx++ )
@@ -338,7 +345,6 @@ bool Strat::LayerModel::read( std::istream& strm )
     StrmOper::wordFromLine( strm, buf, 256 ); // read newline
 
     PropertyRefSelection newprops;
-    newprops += &PropertyRef::thickness(); // get current survey's thickness
     for ( int iprop=0; iprop<nrprops; iprop++ )
     {
 	StrmOper::wordFromLine( strm, buf, 256 ); // read "#P.."
@@ -384,6 +390,7 @@ bool Strat::LayerModel::read( std::istream& strm )
 	    seq->layers() += newlay;
 	    StrmOper::wordFromLine( strm, buf, 256 ); // read newline
 	}
+	seq->prepareUse();
 	seqs_ += seq;
     }
     return true;

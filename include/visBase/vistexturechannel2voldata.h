@@ -34,7 +34,7 @@ public:
     static TextureChannel2VolData*	create()
 			mCreateDataObj(TextureChannel2VolData);
 
-    bool        	createRGBA(SbImagei32&) const	{ return false; }
+    const osg::Image*	createRGBA()		{ return 0; }
     bool		canSetSequence() const	{ return true; }
     void		setSequence(int channel,const ColTab::Sequence&);
     const ColTab::Sequence* getSequence(int channel) const;

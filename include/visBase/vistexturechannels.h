@@ -17,8 +17,6 @@ ________________________________________________________________________
 #include "visdata.h"
 #include "odmemory.h"
 
-class SoSwitch;
-class SoTextureComposer;
 class SbImagei32;
 class TaskRunner;
 
@@ -110,22 +108,6 @@ protected:
     bool			interpolatetexture_;
 };
 
-
-
-mExpClass(visBase) TextureComposer : public DataObject
-{
-public:
-
-    static TextureComposer*	create() 
-				mCreateDataObj(TextureComposer);
-    void			setOrigin(int,int,int);
-    void			setSize(int,int,int);
-protected:
-				~TextureComposer();
-    virtual SoNode*		gtInvntrNode();
-
-    SoTextureComposer*		texturecomposer_;
-};
 
 }; // Namespace
 

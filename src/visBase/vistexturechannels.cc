@@ -13,9 +13,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistexturechannels.h"
 
 #include "vistexturechannel2rgba.h"
-#include "SoTextureChannelSet.h"
-#include "SoTextureComposer.h"
-#include "Inventor/nodes/SoSwitch.h"
 #include "coltabmapper.h"
 
 #include <osgGeo/LayeredTexture>
@@ -27,7 +24,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 
 mCreateFactoryEntry( visBase::TextureChannels );
-mCreateFactoryEntry( visBase::TextureComposer );
 
 
 namespace visBase
@@ -957,39 +953,6 @@ void TextureChannels::enableTextureInterpolation( bool yn )
 bool TextureChannels::textureInterpolationEnabled() const
 {
     return interpolatetexture_;
-}
-
-
-// Texture Composer
-
-TextureComposer::TextureComposer()
-    : texturecomposer_(new SoTextureComposer())
-{
-    texturecomposer_->ref();
-}
-
-
-TextureComposer::~TextureComposer()
-{
-    texturecomposer_->unref();
-}
-
-
-SoNode* TextureComposer::gtInvntrNode()
-{
-    return texturecomposer_;
-}
-
-
-void TextureComposer::setOrigin( int val1, int val2, int val3 )
-{
-    texturecomposer_->origin.setValue( val1, val2, val3 );
-}
-
-
-void TextureComposer::setSize( int xsz, int ysz, int zsz )
-{
-    texturecomposer_->size.setValue( xsz, ysz, zsz );
 }
 
 }; // namespace visBase

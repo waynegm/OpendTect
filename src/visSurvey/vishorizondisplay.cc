@@ -199,7 +199,6 @@ bool HorizonDisplay::setChannels2RGBA( visBase::TextureChannel2RGBA* t )
 
     EMObjectDisplay::setChannels2RGBA( 0 );
     sections_[0]->setChannels2RGBA( t );
-    sections_[0]->getChannels2RGBA()->enableInterpolation(enabletextureinterp_);
 
     return true;
 }
@@ -942,7 +941,7 @@ bool HorizonDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
     surf->setSurface( horizon->geometry().sectionGeometry(sid), true, tr );
 
     surf->getChannels2RGBA()->allowShading( allowshading_ );
-    surf->getChannels2RGBA()->enableInterpolation( enabletextureinterp_ );
+    surf->getChannels()->enableTextureInterpolation( enabletextureinterp_ );
     surf->useWireframe( useswireframe_ );
     surf->setResolution( resolution_-1, tr );
 
@@ -968,15 +967,11 @@ void HorizonDisplay::enableTextureInterpolation( bool yn )
     enabletextureinterp_ = yn;
     for ( int idx=0; idx<sections_.size(); idx++ )
     {
-	if ( !sections_[idx] || !sections_[idx]->getChannels2RGBA() )
+	if ( !sections_[idx] || !sections_[idx]->getChannels() )
 	    continue;
 	
-	sections_[idx]->getChannels2RGBA()->enableInterpolation( yn );
+	sections_[idx]->getChannels()->enableTextureInterpolation( yn );
 
-	//Crap, but does not work otherwise
-	if ( !yn && sections_[idx]->getChannels2RGBA()->canUseShading() )
-	    sections_[idx]->getChannels()->touchMappedData();
-	//End of crap
     }
 }
 

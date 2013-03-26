@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "viscolortab.h"
 #include "vismultitexture2.h"
 #include "vistexturechannel2rgba.h"
+#include "visrgbatexturechannel2rgba.h"
 #include "vistexturechannels.h"
 #include "iopar.h"
 #include "keystrs.h"
@@ -54,11 +55,10 @@ MultiTextureSurveyObject::MultiTextureSurveyObject( bool dochannels )
     {
 	channels_->ref();
 	addChild( channels_->getInventorNode() );
-	channels_->setChannels2RGBA( 
+	channels_->setChannels2RGBA(
 		visBase::ColTabTextureChannel2RGBA::create() );
 
-	// visBase::DM().getObject( channels_->getInventorNode() );
-	// Feb 13, Kristofer: Cannot se the purpose of this
+	channels_->enableTextureInterpolation( enabletextureinterp_ );
     }
 	
     getMaterial()->setColor( Color::White() );
@@ -154,12 +154,7 @@ MultiTextureSurveyObject::setChannels2RGBA( visBase::TextureChannel2RGBA* t )
     RefMan<visBase::TextureChannel2RGBA> dummy( t );
     if ( !channels_ ) return true;
 
-    const bool res = channels_->setChannels2RGBA( t );
-    if ( channels_ && channels_->getChannels2RGBA() )	
-	channels_->getChannels2RGBA()->enableInterpolation( 
-		enabletextureinterp_ );
-
-    return res;
+    return channels_->setChannels2RGBA(t);
 }
     
     
@@ -316,28 +311,38 @@ void MultiTextureSurveyObject::clearTextures()
 void MultiTextureSurveyObject::setAttribTransparency( int attrib,
 						      unsigned char nt )
 {
-    if ( texture_ ) texture_->setTextureTransparency( attrib, nt );
+    if ( texture_ )
+	texture_->setTextureTransparency( attrib, nt );
     else
     {
 	mDynamicCastGet( visBase::ColTabTextureChannel2RGBA*, cttc2rgba,
-		channels_->getChannels2RGBA() );
+			 channels_->getChannels2RGBA() );
 	if ( cttc2rgba )
 	    cttc2rgba->setTransparency( attrib, nt );
+
+	mDynamicCastGet( visBase::RGBATextureChannel2RGBA*, rgbatc2rgba,
+			 channels_->getChannels2RGBA() );
+	if ( rgbatc2rgba )
+	    rgbatc2rgba->setTransparency( nt );
     }
 }
 
 
 
-unsigned char
-MultiTextureSurveyObject::getAttribTransparency( int attrib ) const
+unsigned char MultiTextureSurveyObject::getAttribTransparency(int attrib) const
 {
     if ( texture_ )
 	return texture_->getTextureTransparency( attrib );
 
     mDynamicCastGet( visBase::ColTabTextureChannel2RGBA*, cttc2rgba,
-	    channels_->getChannels2RGBA() );
+		     channels_->getChannels2RGBA() );
     if ( cttc2rgba )
 	return cttc2rgba->getTransparency( attrib );
+    
+    mDynamicCastGet( visBase::RGBATextureChannel2RGBA*, rgbatc2rgba,
+		     channels_->getChannels2RGBA() );
+    if ( rgbatc2rgba )
+	return rgbatc2rgba->getTransparency();
 
     return 0;
 }
@@ -382,15 +387,9 @@ void MultiTextureSurveyObject::enableTextureInterpolation( bool yn )
 	return;
 
     enabletextureinterp_ = yn;
-    if ( getChannels2RGBA() )
-    {
-	getChannels2RGBA()->enableInterpolation( yn );
 
-	//Should not be necessary, but buggy Coin/driver forces me
-	if ( !yn && getChannels2RGBA()->canUseShading() ) 
-	    channels_->touchMappedData();
-	//End of crap
-    }
+    if ( channels_ )
+	channels_->enableTextureInterpolation( yn );
 }
 
 

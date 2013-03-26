@@ -93,6 +93,9 @@ public:
 
     osgGeo::LayeredTexture*	getOsgTexture() { return osgtexture_; }
     const TypeSet<int>*		getOsgIDs(int channel) const;
+
+    void			enableTextureInterpolation(bool);
+    bool			textureInterpolationEnabled() const;
     
 protected:
     friend			class ChannelInfo;
@@ -104,6 +107,7 @@ protected:
     
     TextureChannel2RGBA*	tc2rgba_;
     osgGeo::LayeredTexture*	osgtexture_;
+    bool			interpolatetexture_;
 };
 
 

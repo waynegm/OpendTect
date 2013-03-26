@@ -18,8 +18,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "Inventor/nodes/SoSwitch.h"
 #include "coltabmapper.h"
 
-#include <osg/Image>
 #include <osgGeo/LayeredTexture>
+#include <osg/Image>
 
 #define mNrColors	255
 
@@ -522,14 +522,19 @@ void ChannelInfo::updateOsgImages()
 }
 
 
+#define mGetFilterType (interpolatetexture_ ? osgGeo::Linear : osgGeo::Nearest)
+
 TextureChannels::TextureChannels()
     : tc2rgba_( 0 )
     , osgtexture_( 0 )
+    , interpolatetexture_( true )
 {
     turnOn( true );
 
     osgtexture_ = new osgGeo::LayeredTexture;
     osgtexture_->invertUndefLayers();
+    osgtexture_->setDataLayerFilterType( osgtexture_->compositeLayerId(),
+					 mGetFilterType );
     osgtexture_->ref();
 
     addChannel();
@@ -607,6 +612,7 @@ int TextureChannels::addChannel()
 	osgtexture_->setDataLayerUndefChannel( osgid, 3 );
 	const osg::Vec4f imageudfcolor( 1.0, 1.0, 1.0, 0.0 );
 	osgtexture_->setDataLayerImageUndefColor( osgid, imageudfcolor );
+	osgtexture_->setDataLayerFilterType( osgid, mGetFilterType );
     }
 
     osgids += osgid;
@@ -742,7 +748,11 @@ void TextureChannels::setNrComponents( int channel, int newsz )
 
     TypeSet<int> osgids = channelinfo_[channel]->getOsgIDs();
     while ( osgids.size()<newsz )
-	osgids += osgtexture_->addDataLayer();
+    {
+	const int osgid = osgtexture_->addDataLayer();
+	osgtexture_->setDataLayerFilterType( osgid, mGetFilterType );
+	osgids += osgid;
+    }
 
     while ( osgids.size()>newsz )
     {
@@ -928,6 +938,25 @@ const TypeSet<int>* TextureChannels::getOsgIDs( int channel ) const
 	return 0;
 
     return &channelinfo_[channel]->getOsgIDs();
+}
+
+
+void TextureChannels::enableTextureInterpolation( bool yn )
+{
+    interpolatetexture_ = yn;
+
+    for ( int idx=0; osgtexture_ && idx<osgtexture_->nrDataLayers(); idx++ )
+    {
+	const int layerid = osgtexture_->getDataLayerID( idx );
+	if ( osgtexture_->getDataLayerFilterType(layerid) != mGetFilterType )
+	    osgtexture_->setDataLayerFilterType( layerid, mGetFilterType );
+    }
+}
+
+
+bool TextureChannels::textureInterpolationEnabled() const
+{
+    return interpolatetexture_;
 }
 
 

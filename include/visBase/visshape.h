@@ -66,7 +66,7 @@ public:
     void			removeSwitch();
     
 protected:
-				Shape( SoNode* );
+				Shape();
     virtual			~Shape();
     
     Texture2*			texture2_;

@@ -42,7 +42,7 @@ const char* Shape::sKeyMaterial() 		{ return  "Material";	}
 
 
     
-Shape::Shape( SoNode* shape )
+Shape::Shape()
     : texture2_( 0 )
     , texture3_( 0 )
     , material_( 0 )
@@ -164,9 +164,8 @@ int Shape::usePar( const IOPar& par )
 }
 
     
-#define mVertexShapeConstructor( shp, geode ) \
-    Shape( shp ) \
-    , normals_( 0 ) \
+#define mVertexShapeConstructor( geode ) \
+     normals_( 0 ) \
     , coords_( 0 ) \
     , texturecoords_( 0 ) \
     , geode_( geode ) \
@@ -176,7 +175,7 @@ int Shape::usePar( const IOPar& par )
     
     
 VertexShape::VertexShape()
-    : mVertexShapeConstructor( 0, new osg::Geode )
+    : mVertexShapeConstructor( new osg::Geode )
 {
     setupGeode();
 }
@@ -185,7 +184,7 @@ VertexShape::VertexShape()
     
 VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 			  bool creategeode )
-    : mVertexShapeConstructor( 0, creategeode ? new osg::Geode : 0 )
+    : mVertexShapeConstructor( creategeode ? new osg::Geode : 0 )
 {
     setupGeode();
     setPrimitiveType( tp );
@@ -401,7 +400,6 @@ public:
     }
 };
     
-    
 void VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
 {
     p->ref();
@@ -438,7 +436,6 @@ Geometry::PrimitiveSet* VertexShape::getPrimitiveSet( int idx )
 {
     return primitivesets_[idx];
 }
-    
     
 void VertexShape::removePrimitiveSetFromScene( const osg::PrimitiveSet* ps )
 {

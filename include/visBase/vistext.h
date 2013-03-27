@@ -34,7 +34,8 @@ public:
     enum			Justification { Left, Right, Center };
     
     void			setPosition(const osg::Vec3f&);
-    void			setPosition(const Coord3&);
+    void			setPosition(const Coord3&, 
+					    bool scenespace = false);
     Coord3			getPosition() const;
 
     void			setFontData(const FontData&);

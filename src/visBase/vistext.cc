@@ -37,6 +37,7 @@ Text::Text()
     text_->ref();
     text_->setAxisAlignment( osgText::TextBase::SCREEN );
     text_->setCharacterSizeMode(osgText::TextBase::SCREEN_COORDS );
+    text_->setDataVariance( osg::Object::DYNAMIC );
     setFontData( fontdata_ ); //trigger update of font_
 }
 
@@ -62,10 +63,13 @@ void Text::setPosition( const osg::Vec3f& pos )
 }
     
     
-void Text::setPosition( const Coord3& pos )
+void Text::setPosition( const Coord3& pos, bool scenespace )
 {
     osg::Vec3 osgpos;
-    mVisTrans::transform( displaytrans_, pos, osgpos );
+    if( !scenespace )
+	mVisTrans::transform( displaytrans_, pos, osgpos );
+    else
+	osgpos =  Conv::to<osg::Vec3>(pos);
     setPosition( osgpos );
 }
     

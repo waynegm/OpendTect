@@ -113,7 +113,7 @@ int Coordinates::addPos( const Coord3& pos )
     if ( nrunused )
     {
 	res = unusedcoords_.pop();
-	setPosWithoutLock( res, pos );
+	setPosWithoutLock( res, pos, false );
     }
     else
     {
@@ -182,17 +182,18 @@ bool Coordinates::isDefined( int idx ) const
 void Coordinates::setPos( int idx, const Coord3& pos )
 {
     Threads::MutexLocker lock( mutex_ );
-    setPosWithoutLock(idx,pos);
+    setPosWithoutLock(idx,pos,false);
 }
 
 
-void Coordinates::setPosWithoutLock( int idx, const Coord3& pos )
+void Coordinates::setPosWithoutLock( int idx, const Coord3& pos,
+				     bool scenespace )
 {
     for ( int idy=mArrSize; idy<idx; idy++ )
 	unusedcoords_ += idy;
 
     Coord3 postoset = pos;
-    if ( postoset.isDefined() && transformation_ )
+    if ( !scenespace && postoset.isDefined() && transformation_ )
 	transformation_->transform( postoset );
     
     if ( idx>=mGetOsgVec3Arr(osgcoords_)->size() )
@@ -298,17 +299,18 @@ void Coordinates::setPositions( const TypeSet<Coord3>& pos)
 	if ( unusedcoords_.indexOf(idx)!=-1 )
 	    continue;
 
-	setPosWithoutLock(idx, pos[idx] );
+	setPosWithoutLock(idx, pos[idx], false );
     }
 }
 
 
-void Coordinates::setPositions( const Coord3* pos, int sz, int start )
+void Coordinates::setPositions( const Coord3* pos, int sz, int start,
+				bool scenespace )
 {
     Threads::MutexLocker lock( mutex_ );
 
     for ( int idx=0; idx<sz; idx++ )
-	setPosWithoutLock(idx+start, pos[idx] );
+	setPosWithoutLock(idx+start, pos[idx], scenespace );
 }
 
 
@@ -317,7 +319,7 @@ void Coordinates::setAllPositions( const Coord3 pos, int sz, int start )
     Threads::MutexLocker lock( mutex_ );
 
     for ( int idx=0; idx<sz; idx++ )
-	setPosWithoutLock(idx+start, pos );
+	setPosWithoutLock(idx+start, pos, false );
 }
 
     

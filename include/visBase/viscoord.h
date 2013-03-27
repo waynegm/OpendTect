@@ -72,11 +72,12 @@ public:
     Coord3		getPos(int,bool scenespace=false) const;
     bool		isDefined(int) const;
     void		setPos(int,const Coord3&);
-    void		setPositions(const Coord3*,int sz,int start);
+    void		setPositions(const Coord3*,int sz,int start,
+				     bool scenespace=false);
     void		insertPos(int,const Coord3&);
     void		removePos(int, bool keepidxafter=true );
     void		removeAfter(int);
-    void		setAllPositions( const Coord3 pos, int sz, int start );
+    void		setAllPositions(const Coord3 pos,int sz,int start);
 
     void		setAllZ(const float*,int sz,float zscale=1);
 
@@ -88,7 +89,7 @@ protected:
     void		getPositions(TypeSet<Coord3>&) const;
     void		setPositions(const TypeSet<Coord3>&);
 
-    void		setPosWithoutLock(int, const Coord3&);
+    void		setPosWithoutLock(int, const Coord3&,bool scenespace);
     			/*!< Object should be locked when calling */
     
     int			getFreeIdx();

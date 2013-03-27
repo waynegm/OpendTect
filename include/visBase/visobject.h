@@ -20,7 +20,7 @@ ________________________________________________________________________
 
 class Coord3;
 
-namespace osg { class Switch; }
+namespace osg { class Group; }
 
 namespace visBase
 {
@@ -36,9 +36,6 @@ class EventCatcher;
 mExpClass(visBase) VisualObject : public DataObject
 {
 public:
-    virtual bool		turnOn(bool)				= 0;
-    virtual bool		isOn() const				= 0;
-
     virtual void		setMaterial( Material* )		= 0;
     virtual Material*		getMaterial()				= 0;
 
@@ -78,9 +75,6 @@ mExpClass(visBase) VisualObjectImpl : public VisualObject
 {
 public:
 
-    bool		turnOn(bool);
-    bool		isOn() const;
-    void		removeSwitch();
     void		setRightHandSystem(bool yn) { righthandsystem_=yn; }
     bool		isRightHandSystem() const { return righthandsystem_; }
 
@@ -131,7 +125,7 @@ protected:
 
 private:
     
-    osg::Switch*	osgroot_;
+    osg::Group*		osgroot_;
 };
 
 mLockerClassImpl( visBase, VisualReadLockLocker, VisualObjectImpl,

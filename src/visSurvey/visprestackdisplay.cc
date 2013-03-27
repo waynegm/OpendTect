@@ -75,7 +75,6 @@ PreStackDisplay::PreStackDisplay()
     
     flatviewer_->ref();
     flatviewer_->setSelectable( false );
-    flatviewer_->removeSwitch();
     flatviewer_->appearance().setGeoDefaults( true );
     flatviewer_->getMaterial()->setDiffIntensity( 0.2 );
     flatviewer_->getMaterial()->setAmbience( 0.8 );

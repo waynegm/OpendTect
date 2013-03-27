@@ -80,12 +80,11 @@ Seis2DDisplay::Seis2DDisplay()
     linename_->ref();
     linename_->addText();
     
-    insertChild( childIndex(channels_->getInventorNode()),
-	linename_->getInventorNode() );
+    insertChild( childIndex(channels_->osgNode()),
+	linename_->osgNode() );
     
     triangles_->ref();
-    triangles_->removeSwitch();
-    addChild( triangles_->getInventorNode() );
+    addChild( triangles_->osgNode() );
     
     getMaterial()->setColor( Color::White() );
     getMaterial()->setAmbience( 0.8 );
@@ -97,7 +96,7 @@ Seis2DDisplay::~Seis2DDisplay()
 {
     if ( linename_ )
     {
-	removeChild( linename_->getInventorNode() );
+	removeChild( linename_->osgNode() );
 	linename_->unRef();
     }
 

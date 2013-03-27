@@ -41,7 +41,7 @@ RandomPos2Body::~RandomPos2Body()
     if ( transformation_ ) transformation_->unRef();
     if ( triset_ ) 
     {
-	removeChild( triset_->getInventorNode() );
+	removeChild( triset_->osgNode() );
 	triset_->unRef();
     }
 }
@@ -78,7 +78,7 @@ bool RandomPos2Body::setPoints( const TypeSet<Coord3>& pts )
 	triset_ = visBase::TriangleStripSet::create();
 	triset_->ref();
 	triset_->setDisplayTransformation( transformation_ );
-	addChild( triset_->getInventorNode() );
+	addChild( triset_->osgNode() );
     }
 
     TypeSet<Coord3> picks;

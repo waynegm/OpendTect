@@ -40,8 +40,7 @@ MarchingCubesSurface::MarchingCubesSurface()
     materialbinding->value = SoMaterialBinding::OVERALL;
 
     shape_->ref();
-    shape_->removeSwitch();
-    addChild( shape_->getInventorNode() );
+    addChild( shape_->osgNode() );
     shape_->setSelectable( false );
 
     shape_->setSurface( surface_ );

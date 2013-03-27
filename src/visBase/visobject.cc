@@ -15,7 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "vistransform.h"
 
-#include <osg/Switch>
+#include <osg/Group>
 #include <osg/BlendFunc>
 
 namespace visBase
@@ -52,7 +52,7 @@ bool VisualObject::isPickable() const
 
 VisualObjectImpl::VisualObjectImpl( bool issel )
     : VisualObject( issel )
-    , osgroot_( new osg::Switch )
+    , osgroot_( new osg::Group )
     , material_( 0 )
     , righthandsystem_( true )
 {
@@ -101,30 +101,6 @@ void VisualObjectImpl::writeUnLock()
 bool VisualObjectImpl::tryWriteLock()
 {
     return false;
-}
-
-
-
-bool VisualObjectImpl::turnOn( bool yn )
-{
-    const bool res = isOn();
-    if ( yn )
-	osgroot_->setAllChildrenOn();
-    else
-	osgroot_->setAllChildrenOff();
-    
-    return res;
-}
-
-
-bool VisualObjectImpl::isOn() const
-{
-    if ( osgroot_->getNumChildren() )
-    {
-	return osgroot_->getValue( 0 );
-    }
-    
-    return true;
 }
 
 
@@ -180,12 +156,6 @@ Material* VisualObjectImpl::getMaterial()
 	setMaterial( new visBase::Material );
     
     return material_;
-}
-
-
-void VisualObjectImpl::removeSwitch()
-{
-    pErrMsg( "Don't call");
 }
 
 

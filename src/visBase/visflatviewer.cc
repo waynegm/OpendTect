@@ -76,7 +76,7 @@ FlatViewer::FlatViewer()
     channel2rgba_->allowShading( true );
 
     channels_->ref();
-    addChild( channels_->getInventorNode() );
+    addChild( channels_->osgNode() );
     channels_->setChannels2RGBA( channel2rgba_ );
 
     if ( channels_->nrChannels()<1 )
@@ -87,17 +87,16 @@ FlatViewer::FlatViewer()
 
     rectangle_->ref();
     rectangle_->setMaterial( 0 );
-    rectangle_->removeSwitch();
-    addChild( rectangle_->getInventorNode() );
+    addChild( rectangle_->osgNode() );
 
     x1gridlines_->ref();
     x1gridlines_->setMaterial( new visBase::Material );
     x1gridlines_->getMaterial()->setColor( Color(0,0,0,0) );
-    addChild( x1gridlines_->getInventorNode() );
+    addChild( x1gridlines_->osgNode() );
 
     x2gridlines_->ref();
     x2gridlines_->setMaterial( x1gridlines_->getMaterial() );
-    addChild( x2gridlines_->getInventorNode() );
+    addChild( x2gridlines_->osgNode() );
 }
 
 
@@ -307,7 +306,7 @@ void FlatViewer::replaceChannels( TextureChannels* nt )
 
     if ( channels_ )
     {
-	removeChild( channels_->getInventorNode() );
+	removeChild( channels_->osgNode() );
 	channels_->unRef();
     }
 

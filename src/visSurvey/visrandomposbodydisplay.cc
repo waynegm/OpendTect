@@ -39,7 +39,7 @@ RandomPosBodyDisplay::~RandomPosBodyDisplay()
     if ( embody_ ) embody_->unRef();
     if ( displaybody_ ) 
     {
-	removeChild( displaybody_->getInventorNode() );
+	removeChild( displaybody_->osgNode() );
 	displaybody_->unRef();
     }
 }
@@ -51,7 +51,7 @@ bool RandomPosBodyDisplay::setVisBody( visBase::RandomPos2Body* body )
 
     if ( displaybody_ )
     {
-	removeChild( displaybody_->getInventorNode() );
+	removeChild( displaybody_->osgNode() );
 	displaybody_->unRef();
 	displaybody_ = 0;
     }
@@ -81,7 +81,7 @@ bool RandomPosBodyDisplay::setVisBody( visBase::RandomPos2Body* body )
     displaybody_->setDisplayTransformation( transform_ );
     displaybody_->setRightHandSystem( true );
     displaybody_->setSelectable( false );
-    addChild( displaybody_->getInventorNode() );
+    addChild( displaybody_->osgNode() );
 
     if ( displaybody_->getMaterial() )
 	getMaterial()->setFrom( *displaybody_->getMaterial() );
@@ -135,10 +135,9 @@ void RandomPosBodyDisplay::updateVisFromEM()
 	displaybody_->ref();
 	displaybody_->setDisplayTransformation( transform_ );
 	displaybody_->setRightHandSystem( true );
-	displaybody_->removeSwitch();
 	displaybody_->setMaterial( 0 );
 	displaybody_->setSelectable( false );
-	addChild( displaybody_->getInventorNode() );
+	addChild( displaybody_->osgNode() );
     }
 
     displaybody_->setPoints( embody_->getPositions() );

@@ -19,8 +19,8 @@ static const char* rcsID mUsedVar = "$Id$";
 
 mCreateFactoryEntry( visBase::Coordinates );
 
-namespace visBase
-{
+using namespace visBase;
+
     
 
 Coordinates::Coordinates()
@@ -83,6 +83,15 @@ const mVisTrans*  Coordinates::getDisplayTransformation() const
 int Coordinates::size(bool includedeleted) const
 {
     return mArrSize -(includedeleted ? 0 : unusedcoords_.size());
+}
+    
+    
+void Coordinates::setEmpty()
+{
+    Threads::MutexLocker lock( mutex_ );
+    
+    unusedcoords_.erase();
+    mGetOsgVec3Arr(osgcoords_)->clear();
 }
 
 
@@ -452,4 +461,3 @@ void CoordListAdapter::remove( int idx )
     coords_.removePos( idx, true );
 }
 
-};

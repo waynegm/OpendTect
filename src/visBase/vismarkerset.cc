@@ -46,8 +46,8 @@ Normals* MarkerSet::getNormals()
 {
     if ( !normals_ )
     {
-	if ( normals_.setIfNull( Normals::create() ) )
-	    markerset_->setNormalArray( mGetOsgVec3Arr( normals_->osgArray()) );
+	normals_ = Normals::create();
+	markerset_->setNormalArray( mGetOsgVec3Arr( normals_->osgArray()) );
     }
     
     return normals_;

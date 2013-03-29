@@ -68,7 +68,7 @@ protected:
 				~MarkerSet();
     
     RefMan<Coordinates>		coords_;
-    LockedRefMan<Normals>	normals_;
+    RefMan<Normals>		normals_;
     
     RefMan<const mVisTrans>	displaytrans_;
     osgGeo::MarkerSet*		markerset_;

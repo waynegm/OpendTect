@@ -34,7 +34,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Material>
 #include <osg/Node>
 #include <osgGeo/MarkerSet>
-#include <osgGeo/WellLog>
 #include <osgGeo/PlaneWellLog>
 #include <osgText/Text>
 

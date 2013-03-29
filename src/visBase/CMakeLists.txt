@@ -39,6 +39,7 @@ SET(OD_MODULE_SOURCES
 	   vislight.cc
 	   vislines.cc
 	   vismarker.cc
+	   vismarkerset.cc
 	   vismarchingcubessurface.cc
 	   vismaterial.cc
 	   vismultitexture.cc

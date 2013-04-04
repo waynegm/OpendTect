@@ -20,7 +20,6 @@ ________________________________________________________________________
 #include "visdataman.h"
 
 class SoNode;
-class IOPar;
 class BufferString;
 
 namespace visBase { class DataObject; class EventInfo; }
@@ -128,13 +127,6 @@ public:
     virtual bool		isRightHandSystem() const	{ return true; }
 
     virtual const char*		errMsg() const	{ return 0; }
-
-    virtual bool		acceptsIncompletePar() const    {return false;}
-				/*!<Returns true if it can cope with non-
-				    complete session-restores. If it returns
-				    false, DataManager::usePar() will
-				    fail if usePar of this function returns
-				    0, and it doesn't help to retry.  */
 
     bool			serialize(const char* filename,
 	    				  bool binary=false);

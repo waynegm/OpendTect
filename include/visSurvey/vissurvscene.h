@@ -188,7 +188,6 @@ public:
 
     virtual void		fillPar(IOPar&,TypeSet<int>&) const;
     virtual int			usePar(const IOPar&);
-    bool			acceptsIncompletePar() const { return true; }
     
     static const char*		sKeyZStretch();
 

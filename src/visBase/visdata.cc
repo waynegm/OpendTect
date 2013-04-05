@@ -25,17 +25,17 @@ const void* DataObject::visualizationthread_ = 0;
 
 void DataObject::enableTraversal( unsigned int tt, bool yn )
 {
-    if ( osgNode() )
-    {
-	unsigned int mask = osgNode()->getNodeMask();
-	osgNode()->setNodeMask( yn ? (mask | tt) : (mask & ~tt) );
-    }
+    enabledmask_ = yn
+	? (enabledmask_ | tt )
+	: (enabledmask_ & ~tt );
+    
+    updateNodemask();
 }
 
 
 bool DataObject::isTraversalEnabled( unsigned int tt ) const
 {
-    return osgNode() && (osgNode()->getNodeMask() & tt);
+    return enabledmask_ & tt;
 }
 
 
@@ -67,6 +67,7 @@ DataObject::DataObject()
     , name_( 0 )
     , enabledmask_( cAllTraversalMask() )
     , osgnode_( 0 )
+    , ison_( true )
 {
     DM().addObject( this );
 }
@@ -146,31 +147,38 @@ int DataObject::getID( const osg::Node* node )
 bool DataObject::turnOn( bool yn )
 {
     const bool res = isOn();
-    enableTraversal( enabledmask_, yn );
+    ison_ = yn;
+    
+    updateNodemask();
+    
+
     return res;
 }
+
+
+void DataObject::updateNodemask()
+{
+    if ( osgNode() )
+	osgNode()->setNodeMask( ison_ ? enabledmask_ :  cNoTraversalMask() );
     
+}
+
 
 bool DataObject::isOn() const
 {
-    return isTraversalEnabled( enabledmask_ );
+    return ison_;
 }
     
     
 void DataObject::setPickable( bool yn )
 {
-    const bool ison = isOn();
-    enabledmask_ = yn
-    	? (enabledmask_ | cEventTraversalMask() )
-        : (enabledmask_ & ~cEventTraversalMask() );
-    
-    turnOn( ison );
+    enableTraversal( cEventTraversalMask(), yn );
 }
     
     
 bool DataObject::isPickable() const
 {
-    return enabledmask_ & cEventTraversalMask();
+    return isTraversalEnabled( cEventTraversalMask() );
 }
 
 
@@ -191,6 +199,8 @@ void DataObject::updateOsgNodeData()
 	osgnode_->setName( name_ ? name_->buf() : sKey::EmptyString().str() );
 	osgnode_->setUserValue( idstr, id() );
     }
+    
+    updateNodemask();
 }
 
 

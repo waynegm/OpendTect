@@ -49,7 +49,6 @@ inline unsigned int cIntersectionTraversalMask()	{ return 0x00000002; }
 inline unsigned int cBBoxTraversalMask()		{ return 0x00000004; }
 
 
-
 /*!\brief
 DataObject is the base class off all objects that are used in Visualisation and
 ought to be shared in visBase::DataManager. The DataManager owns all the
@@ -167,6 +166,8 @@ protected:
 				    setOsgNodeInternal( (osg::Node*) t );
 				    return t;
 				}
+    
+    void			updateNodemask();
 
 private:
     void			setOsgNodeInternal( osg::Node* t );
@@ -175,6 +176,7 @@ private:
     ObjectSet<NodeState>	nodestates_;
     osg::Node*			osgnode_;
     int				id_;
+    bool			ison_;
     BufferString*		name_;
     unsigned int		enabledmask_;
     static const void*		visualizationthread_;

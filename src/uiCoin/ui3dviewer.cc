@@ -436,8 +436,7 @@ void uiDirectViewBody::updateActModeCursor()
 
 bool ui3DViewerBody::isViewMode() const
 {
-    return scene_ &&
-           !scene_->isTraversalEnabled( visBase::cEventTraversalMask() );
+    return scene_ && !scene_->isPickable();
 }
 
 
@@ -470,7 +469,7 @@ void ui3DViewerBody::setViewMode( bool yn, bool trigger )
     manip->enableDragging( yn );
 
     if ( scene_ )
-	scene_->enableTraversal( visBase::cEventTraversalMask(), !yn );
+	scene_->setPickable( !yn );
     
     MouseCursor cursor;
     if ( yn )

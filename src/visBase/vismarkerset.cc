@@ -15,6 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "vistransform.h"
 #include "visosg.h"
+#include "vismaterial.h"
 
 #include <osgGeo/MarkerSet>
 
@@ -29,17 +30,23 @@ MarkerSet::MarkerSet()
     , markerset_( new osgGeo::MarkerSet )
     , displaytrans_( 0 )
     , coords_( Coordinates::create() )
+    , singlecolormaterial_( new visBase::Material )
 {
-    setOsgNode( markerset_ );
-    
+    markerset_->ref();
+    addChild( markerset_ );
     markerset_->setVertexArray( mGetOsgVec3Arr(coords_->osgArray()) );
+
     setType( MarkerStyle3D::Cube );
     setScreenSize( cDefaultScreenSize() );
+    setMaterial( 0 ); //Triggers update of markerset's color array
 }
 
 
 MarkerSet::~MarkerSet()
-{}
+{
+    clearMarkers();
+    markerset_->unref();
+}
 
 
 Normals* MarkerSet::getNormals()
@@ -54,10 +61,30 @@ Normals* MarkerSet::getNormals()
 }
 
 
+void MarkerSet::setMaterial( visBase::Material* mat )
+{
+    visBase::VisualObjectImpl::setMaterial( mat );
+    if ( material_ )
+	markerset_->setColorArray(
+	    mGetOsgVec4Arr( material_->getColorArray() ) );
+
+}
+
+
+void MarkerSet::clearMarkers()
+{
+    if ( coords_ ) coords_->setEmpty();
+    if ( normals_ ) normals_->clear();
+    if ( material_ ) material_->clear();
+}
+
+
 void MarkerSet::setMarkerStyle( const MarkerStyle3D& ms )
 {
+    singlecolormaterial_->setColor( ms.color_ );
     setType( ms.type_ );
-    setScreenSize( (float)ms.size_ );
+    setScreenSize( (float) ms.size_ );
+    setMarkerHeightRatio( ms.heightratio_ );
 }
 
 
@@ -65,17 +92,6 @@ MarkerStyle3D::Type MarkerSet::getType() const
 {
     return markerstyle_.type_;
 }
-
-/*
-static float getSurveyRotation()
-{
-    const RCol2Coord& b2c = SI().binID2Coord();
-    const float xcrd = (float) b2c.getTransform(true).c;
-    const float ycrd = (float) b2c.getTransform(false).c;
-    const float angle = atan2( ycrd, xcrd );
-    return angle;
-}
- */
 
 
 void MarkerSet::setType( MarkerStyle3D::Type type )
@@ -94,17 +110,6 @@ void MarkerSet::setType( MarkerStyle3D::Type type )
 	case MarkerStyle3D::Sphere:
 	    markerset_->setShape( osgGeo::MarkerSet::Sphere );
 	    break;
-	    /*
-	case MarkerStyle3D::Arrow:
-	    markerset_->setShape( osgGeo::MarkerSet::Arrow );
-	    break;
-	case MarkerStyle3D::Cross:
-	    markerset_->setShape( osgGeo::MarkerSet::Cross );
-	    break;
-	case MarkerStyle3D::Plane:
-	    markerset_->setShape( osgGeo::MarkerSet::Cross );
-	    break;
-	     */
 	default:
 	    pErrMsg("Shape not implemented");
 	    markerset_->setShape( osgGeo::MarkerSet::None );
@@ -116,14 +121,14 @@ void MarkerSet::setType( MarkerStyle3D::Type type )
 
 void MarkerSet::setScreenSize( float sz )
 {
-    markerset_->setScreenSize( sz );
     markerstyle_.size_ = (int)sz;
+    markerset_->setMarkerSize( sz );
 }
 
 
 float MarkerSet::getScreenSize() const
 {
-    return markerset_->getScreenSize();
+    return markerset_->getMarkerSize();
 }
 
 
@@ -132,6 +137,49 @@ void MarkerSet::doFaceCamera(bool yn)
     markerset_->setRotateMode( yn
 	? osg::AutoTransform::ROTATE_TO_CAMERA
 	: osg::AutoTransform::NO_ROTATION );
+}
+
+
+void MarkerSet::setMarkerHeightRatio( float heightratio )
+{
+    markerstyle_.heightratio_ = heightratio;
+    markerset_->setMarkerHeightRatio( heightratio );
+}
+
+
+float MarkerSet::getMarkerHeightRatio() const 
+{
+    return markerset_->getMarkerHeightRatio();
+}
+
+
+void MarkerSet::setMaximumScale( float maxscale )
+{
+    markerset_->setMaxScale( maxscale );
+}
+
+
+float MarkerSet::getMaximumScale() const
+{
+    return markerset_->getMaxScale();
+}
+
+
+void MarkerSet::setMinimumScale( float minscale )
+{
+    markerset_->setMinScale( minscale );
+}
+
+
+float MarkerSet::getMinimumScale() const
+{
+    return markerset_->getMinScale();
+}
+
+
+void MarkerSet::setAutoRotateMode( AutoRotateMode rotatemode )
+{
+    markerset_->setRotateMode( (osg::AutoTransform::AutoRotateMode)rotatemode );
 }
 
 

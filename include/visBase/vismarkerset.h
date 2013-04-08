@@ -36,15 +36,29 @@ Size and shape are settable.
 mExpClass(visBase) MarkerSet : public VisualObjectImpl
 {
 public:
+
+    enum AutoRotateMode
+    {
+	NO_ROTATION,
+	ROTATE_TO_SCREEN,
+	ROTATE_TO_CAMERA,
+	ROTATE_TO_AXIS
+    };
+
     static MarkerSet*	create()
 			mCreateDataObj(MarkerSet);
     
     Coordinates*	getCoordinates()    { return coords_; }
     Normals*		getNormals();
 
+    void		setMaterial(visBase::Material*);
+			//!<If material is null, markers will be single color
+
     void		setMarkerStyle(const MarkerStyle3D&);
-    			/*!<Sets predefined shape and size. */
-    const MarkerStyle3D& getMarkerStyle() const	{ return markerstyle_; }
+    			/*!<Sets predefined shape and size.
+			    Will only use color of markerstyle if no
+			    material is set.*/
+    MarkerStyle3D&	getMarkerStyle() { return markerstyle_; }
     void		setType(MarkerStyle3D::Type);
     			/*!<Sets predefined shape. */
     MarkerStyle3D::Type	getType() const;
@@ -56,6 +70,17 @@ public:
     float		getScreenSize() const;
     static float	cDefaultScreenSize() { return 5; }
 
+    void		setMarkerHeightRatio( float );
+    float		getMarkerHeightRatio() const;
+
+    void		setMinimumScale(float);
+    float		getMinimumScale() const;
+
+    void		setMaximumScale(float);
+    float		getMaximumScale() const;
+
+    void		setAutoRotateMode(AutoRotateMode);
+
     void		doFaceCamera(bool yn);
     			/*!<If true, the maker will always be rotated so the
 			    same part of the marker always faces the camera. */
@@ -64,12 +89,14 @@ public:
     void		setDisplayTransformation( const mVisTrans* );
     const mVisTrans*	getDisplayTransformation() const;
 
+    void		clearMarkers();
+
 protected:
 				~MarkerSet();
     
     RefMan<Coordinates>		coords_;
     RefMan<Normals>		normals_;
-    
+    RefMan<Material>		singlecolormaterial_;
     RefMan<const mVisTrans>	displaytrans_;
     osgGeo::MarkerSet*		markerset_;
     MarkerStyle3D		markerstyle_;

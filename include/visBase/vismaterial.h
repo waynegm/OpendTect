@@ -78,15 +78,18 @@ public:
 
     int			nrOfMaterial() const;
     
+    void		clear();
+    
     const osg::Array*	getColorArray() const;
+    osg::Array*		getColorArray();
 
 protected:
 			~Material();
     void		setMinNrOfMaterials(int);
     void		updateMaterial(int);
-    void		createArray();
+    void		createOsgColorArray();
 
-    TypeSet<Color>	color_;
+    TypeSet<Color>	colors_;
     TypeSet<float>	diffuseintensity_;
     TypeSet<float>	transparency_;
     
@@ -96,7 +99,7 @@ protected:
     float		shininess_;
 
     osg::Material*	material_;
-    osg::Array*		colorarray_;
+    osg::Array*		osgcolorarray_;
 
     static const char*	sKeyColor();
     static const char*	sKeyAmbience();

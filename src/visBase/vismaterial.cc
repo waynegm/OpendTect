@@ -29,7 +29,7 @@ const char* Material::sKeyTransparency()	{ return "Transparency"; }
 
 Material::Material()
     : material_( addAttribute(new osg::Material) )
-    , colorarray_( 0 )
+    , osgcolorarray_( 0 )
     , ambience_( 0.8 )
     , specularintensity_( 0 )
     , emmissiveintensity_( 0 )
@@ -46,14 +46,14 @@ Material::Material()
 Material::~Material()
 {
     material_->unref();
-    if ( colorarray_ ) colorarray_->unref();
+    if ( osgcolorarray_ ) osgcolorarray_->unref();
 }
 
 
 #define mSetProp( prop ) prop = mat.prop
 void Material::setFrom( const Material& mat )
 {
-    mSetProp( color_ );
+    mSetProp( colors_ );
     mSetProp( diffuseintensity_ );
     mSetProp( ambience_ );
     mSetProp( specularintensity_ );
@@ -61,7 +61,7 @@ void Material::setFrom( const Material& mat )
     mSetProp( shininess_ );
     mSetProp( transparency_ );
 
-    for ( int idx=color_.size()-1; idx>=0; idx-- )
+    for ( int idx=colors_.size()-1; idx>=0; idx-- )
 	updateMaterial( idx );
 }
 
@@ -69,19 +69,20 @@ void Material::setFrom( const Material& mat )
 void Material::setColor( const Color& n, int idx )
 {
     setMinNrOfMaterials(idx);
-    if ( color_[idx]==n )
+    if ( colors_[idx]==n )
 	return;
 
-    color_[idx] = n;
+    colors_[idx] = n;
     updateMaterial( idx );
 }
 
 
 const Color& Material::getColor( int idx ) const
 {
-    if ( idx>=0 && idx<color_.size() )
-	return color_[idx];
-    return color_[0];
+    if ( colors_.validIdx(idx) )
+	return colors_[idx];
+
+    return colors_[0];
 }
 
 
@@ -138,27 +139,28 @@ mSetGetProperty( float, Shininess, shininess_ );
 #define mGetOsgCol( col, fac, transp ) \
     osg::Vec4( col.r()*fac/255, col.g()*fac/255, col.b()*fac/255, 1.0-transp )
 
+
 void Material::updateMaterial( int idx )
 {
     const osg::Vec4 diffuse =
-	mGetOsgCol( color_[idx], diffuseintensity_[idx], transparency_[idx] );
+	mGetOsgCol( colors_[idx], diffuseintensity_[idx], transparency_[idx] );
     
     if ( !idx )
     {
 	
 	material_->setAmbient( osg::Material::FRONT_AND_BACK,
-		mGetOsgCol(color_[0],ambience_,transparency_[0]) );
+		mGetOsgCol(colors_[0],ambience_,transparency_[0]) );
 	material_->setSpecular( osg::Material::FRONT_AND_BACK,
-		mGetOsgCol(color_[0],specularintensity_,transparency_[0]) );
+		mGetOsgCol(colors_[0],specularintensity_,transparency_[0]) );
 	material_->setEmission( osg::Material::FRONT_AND_BACK,
-		mGetOsgCol(color_[0],emmissiveintensity_,transparency_[0]) );
+		mGetOsgCol(colors_[0],emmissiveintensity_,transparency_[0]) );
 
 	material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
 	material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
 
-	if ( colorarray_ )
+	if ( osgcolorarray_ )
 	{
-	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(colorarray_);
+	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
 	    if ( colarr.size() )
 		colarr[0] = diffuse;
 	    else
@@ -167,15 +169,14 @@ void Material::updateMaterial( int idx )
     }
     else
     {
-	if ( !colorarray_ )
+	if ( !osgcolorarray_ )
 	{
-	    colorarray_ = new osg::Vec4Array;
-	    colorarray_->ref();
-	    mGetOsgVec4Arr(colorarray_)->push_back( diffuse );
+	    createOsgColorArray();
+	    mGetOsgVec4Arr(osgcolorarray_)->push_back( diffuse );
 	}
 	else
 	{
-	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(colorarray_);
+	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
 
 	    if ( colarr.size()<=idx )
 		colarr.resize( idx+1 );
@@ -189,14 +190,14 @@ void Material::updateMaterial( int idx )
 
 
 int Material::nrOfMaterial() const
-{ return color_.size(); }
+{ return colors_.size(); }
 
 
 void Material::setMinNrOfMaterials(int minnr)
 {
-    while ( color_.size()<=minnr )
+    while ( colors_.size()<=minnr )
     {
-	color_ += Color(179,179,179);
+	colors_ += Color(179,179,179);
 	diffuseintensity_ += 0.8;
 	transparency_ += 0.0;
     }
@@ -248,19 +249,26 @@ void Material::fillPar( IOPar& iopar ) const
     
 const osg::Array* Material::getColorArray() const
 {
-    return colorarray_;
+    return osgcolorarray_;
 }
     
 
-void Material::createArray()
+osg::Array* Material::getColorArray()
 {
-    if ( colorarray_ )
+    if ( !osgcolorarray_ )
+	createOsgColorArray();
+
+    return osgcolorarray_;
+}
+
+
+void Material::createOsgColorArray()
+{
+    if ( osgcolorarray_ )
 	return;
     
-    colorarray_ = new osg::Vec4Array;
-    colorarray_->ref();
-    mGetOsgVec4Arr(colorarray_)->
-        push_back( material_->getDiffuse( osg::Material::FRONT ) );
+    osgcolorarray_ = new osg::Vec4Array;
+    osgcolorarray_->ref();
 }
 
 
@@ -295,6 +303,16 @@ Material::ColorMode Material::getColorMode() const
 	return AmbientAndDiffuse;
 
     return Off;
+}
+
+
+void	Material::clear()
+{
+    colors_.erase();
+    diffuseintensity_.erase();
+    transparency_.erase();
+    if ( osgcolorarray_ )
+        mGetOsgVec4Arr( osgcolorarray_ )->clear();
 }
 
 

@@ -190,16 +190,9 @@ BoxDragger::BoxDragger()
     , motion( this )
     , changed( this )
     , finished( this )
-    , osgboxdragger_( 0 )
-    , osgdraggerroot_( 0 )
     , osgcallbackhandler_( 0 )
+    , osgboxdragger_( setOsgNode( new osgManipulator::TabBoxDragger() ) )
 {
-    osgdraggerroot_ = new osg::Switch();
-    setOsgNode( osgdraggerroot_ );
-    
-    osgboxdragger_ = new osgManipulator::TabBoxDragger();
-    osgdraggerroot_->addChild( osgboxdragger_ );
-
     osgboxdragger_->setupDefaultGeometry();
     osgboxdragger_->setHandleEvents( true );
 
@@ -337,20 +330,6 @@ void BoxDragger::setWidthLimits( const Interval<float>& x,
 }
 
 
-bool BoxDragger::turnOn( bool yn )
-{
-    const bool res = isOn();
-    osgdraggerroot_->setValue( 0, yn );
-    return res;
-}
-
-
-bool BoxDragger::isOn() const
-{
-    return osgdraggerroot_->getValue(0);
-}
-
-    
 void BoxDragger::setDisplayTransformation( const mVisTrans* nt )
 {
     if ( transform_ == nt )

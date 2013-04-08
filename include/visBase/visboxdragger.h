@@ -54,9 +54,6 @@ public:
 	    				       const Interval<float>& y,
 					       const Interval<float>& z );
 
-    bool			turnOn(bool yn);
-    bool			isOn() const;
-
     void			showDraggerBorder(bool yn=true);
     bool			isDraggerBorderShown() const;
 
@@ -80,7 +77,6 @@ protected:
 						     const Coord3& worldtrans);
 
     osgManipulator::TabBoxDragger*	osgboxdragger_;
-    osg::Switch*			osgdraggerroot_;
     osg::ShapeDrawable*			osgdraggerbox_;
     BoxDraggerCallbackHandler*		osgcallbackhandler_;
 

@@ -16,8 +16,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "thread.h"
 #include "vistransform.h"
 
-#include <Inventor/nodes/SoNormal.h>
-
 #include <osg/Array>
 
 mCreateFactoryEntry( visBase::Normals );
@@ -26,25 +24,11 @@ namespace visBase
 {
 
 Normals::Normals()
-    : normals_( 0 )
+    : osgnormals_( new osg::Vec3Array )
     , mutex_( *new Threads::Mutex )
     , transformation_( 0 )
-    , osgnormals_( new osg::Vec3Array )
 {
-    if ( !osgnormals_ )
-    {
-	normals_->ref();
-	for ( int idx=normals_->vector.getNum()-1; idx>=0; idx-- )
-	{
-	    unusednormals_ += 0;
-	    normals_->vector.set1Value( 0,
-		    SbVec3f(mUdf(float),mUdf(float),mUdf(float) ) );
-	}
-	
-	return;
-    }
-    
-    mGetOsgVec3Arr(osgnormals_)->ref();
+    osgnormals_->ref();
 }
 
 
@@ -53,50 +37,43 @@ Normals::~Normals()
     delete &mutex_;
     if ( transformation_ ) transformation_->unRef();
     
-    if ( normals_ )
-    {
-	normals_->unref();
-	return;
-    }
-    
-    
-    mGetOsgVec3Arr(osgnormals_)->unref();
+    osgnormals_->unref();
 }
 
 
 void Normals::setNormal( int idx, const Vector3& n )
 {
-    Coord3 normal = n;
-    transformNormal( transformation_, normal, true );
+    osg::Vec3f osgnormal;
+    visBase::Transformation::transformDir( transformation_, n, osgnormal );
 
     Threads::MutexLocker lock( mutex_ );
-    for ( int idy=normals_->vector.getNum(); idy<idx; idy++ )
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+    for ( int idy=osgnormals->size(); idy<idx; idy++ )
     {
 	unusednormals_ += idy;
-	normals_->vector.set1Value( idy,
-		SbVec3f(mUdf(float),mUdf(float),mUdf(float) ) );
+	(*osgnormals)[idy] = osg::Vec3f( mUdf(float),mUdf(float),mUdf(float) );
     }
-
-    normals_->vector.set1Value( idx, SbVec3f( (float) normal.x, 
-				    (float) normal.y, (float) normal.z ));
+    osgnormals->push_back( osgnormal );
 }
 
 
 int Normals::nrNormals() const
-{ return normals_->vector.getNum(); }
+{ return mGetOsgVec3Arr(osgnormals_)->size(); }
+
+
+void Normals::clear()
+{
+    mGetOsgVec3Arr( osgnormals_ )->clear();
+}
 
 
 void Normals::inverse()
 {
     Threads::MutexLocker lock( mutex_ );
 
-    SbVec3f* normals = normals_->vector.startEditing();
-
-    for ( int idx=normals_->vector.getNum()-1; idx>=0; idx-- )
-	normals[idx] *= -1;
-
-    if ( normals_->vector.getNum() )
-	normals_->vector.finishEditing();
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+    for ( int idx=osgnormals->size()-1; idx>=0; idx-- )
+	(*osgnormals)[idx] *= -1;
 }
 
 
@@ -104,7 +81,7 @@ int Normals::nextID( int previd ) const
 {
     Threads::MutexLocker lock( mutex_ );
 
-    const int sz = normals_->vector.getNum();
+    const int sz = nrNormals();
 
     int res = previd+1;
     while ( res<sz )
@@ -117,71 +94,64 @@ int Normals::nextID( int previd ) const
 }
 
 
-
 int Normals::addNormal( const Vector3& n )
 {
-    Coord3 normal = n;
-    transformNormal( transformation_, normal, true );
+
+    osg::Vec3f osgnormal;
+    visBase::Transformation::transformDir( transformation_, n, osgnormal );
 
     Threads::MutexLocker lock( mutex_ );
-    const int res = getFreeIdx();
-    normals_->vector.set1Value( res, SbVec3f( (float) normal.x, 
-				    (float) normal.y, (float) normal.z ));
 
-    return res;
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+    osgnormals->push_back( osgnormal ) ;
+
+    return nrNormals();
 }
 
 
 void Normals::addNormalValue( int idx, const Vector3& n )
 {
-    Coord3 normal = n;
-    transformNormal( transformation_, normal, true );
+    osg::Vec3f osgnormal;
+    visBase::Transformation::transformDir( transformation_, n, osgnormal );
 
     Threads::MutexLocker lock( mutex_ );
-    SbVec3f newnormal = normals_->vector[idx];
-    bool set = idx>=normals_->vector.getNum();
-
-    if ( !set )
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+    if( idx >= nrNormals() )
     {
-	newnormal = normals_->vector[idx];
-	if ( mIsUdf(newnormal[0]) )
-	    set = true;
+	osgnormals->push_back( osgnormal ) ;
+    }
+    else
+    {
+	float xval = (*osgnormals)[idx][0];
+	if( mIsUdf( xval ) )
+	    (*osgnormals)[idx] = osgnormal;
 	else
-	{
-	    newnormal[0] += (float) normal.x;
-	    newnormal[1] += (float) normal.y;
-	    newnormal[2] += (float) normal.z;
-	}
+	    (*osgnormals)[idx] += osgnormal;
+
     }
 
-    if ( set )
-    {
-	newnormal[0] = (float) normal.x;
-	newnormal[1] = (float) normal.y;
-	newnormal[2] = (float) normal.z;
-    }
-
-    normals_->vector.set1Value( idx, newnormal );
 }
 
 
 void Normals::removeNormal(int idx)
 {
     Threads::MutexLocker lock( mutex_ );
-    const int nrnormals = normals_->vector.getNum();
+    const int nrnormals = nrNormals();
+
     if ( idx<0 || idx>=nrnormals )
     {
 	pErrMsg("Invalid index");
 	return;
     }
     
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+
     if ( idx==nrnormals-1 )
-	normals_->vector.deleteValues( idx );
+	osgnormals->pop_back();
     else
     {
-	unusednormals_ += idx;
-	normals_->vector.set1Value( idx,
-		SbVec3f(mUdf(float),mUdf(float),mUdf(float) ) );
+	unusednormals_ += 1;
+	(*osgnormals)[idx] = osg::Vec3f( mUdf(float),mUdf(float),mUdf(float) );
     }
 }
 
@@ -190,38 +160,33 @@ void Normals::setAll( const float* vals, int coord3sz )
 {
     Threads::MutexLocker lock( mutex_ );
 
-    if ( coord3sz!=normals_->vector.getNum() )
-	normals_->vector.setNum( coord3sz );
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+    if ( coord3sz!=nrNormals() )
+	osgnormals->resize( coord3sz );
 
-    float* nms = (float*)normals_->vector.startEditing();
-    float* stopptr = nms + coord3sz * 3;
-    while ( nms<stopptr )
+    int nrnormals( 0 );
+    while ( nrnormals< coord3sz )
     {
- 	*nms = *vals;
- 	nms++;
- 	vals++;
-    } 
-    normals_->vector.finishEditing();
+	( *osgnormals )[nrnormals] = 
+	    osg::Vec3f( vals[nrnormals*3], vals[nrnormals*3+1], vals[nrnormals*3+2] );
+	nrnormals++;
+    }
 }
-
 
 
 Coord3 Normals::getNormal( int idx ) const
 {
     Threads::MutexLocker lock( mutex_ );
-    if ( idx>=normals_->vector.getNum() )
+    if ( idx>=nrNormals() )
 	return Coord3::udf();
 
-    const SbVec3f norm = normals_->vector[idx];
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+    const osg::Vec3f norm = ( *osgnormals )[idx];
     Coord3 res( norm[0], norm[1], norm[2] );
     transformNormal( transformation_, res, false );
 
     return res;
 }
-
-
-SoNode* Normals::gtInvntrNode()
-{ return normals_; }
 
 
 void Normals::transformNormal( const Transformation* t, Coord3& n,
@@ -236,43 +201,21 @@ void Normals::transformNormal( const Transformation* t, Coord3& n,
 }
 
 
-int  Normals::getFreeIdx()
-{
-    if ( unusednormals_.size() )
-    {
-	const int res = unusednormals_[unusednormals_.size()-1];
-	unusednormals_.removeSingle(unusednormals_.size()-1);
-	return res;
-    }
-
-    return normals_->vector.getNum();
-}
-
-
 void Normals::setDisplayTransformation( const mVisTrans* nt )
 {
     if ( nt==transformation_ ) return;
 
+    osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
+
     Threads::MutexLocker lock( mutex_ );
-
-    const bool oldstatus = normals_->vector.enableNotify( false );
-    for ( int idx=normals_->vector.getNum()-1; idx>=0; idx-- )
+    for ( int idx = 0; idx<nrNormals(); idx++ )
     {
-	if ( unusednormals_.indexOf( idx )!=-1 )
-	    continue;
-
-	const SbVec3f norm = normals_->vector[idx];
-	Coord3 res( norm[0], norm[1], norm[2] );
-	transformNormal( transformation_, res, false );
-	transformNormal( nt, res, true );
-
-	normals_->vector.set1Value( idx, SbVec3f((float) res.x,
-					    (float) res.y,(float) res.z) );
+	osg::Vec3f normal;
+	visBase::Transformation::transformBackDir( transformation_, 
+				 (*osgnormals)[idx], normal );
+	visBase::Transformation::transformDir( nt, normal );
+	(*osgnormals)[idx] =  normal;
     }
-
-    normals_->vector.enableNotify( oldstatus );
-    normals_->touch();
-
 
     if ( transformation_ )
 	transformation_->unRef();

@@ -21,7 +21,6 @@ ________________________________________________________________________
 
 
 class CallBacker;
-class SoNormal;
 class Coord3;
 
 namespace Threads { class Mutex; };
@@ -49,6 +48,7 @@ public:
     void		removeNormal( int );
     Coord3		getNormal(int) const;
     void		addNormalValue(int,const Coord3&);
+    void		clear();
 
     void		setAll(const float* vals,int nmsz);
     			//!<vals are transformed, ordered in x,y,z.
@@ -64,18 +64,13 @@ protected:
 	    				bool todisplay) const;
 
     			~Normals();
-    int			getFreeIdx();
     			/*!< Object should be locked when calling */
-
-    SoNormal*			normals_;
 
     TypeSet<int>		unusednormals_;
     Threads::Mutex&		mutex_;
 
     const mVisTrans*		transformation_;
 
-    virtual SoNode*		gtInvntrNode();
-    
     osg::Array*			osgnormals_;
     			
 };

@@ -84,7 +84,6 @@ void MarkerSet::setMarkerStyle( const MarkerStyle3D& ms )
     singlecolormaterial_->setColor( ms.color_ );
     setType( ms.type_ );
     setScreenSize( (float) ms.size_ );
-    setMarkerHeightRatio( ms.heightratio_ );
 }
 
 
@@ -142,7 +141,6 @@ void MarkerSet::doFaceCamera(bool yn)
 
 void MarkerSet::setMarkerHeightRatio( float heightratio )
 {
-    markerstyle_.heightratio_ = heightratio;
     markerset_->setMarkerHeightRatio( heightratio );
 }
 

@@ -12,10 +12,9 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "viswell.h"
 
-#include "visdatagroup.h"
 #include "visdrawstyle.h"
 #include "viscoord.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vispolyline.h"
 #include "vistext.h"
@@ -31,9 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "zaxistransform.h"
 
 #include <osg/Switch>
-#include <osg/Material>
 #include <osg/Node>
-#include <osgGeo/MarkerSet>
 #include <osgGeo/PlaneWellLog>
 #include <osgText/Text>
 
@@ -62,12 +59,14 @@ Well::Well()
     , transformation_(0)
     , zaxistransform_(0)
     , voiidx_(-1)
-    , markerset_( new osgGeo::MarkerSet )
     , leftlog_( new osgGeo::PlaneWellLog )
     , rightlog_( new osgGeo::PlaneWellLog )
 {
+    
+    markerset_ = MarkerSet::create();
     markerset_->ref();
-    addChild( markerset_ );
+    addChild( markerset_->osgNode() );
+    markerset_->setMaterial( new Material );
 
     track_ = PolyLine::create();
     track_->ref();  
@@ -108,7 +107,7 @@ Well::~Well()
     removeChild( track_->osgNode() );
     track_->unRef();
 
-    markerset_->unref();
+    markerset_->unRef();
 
     removeLogs();
     leftlog_->unref();
@@ -251,53 +250,50 @@ bool Well::wellBotNameShown() const
 }
 
 
-void Well::setMarkerSet(const MarkerParams& mp)
+void Well::setMarkerSetParams( const MarkerParams& mp )
 {
-    osgGeo::MarkerSet::MarkerType shape;
-    
+   MarkerStyle3D markerstyle;
+   markerset_->setMarkerHeightRatio( 1.0f );
+
     switch ( mp.shapeint_ )
     {
     case 0:
-	shape = osgGeo::MarkerSet::Cylinder;
-	markerset_->setHeight(mp.cylinderheight_*10);
+	markerstyle = MarkerStyle3D::Cylinder;
+	markerset_->setMarkerHeightRatio( ( float )mp.cylinderheight_/mp.size_ );
     	break;
     case 1:
-	shape = osgGeo::MarkerSet::Box;  // it should be "Cone"
+	markerstyle = MarkerStyle3D::Cube;
 	break;
     case 2:
-	shape = osgGeo::MarkerSet::Sphere;
+	markerstyle = MarkerStyle3D::Sphere;
 	break;
     case 3:
-	shape = osgGeo::MarkerSet::Box;
+	markerstyle = MarkerStyle3D::Cone;
 	break;
     default:
+	pErrMsg( "Shape not implemented" );
 	return;
     }
 
-    markerset_->setRadius(mp.size_*10);
-    markerset_->setShape(shape);
-    markerset_->setDetail(0.5f);
-    markerset_->setMinScale(0);
-    markerset_->setMaxScale(1.5f);
-    markerset_->setRotateMode(osg::AutoTransform::NO_ROTATION);
+    markerstyle.size_ = mp.size_;
+    markerset_->setMarkerStyle( markerstyle );
+    markerset_->setMinimumScale( 0 );
+    markerset_->setMaximumScale( 25.5f );
+    
+    markerset_->setAutoRotateMode( visBase::MarkerSet::NO_ROTATION );
 }
 
 
 void Well::addMarker( const MarkerParams& mp )
 {
-    setMarkerSet( mp );
-
     Coord3 markerpos = *mp.pos_;
     if ( zaxistransform_ )
 	  markerpos.z = zaxistransform_->transform( markerpos );
     if ( mIsUdf(markerpos.z) )
 	  return;
-    
-    osg::Vec3f disppos;
-    mVisTrans::transform( transformation_, markerpos, disppos );
-    
-    markerset_->getVertexArray()->push_back( disppos );
-    markerset_->getColorArray()->push_back( Conv::to<osg::Vec4>(mp.col_));
+
+    const int id = markerset_->getCoordinates()->addPos( markerpos );
+    markerset_->getMaterial()->setColor( mp.col_,id ) ;
 
     const int textidx = markernames_->addText();
     Text* txt = markernames_->text( textidx );
@@ -310,9 +306,7 @@ void Well::addMarker( const MarkerParams& mp )
 
 void Well::removeAllMarkers() 
 {
-    markerset_->getVertexArray()->clear();
-    markerset_->getColorArray()->clear();
-    markerset_->getVertexArray()->dirty();
+    markerset_->clearMarkers();
     markernames_->removeAll();
 }
 
@@ -320,42 +314,31 @@ void Well::removeAllMarkers()
 void Well::setMarkerScreenSize( int size )
 {
     markersize_ = size;
-    for ( int idx=0; idx<markergroup_->size(); idx++ )
-    {
-	mDynamicCastGet(Marker*,marker,markergroup_->getObject(idx))
-	marker->setScreenSize( size );
-    }
+    markerset_->setScreenSize( size );
 }
 
 
 int Well::markerScreenSize() const
 {
-    mDynamicCastGet(Marker*,marker,markergroup_->getObject(0))
-    return marker ? mNINT32(marker->getScreenSize()) : markersize_;
+    return markerset_->getScreenSize();
 }
 
 
 bool Well::canShowMarkers() const
 {
-    return markerset_->getVertexArray()->size(); 
+    return markerset_->getCoordinates()->size(); 
 }
 
 
 void Well::showMarkers( bool yn )
 {
-    if ( yn==markersShown() )
-	return;
-
-    if ( yn )
-	addChild( markerset_ );
-    else
-	removeChild( markerset_ );
+   markerset_->turnOn( yn );
 }
 
 
 bool Well::markersShown() const
 {
-    return childIndex( markerset_ )!=-1;
+    return markerset_->isOn();
 }
 
 void Well::showMarkerName( bool yn )
@@ -788,6 +771,7 @@ void Well::setDisplayTransformation( const mVisTrans* nt )
     wellbottxt_->setDisplayTransformation( transformation_ );
     welltoptxt_->setDisplayTransformation( transformation_ );
     markernames_->setDisplayTransformation( transformation_ );
+    markerset_->setDisplayTransformation( transformation_ );
 }
 
 

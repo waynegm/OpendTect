@@ -14,7 +14,6 @@ ________________________________________________________________________
 
 
 #include "visbasemod.h"
-#include "visbasemod.h"
 #include "color.h"
 #include "fontdata.h"
 #include "ranges.h"
@@ -33,7 +32,6 @@ template <class T> class Interval;
 
 namespace osgGeo
 {
-    class MarkerSet;
     class PlaneWellLog;
 }
 
@@ -44,10 +42,10 @@ namespace visBase
 class PolyLine3D;
 class PolyLine;
 class PolyLineBase;
-class DataObjectGroup;
 class Text2;
 class Text;
 class Transformation;
+class MarkerSet;
 
 /*! \brief 
 Base class for well display
@@ -102,6 +100,7 @@ public:
 	Coord3* 		pos_;
     };
 
+    void			setMarkerSetParams(const MarkerParams&);
     void			addMarker(const MarkerParams&);
 
     bool			canShowMarkers() const;
@@ -204,38 +203,36 @@ public:
     static const char*		logwidthstr();
 
 protected:
-    					~Well();
+    				~Well();
 
-    PolyLine*				track_;
-    osgGeo::MarkerSet*			markerset_;
-    osgGeo::PlaneWellLog*		leftlog_;
-    osgGeo::PlaneWellLog*		rightlog_;
+    PolyLine*			track_;
+    MarkerSet*			markerset_;
+    osgGeo::PlaneWellLog*	leftlog_;
+    osgGeo::PlaneWellLog*	rightlog_;
 
-    Text2*				welltoptxt_;
-    Text2*				wellbottxt_;
-    DataObjectGroup*			markergroup_;
-    Text2*				markernames_;
-    Text2*				lognmleft_;
-    Text2*				lognmright_;
-    const mVisTrans*			transformation_;
+    Text2*			welltoptxt_;
+    Text2*			wellbottxt_;
+    Text2*			markernames_;
+    Text2*			lognmleft_;
+    Text2*			lognmright_;
+    const mVisTrans*		transformation_;
 
-    bool				showmarkers_;
-    bool				showlogs_;
-    float				constantlogsizefac_;
+    bool			showmarkers_;
+    bool			showlogs_;
+    float			constantlogsizefac_;
     
-    ZAxisTransform*			zaxistransform_;
-    int					voiidx_;
+    ZAxisTransform*		zaxistransform_;
+    int				voiidx_;
 
 private:
-    void				setText(Text*, const char*, Coord3*, 
-						const FontData&);
-    void				setMarkerSet(const MarkerParams&);
+    void			setText(Text*, const char*, Coord3*, 
+					const FontData&);
 
-    void				getLinScale(const LogParams&,
-						    LinScaler&,
-						    bool isFill = true);
-    void				getLinScaleRange( const LinScaler&, Interval<float>&, 
-					float&, float&, bool);
+    void			getLinScale(const LogParams&,
+					    LinScaler&,
+					    bool isFill = true);
+    void			getLinScaleRange( const LinScaler&,
+				    Interval<float>&, float&, float&, bool);
 
 };
 

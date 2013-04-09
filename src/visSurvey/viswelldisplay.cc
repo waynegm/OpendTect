@@ -18,7 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "visdataman.h"
 #include "visevent.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vistransform.h"
 
@@ -362,6 +362,7 @@ void WellDisplay::updateMarkers( CallBacker* )
 
     visBase::Well::MarkerParams mp;
     fillMarkerParams( mp );
+    well_->setMarkerSetParams( mp );
     
     const BufferStringSet selnms(
 	    	wd->displayProperties(false).markers_.selmarkernms_ );
@@ -826,14 +827,16 @@ void WellDisplay::addPick( Coord3 pos )
 
     if ( insertidx > -1 )
     {
-	visBase::Marker* marker = visBase::Marker::create();
-	group_->addObject( marker );
+	visBase::MarkerSet* markerset = visBase::MarkerSet::create();
+	group_->addObject( markerset );
 
-	marker->setDisplayTransformation( transformation_ );
-	marker->setCenterPos( pos );
-        marker->setScreenSize( mPickSz );
-	marker->setType( (MarkerStyle3D::Type)mPickSz );
-	marker->getMaterial()->setColor( lineStyle()->color_ );
+	markerset->setDisplayTransformation( transformation_ );
+	markerset->getCoordinates()->addPos( pos );
+	MarkerStyle3D markerstyle;
+	markerstyle.size_ = mPickSz;
+	markerstyle.type_ = (MarkerStyle3D::Type) mPickSz;
+	markerstyle.color_ = lineStyle()->color_;
+	markerset->setMarkerStyle( markerstyle );
     }
 }
 
@@ -854,8 +857,8 @@ void WellDisplay::setDisplayTransformForPicks( const mVisTrans* newtr )
     if ( !group_ ) return;
     for ( int idx=0; idx<group_->size(); idx++ )
     {
-	mDynamicCastGet(visBase::Marker*,marker,group_->getObject(idx));
-	marker->setDisplayTransformation( transformation_ );
+	mDynamicCastGet(visBase::MarkerSet*,markerset,group_->getObject(idx));
+	markerset->setDisplayTransformation( transformation_ );
     }
 }
 
@@ -890,8 +893,8 @@ void WellDisplay::setupPicking( bool yn )
 
     for ( int idx=0; idx<group_->size(); idx++ )
     {
-	mDynamicCastGet(visBase::Marker*,marker,group_->getObject(idx));
-	marker->turnOn( yn );
+	mDynamicCastGet(visBase::MarkerSet*,markerset,group_->getObject(idx));
+	markerset->turnOn( yn );
     }
 }
 

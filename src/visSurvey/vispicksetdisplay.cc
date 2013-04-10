@@ -43,9 +43,6 @@ PickSetDisplay::~PickSetDisplay()
 {
     if ( bodydisplay_ ) 
 	bodydisplay_->unRef();
-    if ( scene_ )
-	scene_->zstretchchange.remove(
-		mCB(this,PickSetDisplay,sceneZChangeCB) );
 }
 
 
@@ -148,7 +145,7 @@ visBase::VisualObject* PickSetDisplay::createLocation() const
     marker->setScreenSize( mCast(float,set_->disp_.pixsize_) );
     marker->setMaterial( 0 );
     if ( scene_ )
-	marker->setZStretch( scene_->getZStretch()*scene_->getZScale()/2 );
+	marker->setZStretch( scene_->getFixedZStretch()*scene_->getZScale()/2 );
     return marker;
 }
 
@@ -234,26 +231,6 @@ void PickSetDisplay::dispChg( CallBacker* cb )
     }
 
     LocationDisplay::dispChg( cb );
-}
-
-
-void PickSetDisplay::setScene( Scene* scn )
-{
-    SurveyObject::setScene( scn );
-    if ( scene_ ) 
-	scene_->zstretchchange.notify( 
-		mCB(this,PickSetDisplay,sceneZChangeCB) );
-}
-
-
-void PickSetDisplay::sceneZChangeCB( CallBacker* )
-{
-    for ( int idx=0; idx<group_->size(); idx++ )
-    {
-	mDynamicCastGet(visBase::Marker*,marker,group_->getObject(idx));
-	if ( marker && scene_ )
-	    marker->setZStretch( scene_->getZStretch()*scene_->getZScale()/2 );
-    }
 }
 
 

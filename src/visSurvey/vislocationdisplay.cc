@@ -486,7 +486,7 @@ Coord3 LocationDisplay::display2World( const Coord3& pos ) const
 {
     Coord3 res = pos;
     if ( scene_ )
-	scene_->getZScaleTransform()->transformBack( res );
+	scene_->getTempZStretchTransform()->transformBack( res );
     if ( transformation_ )
 	transformation_->transformBack( res );
     return res;
@@ -498,7 +498,7 @@ Coord3 LocationDisplay::world2Display( const Coord3& pos ) const
     Coord3 res;
     mVisTrans::transform( transformation_, pos, res );
     if ( scene_ )
-	scene_->getZScaleTransform()->transform( res );
+	scene_->getTempZStretchTransform()->transform( res );
     return res;
 }
 

@@ -350,7 +350,7 @@ void uiMPEMan::seedClick( CallBacker* )
     {
 	visSurvey::Scene* scene = visSurvey::STM().currentScene();
 	seedpos = clickcatcher->info().getPos();
-	scene->getZScaleTransform()->transformBack( seedpos );
+	scene->getTempZStretchTransform()->transformBack( seedpos );
 	scene->getUTM2DisplayTransform()->transformBack( seedpos );
     }
     else

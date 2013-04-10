@@ -128,14 +128,16 @@ public:
 
     void			objectMoved(CallBacker*);
 
-    Notifier<Scene>		zstretchchange;
-    void			setZStretch(float);
+    void			setFixedZStretch(float);
     				/*!<Used to set the z-strecthing according
 				    to the user's preference. Is unitless -
 				    all entities (i.e. distance vs time) 
 				    should be handled by zscale.
 				*/
-    float			getZStretch() const;
+    float			getFixedZStretch() const;
+    
+    void			setTempZStretch(float);
+    float			getTempZStretch() const;
 
     void			setZScale(float);
     				/*!<The zscale should compensate for different
@@ -146,8 +148,7 @@ public:
     				/*!<Returns an anproximate figure how to scale Z
 				    relates to XY coordinates in this scene. */
 
-    const mVisTrans*		getZScaleTransform() const;
-    mVisTrans*			getZScaleTransform();
+    const mVisTrans*		getTempZStretchTransform() const;
     const mVisTrans*		getInlCrl2DisplayTransform() const;
     const mVisTrans*		getUTM2DisplayTransform() const;
     void			setZAxisTransform(ZAxisTransform*,TaskRunner*);
@@ -202,7 +203,7 @@ protected:
     void			updateBaseMapCursor(const Coord&);
     static const Color&		cDefaultMarkerColor();
     
-    RefMan<visBase::Transformation>	zscaletransform_;
+    RefMan<visBase::Transformation>	tempzstretchtrans_;
     
     RefMan<visBase::Transformation>	inlcrlrotation_;
     RefMan<visBase::Transformation>	inlcrlscale_;

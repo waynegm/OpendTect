@@ -56,13 +56,12 @@ static const char* sKeydTectScene()	{ return "dTect.Scene."; }
 
 
 Scene::Scene()
-    : zscaletransform_(0)
+    : tempzstretchtrans_(0)
     , annot_(0)
     , marker_(0)
     , mouseposchange(this)
     , mouseposval_(0)
     , mouseposstr_("")
-    , zstretchchange(this)
     , curzstretch_( 2 )
     , datatransform_( 0 )
     , appallowshad_(true)
@@ -201,10 +200,10 @@ Scene::~Scene()
 
 void Scene::updateTransforms( const HorSampling& hs )
 {
-    if ( !zscaletransform_ )
+    if ( !tempzstretchtrans_ )
     {
-	zscaletransform_ = mVisTrans::create();
-	visBase::DataObjectGroup::addObject( zscaletransform_ );
+	tempzstretchtrans_ = mVisTrans::create();
+	visBase::DataObjectGroup::addObject( tempzstretchtrans_ );
     }
 
     RefMan<mVisTrans> newinlcrlrotation = mVisTrans::create();
@@ -216,7 +215,7 @@ void Scene::updateTransforms( const HorSampling& hs )
     SceneTransformManager::computeICRotationTransform(*SI().get3DGeometry(true),
 	zfactor, newinlcrlrotation, newinlcrlscale );
     
-    zscaletransform_->addObject( newinlcrlrotation );
+    tempzstretchtrans_->addObject( newinlcrlrotation );
     
     RefMan<mVisTrans> oldinlcrlrotation = inlcrlrotation_;
     inlcrlrotation_ = newinlcrlrotation;
@@ -224,12 +223,13 @@ void Scene::updateTransforms( const HorSampling& hs )
     
     if ( oldinlcrlrotation )
     {
-	zscaletransform_->removeObject(
-			   zscaletransform_->getFirstIdx( oldinlcrlrotation ));
+	tempzstretchtrans_->removeObject(
+			tempzstretchtrans_->getFirstIdx( oldinlcrlrotation ));
 	
 	for ( int idx=0; idx<oldinlcrlrotation->size(); idx++ )
 	{
-	    RefMan<visBase::DataObject> dobj = oldinlcrlrotation->getObject(idx);
+	    RefMan<visBase::DataObject> dobj =
+	    	oldinlcrlrotation->getObject(idx);
 	    inlcrlrotation_->addObject( dobj );
 	    dobj->setDisplayTransformation( inlcrlscale_ );
 	}
@@ -243,9 +243,9 @@ void Scene::updateTransforms( const HorSampling& hs )
     
     if ( utm2disptransform_ )
     {
-	for ( int idx=0; idx<zscaletransform_->size(); idx++ )
+	for ( int idx=0; idx<tempzstretchtrans_->size(); idx++ )
 	{
-	    visBase::DataObject* dobj = zscaletransform_->getObject( idx );
+	    visBase::DataObject* dobj = tempzstretchtrans_->getObject( idx );
 	    if ( dobj->getDisplayTransformation()==utm2disptransform_ )
 	    {
 		dobj->setDisplayTransformation( newutm2disptransform );
@@ -257,7 +257,7 @@ void Scene::updateTransforms( const HorSampling& hs )
     
     ObjectSet<visBase::Transformation> utm2display;
     utm2display += utm2disptransform_;
-    utm2display += zscaletransform_;
+    utm2display += tempzstretchtrans_;
     events_.setUtm2Display( utm2display );
 }
 
@@ -316,7 +316,7 @@ void Scene::setCubeSampling( const CubeSampling& cs )
 
 int Scene::size() const
 {
-    return zscaletransform_->size()+inlcrlrotation_->size();
+    return tempzstretchtrans_->size()+inlcrlrotation_->size();
 }
 
 
@@ -334,10 +334,10 @@ int Scene::getFirstIdx( const visBase::DataObject* dobj ) const
 
 visBase::DataObject* Scene::getObject( int idx )
 {
-    if ( idx<zscaletransform_->size() )
-	return zscaletransform_->getObject( idx );
+    if ( idx<tempzstretchtrans_->size() )
+	return tempzstretchtrans_->getObject( idx );
 
-    return inlcrlrotation_->getObject( idx-zscaletransform_->size() );
+    return inlcrlrotation_->getObject( idx-tempzstretchtrans_->size() );
 }
 
 
@@ -350,7 +350,7 @@ const visBase::DataObject* Scene::getObject( int idx ) const
 void Scene::addUTMObject( visBase::VisualObject* obj )
 {
     obj->setDisplayTransformation( utm2disptransform_ );
-    zscaletransform_->addObject( obj );
+    tempzstretchtrans_->addObject( obj );
 }
 
 
@@ -407,30 +407,48 @@ void Scene::removeObject( int idx )
     if ( so && so->getMovementNotifier() )
 	so->getMovementNotifier()->remove( mCB(this,Scene,objectMoved) );
 
-    if ( idx<zscaletransform_->size() )
-	zscaletransform_->removeObject( idx );
+    if ( idx<tempzstretchtrans_->size() )
+	tempzstretchtrans_->removeObject( idx );
     else
-	inlcrlrotation_->removeObject( idx-zscaletransform_->size() );
+	inlcrlrotation_->removeObject( idx-tempzstretchtrans_->size() );
 
     if ( so )
 	objectMoved(0);
 }
 
 
-void Scene::setZStretch( float zstretch )
+void Scene::setFixedZStretch( float zstretch )
 {
     if ( mIsEqual(zstretch,curzstretch_,mDefEps) ) return;
 
     curzstretch_ = zstretch;
     updateTransforms( cs_.hrg );
-    
-    zstretchchange.trigger();
 }
-
-
-float Scene::getZStretch() const
+    
+    
+float Scene::getFixedZStretch() const
 { return curzstretch_; }
 
+
+float Scene::getTempZStretch() const
+{
+    return tempzstretchtrans_
+    	? mCast(float,tempzstretchtrans_->getScale().z)
+    	: 1.f;
+}
+
+    
+void Scene::setTempZStretch( float zstretch )
+{
+    if ( !tempzstretchtrans_ )
+    {
+	pErrMsg("No z-transform");
+	return;
+    }
+    
+    tempzstretchtrans_->setScale( Coord3(1,1,zstretch) );
+}
+    
 
 void Scene::setZScale( float zscale )
 {
@@ -443,12 +461,8 @@ float Scene::getZScale() const
 { return zscale_; }
 
 
-const mVisTrans* Scene::getZScaleTransform() const
-{ return zscaletransform_; }
-
-
-mVisTrans* Scene::getZScaleTransform()
-{ return zscaletransform_; }
+const mVisTrans* Scene::getTempZStretchTransform() const
+{ return tempzstretchtrans_; }
 
 
 const mVisTrans* Scene::getInlCrl2DisplayTransform() const
@@ -914,11 +928,11 @@ void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
 void Scene::removeAll()
 {
     visBase::DataObjectGroup::removeAll();
-    const int idx = visBase::DataObjectGroup::getFirstIdx( zscaletransform_ );
+    const int idx = visBase::DataObjectGroup::getFirstIdx( tempzstretchtrans_ );
     if ( idx!=-1 )
 	visBase::DataObjectGroup::removeObject( idx );
 
-    zscaletransform_ = 0; inlcrlrotation_ = 0; annot_ = 0;
+    tempzstretchtrans_ = 0; inlcrlrotation_ = 0; annot_ = 0;
     polyselector_= 0;
     delete coordselector_; coordselector_ = 0;
     curzstretch_ = -1;

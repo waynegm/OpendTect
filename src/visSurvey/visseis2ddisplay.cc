@@ -617,7 +617,7 @@ float Seis2DDisplay::calcDist( const Coord3& pos ) const
     {
 	zdif = (float) mMIN(fabs(xytpos.z-zrg.start), fabs(xytpos.z-zrg.stop));
 	const float zscale = scene_
-	    ? scene_->getZScale() * scene_->getZStretch()
+	    ? scene_->getZScale() * scene_->getFixedZStretch()
 	    : SI().zScale();
 	zdif *= zscale;
     }

@@ -340,7 +340,7 @@ float PlaneDataDisplay::calcDist( const Coord3& pos ) const
     zdiff = cs.zrg.includes(xytpos.z,false)
 	? 0
 	: (float)(mMIN(fabs(xytpos.z-cs.zrg.start), fabs(xytpos.z-cs.zrg.stop))  
-	               * zfactor  * scene_->getZStretch() );
+	               * zfactor  * scene_->getFixedZStretch() );
 
     const float inldist = inlcrlsystem_->inlDistance();
     const float crldist = inlcrlsystem_->crlDistance();
@@ -354,7 +354,7 @@ float PlaneDataDisplay::calcDist( const Coord3& pos ) const
 float PlaneDataDisplay::maxDist() const
 {
     const float zfactor = scene_ ? scene_->getZScale() : inlcrlsystem_->zScale();
-    float maxzdist = zfactor * scene_->getZStretch() * inlcrlsystem_->zStep() / 2;
+    float maxzdist = zfactor * scene_->getFixedZStretch() * inlcrlsystem_->zStep() / 2;
     return orientation_==Zslice ? maxzdist : SurveyObject::sDefMaxDist();
 }
 

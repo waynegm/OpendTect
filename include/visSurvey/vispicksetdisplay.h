@@ -49,7 +49,6 @@ public:
 
     void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
-    void			setScene(Scene*);
 
 protected:
 
@@ -62,7 +61,6 @@ protected:
     void			dispChg(CallBacker*);
     void			locChg(CallBacker*);
     void			setChg(CallBacker*);
-    void			sceneZChangeCB(CallBacker*);
     bool			hasColor() const	{ return true; }
     void			setColor(Color);
 

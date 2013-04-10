@@ -268,7 +268,7 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
     }
     
     const float zscale = scene_
-	? scene_->getZScale() *scene_->getZStretch()
+	? scene_->getZScale() *scene_->getFixedZStretch()
 	: SI().zScale();
 
     if ( !explicitbody_ )
@@ -506,7 +506,7 @@ Coord3 PolygonBodyDisplay::disp2world( const Coord3& displaypos ) const
     if ( pos.isDefined() )
     {
 	if ( scene_ )
-	    scene_->getZScaleTransform()->transformBack( pos );
+	    scene_->getTempZStretchTransform()->transformBack( pos );
 	if ( displaytransform_ )
 	    displaytransform_->transformBack( pos );
     }
@@ -551,7 +551,7 @@ void PolygonBodyDisplay::mouseCB( CallBacker* cb )
 
     EM::PosID nearestpid0, nearestpid1, insertpid;
     const float zscale = scene_
-	? scene_->getZScale() *scene_->getZStretch()
+	? scene_->getZScale() *scene_->getFixedZStretch()
 	: SI().zScale();
 
     polygonsurfeditor_->getInteractionInfo( nearestpid0, nearestpid1, insertpid,					    pos, zscale );

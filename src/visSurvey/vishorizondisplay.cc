@@ -237,7 +237,7 @@ void HorizonDisplay::setSceneEventCatcher(visBase::EventCatcher* ec)
 
 EM::PosID HorizonDisplay::findClosestNode( const Coord3& pickedpos ) const
 {
-    const mVisTrans* ztrans = scene_->getZScaleTransform();
+    const mVisTrans* ztrans = scene_->getTempZStretchTransform();
     Coord3 newpos;
     ztrans->transformBack( pickedpos, newpos );
     if ( transformation_ )

@@ -52,18 +52,18 @@ uiZStretchDlg::uiZStretchDlg( uiParent* p )
 
 	scenefld_ = new uiLabeledComboBox( this, scenenms, "Apply scaling to" );
 	scenefld_->box()->setCurrentItem( 1 );
-	scenefld_->box()->selectionChanged.notify(
-					mCB(this,uiZStretchDlg,sceneSel) );
+	mAttachCB( scenefld_->box()->selectionChanged,uiZStretchDlg,sceneSel );
     }
 
     sliderfld_ = new uiSliderExtra( this, uiSliderExtra::Setup("Z stretch")
 				     .withedit(true).nrdec(3).logscale(true),
 	   				"Z stretch slider" );
-    sliderfld_->sldr()->valueChanged.notify( mCB(this,uiZStretchDlg,sliderMove) );
+    mAttachCB( sliderfld_->sldr()->valueChanged,
+	       uiZStretchDlg, sliderMove );
     if ( scenefld_ )
 	sliderfld_->attach( alignedBelow, scenefld_ );
 
-    preFinalise().notify( mCB(this,uiZStretchDlg,doFinalise) );
+    mAttachCB( preFinalise(), uiZStretchDlg, doFinalise );
 }
 
 
@@ -79,13 +79,13 @@ void uiZStretchDlg::doFinalise( CallBacker* )
     {
 	ioPixmap vwallpm( "view_all" );
 	vwallbut_ = new uiPushButton( grp, "&Fit to scene", vwallpm, true );
-	vwallbut_->activated.notify( mCB(this,uiZStretchDlg,butPush) );
+	mAttachCB( vwallbut_->activated, uiZStretchDlg, butPush );
     }
     if ( homecb.willCall() )
     {
 	ioPixmap homepm( "home" );
 	uiButton* homebut = new uiPushButton( grp, "To &Home", homepm, true );
-	homebut->activated.notify( mCB(this,uiZStretchDlg,butPush) );
+	mAttachCB( homebut->activated, uiZStretchDlg, butPush );
 	if ( vwallbut_ )
 	    homebut->attach( rightOf, vwallbut_ );
     }
@@ -119,8 +119,9 @@ float uiZStretchDlg::getCurrentZStretch() const
     int sceneidx = scenefld_ ? scenefld_->box()->currentItem()-1 : 0;
     if ( sceneidx < 0 ) sceneidx = 0;
     mDynamicCastGet(visSurvey::Scene*,scene,
-		    visBase::DM().getObject(sceneids_[sceneidx]))
-    return scene->getZStretch();
+		    visBase::DM().getObject(sceneids_[sceneidx]));
+    
+    return scene->getFixedZStretch() * scene->getTempZStretch();
 }
 
 
@@ -136,17 +137,15 @@ void uiZStretchDlg::setZStretch( float zstretch, bool permanent )
 	mDynamicCastGet(visSurvey::Scene*,scene,
 			visBase::DM().getObject(sceneids_[idx]));
 	
-	RefMan<visBase::Transformation> zscaletrans =
-						scene->getZScaleTransform();
 	if ( permanent )
 	{
 	    MouseCursorChanger cursorchanger( MouseCursor::Busy );
-	    zscaletrans->reset();
-	    scene->setZStretch( zstretch );
+	    scene->setTempZStretch( 1.f );
+	    scene->setFixedZStretch( zstretch );
 	}
 	else
 	{
-	    zscaletrans->setScale( Coord3(1,1,zstretch/scene->getZStretch() ));
+	    scene->setTempZStretch( zstretch/scene->getFixedZStretch() );
 	}
     }
 }

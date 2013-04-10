@@ -692,7 +692,7 @@ float MPEDisplay::calcDist( const Coord3& pos ) const
     zdiff = (float) ( cs.zrg.includes(xytpos.z,false)
 	     ? 0
 	     : mMIN(xytpos.z-cs.zrg.start,xytpos.z-cs.zrg.stop) *
-	       zfactor  * scene_->getZStretch() );
+	       zfactor  * scene_->getFixedZStretch() );
 
     const float inldist = SI().inlDistance();
     const float crldist = SI().crlDistance();
@@ -706,7 +706,7 @@ float MPEDisplay::calcDist( const Coord3& pos ) const
 float MPEDisplay::maxDist() const
 {
     const float zfactor = scene_ ? scene_->getZScale() : SI().zScale();
-    float maxzdist = zfactor * scene_->getZStretch() * SI().zStep() / 2;
+    float maxzdist = zfactor * scene_->getFixedZStretch() * SI().zStep() / 2;
     return engine_.trackPlane().boundingBox().nrZ()==1 
 				? maxzdist : SurveyObject::sDefMaxDist();
 }

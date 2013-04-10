@@ -278,7 +278,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
     if ( !explicitpanels_ )
     {
 	const float zscale = scene_
-	    ? scene_->getZScale() *scene_->getZStretch()
+	    ? scene_->getZScale() *scene_->getFixedZStretch()
 	    : inlcrlsystem_->zScale();
 
 	mTryAlloc( explicitpanels_,Geometry::ExplFaultStickSurface(0,zscale));
@@ -657,7 +657,7 @@ Coord3 FaultDisplay::disp2world( const Coord3& displaypos ) const
     if ( pos.isDefined() )
     {
 	if ( scene_ )
-	    scene_->getZScaleTransform()->transformBack( pos );
+	    scene_->getTempZStretchTransform()->transformBack( pos );
 	if ( displaytransform_ )
 	    displaytransform_->transformBack( pos );
     }
@@ -666,7 +666,7 @@ Coord3 FaultDisplay::disp2world( const Coord3& displaypos ) const
 
 
 #define mZScale() \
-    ( scene_ ? scene_->getZScale()*scene_->getZStretch() : inlcrlsystem_->zScale() )
+    ( scene_ ? scene_->getZScale()*scene_->getFixedZStretch() : inlcrlsystem_->zScale() )
 
 void FaultDisplay::mouseCB( CallBacker* cb )
 {

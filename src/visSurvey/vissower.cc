@@ -195,20 +195,20 @@ void Sower::calibrateEventInfo( visBase::EventInfo& eventinfo )
     CubeSampling cs = pdd->getCubeSampling( false, false );
     Coord3 p0( SI().transform(cs.hrg.start), cs.zrg.start );
     transformation_->transform( p0 );
-    scene->getZScaleTransform()->transform( p0 );
+    scene->getTempZStretchTransform()->transform( p0 );
     Coord3 p1( SI().transform( cs.hrg.stop), cs.zrg.start );
     transformation_->transform( p1 );
-    scene->getZScaleTransform()->transform( p1 );
+    scene->getTempZStretchTransform()->transform( p1 );
     Coord3 p2( SI().transform(cs.hrg.start), cs.zrg.stop );
     transformation_->transform( p2 );
-    scene->getZScaleTransform()->transform( p2 );
+    scene->getTempZStretchTransform()->transform( p2 );
 
     Coord3 pos;
     if ( !Plane3(p0,p1,p2).intersectWith(eventinfo.mouseline, pos) )
 	return;
 
     eventinfo.displaypickedpos = pos;
-    scene->getZScaleTransform()->transformBack( pos );
+    scene->getTempZStretchTransform()->transformBack( pos );
     transformation_->transformBack( pos, eventinfo.worldpickedpos );
 }
 
@@ -270,7 +270,7 @@ void Sower::tieToWorkRange( const visBase::EventInfo& eventinfo )
     {
 	Coord3& displaypos = eventlist_[eventlist_.size()-1]->displaypickedpos;
 	transformation_->transform( lastworldpos, displaypos );
-	scene->getZScaleTransform()->transform( displaypos );
+	scene->getTempZStretchTransform()->transform( displaypos );
     }
 }
 
@@ -307,7 +307,7 @@ bool Sower::acceptMouse( const visBase::EventInfo& eventinfo )
 	    const double t = eventinfo.mouseline.closestPoint(
 						eventinfo.displaypickedpos );
 	    furrowpos = eventinfo.mouseline.getPoint( t-0.01 );
-	    scene->getZScaleTransform()->transformBack( furrowpos );
+	    scene->getTempZStretchTransform()->transformBack( furrowpos );
 	    transformation_->transformBack( furrowpos );
 	}
 

@@ -467,7 +467,7 @@ Coord3 FaultStickSetDisplay::disp2world( const Coord3& displaypos ) const
     if ( pos.isDefined() )
     {
 	if ( scene_ )
-	    scene_->getZScaleTransform()->transformBack( pos ); 
+	    scene_->getTempZStretchTransform()->transformBack( pos ); 
 	if ( displaytransform_ )
 	    displaytransform_->transformBack( pos );
     }
@@ -478,7 +478,7 @@ Coord3 FaultStickSetDisplay::disp2world( const Coord3& displaypos ) const
 static float zdragoffset = 0;
 
 #define mZScale() \
-    ( scene_ ? scene_->getZScale()*scene_->getZStretch() : inlcrlsystem_->zScale() )
+    ( scene_ ? scene_->getZScale()*scene_->getFixedZStretch() : inlcrlsystem_->zScale() )
 
 #define mSetUserInteractionEnd() \
     if ( !viseditor_->sower().moreToSow() ) \

@@ -400,7 +400,7 @@ bool uiODApplMgr::setPickSetDirs( Pick::Set& ps )
 {
     const int sceneid = sceneMgr().askSelectScene();
     mDynamicCastGet(visSurvey::Scene*,scene,visserv_->getObject(sceneid) );
-    const float velocity = scene->getZStretch() * scene->getZScale();
+    const float velocity = scene->getFixedZStretch() * scene->getZScale();
     return attrserv_->setPickSetDirs(ps, nlaserv_ ? &nlaserv_->getModel():0,velocity);
 }
 

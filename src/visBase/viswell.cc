@@ -292,8 +292,8 @@ void Well::addMarker( const MarkerParams& mp )
     if ( mIsUdf(markerpos.z) )
 	  return;
 
-    const int id = markerset_->getCoordinates()->addPos( markerpos );
-    markerset_->getMaterial()->setColor( mp.col_,id ) ;
+    const int markerid = markerset_->getCoordinates()->addPos( markerpos );
+    markerset_->getMaterial()->setColor( mp.col_,markerid ) ;
 
     const int textidx = markernames_->addText();
     Text* txt = markernames_->text( textidx );

@@ -144,7 +144,6 @@ void Text::setDisplayTransformation( const mVisTrans* newtrans )
 
 Text2::Text2()
     : VisualObjectImpl( false )
-    , texts_( false )
     , geode_( new osg::Geode )
     , displaytransform_( 0 )
 {

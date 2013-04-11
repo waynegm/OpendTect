@@ -56,7 +56,7 @@ struct PropRef_ThickRef_Man : public CallBacker
 
 PropRef_ThickRef_Man()
 {
-    ref_ = new PropertyRef( "Thickness", PropertyRef::Dist );
+    ref_ = new PropertyRef( sKey::Thickness(), PropertyRef::Dist );
     ref_->aliases().add( "thick" );
     const PropertyRef* thref = PROPS().find( "thickness" );
     if ( thref )
@@ -366,8 +366,7 @@ int PropertyRefSet::add( PropertyRef* pr )
 {
     if ( !pr ) return -1;
 
-    const int idx = indexOf( pr->name() );
-    if ( idx < 0 )
+    if ( !isPresent( pr->name() ) )
 	{ ObjectSet<PropertyRef>::operator+=( pr ); return size()-1; }
 
     return -1;

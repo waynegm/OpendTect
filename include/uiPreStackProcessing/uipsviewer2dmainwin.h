@@ -24,7 +24,8 @@ ________________________________________________________________________
 
 class uiSlicePos2DView;
 
-namespace PreStack { class Gather; }
+namespace PreStack { class Gather; class MuteDef; }
+namespace FlatView { class AuxData; }
 namespace PreStackView
 {
     class uiViewer2D;
@@ -37,6 +38,7 @@ mExpClass(uiPreStackProcessing) uiViewer2DMainWin : public uiObjectItemViewWin, 
 {
 public:    
 			uiViewer2DMainWin(uiParent*,const char* title);
+			~uiViewer2DMainWin();
 
     virtual void 	start()		{ show(); }
     virtual void        setWinTitle( const char* t )    { setCaption(t); }
@@ -57,6 +59,8 @@ protected:
 
     TypeSet<GatherInfo>	gatherinfos_;
     TypeSet<int> 	dpids_;
+    ObjectSet<PreStack::MuteDef> mutes_;
+    TypeSet<Color>	mutecolors_;
     CubeSampling 	cs_;
     uiSlicePos2DView*	slicepos_;
     uiViewer2DPosDlg* 	posdlg_;
@@ -72,6 +76,8 @@ protected:
     void		setGatherView(uiGatherDisplay*,
 	    			      uiGatherDisplayInfoHeader*);
     void 		setUpView();
+    void		clearAuxData();
+    void		displayMutes();
 
     void		displayInfo(CallBacker*);
     void		doHelp(CallBacker*);
@@ -80,6 +86,7 @@ protected:
     void		posDlgPushed(CallBacker*);		
     void 		dataDlgPushed(CallBacker*);
     void		showZAxis(CallBacker*);
+    void		loadMuteCB(CallBacker*);
 };
 
 

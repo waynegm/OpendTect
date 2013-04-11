@@ -1,0 +1,11 @@
+# This file should be placed in the root directory of your project.
+#
+# Copyright (C): dGB Beheer B.V., 2013-
+# $Id$
+#
+
+if( CTEST_MODEL )
+    if ( ${CTEST_MODEL} STREQUAL "Experimental" )
+	message( Hello )
+    endif()
+endif()

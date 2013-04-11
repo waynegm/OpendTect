@@ -9,6 +9,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "commandlineparser.h"
 #include "typeset.h"
+#include "keystrs.h"
 
 #include <iostream>
 
@@ -30,10 +31,12 @@ int main( int narg, char** argv )
     SetProgramArgs( narg, argv );
     CommandLineParser parser;
     
-    const bool quiet = parser.hasKey("quiet");
+    const bool quiet = parser.hasKey( sKey::Quiet() );
     
     const char* createkeystr = "--create";
     const char* createstr = createkeystr+2;
+    const char* inbgkeystr = "--bg";
+    const char* inbgstr = inbgkeystr+2;
     const char* file1str = "file1.cc";
     const char* file2str = "file2.cc";
     const char* file3str = "file3.cc";
@@ -52,6 +55,8 @@ int main( int narg, char** argv )
     argv1 += dummystr; //not a key
     argv1 += "-5"; //not a key
     argv1 += "-.5"; //not a key
+    argv1 += inbgkeystr;
+    argv1 += "not_a_number";
     
     CommandLineParser testparser( argv1.size(), (char**) argv1.arr() );
     
@@ -80,10 +85,13 @@ int main( int narg, char** argv )
     mRunTest( getVal(createstr,createfloat) && createfloat==5 );
     mRunTest( getVal(createstr,createdouble) && createdouble==5 );
     mRunTest( getVal("flag", flagfile) && flagfile==file2str );
+    mRunTest( getVal("nonexistingkey", flagfile)==false );
+    mRunTest( getVal("nonexistingkey", flagfile, true) );
+    mRunTest( getVal(inbgstr, createint)==false );
 
     BufferStringSet normalargs;
     testparser.getNormalArguments(normalargs);
-    if ( normalargs.size()!=7 )
+    if ( normalargs.size()!=8 )
     {
 	std::cerr << "getNormalArguments() - FAILED\n";
 	return 1;
@@ -97,7 +105,7 @@ int main( int narg, char** argv )
     mRunTest( isKeyValue(1) );
     
     testparser.getNormalArguments(normalargs);
-    if ( normalargs.size()!=6 )
+    if ( normalargs.size()!=7 )
     {
 	std::cerr << "getNormalArguments() with 1 key with value - FAILED\n";
 	return 1;

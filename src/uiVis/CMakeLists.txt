@@ -2,12 +2,11 @@
 #
 #	Makefile : 	ui- based on vis stuff.
 # 	July 2002	Nanne Hemstra
-#	RCS :		$Id: CMakeLists.txt,v 1.1 2012-01-24 13:51:14 cvskris Exp $
+#	RCS :		$Id$
 #_______________________________________________________________________________
 
 SET(OD_MODULE_DEPS uiCoin uiMPE )
 SET(OD_MODULE_SOURCES
-		inituivis.cc
 		uiattribtransdlg.cc
 		uifltdispoptgrp.cc
 		uigridlinesdlg.cc

@@ -14,12 +14,15 @@ ________________________________________________________________________
 -*/
 
 #include "wellmod.h"
-#include "namedobj.h"
 #include "color.h"
+#include "ranges.h"
+#include "namedobj.h"
+#include "manobjectset.h"
+class IOPar;
+
 
 namespace Well
 {
-
 class Track;
 
 /*!
@@ -32,17 +35,20 @@ mExpClass(Well) Marker : public ::NamedObject
 {
 public:
 
-			Marker( const char* nm=0, float dh=0 )
+			Marker( const char* nm=0, float dh=0, Color c=Color() )
 			: ::NamedObject(nm)
 			, dah_(dh)
+			, color_(c)
 			, levelid_(-1)		{}
 			Marker(int lvlid,float dh);
 			Marker(const Marker&);
+    inline bool		operator ==( const Marker& m )
+			{ return m.name() == name(); }
 
-    float		dah() const		{ return dah_; }
-    void		setDah( float v )	{ dah_ = v; }
-    int			levelID() const		{ return levelid_; }
-    void		setLevelID( int id )	{ levelid_ = id; }
+    inline float	dah() const		{ return dah_; }
+    inline void		setDah( float v )	{ dah_ = v; }
+    inline int		levelID() const		{ return levelid_; }
+    inline void		setLevelID( int id )	{ levelid_ = id; }
 
     const BufferString&	name() const;
     Color		color() const;
@@ -54,35 +60,35 @@ public:
     bool                operator > (const Marker& dm) const 
     			{ return dah_ >= dm.dah_; }
 
-
 protected:
 
     float		dah_;
-    int			levelid_;
     Color		color_;
+    int			levelid_;
+
 };
 
 
-/*!
-\brief ObjectSet of Markers.
-*/
+/*!\brief Set of Markers */
 
-mExpClass(Well) MarkerSet : public ObjectSet<Marker>
+mExpClass(Well) MarkerSet : public ManagedObjectSet<Marker>
 {
 public:
-    			MarkerSet()		{}
+    			MarkerSet()			{}
 
     virtual ObjectSet<Marker>& operator +=(Marker*);
 
     const Marker* 	getByName(const char* nm) const { return gtByName(nm); }
     Marker* 		getByName(const char* nm) 	{ return gtByName(nm); }
-
     const Marker* 	getByLvlID(int id) const	{ return gtByLvlID(id);}
     Marker* 		getByLvlID(int id) 		{ return gtByLvlID(id);}
+    int			getIdxAbove(float z,const Well::Track* trck=0) const;
+    			//!< is trck provided, compares TVDs
 
     bool		isPresent(const char* n) const 	{ return getByName(n); }
     int			indexOf(const char*) const;		  
     bool		insertNew(Well::Marker*); //becomes mine
+    virtual void	append(const ObjectSet<Marker>&);
 
     int			indexOf( const Marker* m ) const
 			{ return ObjectSet<Marker>::indexOf(m); }	
@@ -90,11 +96,44 @@ public:
 			{ return ObjectSet<Marker>::isPresent(m); }	
 
     void		getNames(BufferStringSet&) const;
+    void		getColors(TypeSet<Color>&) const;
+    void		fillPar(IOPar&) const;
+    void		usePar(const IOPar&);
 
 protected:
 
     Marker* 		gtByName(const char*) const;
     Marker* 		gtByLvlID(int) const;
+};
+
+
+/*!\brief Range of markers (typically describing zone of interest) */
+
+mExpClass(Well) MarkerRange
+{
+public:
+    			MarkerRange(const MarkerSet&,
+				    Interval<int> idxrg=Interval<int>(-1,-1));
+
+    inline int		size() const		{ return rg_.width(false) + 1; }
+    bool		isValid() const;
+
+    inline bool		isIncluded( int i ) const
+    						{ return rg_.includes(i,false);}
+    bool		isIncluded(const char*) const;
+    bool		isIncluded(float z) const;
+    void		getNames(BufferStringSet&) const;
+    MarkerSet*		getResultSet() const; //!< returns new set
+
+    const MarkerSet&	markers() const		{ return markers_; }
+    const Interval<int>& idxRange() const	{ return rg_; }
+    Interval<int>&	idxRange()		{ return rg_; }
+
+protected:
+
+    const MarkerSet&	markers_;
+    Interval<int>	rg_;
+
 };
 
 

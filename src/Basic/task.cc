@@ -101,6 +101,7 @@ bool Task::shouldContinue()
 
 
 TaskGroup::TaskGroup()
+    : curtask_(-1)
 {}
 
 
@@ -118,28 +119,28 @@ void TaskGroup::setProgressMeter( ProgressMeter* p )
 od_int64 TaskGroup::nrDone() const
 {
     Threads::MutexLocker lock( lock_ );
-    return tasks_[curtask_]->nrDone();
+    return tasks_.validIdx(curtask_) ? tasks_[curtask_]->nrDone() : 0;
 }
 
 
 od_int64 TaskGroup::totalNr() const
 {
     Threads::MutexLocker lock( lock_ );
-    return tasks_[curtask_]->totalNr();
+    return tasks_.validIdx(curtask_) ? tasks_[curtask_]->totalNr() : 0;
 }
 
 
 const char* TaskGroup::message() const
 {
     Threads::MutexLocker lock( lock_ );
-    return tasks_[curtask_]->message();
+    return tasks_.validIdx(curtask_) ? tasks_[curtask_]->message() : 0;
 }
 
 
 const char* TaskGroup::nrDoneText() const
 {
     Threads::MutexLocker lock( lock_ );
-    return tasks_[curtask_]->nrDoneText();
+    return tasks_.validIdx(curtask_) ? tasks_[curtask_]->nrDoneText() : 0;
 }
 
 
@@ -169,14 +170,15 @@ void TaskGroup::enableWorkControl( bool yn )
 void TaskGroup::controlWork( Task::Control t )
 {
     Threads::MutexLocker lock( lock_ );
-    tasks_[curtask_]->controlWork( t );
+    if ( tasks_.validIdx(curtask_) ) tasks_[curtask_]->controlWork( t );
 }
 
 
 Task::Control TaskGroup::getState() const
 {
     Threads::MutexLocker lock( lock_ );
-    return tasks_[curtask_]->getState();
+    return tasks_.validIdx(curtask_) ? tasks_[curtask_]->getState()
+				     : Task::Stop;
 }
 
 void TaskGroup::setParallel(bool)
@@ -276,6 +278,14 @@ ParallelTask::ParallelTask( const char* nm )
 { }
 
 
+ParallelTask::ParallelTask( const ParallelTask& t )
+    : Task( t.name() )
+    , progressmeter_( 0 )
+    , nrdone_( -1 )
+    , totalnrcache_( -1 )
+{ }
+
+
 ParallelTask::~ParallelTask()
 {}
 
@@ -293,7 +303,7 @@ void ParallelTask::setProgressMeter( ProgressMeter* pm )
 
 void ParallelTask::addToNrDone( int nr )
 {
-    if ( !nrdone_.setIfEqual( nr, -1 ) )
+    if ( !nrdone_.strongSetIfEqual( nr, -1 ) )
 	nrdone_ += nr;
 
     if ( progressmeter_ )

@@ -64,6 +64,7 @@ public:
     virtual void	setFillPattern(const FillPattern&);
 
     void		setCursor(const MouseCursor&);
+    void		setToolTip(const char*);
 
     virtual void	setScene(uiGraphicsScene*);
     void		setParent(uiGraphicsItem*);
@@ -102,8 +103,7 @@ private:
 mExpClass(uiBase) uiGraphicsItemSet : public ManagedObjectSet<uiGraphicsItem>
 {
 public:
-			uiGraphicsItemSet()
-			    : ManagedObjectSet<uiGraphicsItem>(false)	{}
+			uiGraphicsItemSet()		{}
 
     void		add( uiGraphicsItem* itm )	{ (*this) += itm; }
     uiGraphicsItem*	get( int idx )			{ return (*this)[idx]; }

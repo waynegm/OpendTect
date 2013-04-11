@@ -29,6 +29,7 @@ static PosInfo::Survey2D* theinst = 0;
 static const char* sIdxFilename = "idx.txt";
 static const char* sKeyStor = "Storage";
 static const char* sKeyMaxID = "Max ID";
+static const char* sKeyTrcDist = "Inter-trace Distance";
 static bool cWriteAscii = false;
 
 
@@ -50,6 +51,9 @@ bool PosInfo::GeomID::isOK() const
 
 void PosInfo::GeomID::setUndef()
 { lineid_ = lsid_ = -1; }
+
+bool PosInfo::GeomID::isUndef() const
+{ return lineid_==-1 || lsid_==-1; }
 
 BufferString PosInfo::GeomID::toString() const
 {
@@ -533,6 +537,7 @@ void PosInfo::Survey2D::setCurLineSet( int lsid ) const
 
 void PosInfo::Survey2D::setCurLineSet( const char* lsnm ) const
 {
+    Threads::MutexLocker lock( mutex_ );
     if ( !lsnm || !*lsnm )
     {
 	lineindex_.setEmpty();
@@ -664,7 +669,7 @@ bool PosInfo::Survey2D::setGeometry( const PosInfo::Line2DData& l2dd )
 
     float max, median;
     l2dd.compDistBetwTrcsStats( max, median );
-    astrm.put( sKey::TrcDist(), max, median );
+    astrm.put( sKeyTrcDist, max, median );
 
     astrm.put( sKeyStor, cWriteAscii ? sKey::Ascii() : sKey::Binary() );
     astrm.newParagraph();
@@ -905,7 +910,7 @@ bool PosInfo::Survey2D::readDistBetwTrcsStats( const char* linenm,
     ascistream astrm( sfio.istrm() ); // read header
     while ( !atEndOfSection(astrm.next()) )
     {   
-	if ( FixedString(astrm.keyWord()) == sKey::TrcDist() )
+	if ( FixedString(astrm.keyWord()) == sKeyTrcDist )
 	{
 	    FileMultiString statsstr(astrm.value());
 	    max = statsstr.getFValue(0);
@@ -948,7 +953,12 @@ TraceID Survey::Geometry2D::nearestTrace( const Coord& crd, float* dist ) const
     PosInfo::Line2DPos pos;
     return data_.getPos(crd,pos,dist) ? TraceID( geomid_, geomid_, pos.nr_) 
 				      : TraceID::udf();
+}
 
+
+StepInterval<float> Survey::Geometry2D::zRange() const
+{
+    return data_.zRange();
 }
 
 

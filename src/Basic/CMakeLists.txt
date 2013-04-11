@@ -5,11 +5,16 @@
 #	RCS :		$Id$
 #_______________________________________________________________________________
 
-SET(OD_USEQT Core)
-SET(OD_USEBREAKPAD No)
-SET(OD_USEZLIB NO )
-SET(QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h i_qptr.h)
-SET(OD_MODULE_SOURCES genc.cc oddirs.cc
+set( OD_USEQT Core)
+set( OD_USEBREAKPAD Yes)
+set( OD_USEZLIB Yes)
+set( QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h i_qptr.h)
+set( OD_TEST_PROGS svnversion.cc
+		sets.cc
+		threads.cc
+		commandlineparser.cc
+		refcount.cc )
+set( OD_MODULE_SOURCES genc.cc oddirs.cc
 	    ailayer.cc
 	    arrayndinfo.cc
 	    arrayndslice.cc

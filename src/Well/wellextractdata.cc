@@ -36,7 +36,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <iostream>
 #include <math.h>
 
-#define mLocalEps 1e-2;
+#define mLocalEps 1e-2f;
 
 namespace Well
 {
@@ -816,16 +816,18 @@ float Well::LogDataExtracter::calcVal( const Well::Log& wl, float dah,
 {
     Interval<float> rg( dah-winsz, dah+winsz ); rg.sort();
     TypeSet<float> vals;
-    for ( int idx=0; idx<wl.size(); idx++ )
+    int startidx = wl.indexOf( rg.start );
+    if ( startidx < 0 ) startidx = 0;
+    for ( int idx=startidx; idx<wl.size(); idx++ )
     {
-	float newdah = wl.dah( idx );
-	if ( rg.includes(newdah,false) )
+	float curdah = wl.dah( idx );
+	if ( rg.includes(curdah,false) )
 	{
 	    float val = wl.value(idx);
 	    if ( !mIsUdf(val) )
 		vals += wl.value(idx);
 	}
-	else if ( newdah > rg.stop )
+	else if ( curdah > rg.stop )
 	    break;
     }
     if ( vals.size() < 1 ) return mUdf(float);
@@ -1030,8 +1032,8 @@ od_int64 Well::LogSampler::nrIterations() const
 
 #define mGetZ(zvalue,dah) \
     	zvalue = zrgisintime_ \
-	       ? mCast( float, track_.getPos( dahrg.start ).z ) \
-    	       : d2t_->getTime( dahrg.start, track_ );
+	       ? mCast( float, track_.getPos( dah ).z ) \
+    	   : d2t_->getTime( dah, track_ );
 
 
 bool Well::LogSampler::doPrepare( int thread )
@@ -1068,11 +1070,11 @@ bool Well::LogSampler::doPrepare( int thread )
     } // zrg_ now matches the extraction domain
 
     float zstart = (float) mNINT32(zrg_.start/zstep_) * zstep_;
-    if ( zstart < zrg_.start-(zstep_*1e-2) )
+    if ( zstart < zrg_.start-(zstep_*1e-2f) )
 	zstart += zstep_;
 
     float zstop = (float) mNINT32(zrg_.stop/zstep_) * zstep_;
-    if ( zstop > zrg_.stop+(zstep_*1e-2) )
+    if ( zstop > zrg_.stop+(zstep_*1e-2f) )
 	zstop -= zstep_;
 
     StepInterval<float> zrgreg( zstart, zstop, zstep_ );
@@ -1082,8 +1084,8 @@ bool Well::LogSampler::doPrepare( int thread )
     for ( int idx=0; idx<=zrgreg.nrSteps(); idx++ )
     {
 	const float zmid = zrgreg.atIndex(idx);
-	const float ztop = zmid - zstep_/2.;
-	const float zbase = zmid + zstep_/2.;
+	const float ztop = zmid - zstep_/2.f;
+	const float zbase = zmid + zstep_/2.f;
 	Interval<float> dahwin;
 	mGetDah( dahwin.start, ztop )
 	mGetDah( dahwin.stop, zbase )
@@ -1096,7 +1098,7 @@ bool Well::LogSampler::doPrepare( int thread )
 
     data_ = new Array2DImpl<float>( mCast(int,nrIterations()+2),
 	   			    dahs.size() );
-    const int winszidx = nrIterations()+1;
+    const int winszidx = mCast(int,nrIterations())+1;
     for ( int idz=0; idz<dahs.size(); idz++ )
     {
 	data_->set( 0, idz, dahs[idz] );

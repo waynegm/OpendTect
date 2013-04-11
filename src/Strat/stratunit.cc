@@ -191,6 +191,12 @@ Strat::NodeUnitRef::~NodeUnitRef()
     for( int idx=0; idx<nrRefs(); idx++ )
 	ref( idx ).toBeDeleted.disable();
 
+    setEmpty();
+}
+
+
+void Strat::NodeUnitRef::setEmpty()
+{
     deepErase( refs_ );
 }
 
@@ -367,6 +373,12 @@ Strat::LeafUnitRef::LeafUnitRef( Strat::NodeUnitRef* up, int lithidx,
     : UnitRef(up,d)
     , lith_(lithidx)
 {
+}
+
+
+bool Strat::LeafUnitRef::isUndef() const
+{
+    return this == &refTree().undefLeaf();
 }
 
 

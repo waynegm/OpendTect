@@ -139,7 +139,7 @@ int Time2DepthStretcher::addVolumeOfInterest(const CubeSampling& cs,
 					     bool depth )
 {
     int id = 0;
-    while ( voiids_.indexOf(id)!=-1 ) id++;
+    while ( voiids_.isPresent(id) ) id++;
 
     voidata_ += 0;
     voivols_ += cs;
@@ -605,6 +605,14 @@ void Time2DepthStretcher::releaseData()
 }
 
 
+float Time2DepthStretcher::zScale() const
+{
+    const SurveyInfo::Unit zscaleunit = SI().depthsInFeet() ? SurveyInfo::Feet 
+							    : SurveyInfo::Meter;
+    return SurveyInfo::defaultXYtoZScale( zscaleunit, SI().xyUnit() ); 
+}
+
+
 //Depth2Time
 
 
@@ -627,7 +635,10 @@ bool Depth2TimeStretcher::needsVolumeOfInterest() const
 
 
 void Depth2TimeStretcher::fillPar( IOPar& par ) const
-{ stretcher_->fillPar( par ); }
+{ 
+    stretcher_->fillPar( par );
+    ZAxisTransform::fillPar( par );
+}
 
 
 bool Depth2TimeStretcher::usePar( const IOPar& par )
@@ -700,6 +711,10 @@ float Depth2TimeStretcher::getGoodZStep() const
 
 const char* Depth2TimeStretcher::getZDomainID() const
 { return stretcher_->getZDomainID(); }
+
+
+float Depth2TimeStretcher::zScale() const
+{ return SurveyInfo::defaultXYtoZScale( SurveyInfo::Second, SI().xyUnit() ); }
 
 
 VelocityModelScanner::VelocityModelScanner( const IOObj& input, 
@@ -876,19 +891,11 @@ void LinearVelTransform::transformT2D( const BinID& bid,
 				       const SamplingData<float>& sd,
 				       int sz, float* res ) const
 {
-    if ( sz < 0 )
-	return;
-    
-    const double dv = mIsZero( dv_, 1e-6 ) ? 1e-7 : dv_;
-    const double fact = dv / startvel_;
-    const double dv2 = 2.f / dv;
-
-    const double srd = SI().seismicReferenceDatum();
-    const double sealeveltwt = -1.f * dv2 * Math::Log( 1.f - srd * fact );
-    for ( int idx=0; idx<sz; idx++ )
+    if ( !computeLinearT2D( startvel_, dv_, -SI().seismicReferenceDatum(),
+			    sd, sz, res) )
     {
-	const double time = ( sd.start + idx*sd.step - sealeveltwt ) / 2.f;
-	res[idx] = mCast(float,( Math::Exp( dv * time ) - 1.f ) / fact);
+	for ( int idx=0; idx<sz; idx++ )
+	    res[idx] = mUdf(float);
     }
 }
 
@@ -897,26 +904,11 @@ void LinearVelTransform::transformD2T( const BinID& bid,
 				      const SamplingData<float>& sd,
 				      int sz, float* res ) const
 {
-    if ( sz < 0 )
-	return;
-
-    const double dv = mIsZero( dv_, 1e-6 ) ? 1e-7 : dv_;
-    const double fact = dv / startvel_;
-    const double dv2 = 2.f / dv;
-    
-    const double srd = SI().seismicReferenceDatum();
-    for ( int idx=0; idx<sz; idx++ )
+    if ( !computeLinearD2T( startvel_, dv_, -SI().seismicReferenceDatum(),
+			   sd, sz, res) )
     {
-	const double depth = sd.start + idx*sd.step - srd;
-	res[idx] = mCast(float,dv2 * Math::Log( 1.f + depth*fact ));
-    }
-
-    if ( !mIsZero(srd,1e-2) )
-    {
-	const float sealeveltwt = mCast(float,
-				  -1.f * dv2 * Math::Log( 1.f - srd * fact ));
 	for ( int idx=0; idx<sz; idx++ )
-	    res[idx] += sealeveltwt;
+	    res[idx] = mUdf(float);
     }
 }
 

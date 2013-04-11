@@ -511,7 +511,7 @@ void FaultStickSetDisplay::mouseCB( CallBacker* cb )
     const MultiID* pickedmid = 0;
     const char* pickednm = 0;
     PtrMan<Coord3> normal = 0;
-    PtrMan<const MultiID> horid;
+    ConstPtrMan<MultiID> horid;
     BufferString horshiftname;
     Coord3 pos;
 

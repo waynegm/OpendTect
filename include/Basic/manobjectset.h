@@ -24,7 +24,7 @@ mClass(Basic) ManagedObjectSet : public ObjectSet<T>
 {
 public:
 
-    inline 			ManagedObjectSet(bool objs_are_arrs);
+    inline			ManagedObjectSet()	{}
     inline			ManagedObjectSet(const ManagedObjectSet<T>&);
     inline virtual		~ManagedObjectSet();
     inline ManagedObjectSet<T>&	operator =(const ObjectSet<T>&);
@@ -33,7 +33,8 @@ public:
 
     inline virtual ManagedObjectSet<T>& operator -=( T* ptr );
 
-    inline virtual void		erase();
+    inline virtual void		erase()			{ deepErase( *this ); }
+    inline virtual void		append(const ObjectSet<T>&);
     inline virtual void		removeRange(od_int64,od_int64);
     inline virtual T*		removeSingle( int idx, bool kporder=true );
 				/*!<Deletes entry and returns 0 */
@@ -42,18 +43,10 @@ public:
 
     inline void			setEmpty()		{ erase(); }
 
-protected:
-
-    bool	isarr_;
-
 };
 
 
 //ObjectSet implementation
-template <class T> inline
-ManagedObjectSet<T>::ManagedObjectSet( bool isarr ) : isarr_(isarr)
-{}
-
 
 template <class T> inline
 ManagedObjectSet<T>::ManagedObjectSet( const ManagedObjectSet<T>& t )
@@ -68,7 +61,8 @@ ManagedObjectSet<T>::~ManagedObjectSet()
 template <class T> inline
 ManagedObjectSet<T>& ManagedObjectSet<T>::operator =( const ObjectSet<T>& os )
 {
-    if ( &os != this ) deepCopy( *this, os );
+    if ( &os != this )
+	{ erase(); append( os ); }
     return *this;
 }
 
@@ -76,7 +70,7 @@ template <class T> inline
 ManagedObjectSet<T>& ManagedObjectSet<T>::operator =(
 					const ManagedObjectSet<T>& os )
 {
-    if ( &os != this ) { isarr_ = os.isarr_; deepCopy( *this, os ); }
+    if ( &os != this ) deepCopy( *this, os );
     return *this;
 }
 
@@ -84,30 +78,29 @@ ManagedObjectSet<T>& ManagedObjectSet<T>::operator =(
 template <class T> inline
 ManagedObjectSet<T>& ManagedObjectSet<T>::operator -=( T* ptr )
 {
-    if ( !ptr ) return *this;
-    this->vec_.erase( (void*)ptr );
-    if ( isarr_ )	delete [] ptr;
-    else		delete ptr;
+    if ( ptr )
+	{ this->vec_.erase( (void*)ptr ); delete ptr; }
     return *this;
 }
 
 
 template <class T> inline
-void ManagedObjectSet<T>::erase()
+void ManagedObjectSet<T>::append( const ObjectSet<T>& os )
 {
-    if ( isarr_ )	deepEraseArr( *this );
-    else		deepErase( *this );
+    const int sz = os.size();
+    this->vec_.setCapacity( this->size()+sz );
+    if ( !os.isManaged() )
+	ObjectSet<T>::append( os );
+    else
+	for ( int idx=0; idx<sz; idx++ )
+	    *this += new T( *os[idx] );
 }
 
 
 template <class T> inline
 T* ManagedObjectSet<T>::removeSingle( int idx, bool kporder )
 {
-    if ( isarr_ )
-	delete [] (*this)[idx];
-    else
-	delete (*this)[idx];
-
+    delete (*this)[idx];
     ObjectSet<T>::removeSingle( idx, kporder );
     return 0; //Don't give anyone a chance to play with the deleted object
 }
@@ -117,12 +110,7 @@ template <class T> inline
 void ManagedObjectSet<T>::removeRange( od_int64 i1, od_int64 i2 )
 {
     for ( int idx=(int)i1; idx<=i2; idx++ )
-    {
-	if ( isarr_ )
-	    delete [] (*this)[idx];
-	else
-	    delete (*this)[idx];
-    }
+	delete (*this)[idx];
     ObjectSet<T>::removeRange( i1, i2 );
 }
 

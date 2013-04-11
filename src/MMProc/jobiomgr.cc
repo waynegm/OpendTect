@@ -123,14 +123,14 @@ class JobIOHandler : public CallBacker
 {
 public:
     			JobIOHandler( int firstport )
-			    : exitreq_( 0 ) 
-			    , firstport_( firstport )
+			    : exitreq_(0) 
+			    , firstport_(firstport)
+			    , usedport_(firstport)
+			    , ready_(false)
 			    {
 				serversocket_.readyRead.notify(
 				    mCB(this,JobIOHandler,socketCB) );
-				if ( !serversocket_.isListening() )
-				    serversocket_.listen( System::localAddress(),
-						      firstport_ );
+				listen( firstport_ );
 			    }
 
     virtual		~JobIOHandler()
@@ -139,27 +139,13 @@ public:
 				serversocket_.readyRead.remove(
 				    mCB(this,JobIOHandler,socketCB) );
 			    }
-
-    bool		ready()	{ return port() > 0; }
-    int			port()	{ return firstport_; }
-
-    void		addJobDesc( const HostData& hd, int descnr )
-			    {
-				jobhostresps_ +=
-				    new JobHostRespInfo( hd, descnr );
-			    }
-
-    void		removeJobDesc( const char* hostnm, int descnr )
-			    {
-				JobHostRespInfo* jhri =
-						getJHRFor( descnr, hostnm );
-
-				if ( jhri )
-				    { jobhostresps_ -= jhri; delete jhri; }
-			    }
-
-    void		reqModeForJob( const JobInfo&, JobIOMgr::Mode );
-
+    
+    bool		ready()	{ return ready_ && port() > 0; }
+    int			port()	{ return usedport_; }
+    void		listen(int firstport,int maxtries=3000 ); // as used in 4.0
+    void		reqModeForJob(const JobInfo&, JobIOMgr::Mode);
+    void		addJobDesc(const HostData&,int descnr);
+    void		removeJobDesc(const char* hostnm, int descnr);
     ObjQueue<StatusInfo>& statusQueue() { return statusqueue_; }
 
 protected:
@@ -173,9 +159,47 @@ protected:
     bool*			exitreq_;
     TcpServer			serversocket_;
     int				firstport_;
+    int				usedport_;
     ObjQueue<StatusInfo>	statusqueue_;
     ObjectSet<JobHostRespInfo>	jobhostresps_;
+    bool			ready_;
 };
+
+
+void JobIOHandler::listen( int firstport, int maxtries ) // as used in 4.0
+{	
+    int currentport = firstport;
+    for ( int idx=0; idx<maxtries; idx++, currentport++ )
+    {
+	serversocket_.listen( System::localAddress(),
+	    currentport );
+	if ( serversocket_.isListening() )
+	{
+	    usedport_ = currentport;
+	    ready_ = true;
+	    break;
+	}
+	else
+	    serversocket_.close();
+    }
+}
+
+
+void JobIOHandler::addJobDesc( const HostData& hd, int descnr )
+{
+    jobhostresps_ +=
+	new JobHostRespInfo( hd, descnr );
+}
+
+
+void JobIOHandler::removeJobDesc( const char* hostnm, int descnr )
+{			
+    JobHostRespInfo* jhri =
+	getJHRFor( descnr, hostnm );
+
+    if ( jhri )
+    { jobhostresps_ -= jhri; delete jhri; }
+}
 
 
 JobHostRespInfo* JobIOHandler::getJHRFor( int descnr, const char* hostnm )
@@ -311,8 +335,8 @@ bool JobIOHandler::readTag( char& tag, SeparString& sepstr,
 
 
 JobIOMgr::JobIOMgr( int firstport, int niceval )
-    : iohdlr_( *new JobIOHandler(firstport) )
-    , niceval_( niceval )
+    : iohdlr_(*new JobIOHandler(firstport))
+    , niceval_(niceval)
 {
     for ( int count=0; count < 10 && !iohdlr_.ready(); count++ )
 	{ Threads::sleep( 0.1 ); }
@@ -349,6 +373,8 @@ void JobIOMgr::removeJob( const char* hostnm, int descnr )
 ObjQueue<StatusInfo>& JobIOMgr::statusQueue()
     { return iohdlr_.statusQueue(); }
 
+bool JobIOMgr::isReady() const
+    { return iohdlr_.ready(); }
 
 bool JobIOMgr::startProg( const char* progname,
 	IOPar& iop, const FilePath& basefp, const JobInfo& ji,
@@ -394,7 +420,7 @@ extern const BufferString& getTempBaseNm();
 
 extern int& MMJob_getTempFileNr();
 
-FilePath getConvFilePath( const HostData& hd, const FilePath& fp )
+static FilePath getConvertedFilePath( const HostData& hd, const FilePath& fp )
 {
     FilePath newfp = hd.prefixFilePath( HostData::Data );
     if ( !newfp.nrLevels() ) return fp;
@@ -402,8 +428,8 @@ FilePath getConvFilePath( const HostData& hd, const FilePath& fp )
     BufferString proc( getTempBaseNm() );
     proc += "_";
     proc += MMJob_getTempFileNr()-1;
-    /*newfp.add(  GetSurveyName() ).add( "Proc" )
-	 .add( proc ).add( fp.fileName() );*/
+     newfp.add(  GetSurveyName() ).add( "Proc" )
+    .add( proc ).add( fp.fileName() );
     return newfp;
 }
 
@@ -411,7 +437,7 @@ FilePath getConvFilePath( const HostData& hd, const FilePath& fp )
 bool JobIOMgr::mkIOParFile( FilePath& iopfp, const FilePath& basefp,
 			    const HostData& machine, const IOPar& iop )
 {
-    FilePath remotefp = getConvFilePath( machine, basefp );
+    FilePath remotefp = getConvertedFilePath( machine, basefp );
     iopfp = basefp; iopfp.setExtension( ".par", false );
     const BufferString iopfnm( iopfp.fullPath() );
 
@@ -531,9 +557,12 @@ void JobIOMgr::mkCommand( CommandString& cmd, const HostData& machine,
     cmd = "@";
 
 #ifdef __msvc__
-
-    cmd.add( "od_remexec" );
-    cmd.add( machine.name() );
+    BufferString remhostaddress = System::hostAddress( machine.name() );
+    if ( remhostaddress != System::localAddress() )//do not use rem exec if host is local
+    {
+	cmd.add( "od_remexec" );
+	cmd.add( machine.name() );
+    }
     cmd.add( progname );
     cmd.addFlag( "-masterhost", GetLocalIP() ); 
     cmd.addFlag( "-masterport", iohdlr_.port() );

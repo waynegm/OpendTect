@@ -42,6 +42,7 @@ public:
 
     bool	isOK() const;
     void	setUndef();
+    bool	isUndef() const;
 
     bool	operator ==( const GeomID& a ) const
    		{ return a.lsid_ == lsid_ && a.lineid_ == lineid_; }
@@ -178,6 +179,8 @@ public:
     bool			is2D() const		{ return true; }
     PosInfo::Line2DData&	data()			{ return data_; }
     const PosInfo::Line2DData	data() const		{ return data_; }
+    
+    StepInterval<float>		zRange() const;
 
     static BufferString  	makeUniqueLineName(const char* lsnm,
 	    					   const char* lnm);

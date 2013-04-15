@@ -21,7 +21,7 @@ ________________________________________________________________________
 
 namespace osgGeo
 {
-    class RandomLineNode;
+    class TexturePanelStripNode;
 }
 
 template <class T> class Array2D;
@@ -109,7 +109,7 @@ protected:
     void			rebuild();
     void			createDragger();
     
-    osgGeo::RandomLineNode*	node_;
+    osgGeo::TexturePanelStripNode*	node_;
     
     RefMan<TextureChannels>	channels_;
 

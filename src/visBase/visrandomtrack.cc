@@ -33,7 +33,7 @@ namespace visBase
 
 RandomTrack::RandomTrack()
     : VisualObjectImpl(false)
-    , node_(new osgGeo::RandomLineNode)
+    , node_(new osgGeo::TexturePanelStripNode)
     , depthrg_(0,1)
     , knotmovement(this)
     , knotnrchange(this)

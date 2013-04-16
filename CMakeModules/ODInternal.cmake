@@ -6,7 +6,7 @@
 #_______________________________________________________________________________
 
 #Configure odversion.h
-configure_file ( ${OpendTect_DIR}/include/Basic/odversion.h.in ${OpendTect_DIR}/include/Basic/odversion.h )
+configure_file ( ${OpendTect_DIR}/include/Basic/odversion.h.in ${OpendTect_DIR}/include/Basic/odversion.h NEWLINE_STYLE CRLF )
 
 file(GLOB CMAKE_FILES CMakeModules/*.cmake )
 

@@ -28,7 +28,7 @@ endif()
 
 set ( OD_TESTDATA_DIR "" CACHE FILEPATH "Test data location" )
 configure_file ( ${OpendTect_DIR}/CMakeModules/templates/CTestCustom.ctest.in
-		 ${CMAKE_BINARY_DIR}/CTestCustom.ctest @ONLY )
+		 ${CMAKE_BINARY_DIR}/CTestCustom.ctest @ONLY NEWLINE_STYLE CRLF )
 
 add_definitions("-D__cmake__")
 
@@ -46,6 +46,8 @@ set ( OD_ATTRIB_EXECS od_process_attrib od_process_attrib_em od_stratamp )
 set ( OD_VOLUME_EXECS od_process_volume )
 set ( OD_PRESTACK_EXECS od_process_prestack )
 set ( OD_ZAXISTRANSFORM_EXECS od_process_time2depth )
+
+set ( OD_LINESEP "\r\n" )
 
 #Macro for going through a list of modules and adding them
 macro ( OD_ADD_MODULES )

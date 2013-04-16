@@ -36,10 +36,10 @@ MACRO( OD_CREATE_INIT_HEADER )
 
 	foreach ( DEP ${OD_MODULE_DEPS} )
 	    string ( TOLOWER ${DEP} DEPLOWER )
-	    set ( MODFILEHEADER "${MODFILEHEADER}\n#include \"${DEPLOWER}mod.h\"" )
+	    set ( MODFILEHEADER "${MODFILEHEADER}${OD_LINESEP}#include \"${DEPLOWER}mod.h\"" )
 	endforeach()
 
-	CONFIGURE_FILE( ${OpendTect_DIR}/CMakeModules/templates/initheader.h.in 
-			${INITHEADER} )
+	configure_file( ${OpendTect_DIR}/CMakeModules/templates/initheader.h.in 
+			${INITHEADER} NEWLINE_STYLE CRLF )
     endif ()
 ENDMACRO()

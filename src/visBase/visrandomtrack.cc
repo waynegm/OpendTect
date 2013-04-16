@@ -24,7 +24,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "errh.h"
 
 #include <osg/Array>
-#include <osgGeo/RandomLine>
+#include <osgGeo/TexturePanelStrip>
 
 mCreateFactoryEntry( visBase::RandomTrack );
 

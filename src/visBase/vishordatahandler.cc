@@ -134,7 +134,7 @@ void HorizonSectionDataHandler::generatePositionData( DataPointSet& dtpntset,
     mAllocVarLenArr( float, vals, bivs.nrVals() ); 
     for ( int idx=0; idx<bivs.nrVals(); idx++ )
 	vals[idx] = mUdf(float);
-
+     
     vals[sidcolidx+dtpntset.nrFixedCols()] = sectionid;
 
     const int nrknots = horsection_->geometry_->nrKnots();

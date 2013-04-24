@@ -28,7 +28,7 @@ static const int   cMaximumResolution = 6;
 static const int   cMinInitialTimes = 3;
 static const char  cNoneResolution = -1;
 
-static const char* sKeySectionID() { return "Section ID"; }
+static const char* sKeyHorSectionID() { return "Section ID"; }
 
 enum	GeometryType{ Triangle = 0, Line,Point, WireFrame };
 

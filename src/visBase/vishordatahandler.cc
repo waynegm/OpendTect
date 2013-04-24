@@ -123,7 +123,7 @@ void HorizonSectionDataHandler::generatePositionData( DataPointSet& dtpntset,
 	    return;
     }
 
-    const DataColDef sidcol( sKeySectionID() );
+    const DataColDef sidcol( sKeyHorSectionID() );
     if ( dtpntset.dataSet().findColDef(sidcol,PosVecDataSet::NameExact)==-1 )
 	dtpntset.dataSet().add( new DataColDef(sidcol) );
 

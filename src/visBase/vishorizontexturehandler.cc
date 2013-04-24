@@ -263,7 +263,7 @@ void HorizonTextureHandler::updateTexture(int channel,int sectionid,
 	return;
 
     const int nrfixedcols = dtpntset->nrFixedCols();
-    const DataColDef sidcoldef( sKeySectionID() );
+    const DataColDef sidcoldef( sKeyHorSectionID() );
     const int sidcol = 
 	dtpntset->dataSet().findColDef(sidcoldef,PosVecDataSet::NameExact);
     const int shift = sidcol==-1 ?  nrfixedcols : nrfixedcols+1;

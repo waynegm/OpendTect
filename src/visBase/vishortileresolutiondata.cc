@@ -142,7 +142,6 @@ void TileResolutionData::setAllVertices( const TypeSet<Coord3>& positions )
 void TileResolutionData::calcNormals( bool allownormalinvalid )
 {
     const HorizonSection& hrsection = sectile_->hrsection_;
-    const char res = resolution_;
 
     int valididx = 0;
 

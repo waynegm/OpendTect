@@ -39,6 +39,7 @@ namespace visBase
     class TextureChannels;
     class HorizonSectionDataHandler;
     class HorizonTextureHandler;
+    class HorTilesCreatorAndUpdator;
 
 /*!Horizon geometry is divided into 64*64 pixel tiles. Each tile has it's own 
   glue edge to merge into it's neighbors in case of different resolutions. Each

@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "arrayndimpl.h"
 #include "rowcol.h"
-#include "thread.h"
 #include "visobject.h"
 #include "geomelement.h"
 
@@ -27,22 +26,19 @@ class DataPointSet;
 class ZAxisTransform;
 class TaskRunner;
 
-namespace osg
-{
-    class Group;
-    class CullStack;
-}
-
 
 namespace Geometry { class BinIDSurface; }
 namespace ColTab { class Sequence; class MapperSetup; }
 namespace osgGeo { class LayeredTexture;  }
+namespace osg { class CullStack; }
 
 namespace visBase
 {
     class TextureChannel2RGBA;    
     class HorizonSectionTile;
     class TextureChannels;
+    class HorizonSectionDataHandler;
+    class HorizonTextureHandler;
 
 /*!Horizon geometry is divided into 64*64 pixel tiles. Each tile has it's own 
   glue edge to merge into it's neighbors in case of different resolutions. Each
@@ -59,9 +55,7 @@ public:
     const mVisTrans*		getDisplayTransformation() const;
     void			setZAxisTransform(ZAxisTransform*,TaskRunner*);
 
-    void			setRightHandSystem(bool);
-
-    				//Texture information
+    //Texture information
     void                        useChannel(bool);
     int                         nrChannels() const;
     void                        addChannel();
@@ -85,7 +79,7 @@ public:
     void			setTransparency(int ch,unsigned char yn);
     unsigned char		getTransparency(int ch) const;
 
-    void			getDataPositions(DataPointSet&,double zoff,
+    void			getDataPositions(DataPointSet&,double zoff /*untransformed*/,
 	    					 int sid,TaskRunner*) const;
     void			setTextureData(int channel,const DataPointSet*,
 	    				       int sid,TaskRunner*);
@@ -95,7 +89,7 @@ public:
     void			setChannels2RGBA(TextureChannel2RGBA*);
     TextureChannel2RGBA*	getChannels2RGBA();
     const TextureChannel2RGBA*	getChannels2RGBA() const;
-    TextureChannels*		getChannels() const	{ return channels_; }
+    TextureChannels*		getChannels() const;	//{ return channels_; }
 
     				//Geometry stuff
     void			setSurface(Geometry::BinIDSurface*,bool conn,
@@ -109,42 +103,34 @@ public:
     void			useWireframe(bool);
     bool			usesWireframe() const;
     
-    char			nrResolutions() const;
-    char			currentResolution() const;
-    void			setResolution(int,TaskRunner*);
+    char	 		nrResolutions() const;
+    char 			currentResolution() const;
+    void			setResolution(char,TaskRunner*);
 
     void			setWireframeColor(Color col);
     osgGeo::LayeredTexture*	getOsgTexture() const;
-    void			updateAutoResolution( osg::CullStack* );
     void			updatePrimitiveSets();
     void			turnOsgOn( bool );
-
+    void			setDisplayGeometryType( int type );
 
 protected:
     				~HorizonSection();
     friend class		HorizonSectionTile;			
     friend class		HorizonTileRenderPreparer;
     friend class		TileResolutionData;
+    friend class		HorizonSectionOsgCallBack;
+    friend class		HorizonSectionDataHandler;
+    friend class                HorizonTextureHandler;
+    friend class		HorTilesCreatorAndUpdator;
+
     void			surfaceChangeCB(CallBacker*);
     void			surfaceChange(const TypeSet<GeomPosID>*,
 	    				      TaskRunner*);
     void			removeZTransform();
     void			updateZAxisVOI();
 
-    void			updateTexture(int channel,const DataPointSet*,
-	    				      int sectionid);
-
-    void			updateTileTextureOrigin(const RowCol& texorig);
-    void			updateTileArray();
-    HorizonSectionTile*		createTile(int rowidx,int colidx);
-
-    void			resetAllTiles(TaskRunner*);
-    void			updateNewPoints(const TypeSet<GeomPosID>*,
-	    					TaskRunner*);
-    void			setSizeParameters();
-
-
-
+    void			configSizeParameters();
+    void			updateAutoResolution( const osg::CullStack* );
 
     Geometry::BinIDSurface*	geometry_;
     RowCol			origin_;
@@ -153,48 +139,37 @@ protected:
     StepInterval<int>		displayrrg_;
     StepInterval<int>		displaycrg_;
     Threads::Mutex		updatelock_;
-    ObjectSet<BinIDValueSet>	cache_;
+    Threads::SpinLock		spinlock_;
 
-    TextureChannels*		channels_;
-    TextureChannel2RGBA*	channel2rgba_;
+    HorizonSectionDataHandler*  hordatahandler_;
+    HorizonTextureHandler*	hortexturehandler_;
+    HorTilesCreatorAndUpdator*	hortilescreatorandupdator_;
  
     Array2DImpl<HorizonSectionTile*> tiles_;
     bool			usewireframe_;
 
     const mVisTrans*		transformation_;
-    ZAxisTransform*		zaxistransform_;
-    int				zaxistransformvoi_; 
-    				//-1 not needed by zaxistransform, -2 not set
 				
-    int				desiredresolution_;
-    bool			ismoving_;
-    double			cosanglexinl_;
-    double			sinanglexinl_;
+    char			lowestresidx_;
+    char			desiredresolution_;
+    char 			nrhorsectnrres_;
+
     float			rowdistance_;
     float			coldistance_;
-    Material*			wireframematerial_;
-
     bool			tesselationlock_;
 
-    int				mnrcoordspertileside_;
-    int 			mtotalnrcoordspertile_;
-    int 			mtilesidesize_;
-    int 			mtilelastidx_;
-    int 			mtotalnormalsize_;
-    unsigned char 		mlowestresidx_;
-    int 			mhorsectnrres_;
+    int				nrcoordspertileside_;
+    int 			tilesidesize_;
+    int 			totalnormalsize_;
 
-    int*			spacing_;
-    int*			nrcells_;
-    int*			normalstartidx_;
-    int*			normalsidesize_;
-
-    int				tesselationqueueid_;
+    TypeSet<int>		spacing_;
+    TypeSet<int>		nrcells_;
+    TypeSet<int>		normalstartidx_;
+    TypeSet<int>		normalsidesize_;
 
     osg::Group*		    	osghorizon_;
-    Threads::SpinLock		lock_;
+    bool			forceupdate_;
 
-    static const char*		sKeySectionID()	{ return "Section ID"; }
 };
 
 };

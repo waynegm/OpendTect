@@ -241,7 +241,7 @@ protected:
 
     bool				usestexture_;
     bool				useswireframe_;
-    int					resolution_;
+    char				resolution_;
     int					curtextureidx_;
     float				edgelineradius_;
 

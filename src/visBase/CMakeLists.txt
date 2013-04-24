@@ -34,7 +34,13 @@ SET(OD_MODULE_SOURCES
 	   visgridlines.cc
 	   visimage.cc
 	   visgeomindexedshape.cc
+	   vishordatahandler.cc
 	   vishorizonsection.cc
+	   vishorizonsectiontile.cc
+	   vishorizontexturehandler.cc
+	   vishorthreadworks.cc
+	   vishortileresolutiondata.cc
+	   vishortilescreatorandupdator.cc
 	   vislevelofdetail.cc
 	   vislight.cc
 	   vislines.cc
@@ -47,6 +53,7 @@ SET(OD_MODULE_SOURCES
 	   visnormals.cc
 	   visnodestate.cc
 	   visobject.cc
+	   visosg.cc
 	   visrandompos2body.cc
 	   vispointset.cc
 	   vispolygonoffset.cc

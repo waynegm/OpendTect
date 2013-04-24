@@ -31,7 +31,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdrawstyle.h"
 #include "visevent.h"
 #include "vishingeline.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vismpe.h"
 #include "vishorizonsection.h"
@@ -868,7 +868,7 @@ void HorizonDisplay::setTranslation( const Coord3& nt )
     {
 	translation_ = visBase::Transformation::create();
 	translation_->ref();
-	insertChild( 0, translation_->osgNode() );
+	addChild( translation_->osgNode() );
     }
 
     Coord3 shift( nt ); shift.z *= -1;
@@ -1097,9 +1097,9 @@ int HorizonDisplay::getResolution() const
 
 void HorizonDisplay::setResolution( int res, TaskRunner* tr )
 {
-    resolution_ = res;
+    resolution_ = (char)res;
     for ( int idx=0; idx<sections_.size(); idx++ )
-	sections_[idx]->setResolution( res-1, tr );
+	sections_[idx]->setResolution( resolution_-1, tr );
 }
 
 
@@ -1352,13 +1352,16 @@ void HorizonDisplay::getMousePosInfo( const visBase::EventInfo& eventinfo,
 { \
     if ( curline.size()==1 ) \
     { \
-	visBase::Marker* marker = visBase::Marker::create(); \
-	marker->setDisplayTransformation(transformation_); \
-	marker->setMaterial( 0 ); \
-	marker->setScreenSize( mCast(float,lineStyle()->width_) ); \
-	marker->setType( MarkerStyle3D::Sphere ); \
-	marker->setCenterPos( curline[0] ); \
-	points->addObject( marker ); \
+	visBase::MarkerSet* markerset = visBase::MarkerSet::create(); \
+	MarkerStyle3D markerstyle;\
+	markerstyle.size_ = ( int )mCast(float,lineStyle()->width_);\
+	markerstyle.type_ = MarkerStyle3D::Sphere;\
+	markerset->setMarkerStyle( markerstyle );\
+	markerset->setDisplayTransformation(transformation_); \
+	markerset->setMaterial( 0 ); \
+	markerset->setMarkerHeightRatio( 1.0f );\
+	markerset->getCoordinates()->addPos( curline[0] ); \
+	points->addObject( markerset ); \
     } \
     else \
     { \
@@ -1880,9 +1883,9 @@ void HorizonDisplay::setLineStyle( const LineStyle& lst )
 	visBase::DataObjectGroup* pointgroup = intersectionpointsets_[idx];
 	for ( int idy=1; idy<pointgroup->size(); idy++ )
 	{
-	    mDynamicCastGet(visBase::Marker*,marker,pointgroup->getObject(idx));
-	    if ( marker )
-		marker->setScreenSize( radius*2 );
+	    mDynamicCastGet(visBase::MarkerSet*,markerset,pointgroup->getObject(idx));
+	    if ( markerset )
+		markerset->setScreenSize( radius*2 );
 	}
     }
 }
@@ -1925,21 +1928,24 @@ void HorizonDisplay::updateSectionSeeds(
 	visBase::DataObjectGroup* group = posattribmarkers_[idx];
 	for ( int idy=0; idy<group->size(); idy++ )
 	{
-	    mDynamicCastGet(visBase::Marker*,marker,group->getObject(idy))
-	    if ( !marker ) continue;
+	    mDynamicCastGet(visBase::MarkerSet*,markerset,group->getObject(idy))
+	    if ( !markerset ) continue;
 	
-	    marker->turnOn( !displayonlyatsections_ );
-	    Coord3 pos = marker->centerPos();
-	    if ( transformation_ )
-		transformation_->transform( pos );
-
-	    for ( int idz=0; idz<planelist.size(); idz++ )
+	    markerset->turnOn( !displayonlyatsections_ );
+	    const visBase::Coordinates* markercoords = 
+			    markerset->getCoordinates();
+	    if ( markercoords->size() )
 	    {
-		const float dist = objs[planelist[idz]]->calcDist(pos);
-		if ( dist < objs[planelist[idz]]->maxDist() )
+		const Coord3 markerpos = markercoords->getPos( 0 );
+		for ( int idz=0; idz<planelist.size(); idz++ )
 		{
-		    marker->turnOn(true);
-		    break;
+		    const float dist = 
+			objs[planelist[idz]]->calcDist( markerpos );
+		    if ( dist < objs[planelist[idz]]->maxDist() )
+		    {
+			markerset->turnOn(true);
+			break;
+		    }
 		}
 	    }
 	}

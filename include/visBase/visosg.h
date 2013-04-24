@@ -37,6 +37,14 @@ namespace osg { class Vec3f; class Array; class Referenced; }
 #include <osg/Vec4d>
 #include <color.h>
 #include <convert.h>
+
+namespace visBase
+{
+   void unRefOsgPtr(osg::Referenced*);
+   void refOsgPtr(const osg::Referenced*);
+}
+
+
     
 namespace Conv
 {

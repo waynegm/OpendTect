@@ -23,7 +23,7 @@ if [ "$1" = "--listfile" ]; then
        exit 1
     fi
 
-    cat $listfile | xargs -e $progname
+    cat $listfile | xargs $progname
     if [ "$?" -ne 0 ]; then
        exit 1
     fi
@@ -31,20 +31,15 @@ if [ "$1" = "--listfile" ]; then
     shift
 fi
 
+res=0
 while [ $# -gt 0 ]; do
     hexdump -v -e '"" 1/1 "%02X" " "' $1 | grep -q '[^0][^D] 0A'
     if [ "$?" -ne 1 ]; then
 	echo "UNIX EOL found in $1"
-	exit 1
+	res=1
     fi
     shift
 done
-#files=`cat $listfile | xargs hexdump -v -e '"" 1/1 "%02X" " "' | grep -l '[^0][^D] 0A'`
-#if [ -z "$files" ];then
-echo "No UNIX EOL found!"
-#else
-   #echo "DOS EOL found in: "
-   #echo $files
-   #exit 1
-#fi
+
+exit $res
 

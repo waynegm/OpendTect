@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "executor.h"
 #include "ptrman.h"
 #include "survinfo.h"
+#include "refcount.h"
 #include "visdataman.h"
 #include "visevent.h"
 #include "vismarkerset.h"
@@ -113,7 +114,6 @@ WellDisplay::WellDisplay()
     , logsnumber_(0)
     , transformation_(0)
     , picksallowed_(false)
-    , group_(0)
     , pseudotrack_(0)
     , needsave_(false)
     , dispprop_(0)
@@ -121,6 +121,14 @@ WellDisplay::WellDisplay()
 {
     setMaterial(0);
     setWell( visBase::Well::create() );
+    markerset_ = visBase::MarkerSet::create();
+    markerset_->ref();
+    addChild( markerset_->osgNode() );
+    markerset_->setMaterial( new visBase::Material );
+    MarkerStyle3D markerstyle;
+    markerstyle.size_ = mPickSz;
+    markerstyle.type_ = (MarkerStyle3D::Type) mPickSz;
+    markerset_->setMarkerStyle( markerstyle );
 }
 
 
@@ -131,15 +139,13 @@ WellDisplay::~WellDisplay()
     well_->unRef(); well_ = 0;
     setSceneEventCatcher(0);
     if ( transformation_ ) transformation_->unRef();
-    if ( group_ )
-	removeChild( group_->osgNode() );
 
     wd_ = 0;
     mGetWD(return);
     wd->tobedeleted.remove( mCB(this,WellDisplay,welldataDelNotify) );
     delete dispprop_;
     delete Well::MGR().release( wellid_ );
-
+    markerset_->unRef();
     setBaseMap( 0 );
 }
 
@@ -713,7 +719,7 @@ const mVisTrans* WellDisplay::getDisplayTransformation() const
 
 void WellDisplay::pickCB( CallBacker* cb )
 {
-    if ( !isSelected() || !picksallowed_ || !group_ || isLocked() ) return;
+    if ( !isSelected() || !picksallowed_ || !markerset_ || isLocked() ) return;
 
     mCBCapsuleUnpack(const visBase::EventInfo&,eventinfo,cb);
     if ( eventinfo.type != visBase::MouseClick ||
@@ -748,11 +754,10 @@ void WellDisplay::pickCB( CallBacker* cb )
 	    const float zfactor = scene_ ? scene_->getZScale(): SI().zScale();
 	    if ( eventinfo.pickedobjids.size() && eventid==mousepressid_ )
 	    {
-		int removeidx = group_->getFirstIdx(mousepressid_);
-		if ( removeidx != -1 )
+		if ( mousepressid_!= -1 )
 		{
-		    group_->removeObject( removeidx );
-		    pseudotrack_->removePoint( removeidx );
+		    markerset_->removeMarker( mousepressid_ );
+		    pseudotrack_->removePoint( mousepressid_ );
 		    TypeSet<Coord3> wcoords;
 		    for ( int idx=0; idx<pseudotrack_->nrPoints(); idx++ )
 		    {
@@ -827,23 +832,15 @@ void WellDisplay::addPick( Coord3 pos )
 
     if ( insertidx > -1 )
     {
-	visBase::MarkerSet* markerset = visBase::MarkerSet::create();
-	group_->addObject( markerset );
-
-	markerset->setDisplayTransformation( transformation_ );
-	markerset->getCoordinates()->addPos( pos );
-	MarkerStyle3D markerstyle;
-	markerstyle.size_ = mPickSz;
-	markerstyle.type_ = (MarkerStyle3D::Type) mPickSz;
-	markerstyle.color_ = lineStyle()->color_;
-	markerset->setMarkerStyle( markerstyle );
+	const int markerid = markerset_->getCoordinates()->addPos( pos );
+	markerset_->getMaterial()->setColor( lineStyle()->color_,markerid ) ;
     }
 }
 
 
 void WellDisplay::setDisplayTransformForPicks( const mVisTrans* newtr )
 {
-    if ( transformation_==newtr )
+    if ( transformation_==newtr || !markerset_ )
 	return;
 
     if ( transformation_ )
@@ -854,12 +851,7 @@ void WellDisplay::setDisplayTransformForPicks( const mVisTrans* newtr )
     if ( transformation_ )
 	transformation_->ref();
 
-    if ( !group_ ) return;
-    for ( int idx=0; idx<group_->size(); idx++ )
-    {
-	mDynamicCastGet(visBase::MarkerSet*,markerset,group_->getObject(idx));
-	markerset->setDisplayTransformation( transformation_ );
-    }
+    markerset_->setDisplayTransformation( transformation_ );
 }
 
 
@@ -884,18 +876,17 @@ void WellDisplay::setSceneEventCatcher( visBase::EventCatcher* nevc )
 void WellDisplay::setupPicking( bool yn )
 {
     picksallowed_ = yn;
-    if ( !group_ )
+    if ( !markerset_ )
     {
-	group_ = visBase::DataObjectGroup::create();
+	markerset_ = visBase::MarkerSet::create();
+	markerset_->ref();
+	addChild( markerset_->osgNode() );
+	markerset_->setMaterial( new visBase::Material );
 	mTryAlloc( pseudotrack_, Well::Track() );
-	addChild( group_->osgNode() );
     }
 
-    for ( int idx=0; idx<group_->size(); idx++ )
-    {
-	mDynamicCastGet(visBase::MarkerSet*,markerset,group_->getObject(idx));
-	markerset->turnOn( yn );
-    }
+    markerset_->turnOn( yn );
+
 }
 
 

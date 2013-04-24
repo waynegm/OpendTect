@@ -27,7 +27,7 @@ class LineStyle;
 
 namespace visBase
 {
-    class DataObjectGroup;
+    class MarkerSet;
     class EventCatcher;
     class EventInfo;
     class Transformation;
@@ -164,7 +164,7 @@ protected:
     const mVisTrans*		transformation_;
     MultiID			wellid_;
     visBase::EventCatcher*	eventcatcher_;
-    visBase::DataObjectGroup*	group_;
+    visBase::MarkerSet*		markerset_;
     visBase::Well*		well_;
     Well::Track*		pseudotrack_;
     Well::Data*			wd_;

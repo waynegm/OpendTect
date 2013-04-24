@@ -12,23 +12,24 @@ ________________________________________________________________________
 
 -*/
 
+
 // this header file is the set of const definitions used in the files related to
 // horizonsection. don't include it in somewhere else in od.
 
 
-static const int   cMaxNrTiles		= 15;
-static const int   cMaxNrResolutions	= 10;
+const int   cMaxNrTiles		= 15;
+const int   cMaxNrResolutions	= 10;
 
-static const int   cNoTesselationNeeded	= 0;
-static const int   cShouldRetesselate   = 1;
-static const int   cMustRetesselate     = 2;
+const int   cNoTesselationNeeded	= 0;
+const int   cShouldRetesselate   = 1;
+const int   cMustRetesselate     = 2;
 
-static const int   cNumberNodePerTileSide = 65;
-static const int   cMaximumResolution = 6;
-static const int   cMinInitialTimes = 3;
-static const char  cNoneResolution = -1;
+const int   cNumberNodePerTileSide = 65;
+const int   cMaximumResolution = 6;
+const int   cMinInitialTimes = 3;
+const char  cNoneResolution = -1;
 
-static const char* sKeyHorSectionID() { return "Section ID"; }
+const char* sKeyHorSectionID() { return "Section ID"; }
 
 enum	GeometryType{ Triangle = 0, Line,Point, WireFrame };
 

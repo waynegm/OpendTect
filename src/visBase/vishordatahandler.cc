@@ -122,8 +122,8 @@ void HorizonSectionDataHandler::generatePositionData( DataPointSet& dtpntset,
 	if ( !zaxistransform_->loadDataIfMissing(zaxistransformvoi_) )
 	    return;
     }
-
-    const DataColDef sidcol( sKeyHorSectionID() );
+    const char* hrsectionid = "Section ID";
+    const DataColDef sidcol( hrsectionid );
     if ( dtpntset.dataSet().findColDef(sidcol,PosVecDataSet::NameExact)==-1 )
 	dtpntset.dataSet().add( new DataColDef(sidcol) );
 

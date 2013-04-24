@@ -29,8 +29,6 @@ const int   cMaximumResolution = 6;
 const int   cMinInitialTimes = 3;
 const char  cNoneResolution = -1;
 
-const char* sKeyHorSectionID() { return "Section ID"; }
-
 enum	GeometryType{ Triangle = 0, Line,Point, WireFrame };
 
 

@@ -63,10 +63,22 @@ Normals* MarkerSet::getNormals()
 
 void MarkerSet::setMaterial( visBase::Material* mat )
 {
-    visBase::VisualObjectImpl::setMaterial( mat );
+   if ( material_==mat ) return;
+
+   if ( material_ )
+       markerset_->setColorArray( 0 );
+   else
+       removeNodeState( singlecolormaterial_ );
+   
+   visBase::VisualObjectImpl::setMaterial( mat );
     if ( material_ )
 	markerset_->setColorArray(
 	    mGetOsgVec4Arr( material_->getColorArray() ) );
+    else 
+    {
+	markerset_->setColorArray( 0 ); 
+	addNodeState( (visBase::Material*) singlecolormaterial_ );
+    }
 
 }
 
@@ -79,11 +91,26 @@ void MarkerSet::clearMarkers()
 }
 
 
+void MarkerSet::removeMarker( int idx )
+{
+    if ( coords_ ) coords_->removePos( idx );
+    if ( normals_ ) normals_->removeNormal( idx );
+    if ( material_ ) material_->removeColor( idx );
+}
+
+
 void MarkerSet::setMarkerStyle( const MarkerStyle3D& ms )
 {
     singlecolormaterial_->setColor( ms.color_ );
     setType( ms.type_ );
     setScreenSize( (float) ms.size_ );
+}
+
+
+void MarkerSet::setMarkersSingleColor( const Color& singlecolor )
+{
+     singlecolormaterial_->setColor( singlecolor );
+     setMaterial( 0 );
 }
 
 

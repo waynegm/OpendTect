@@ -49,6 +49,8 @@ public:
     void		setColor(const Color&,int=0);
     const Color&	getColor(int matnr=0) const;
 
+    void		removeColor(int idx);
+
     void		setDiffIntensity(float,int=0);
 			/*!< Should be between 0 and 1 */
     float		getDiffIntensity(int=0) const;

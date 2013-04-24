@@ -86,6 +86,24 @@ const Color& Material::getColor( int idx ) const
 }
 
 
+void Material::removeColor( int idx )
+{
+     if ( colors_.validIdx(idx) && colors_.size()>1 )
+     {
+	 colors_.removeSingle( idx );
+	 transparency_.removeSingle( idx );
+	 diffuseintensity_.removeSingle( idx );
+
+	 for ( int idy=idx; idy<colors_.size(); idy++ )
+	     updateMaterial( idy );
+     }
+     else
+     {
+	 pErrMsg("Removing invalid index or last color.");
+     }
+}
+
+
 void Material::setDiffIntensity( float n, int idx )
 {
     setMinNrOfMaterials(idx);

@@ -54,6 +54,10 @@ public:
     void		setMaterial(visBase::Material*);
 			//!<If material is null, markers will be single color
 
+    void		setMarkersSingleColor(const Color& singlecolor);
+			//!<all markers will use the same color, the color can also
+			//!<be set by markerstyle
+
     void		setMarkerStyle(const MarkerStyle3D&);
     			/*!<Sets predefined shape and size.
 			    Will only use color of markerstyle if no
@@ -88,6 +92,8 @@ public:
 
     void		setDisplayTransformation( const mVisTrans* );
     const mVisTrans*	getDisplayTransformation() const;
+
+    void		removeMarker(int idx);
 
     void		clearMarkers();
 

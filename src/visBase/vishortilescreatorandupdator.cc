@@ -3,7 +3,7 @@
  * AUTHOR   : D. Zheng
  * DATE     : Feb 2013
 -*/
-static const char* rcsID mUsedVar = "$Id: vishortilescreatorandupdator.cc 28563 2013-04-16 18:05:13Z ding.zheng@dgbes.com $";
+static const char* rcsID mUsedVar = "$Id$";
 
 
 #include "vishortilescreatorandupdator.h"

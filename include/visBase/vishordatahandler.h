@@ -6,7 +6,7 @@ ________________________________________________________________________
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
  Author:	Kristofer Tingdahl
  Date:		March 2009
- RCS:		$Id: vishordatahandler.h 28488 2013-04-14 05:39:27Z ding.zheng@dgbes.com $
+ RCS:		$Id$
 ________________________________________________________________________
 
 -*/

@@ -19,8 +19,7 @@ ________________________________________________________________________
 
 #include "multiid.h"
 #include "cubesampling.h"
-#include "uipsviewer2dposdlg.h"
-#include "uipsviewer2dposdlg.h"
+
 
 class uiSlicePos2DView;
 
@@ -120,8 +119,8 @@ mExpClass(uiPreStackProcessing) uiSyntheticViewer2DMainWin : public uiViewer2DMa
 public:
     			uiSyntheticViewer2DMainWin(uiParent*,const char* title);
     			~uiSyntheticViewer2DMainWin();
-    void		setDataPacks(const TypeSet<PreStackView::GatherInfo>&);
-    void		removeDataPacks();
+    void		setGathers(const TypeSet<PreStackView::GatherInfo>&);
+    void		removeGathers();
     void		getGatherNames(BufferStringSet& nms) const;
     void		setGatherNames(const BufferStringSet& nms);
 protected:

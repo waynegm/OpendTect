@@ -28,6 +28,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ioman.h"
 #include "prestackattrib.h"
 #include "prestackgather.h"
+#include "prestackanglecomputer.h"
 #include "propertyref.h"
 #include "raytracerrunner.h"
 #include "separstr.h"
@@ -40,6 +41,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "synthseis.h"
 #include "timeser.h"
 #include "wavelet.h"
+#include "math2.h"
 
 static const char* sKeyIsPreStack()		{ return "Is Pre Stack"; }
 static const char* sKeySynthType()		{ return "Synthetic Type"; }
@@ -53,6 +55,7 @@ DefineEnumNames(SynthGenParams,SynthType,0,"Synthetic Type")
 
 SynthGenParams::SynthGenParams()
 {
+    synthtype_ = PreStack;	//init to avoid nasty crash in generateSD!
     const BufferStringSet& facnms = RayTracer1D::factory().getNames( false );
     if ( !facnms.isEmpty() )
 	raypars_.set( sKey::Type(), facnms.get( facnms.size()-1 ) );
@@ -223,6 +226,7 @@ SyntheticData* StratSynth::replaceSynthetic( int id )
 
 SyntheticData* StratSynth::addDefaultSynthetic()
 {
+    genparams_.synthtype_ = SynthGenParams::ZeroOffset;
     genparams_.createName( genparams_.name_ );
     SyntheticData* sd = addSynthetic();
 
@@ -508,6 +512,12 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 
 	if ( synthgenpar.synthtype_ == SynthGenParams::AngleStack )
 	    sd = createAngleStack( sd, cs, synthgenpar, tr );
+	else
+	{
+	    mDynamicCastGet(PreStackSyntheticData*,presd,sd);
+	    presd->createAngleData( synthgen.rayTracers(),
+		    		    synthgen.elasticModels() );
+	}
     }
     else if ( synthgenpar.synthtype_ == SynthGenParams::ZeroOffset )
     {
@@ -545,15 +555,29 @@ SyntheticData* StratSynth::generateSD( const Strat::LayerModel& lm,
 }
 
 
-void StratSynth::generateOtherQuantities( PostStackSyntheticData& sd, 
+void StratSynth::generateOtherQuantities()
+{
+    if ( !synthetics_.size() ) return;
+
+    for ( int idx=0; idx<synthetics_.size(); idx++ )
+    {
+	const SyntheticData* sd = synthetics_[idx];
+	mDynamicCastGet(const PostStackSyntheticData*,pssd,sd);
+	mDynamicCastGet(const PropertyRefSyntheticData*,prsd,sd);
+	if ( !pssd || prsd ) continue;
+	return generateOtherQuantities( *pssd, lm_ );
+    }
+}
+
+
+void StratSynth::generateOtherQuantities( const PostStackSyntheticData& sd, 
 					  const Strat::LayerModel& lm ) 
 {
     const PropertyRefSelection& props = lm.propertyRefs();
 
     for ( int iprop=1; iprop<props.size(); iprop++ )
     {
-	SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( 
-					(SeisTrcBufDataPack&)sd.getPack() );
+	SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( sd.postStackPack() );
 
 	BufferString nm( "[" ); nm += props[iprop]->name(); nm += "]";
 
@@ -593,10 +617,10 @@ void StratSynth::generateOtherQuantities( PostStackSyntheticData& sd,
 	    }
 	    SeisTrc* trc = iseq < bufsz ? trcbuf->get( iseq ) : 0;
 	    if ( !trc ) continue;
-	    Array1DImpl<float> outvals( vals.size() );
-	    AntiAlias( 1/(float)5, vals.size(), vals.arr(), outvals.arr() );
+	    //Array1DImpl<float> outvals( vals.size() );
+	    //AntiAlias( 1/(float)5, vals.size(), vals.arr(), outvals.arr() );
 	    for ( int idz=0; idz<vals.size(); idz++ )
-		trc->set( idz, outvals.get(idz), 0 );
+		trc->set( idz, vals[idz], 0 );
 	}
 
 
@@ -826,11 +850,65 @@ const SeisTrc* PostStackSyntheticData::getTrace( int seqnr ) const
 PreStackSyntheticData::PreStackSyntheticData( const SynthGenParams& sgp,
 					     PreStack::GatherSetDataPack& dp)
     : SyntheticData(sgp,dp)
+    , angledp_(0)
 {
     useGenParams( sgp );
     DataPackMgr::ID pmid = DataPackMgr::CubeID();
     DPM( pmid ).add( &dp );
     datapackid_ = DataPack::FullID( pmid, dp.id());
+}
+
+
+PreStackSyntheticData::~PreStackSyntheticData()
+{
+    if ( angledp_ )
+	DPM( DataPackMgr::CubeID() ).release( angledp_->id() );
+}
+
+
+void PreStackSyntheticData::convertAngleDataToDegrees( PreStack::Gather* ag ) const
+{
+    Array2D<float>& agdata = ag->data();
+    const int dim0sz = agdata.info().getSize(0);
+    const int dim1sz = agdata.info().getSize(1);
+    for ( int idx=0; idx<dim0sz; idx++ )
+    {
+	for ( int idy=0; idy<dim1sz; idy++ )
+	{
+	    const float radval = agdata.get( idx, idy );
+	    if ( mIsUdf(radval) ) continue;
+	    const float dval = Math::toDegrees(radval);
+	    agdata.set( idx, idy, dval );
+	}
+    }
+}
+
+
+void PreStackSyntheticData::createAngleData( const ObjectSet<RayTracer1D>& rts,
+					     const TypeSet<ElasticModel>& ems ) 
+{
+    if ( angledp_ ) DPM( DataPackMgr::CubeID() ).release( angledp_->id() );
+    ObjectSet<PreStack::Gather> anglegathers;
+    const ObjectSet<PreStack::Gather>& gathers = preStackPack().getGathers();
+    PreStack::ModelBasedAngleComputer anglecomp;
+    for ( int idx=0; idx<rts.size(); idx++ )
+    {
+	if ( !gathers.validIdx(idx) )
+	    continue;
+	const PreStack::Gather* gather = gathers[idx];
+	anglecomp.setOutputSampling( gather->posData() );
+	anglecomp.setElasticModel( ems[idx], false, false ); 
+	anglecomp.setRayTracer( rts[idx] );
+	PreStack::Gather* anglegather = anglecomp.computeAngles();
+	convertAngleDataToDegrees( anglegather );
+	TypeSet<float> azimuths;
+	gather->getAzimuths( azimuths );
+	anglegather->setAzimuths( azimuths );
+	anglegathers += anglegather;
+    }
+
+    angledp_ = new PreStack::GatherSetDataPack( name(), anglegathers );
+    DPM( DataPackMgr::CubeID() ).add( angledp_ );
 }
 
 

@@ -6,10 +6,11 @@
 #_______________________________________________________________________________
 
 #Configure odversion.h
-configure_file ( ${OpendTect_DIR}/include/Basic/odversion.h.in ${OpendTect_DIR}/include/Basic/odversion.h NEWLINE_STYLE CRLF )
+configure_file ( ${OpendTect_DIR}/include/Basic/odversion.h.in ${OpendTect_DIR}/include/Basic/odversion.h )
 
 file(GLOB CMAKE_FILES CMakeModules/*.cmake )
-
+file(GLOB TEMPLATE_FILES CMakeModules/templates/*.in )
+set( CMAKE_FILES ${CMAKE_FILES} ${TEMPLATE_FILES} )
 OD_ADD_SOURCE_FILES( ${CMAKE_FILES} )
 
 #Install cmake things.
@@ -59,8 +60,8 @@ if( WIN32 )
 	     PATTERN ".svn" EXCLUDE )
 endif()
 
+file( GLOB TEXTFILES ${CMAKE_SOURCE_DIR}/data/install_files/unixscripts/*.txt )
 if( UNIX OR APPLE )
-    file( GLOB TEXTFILES ${CMAKE_SOURCE_DIR}/data/install_files/unixscripts/*.txt )
     file( GLOB PROGRAMS ${CMAKE_SOURCE_DIR}/data/install_files/unixscripts/* )
     list( REMOVE_ITEM PROGRAMS ${CMAKE_SOURCE_DIR}/data/install_files/unixscripts/.svn )
     foreach( TEXTFILE ${TEXTFILES} )
@@ -68,8 +69,8 @@ if( UNIX OR APPLE )
     endforeach()
 
     install ( PROGRAMS ${PROGRAMS} DESTINATION . )
-    install ( FILES ${TEXTFILES} DESTINATION . )
 endif()
+install ( FILES ${TEXTFILES} DESTINATION . )
 
 if( APPLE )
     install( PROGRAMS data/install_files/macscripts/chfwscript
@@ -83,10 +84,8 @@ endif( APPLE )
 set( QJPEG ${QT_QJPEG_PLUGIN_RELEASE} )
 set( LMHOSTID lmhostid )
 if( WIN32 )
-    install( PROGRAMS bin/win/unzip.exe DESTINATION
-             ${OD_EXEC_OUTPUT_RELPATH} )
     install( PROGRAMS "C:/Program\ Files \(x86\)/Microsoft\ SDKs/Windows/v7.0A/Bin/signtool.exe" 
-	     DESTINATION ${OD_EXEC_OUTPUT_RELPATH} )
+	     DESTINATION ${OD_EXEC_OUTPUT_RELPATH}/${CMAKE_BUILD_TYPE} )
     set( QJPEG ${QTDIR}/plugins/imageformats/qjpeg4.dll )
     if( ${OD_PLFSUBDIR} STREQUAL "win32" )
         set( MSVCPATH "C:/Program\ Files \(x86\)/Microsoft\ Visual\ Studio\ 10.0/VC/redist/x86/Microsoft.VC100.CRT" )
@@ -97,15 +96,25 @@ if( WIN32 )
 endif()
 
 install( PROGRAMS ${QJPEG} DESTINATION imageformats )
-install( PROGRAMS ${CMAKE_SOURCE_DIR}/bin/${OD_PLFSUBDIR}/${LMHOSTID}
-	 DESTINATION ${OD_EXEC_OUTPUT_RELPATH} )
+if ( WIN32 )
+    install( PROGRAMS ${CMAKE_SOURCE_DIR}/bin/${OD_PLFSUBDIR}/${LMHOSTID}
+	     DESTINATION ${OD_EXEC_OUTPUT_RELPATH}/${CMAKE_BUILD_TYPE} )
+else()
+    install( PROGRAMS ${CMAKE_SOURCE_DIR}/bin/${OD_PLFSUBDIR}/${LMHOSTID}
+	     DESTINATION ${OD_EXEC_OUTPUT_RELPATH} )
+endif()
 if( EXISTS ${MSVCPATH} )
     file( GLOB MSVCDLLS ${MSVCPATH}/*.dll )
     foreach( DLL ${MSVCDLLS} )
-	install( FILES ${DLL} DESTINATION bin/${OD_PLFSUBDIR}/${CMAKE_BUILD_TYPE} )
+	install( FILES ${DLL} DESTINATION bin/${OD_PLFSUBDIR}/${CMAKE_BUILD_TYPE}/thirdpartylibs )
     endforeach()
 endif()
 
+FILE( GLOB SCRIPTS ${CMAKE_SOURCE_DIR}/bin/od_* )
+install( PROGRAMS ${SCRIPTS} DESTINATION bin )
+install( PROGRAMS ${CMAKE_SOURCE_DIR}/bin/mksethdir DESTINATION bin )
+install( PROGRAMS ${CMAKE_SOURCE_DIR}/bin/mac_term DESTINATION bin )
+install( FILES ${CMAKE_SOURCE_DIR}/bin/macterm.in DESTINATION bin )
 
 add_custom_target( sources ${CMAKE_COMMAND}
 		   -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}

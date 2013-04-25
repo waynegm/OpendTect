@@ -13,7 +13,6 @@ ________________________________________________________________________
 -*/
 
 #include "wellattribmod.h"
-#include "wellattribmod.h"
 #include "task.h"
 #include "horsampling.h"
 #include "wellextractdata.h"
@@ -50,7 +49,7 @@ public:
 protected:
 
     const Well::Data&		wd_;
-    BufferString 		errmsg_;
+    mutable BufferString	errmsg_;
     TypeSet<BinID>		binids_;
     HorSampling			hrg_;
     int				nrduplicatetrcs_;

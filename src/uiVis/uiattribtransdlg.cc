@@ -16,7 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 uiAttribTransDlg::uiAttribTransDlg( uiParent* p, visSurvey::SurveyObject& so,
 				    int attrib )
-    : uiDialog( p, uiDialog::Setup("Attribute layer transparency",0,mNoHelpID) )
+    : uiDialog( p, uiDialog::Setup("Attribute transparency",0,mNoHelpID) )
     , so_( so )
     , attrib_( attrib )
     , initaltrans_( so.getAttribTransparency(attrib) )
@@ -45,3 +45,8 @@ bool uiAttribTransDlg::rejectOK( CallBacker* )
     return true;
 }
 
+bool uiAttribTransDlg::acceptOK( CallBacker* )
+{
+    slider_->processInput();
+    return true;
+}

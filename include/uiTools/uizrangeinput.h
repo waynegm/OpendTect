@@ -20,7 +20,7 @@ ________________________________________________________________________
 mExpClass(uiTools) uiZRangeInput : public uiGenInput
 {
 public:
-    				uiZRangeInput(uiParent*,bool time,bool wstep);
+    				uiZRangeInput(uiParent*,bool depth,bool wstep);
 
     template <class T> inline
     void			setZRange(T);
@@ -38,7 +38,7 @@ template <class T> inline
 void uiZRangeInput::setZRange( T range )
 {
     if ( !isdepth_ && !range.isUdf() )
-	range.scale( ZDomain::Time().userFactor() );
+	range.scale( (float) ZDomain::Time().userFactor() );
     
     setValue( range );
 }

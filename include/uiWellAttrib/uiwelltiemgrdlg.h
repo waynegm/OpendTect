@@ -74,17 +74,17 @@ protected:
     uiLabeledComboBox*	cscorrfld_;
     uiWaveletExtraction* extractwvltdlg_;
 
-    bool		getSetup( const char* wllnm );
+    void		getSetup( const char* wllnm );
     bool		getSeismicInSetup();
     bool		getVelLogInSetup() const;
     bool		getDenLogInSetup() const;
     bool		initSetup();
     void		saveWellTieSetup(const MultiID&,
-	    				const WellTie::Setup&) const;
+	    				 const WellTie::Setup&) const;
     
     bool		acceptOK(CallBacker*);
     void		extrWvlt(CallBacker*);
-    void                extractWvltDone(CallBacker*);
+    void		extractWvltDone(CallBacker*);
     void		seisSelChg(CallBacker*);
     void		d2TSelChg(CallBacker*);
     void		wellSelChg(CallBacker*);

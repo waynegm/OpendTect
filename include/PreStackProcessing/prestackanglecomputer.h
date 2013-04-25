@@ -69,11 +69,15 @@ protected:
     FlatPosData			outputsampling_;
     ElasticModel		elasticmodel_;
     RayTracer1D*		raytracer_;
+    const RayTracer1D*		extraytracer_;
     float			thresholdparam_;
     float			maxthickness_;
     bool			needsraytracing_;
 };
 
+/*!
+\brief Computes angles for PreStack::Gather from velocity model.
+*/
 
 mExpClass(PreStackProcessing) VelocityBasedAngleComputer : public AngleComputer
 { mRefCountImpl(VelocityBasedAngleComputer);
@@ -101,16 +105,19 @@ protected:
     TraceID			trcid_;
 };
 
+/*!
+\brief Computes angles for PreStack::Gather from ElasticModel.
+*/
 
 mExpClass(PreStackProcessing) ModelBasedAngleComputer : public AngleComputer
 {
 public:
 				ModelBasedAngleComputer();
 				
-    void			setElasticModel(ElasticModel& em,bool doblock,
+    void			setElasticModel(const ElasticModel& em,
+	    					bool doblock,
 						bool pvelonly=true);
-    void			setRayTracer(RayTracer1D* rt);
-				//! <Ray Tracer becomes mine
+    void			setRayTracer(const RayTracer1D* rt);
     bool			isOK() const
 				{ return elasticmodel_.size(); }
 

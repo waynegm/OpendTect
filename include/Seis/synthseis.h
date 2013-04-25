@@ -13,7 +13,6 @@ ________________________________________________________________________
 -*/
 
 #include "seismod.h"
-#include "seismod.h"
 #include "ailayer.h"
 #include "factory.h"
 #include "reflectivitymodel.h"
@@ -195,6 +194,7 @@ public:
 
     //input
     void		addModel(const ElasticModel&);
+    void		forceReflTimes(const StepInterval<float>&);
     void		fillPar(IOPar& raypars) const;
     bool		usePar(const IOPar& raypars);
 
@@ -228,6 +228,8 @@ public:
     const RayModel&	result(int id) const 	{ return *raymodels_[id]; }
 
     const Interval<float>&	raySampling() const { return raysampling_; }
+    const ObjectSet<RayTracer1D>& rayTracers() const;
+    const TypeSet<ElasticModel>& elasticModels() const	{ return aimodels_; }
 
 protected:
     RayTracerRunner*		rtr_;
@@ -247,9 +249,7 @@ protected:
 
     StepInterval<float>		forcedrefltimes_;
     bool			forcerefltimes_;
-
-public:
-    void			forceReflTimes(const StepInterval<float>&);
+    bool			raytracingdone_;
 };
 
 } //namespace

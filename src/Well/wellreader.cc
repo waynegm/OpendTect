@@ -365,6 +365,8 @@ Interval<float> Well::Reader::getLogDahRange( const char* nm ) const
 
 	readLogData( *log, strm, bintype );
 	sd.close();
+	if ( log->isEmpty() )
+	    continue;
 	
 	const bool valinmtr = SI().zInFeet() && (version < 4.195);
 
@@ -474,7 +476,16 @@ bool Well::Reader::addLog( std::istream& strm ) const
 	    newlog->dahArr()[idx] = newlog->dah(idx) * mToFeetFactorF;
     }
 
+    const float stopz = wd.track().dahRange().stop;
+    for ( int idx=newlog->size()-1; idx>=0; idx-- )
+    {
+	if ( newlog->dahArr()[idx] > stopz )
+	    newlog->valArr()[idx] = mUdf(float);
+    }
+
+    newlog->removeTopBottomUdfs();
     wd.logs().add( newlog );
+
     return true;
 }
 
@@ -526,6 +537,7 @@ bool Well::Reader::getMarkers( std::istream& strm ) const
     IOPar iopar( astrm );
     if ( iopar.isEmpty() ) return false;
 
+    const float stopz = wd.track().dahRange().stop;
     wd.markers().erase();
     BufferString bs;
     for ( int idx=1;  ; idx++ )
@@ -554,7 +566,10 @@ bool Well::Reader::getMarkers( std::istream& strm ) const
 	    wm->setColor( col );
 	}
 
-	wd.markers() += wm;
+	if ( wm->dah() > stopz )
+	    delete wm;
+	else
+	    wd.markers().insertNew( wm );
     }
 
     return wd.markers().size();

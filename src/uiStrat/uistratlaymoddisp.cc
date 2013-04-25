@@ -44,11 +44,10 @@ uiStratLayerModelDisp::uiStratLayerModelDisp( uiStratLayModEditTools& t,
     : uiGroup(t.parent(),"LayerModel display")
     , tools_(t)
     , lmp_(lmp)
-    , zoomwr_(mUdf(double),0,0,0)
+    , zrg_(0,1)
     , selseqidx_(-1)
     , flattened_(false)
     , fluidreplon_(false)
-    , zrg_(0,1)
     , sequenceSelected(this)
     , genNewModelNeeded(this)
     , rangeChanged(this)   
@@ -91,8 +90,8 @@ bool uiStratLayerModelDisp::haveAnyZoom() const
 {
     const int nrseqs = layerModel().size();
     mGetDispZrg(dispzrg);
-    uiWorldRect wr( 1, dispzrg.start, nrseqs + 1, dispzrg.stop );
-    return zoomwr_.isInside( wr, 1e-5 );
+    uiWorldRect wr( 1, dispzrg.start, nrseqs, dispzrg.stop );
+    return zoomBox().isInside( wr, 1e-5 );
 }
 
 
@@ -138,6 +137,7 @@ uiStratSimpleLayerModelDisp::uiStratSimpleLayerModelDisp(
     , zoomboxitm_(0)
     , dispprop_(1)
     , dispeach_(1)
+    , zoomwr_(mUdf(double),0,0,0)
     , fillmdls_(true)
     , uselithcols_(true)
     , showzoomed_(true)
@@ -420,11 +420,19 @@ void uiStratSimpleLayerModelDisp::setZoomBox( const uiWorldRect& wr )
 	zoomboxitm_->setZValue( 100 );
     }
 
-    // provided rect is always in system [0.5,N+0.5]
-    zoomwr_.setLeft( wr.left() + .5 );
-    zoomwr_.setRight( wr.right() + .5 );
-    zoomwr_.setTop( wr.bottom() );
-    zoomwr_.setBottom( wr.top() );
+    if ( mIsUdf(wr.left()) )
+    {
+	zoomwr_.setLeft( mUdf(float) );
+	getBounds();
+    }
+    else
+    {
+	// provided rect is always in system [0.5,N+0.5]
+	zoomwr_.setLeft( wr.left() + .5 );
+	zoomwr_.setRight( wr.right() + .5 );
+	zoomwr_.setTop( wr.bottom() );
+	zoomwr_.setBottom( wr.top() );
+    }
     updZoomBox();
     if ( showzoomed_ )
 	forceRedispAll();
@@ -578,7 +586,8 @@ void uiStratSimpleLayerModelDisp::doDraw()
     const float vwdth = vrg_.width();
     float zfac = 1; mGetDispZ( zfac );
 
-    mStartLayLoop( true, int prevypix1 = -mUdf(int) )
+    mStartLayLoop( true, int lastdrawnypix = mUdf(int) )
+
 
 	float dispz0 = z0; float dispz1 = z1;
 	mGetConvZ( dispz0, zfac ); mGetConvZ( dispz1, zfac );
@@ -592,41 +601,43 @@ void uiStratSimpleLayerModelDisp::doDraw()
 		dispz0 = (float)zoomwr_.bottom();
 	}
 
-	int ypix0 = yax_->getPix( dispz0 );
 	const int ypix1 = yax_->getPix( dispz1 );
-	if ( ypix0 <= prevypix1 ) ypix0 = prevypix1 + 1;
-	prevypix1 = ypix1;
+	if ( mIsUdf(val) )
+	    { lastdrawnypix = ypix1; continue; }
 
-	if ( ypix0 < ypix1 && !mIsUdf(val) )
+	const int ypix0 = mIsUdf(lastdrawnypix) ? yax_->getPix( dispz0 )
+						: lastdrawnypix + 1;
+	if ( ypix0 >= ypix1 )
+	    continue;
+
+	lastdrawnypix = ypix1;
+	const float relx = (val-vrg_.start) / vwdth;
+	const int xpix0 = getXPix( iseq, 0 );
+	const int xpix1 = getXPix( iseq, relx );
+
+	uiRectItem* it = new uiRectItem( xpix0, ypix0,
+					 xpix1-xpix0+1, ypix1-ypix0+1 );
+
+	const Color laycol = lay.dispColor( uselithcols_ );
+	bool mustannotcont = false;
+	if ( !lay.content().isUnspecified() )
+	    mustannotcont = allcontents_
+		|| (selectedcontent_ && lay.content() == *selectedcontent_);
+	const Color pencol = mustannotcont ? lay.content().color_ : laycol;
+	it->setPenColor( pencol );
+	if ( pencol != laycol )
+	    it->setPenStyle( LineStyle(LineStyle::Solid,2,pencol) );
+
+	if ( fillmdls_ )
 	{
-	    const float relx = (val-vrg_.start) / vwdth;
-	    const int xpix0 = getXPix( iseq, 0 );
-	    const int xpix1 = getXPix( iseq, relx );
-
-	    uiRectItem* it = scene().addRect(
-		    mCast(float,xpix0), mCast(float,ypix0),
-		    mCast(float,xpix1-xpix0+1), mCast(float,ypix1-ypix0+1) );
-	    it->setZValue( layzlvl );
-
-	    const Color laycol = lay.dispColor( uselithcols_ );
-	    bool mustannotcont = false;
-	    if ( !lay.content().isUnspecified() )
-		mustannotcont = allcontents_
-		    || (selectedcontent_ && lay.content() == *selectedcontent_);
-	    const Color pencol = mustannotcont ? lay.content().color_ : laycol;
-	    it->setPenColor( pencol );
-	    if ( pencol != laycol )
-		it->setPenStyle( LineStyle(LineStyle::Solid,2,pencol) );
-
-	    if ( fillmdls_ )
-	    {
-		it->setFillColor( laycol );
-		if ( mustannotcont )
-		    it->setFillPattern( lay.content().pattern_ );
-	    }
-
-	    logblckitms_ += it;
+	    it->setFillColor( laycol );
+	    if ( mustannotcont )
+		it->setFillPattern( lay.content().pattern_ );
 	}
+
+	it->setZValue( layzlvl );
+	scene().addItem( it );
+	logblckitms_ += it;
 
     mEndLayLoop()
 

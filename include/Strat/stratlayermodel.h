@@ -14,8 +14,10 @@ ________________________________________________________________________
 -*/
 
 #include "stratmod.h"
-#include "stratlayersequence.h"
+
 #include "elasticpropsel.h"
+#include "propertyref.h"
+#include "stratlayersequence.h"
 
 
 namespace Strat
@@ -44,6 +46,7 @@ public:
     int				size() const	{ return seqs_.size(); }
     LayerSequence&		sequence( int idx )	  { return *seqs_[idx];}
     const LayerSequence& 	sequence( int idx ) const { return *seqs_[idx];}
+    Interval<float>		zRange() const;
 
     void			setEmpty();
     LayerSequence&		addSequence();
@@ -51,8 +54,8 @@ public:
     				//!< Does a match of props
     void			removeSequence(int);
 
-    PropertyRefSelection&	propertyRefs()		{ return props_; }
-    const PropertyRefSelection&	propertyRefs() const	{ return props_; }
+    PropertyRefSelection&	propertyRefs()		{ return proprefs_; }
+    const PropertyRefSelection&	propertyRefs() const	{ return proprefs_; }
     void			prepareUse() const;
 
     void 			setElasticPropSel(const ElasticPropSelection&);
@@ -67,7 +70,7 @@ public:
 protected:
 
     ObjectSet<LayerSequence>	seqs_;
-    PropertyRefSelection	props_;
+    PropertyRefSelection	proprefs_;
     ElasticPropSelection	elasticpropsel_;
 
 };

@@ -20,6 +20,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <QContextMenuEvent>
 #include <QLineEdit>
 #include <QValidator>
+#include <limits.h>
 #include <math.h>
 
 mUseQtnamespace
@@ -158,7 +159,7 @@ uiSpinBox::uiSpinBox( uiParent* p, int dec, const char* nm )
     valueChanged.notify( mCB(this,uiSpinBox,snapToStep) );
     oldvalue_ = getFValue();
 
-    setMaxValue( mUdf(int) );
+    setMaxValue( INT_MAX );
 }
 
 

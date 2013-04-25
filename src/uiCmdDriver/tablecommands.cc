@@ -489,9 +489,9 @@ bool TableSelectCmd::act( const char* parstr )
 				     tag1<CellTag  ? -1 : col );
 
 		specified = tag1!=RowTag || itemrcs12[0]==RowCol(-1,-1) ||
-			    itemrcs12.indexOf(RowCol(-1,col))>=0;
+			    itemrcs12.isPresent(RowCol(-1,col));
 		specified = specified && ( itemrcs11[0]==RowCol(-1,-1) ||
-					   itemrcs11.indexOf(itemrc)>=0 );
+					   itemrcs11.isPresent(itemrc) );
 	    }
 	    else
 	    {
@@ -1293,7 +1293,7 @@ void TableCmdComposer::labelStoredStateNew()
 
 
 #define mIsSet( iswasselected, cellrc ) \
-    ( iswasselected##cells_.indexOf(cellrc) >= 0 )
+    ( iswasselected##cells_.indexOf(cellrc)>=0 ? 1 : 0 )
 
 
 void TableCmdComposer::writeTableSelect()

@@ -377,6 +377,7 @@ void uiTieWin::applyPushed( CallBacker* cb )
 {
     mGetWD(return);
     stretcher_.setD2TModel( wd->d2TModel() );
+    stretcher_.setTrack( &wd->track() );
     stretcher_.doWork( cb );
     doWork( cb );
     clearPicks( cb );
@@ -476,8 +477,9 @@ bool uiTieWin::rejectOK( CallBacker* )
 
 bool uiTieWin::acceptOK( CallBacker* )
 {
-    BufferString msg("This will overwrite your depth/time model, do you want to continue?");
-    if ( uiMSG().askOverwrite(msg) )
+    BufferString errmsg = "This will overwrite your depth/time model, ";
+    errmsg += "do you want to continue?";
+    if ( uiMSG().askOverwrite(errmsg) )
     {
 	drawer_->enableCtrlNotifiers( false );
 	close();
@@ -487,6 +489,7 @@ bool uiTieWin::acceptOK( CallBacker* )
 	if ( Well::MGR().isLoaded( server_.wellID() ) )
 	    Well::MGR().reload( server_.wellID() ); 
     }
+
     return false;
 }
 
@@ -526,8 +529,11 @@ uiInfoDlg::uiInfoDlg( uiParent* p, Server& server )
     wvltdraw_ = new WellTie::uiWaveletView( wvltgrp, wvlts );
     wvltdraw_->activeWvltChged.notify(mCB(this,WellTie::uiInfoDlg,wvltChanged));
     wvltdraw_->setActiveWavelet( data_.isinitwvltactive_ );
+    wvltscaler_ = new uiLabel( wvltgrp, 0 );
+    wvltscaler_->attach( leftAlignedBelow, wvltdraw_ );
     estwvltlengthfld_ = new uiGenInput(wvltgrp,"Estimated wavelet length (ms)");
-    estwvltlengthfld_ ->attach( centeredBelow, wvltdraw_ );
+    estwvltlengthfld_->attach( leftAlignedBelow, wvltscaler_ );
+    estwvltlengthfld_->setElemSzPol( uiObject::Small );
     estwvltlengthfld_->valuechanged.notify( mCB(this,uiInfoDlg,propChanged) );
 
     uiSeparator* verSepar = new uiSeparator( viewersgrp,"Vertical", false );
@@ -555,6 +561,7 @@ uiInfoDlg::uiInfoDlg( uiParent* p, Server& server )
 	for ( int idx=0; idx<wd->markers().size(); idx++)
 	    markernames_.add( wd->markers()[idx]->name() );
     }
+
     markernames_.add( Well::ExtractParams::sKeyDataEnd() );
     StringListInpSpec slis( markernames_ );
     const char* markernms[] = { "Top Marker", "Bottom Marker", 0 };
@@ -572,6 +579,7 @@ uiInfoDlg::uiInfoDlg( uiParent* p, Server& server )
 	else
 	    zrangeflds_ += new uiGenInput( markergrp, "",
 					    FloatInpIntervalSpec() );
+
 	zrangeflds_[idx]->valuechanged.notify(mCB(this,uiInfoDlg,propChanged));
 	zrangeflds_[idx]->attach( rightOf, choicefld_ );
 	zlabelflds_ += new uiLabel( markergrp, units[idx] );
@@ -656,7 +664,8 @@ void uiInfoDlg::usePar( const IOPar& par )
 
 #define mMinWvltLength	20
 #define md2T( zval, outistime )\
-    outistime ? d2t->getTime( zval, wd->track() ) : d2t->getDah( zval ); 
+    outistime ? d2t->getTime( zval, wd->track() ) \
+	      : d2t->getDah( zval, wd->track() );
 #define md2TI( inzrg, ouzrg, outistime )\
     { ouzrg.start = md2T( inzrg.start, outistime ); \
       ouzrg.stop = md2T( inzrg.stop, outistime ) }
@@ -703,7 +712,7 @@ void uiInfoDlg::propChanged( CallBacker* )
     zrg_.stop = mMIN( timerg.stop, reflrg.stop );
     const float reflstep = reflrg.step;
     zrg_.start = (float) mNINT32( zrg_.start / reflstep ) * reflstep;
-    zrg_.stop = (float) mNINT32( zrg_.stop / reflstep ) * reflstep;    
+    zrg_.stop = (float) mNINT32( zrg_.stop / reflstep ) * reflstep;
     if ( zrg_.width() < (float)mMinWvltLength / SI().zDomain().userFactor() )
     {
 	BufferString errmsg = "the wavelet length must be at least ";
@@ -714,9 +723,9 @@ void uiInfoDlg::propChanged( CallBacker* )
     }
 
     const int reqwvltlgthms = estwvltlengthfld_->getIntValue();
-    const float reqwvltlgth = (float)reqwvltlgthms / SI().zDomain().userFactor();
+    const float reqwvltlgth = (float)reqwvltlgthms /SI().zDomain().userFactor();
     const float wvltlgth = zrg_.width() < reqwvltlgth ? zrg_.width()
-						       : reqwvltlgth;
+						      : reqwvltlgth;
     data_.estimatedwvlt_.reSize(
 		mNINT32( wvltlgth / data_.getTraceRange().step ) );
     wvltChanged(0);
@@ -728,6 +737,7 @@ void uiInfoDlg::computeData()
     zrg_.limitTo( data_.getTraceRange() );
     if ( !server_.computeAdditionalInfo( zrg_ ) )
 	{ uiMSG().error( server_.errMSG() ); return; }
+
     crosscorr_->set( data_.correl_ );
 }
 
@@ -736,6 +746,12 @@ void uiInfoDlg::drawData()
 {
     wvltdraw_->redrawWavelets();
     crosscorr_->draw();
+    if ( wvltscaler_ )
+    {
+	BufferString scalerfld = "Synthetic to seismic scaler: ";
+	scalerfld += data_.correl_.scaler_;
+	wvltscaler_->setText( scalerfld );
+    }
 }
 
 
@@ -746,6 +762,7 @@ void uiInfoDlg::wvltChanged( CallBacker* cb )
 	mCBCapsuleUnpack(bool,isinitwvlatactive,cb);
 	server_.setInitWvltActive( isinitwvlatactive );
     }
+
     server_.updateSynthetics(); 
     computeData();
     drawData();

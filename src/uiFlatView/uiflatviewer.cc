@@ -66,6 +66,7 @@ uiFlatViewer::uiFlatViewer( uiParent* p )
     bitmapdisp_->setExtraFactor( extfac_ );
     worldgroup_->add( bitmapdisp_->getDisplay() );
     axesdrawer_.setZvalue( mAxisZStart );
+    mAttachCB( axesdrawer_.layoutChanged(), uiFlatViewer, reSizeCB );
 }
 
 
@@ -94,9 +95,6 @@ void uiFlatViewer::reSizeCB( CallBacker* cb )
 }
 
 
-#define mAxisHeight 20
-#define mAxisWidth 50
-
 uiRect uiFlatViewer::getViewRect() const
 {
     const FlatView::Annotation& annot = appearance().annot_;
@@ -104,12 +102,15 @@ uiRect uiFlatViewer::getViewRect() const
     int r = extraborders_.right();
     int t = extraborders_.top();
     int b = extraborders_.bottom();
+
+    const int axisheight = axesdrawer_.getNeededHeight();
+    const int axiswidth = axesdrawer_.getNeededWidth();
     
-    if ( annot.haveTitle() ) t += mAxisHeight;
+    if ( annot.haveTitle() ) t += axisheight;
     if ( annot.haveAxisAnnot(false) ) 
-	{ l += mAxisWidth; r += 2; }
+	{ l += axiswidth; r += 2; }
     if ( annot.haveAxisAnnot(true) )
-	{ b += mAxisHeight;  t += mAxisHeight; }
+	{ b += axisheight;  t += axisheight; }
     
     const uiBorder annotborder(l,t,r,b);
 
@@ -390,45 +391,3 @@ void uiFlatViewer::setSelDataRanges( Interval<double> xrg,Interval<double> yrg)
     yseldatarange_ = yrg;
     viewChanged.trigger();
 }
-
-
-
-//TODO 4.4 legacy remove when not used 
-uiFlatViewer::uiFlatViewer( uiParent* p, bool yn )
-    : uiGroup(p,"Flat viewer")
-    , view_( new uiGraphicsView( this, "Flatview" ) )
-    , axesdrawer_(*new FlatView::AxesDrawer(*this,*view_))
-    , extfac_(0.5)
-    , extraborders_(0,0,5,0)
-    , worldgroup_( new uiGraphicsItemGroup( true ) )
-    , bitmapdisp_( new FlatView::uiBitMapDisplay( *this ) )
-    , annotwork_( mCB(this,uiFlatViewer,updateAnnotCB) )
-    , auxdatawork_( mCB(this,uiFlatViewer,updateAuxDataCB) )
-    , bitmapwork_( mCB(this,uiFlatViewer,updateBitmapCB) )
-    , control_(0)
-    , xseldatarange_(mUdf(float),mUdf(float))		 
-    , yseldatarange_(mUdf(float),mUdf(float))
-    , useseldataranges_(false)	 
-    , viewChanged(this)
-    , dataChanged(this)
-    , dispParsChanged(this)
-{
-    updatequeueid_ =
-	Threads::WorkManager::twm().addQueue( Threads::WorkManager::Manual );
-
-    view_->preDraw.notify( mCB(this,uiFlatViewer,updateCB ) );
-    view_->disableScrollZoom();
-    view_->scene().setMouseEventActive( true );
-    view_->scene().addItem( worldgroup_ );
-    view_->setScrollBarPolicy( false, uiGraphicsViewBase::ScrollBarAlwaysOff );
-    view_->setScrollBarPolicy( true, uiGraphicsViewBase::ScrollBarAlwaysOff );
-    view_->reSize.notify( mCB(this,uiFlatViewer,reSizeCB) );
-    setStretch( 2, 2 ); view_->setStretch( 2, 2 );
-
-    reportedchanges_ += All;
-    bitmapdisp_->getDisplay()->setZValue( mBitMapZ );
-    bitmapdisp_->setExtraFactor( extfac_ );
-    worldgroup_->add( bitmapdisp_->getDisplay() );
-    axesdrawer_.setZvalue( mAxisZStart );
-}
-

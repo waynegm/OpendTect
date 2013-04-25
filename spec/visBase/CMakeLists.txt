@@ -6,13 +6,12 @@
 #_______________________________________________________________________________
 
 if ( UNIX )
-    set( EXTRA_LIBS ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} )
     if ( APPLE )
     else()
-	list( APPEND EXTRA_LIBS X11 )
+	find_package( X11 )
+	set( EXTRA_LIBS ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${X11_LIBRARIES} )
+	set( OD_MODULE_PROGS od_glxinfo.c )
     endif( APPLE )
-#    set( OD_MODULE_EXECS od_glxinfo )
-    set( OD_MODULE_PROGS od_glxinfo.c )
 else()
     set( OD_MODULE_EXECS w32glxinfo.c )
 endif( UNIX )

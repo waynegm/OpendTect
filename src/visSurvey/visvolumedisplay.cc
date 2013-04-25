@@ -620,7 +620,7 @@ bool VolumeDisplay::updateSeedBasedSurface( int idx, TaskRunner* tr )
     cs.normalise();
     for ( int seedidx=0; seedidx<seeds.size(); seedidx++ )
     {
-	const Coord3 pos =  seeds[seedidx].pos;
+	const Coord3 pos =  seeds[seedidx].pos_;
 	const BinID bid = SI().transform( pos );
 	const int i = cs.inlIdx( bid.inl );
 	const int j = cs.crlIdx( bid.crl );

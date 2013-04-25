@@ -140,6 +140,9 @@ if ( OD_MODULE_HAS_LIBRARY )
     #Add all headerfiles to be included in the library (nice in IDEs)
     foreach ( INCDIR ${OD_${OD_MODULE_NAME}_INCLUDEPATH} )
 	file ( GLOB INCFILES ${INCDIR}/*.h )
+	file ( GLOB XPMFILES ${INCDIR}/*.xpm )
+	file ( GLOB INFILES ${INCDIR}/*.in )
+	set( INCFILES ${INCFILES} ${XPMFILES} ${INFILES} )
 	if ( INCFILES )
 	    list ( APPEND OD_MODULE_INCFILES ${INCFILES} )
 	endif( INCFILES )
@@ -280,7 +283,7 @@ if( OD_MODULE_PROGS OR OD_MODULE_GUI_PROGS )
 	endif()
 
 	if ( ${TARGET_NAME} MATCHES od_main_console )
-	set( EXEC od_main )
+	    set( EXEC od_main.cc )
 	endif()
 
 	add_executable( ${TARGET_NAME} ${OD_EXEC_GUI_SYSTEM} ${EXEC} 
@@ -364,13 +367,23 @@ if(OD_MODULE_BATCHPROGS)
 
 endif( OD_MODULE_BATCHPROGS )
 
-foreach ( TEST_FILE ${OD_TEST_PROGS} )
+foreach ( TEST_FILE ${OD_NIGHTLY_TEST_PROGS} )
+    get_filename_component( TEST_NAME ${TEST_FILE} NAME_WE )
+    set ( TEST_NAME test_${TEST_NAME} )
+
+    set ( OD_TESTS_IGNORE_CONTINUOUS ${OD_TESTS_IGNORE_CONTINUOUS} ${TEST_NAME} PARENT_SCOPE )
+    set ( OD_TESTS_IGNORE_EXPERIMENTAL ${OD_TESTS_IGNORE_EXPERIMENTAL} ${TEST_NAME} PARENT_SCOPE )
+endforeach()
+
+foreach ( TEST_FILE ${OD_TEST_PROGS} ${OD_NIGHTLY_TEST_PROGS} )
     #Add dep on Batch if there are batch-progs
     if ( OD_USEBATCH )
 	list( APPEND OD_RUNTIMELIBS "Batch" "Network" )
 	list( REMOVE_DUPLICATES OD_RUNTIMELIBS )
+	add_definitions( -D__prog__ )
     endif()
     get_filename_component( TEST_NAME ${TEST_FILE} NAME_WE )
+    set ( PARAMETER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tests/${TEST_NAME}.par )
     set ( TEST_NAME test_${TEST_NAME} )
     add_executable( ${TEST_NAME} ${OD_EXEC_GUI_SYSTEM} tests/${TEST_FILE} )
     OD_ADD_SOURCE_FILES( tests/${TEST_FILE} )
@@ -395,19 +408,24 @@ foreach ( TEST_FILE ${OD_TEST_PROGS} )
     endif( OD_CREATE_LAUNCHERS )
     if ( WIN32 )
         set ( TEST_COMMAND "${OpendTect_DIR}/dtect/run_test.cmd" )
-        set ( TEST_ARGS --command ${TEST_NAME}.exe
-			--wdir ${CMAKE_BINARY_DIR}
-			--config Debug --plf ${OD_PLFSUBDIR}
-			--qtdir ${QTDIR}
-			--quiet )
+        set ( TEST_ARGS --command ${TEST_NAME}.exe )
     else()
-        set ( TEST_COMMAND "${OD_EXEC_OUTPUT_PATH}/${TEST_NAME}" )
-	set ( TEST_ARGS "--quiet" )
+        set ( TEST_COMMAND "${OpendTect_DIR}/dtect/run_test.csh" )
+        set ( TEST_ARGS --command ${TEST_NAME} )
+    endif()
+
+    list ( APPEND TEST_ARGS --wdir ${CMAKE_BINARY_DIR}
+		    --config ${CMAKE_BUILD_TYPE} --plf ${OD_PLFSUBDIR}
+		    --qtdir ${QTDIR}
+		    --quiet )
+
+    if ( EXISTS ${PARAMETER_FILE} )
+	list( APPEND TEST_ARGS --parfile ${PARAMETER_FILE} )
     endif()
 
     if ( NOT (OD_TESTDATA_DIR STREQUAL "") )
 	if ( EXISTS ${OD_TESTDATA_DIR} )
-	    set ( TEST_ARGS "${TEST_ARGS} --datadir ${OD_TESTDATA_DIR}" )
+	    list ( APPEND TEST_ARGS --datadir ${OD_TESTDATA_DIR} )
 	endif()
     endif()
 
@@ -497,40 +515,6 @@ macro ( OD_ADD_PLUGIN_BATCHPROGS )
     foreach ( SRC ${ARGV} )
 	list( APPEND OD_MODULE_BATCHPROGS src/${OD_PLUGINSUBDIR}/${SRC} )
     endforeach()
-endmacro()
-
-macro ( OD_ADD_KEYWORD_TEST KW NM )
-    if ( NOT DEFINED WIN32 )
-	set( CMD "${OpendTect_DIR}/dtect/FindKeyword" )
-	list( APPEND CMD "--keyword" "${KW}" "--listfile" "${OD_SOURCELIST_FILE}" )
-	set ( EXCEPTIONFILE ${CMAKE_SOURCE_DIR}/CMakeModules/exceptions/${KW}_exceptions )
-	if ( EXISTS ${EXCEPTIONFILE} )
-	    list( APPEND CMD "--exceptionfile" "${EXCEPTIONFILE}" )
-	endif()
-	add_test( "Keyword_${NM}" ${CMD} )
-    endif()
-endmacro()
-
-macro ( OD_ADD_LINEEND_TEST )
-    if ( NOT DEFINED WIN32 )
-	set( CMD "${OpendTect_DIR}/dtect/FindUnixEOL.sh" )
-	list( APPEND CMD "--listfile" "${OD_SOURCELIST_FILE}" )
-	add_test( LineEndTest ${CMD} )
-
-	set( CMD "${OpendTect_DIR}/dtect/FindNoNewlineAtEndOfFile.csh" )
-	list( APPEND CMD "--listfile" "${OD_SOURCELIST_FILE}" )
-	add_test( FileEndTest ${CMD} )
- 
-    endif()
-endmacro()
-
-
-macro ( OD_ADD_SVNPROP_TEST )
-    if ( NOT DEFINED WIN32 )
-	set( CMD "${OpendTect_DIR}/dtect/CheckSVNProps.csh" )
-	list( APPEND CMD "--listfile" "${OD_SOURCELIST_FILE}" )
-	add_test( SVNPropertyTest ${CMD} )
-    endif()
 endmacro()
 
 #Get current year

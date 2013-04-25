@@ -16,30 +16,28 @@ static const char* rcsID mUsedVar = "$Id$";
 const char* Well::Marker::sKeyDah()	{ return "Depth along hole"; }
 
 
-Well::Marker::Marker( int lvlid, float dh )
-    : levelid_(lvlid)
-    , dah_(dh)
+
+Well::Marker& Well::Marker::operator =( const Well::Marker& mrk )
 {
-}
-
-
-Well::Marker::Marker( const Well::Marker& mrk )
-{
-    setName( mrk.name() );
-    dah_ = mrk.dah();
-    levelid_ = mrk.levelID();
-    color_ = mrk.color();
-}
-
-
-const BufferString& Well::Marker::name() const
-{
-    return NamedObject::name();
+    if ( this != &mrk )
+    {
+	setName( mrk.name() );
+	dah_ = mrk.dah();
+	levelid_ = mrk.levelID();
+	color_ = mrk.color();
+    }
+    return *this;
 }
 
 
 Color Well::Marker::color() const
 {
+    if ( levelid_ >= 0 )
+    {
+	const Strat::Level* lvl = Strat::LVLS().get( levelid_ );
+	if ( lvl )
+	    return lvl->color();
+    }
     return color_;
 }
 
@@ -65,11 +63,11 @@ int Well::MarkerSet::getIdxAbove( float reqz, const Well::Track* trck ) const
     for ( int idx=0; idx<size(); idx++ )
     {
 	const Marker& mrk = *(*this)[idx];
-	float z = mrk.dah();
+	float mrkz = mrk.dah();
 	if ( trck )
-	    z = mCast(float,trck->getPos(z).z);
-	if ( reqz > z )
-	    return idx - 1;
+	    mrkz = mCast(float,trck->getPos(mrkz).z);
+	if ( mrkz > reqz )
+	    return idx-1;
     }
     return size() - 1;
 }

@@ -18,7 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdataman.h"
 #include "visselman.h"
 #include "visevent.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vispolygonoffset.h"
 #include "vislight.h"
 
@@ -216,7 +216,7 @@ void Scene::mousePickCB( CallBacker* cb )
 		     OD::rightMouseButton(eventinfo.buttonstate_) &&
 		     dataobj->rightClicked() )
 		{
-		    mDynamicCastGet( visBase::Marker*, emod, dataobj );
+		    mDynamicCastGet( visBase::MarkerSet*, emod, dataobj );
 		    if ( emod ) 
 		    {
 			markerclicked = true;

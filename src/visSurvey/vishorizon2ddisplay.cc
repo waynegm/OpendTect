@@ -21,7 +21,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "visdrawstyle.h"
 #include "visevent.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vispolyline.h"
 #include "vispointset.h"
@@ -169,11 +169,11 @@ void Horizon2DDisplay::removeSectionDisplay( const EM::SectionID& sid )
     const int idx = sids_.indexOf( sid );
     if ( idx<0 ) return;
 
-    removeChild( lines_[idx]->getInventorNode() );
+    removeChild( lines_[idx]->osgNode() );
     lines_[idx]->unRef();
     if ( points_[idx] )
     {
-	removeChild( points_[idx]->getInventorNode() );
+	removeChild( points_[idx]->osgNode() );
 	points_[idx]->unRef();
     }
 
@@ -466,22 +466,25 @@ void Horizon2DDisplay::updateSeedsOnSections(
 	visBase::DataObjectGroup* group = posattribmarkers_[idx];
 	for ( int idy=0; idy<group->size(); idy++ )
 	{
-	    mDynamicCastGet(visBase::Marker*,marker,group->getObject(idy));
-	    if ( !marker ) continue;
+	    mDynamicCastGet(visBase::MarkerSet*,markerset,group->getObject(idy));
+	    if ( !markerset ) continue;
 
-	    marker->turnOn( !displayonlyatsections_ );
-	    Coord3 pos = marker->centerPos();
-	    if ( transformation_ ) 
-		transformation_->transform( pos );
-	    if ( zaxistransform_ )
-		pos.z = zaxistransform_->transform( pos );
-	    for ( int idz=0; idz<seis2dlist.size(); idz++ )
+	    markerset->turnOn( !displayonlyatsections_ );
+	    const visBase::Coordinates* markercoords = 
+		markerset->getCoordinates();
+	    if ( markercoords->size() )
 	    {
-		const float dist = seis2dlist[idz]->calcDist(pos);
-		if ( dist < seis2dlist[idz]->maxDist() )
+		 Coord3 markerpos = markercoords->getPos( 0 );
+	         if ( zaxistransform_ )
+		    markerpos.z = zaxistransform_->transform( markerpos );
+		for ( int idz=0; idz<seis2dlist.size(); idz++ )
 		{
-		    marker->turnOn(true);
-		    break;
+		    const float dist = seis2dlist[idz]->calcDist( markerpos );
+		    if ( dist < seis2dlist[idz]->maxDist() )
+		    {
+			markerset->turnOn(true);
+			break;
+		    }
 		}
 	    }
 	}

@@ -18,7 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "timefun.h"
 #include "visevent.h"
 #include "vislocationdisplay.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vismpeeditor.h"
 #include "visplanedatadisplay.h"
@@ -48,16 +48,15 @@ Sower::Sower( const visBase::VisualObjectImpl* editobj )
     , underlyingobjid_(-1)
 {
     sowingline_->ref();
-    addChild( sowingline_->getInventorNode() );
+    addChild( sowingline_->osgNode() );
     sowingline_->setMaterial( new visBase::Material );
-    //sowingline_->insertNode( pickstyle_->getInventorNode() );
     reInitSettings();
 }
 
 
 Sower::~Sower()
 {
-    removeChild( sowingline_->getInventorNode() );
+    removeChild( sowingline_->osgNode() );
     sowingline_->unRef();
     deepErase( eventlist_ );
 
@@ -469,8 +468,8 @@ bool Sower::acceptTablet( const visBase::EventInfo& eventinfo )
 	{
 	    const int visid = eventinfo.pickedobjids[idx];
 	    visBase::DataObject* dataobj = visBase::DM().getObject( visid );
-	    mDynamicCastGet( const visBase::Marker*, marker, dataobj );
-	    if ( marker )
+	    mDynamicCastGet( const visBase::MarkerSet*, markerset, dataobj );
+	    if ( markerset )
 		return acceptEraser( eventinfo );
 	}
 

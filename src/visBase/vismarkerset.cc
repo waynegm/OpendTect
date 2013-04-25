@@ -30,7 +30,6 @@ MarkerSet::MarkerSet()
     , markerset_( new osgGeo::MarkerSet )
     , displaytrans_( 0 )
     , coords_( Coordinates::create() )
-    , singlecolormaterial_( new visBase::Material )
 {
     markerset_->ref();
     addChild( markerset_ );
@@ -67,17 +66,19 @@ void MarkerSet::setMaterial( visBase::Material* mat )
 
    if ( material_ )
        markerset_->setColorArray( 0 );
-   else
-       removeNodeState( singlecolormaterial_ );
+  
    
    visBase::VisualObjectImpl::setMaterial( mat );
     if ( material_ )
+    {
 	markerset_->setColorArray(
 	    mGetOsgVec4Arr( material_->getColorArray() ) );
+	markerset_->useSingleColor( false );
+    }
     else 
     {
-	markerset_->setColorArray( 0 ); 
-	addNodeState( (visBase::Material*) singlecolormaterial_ );
+	markerset_->setColorArray( 0 );
+	markerset_->useSingleColor( true );
     }
 
 }
@@ -101,7 +102,6 @@ void MarkerSet::removeMarker( int idx )
 
 void MarkerSet::setMarkerStyle( const MarkerStyle3D& ms )
 {
-    singlecolormaterial_->setColor( ms.color_ );
     setType( ms.type_ );
     setScreenSize( (float) ms.size_ );
 }
@@ -109,8 +109,15 @@ void MarkerSet::setMarkerStyle( const MarkerStyle3D& ms )
 
 void MarkerSet::setMarkersSingleColor( const Color& singlecolor )
 {
-     singlecolormaterial_->setColor( singlecolor );
-     setMaterial( 0 );
+    osg::Vec4f color = Conv::to<osg::Vec4>( singlecolor );
+    markerset_->setSingleColor( color );
+    setMaterial( 0 );
+}
+
+
+Color MarkerSet::getMarkersSingleColor() const
+{
+    return Conv::to<Color>(markerset_->getSingleColor() );
 }
 
 

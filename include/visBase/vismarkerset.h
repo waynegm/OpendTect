@@ -57,6 +57,7 @@ public:
     void		setMarkersSingleColor(const Color& singlecolor);
 			//!<all markers will use the same color, the color can also
 			//!<be set by markerstyle
+    Color		getMarkersSingleColor() const;
 
     void		setMarkerStyle(const MarkerStyle3D&);
     			/*!<Sets predefined shape and size.
@@ -102,7 +103,6 @@ protected:
     
     RefMan<Coordinates>		coords_;
     RefMan<Normals>		normals_;
-    RefMan<Material>		singlecolormaterial_;
     RefMan<const mVisTrans>	displaytrans_;
     osgGeo::MarkerSet*		markerset_;
     MarkerStyle3D		markerstyle_;

@@ -31,6 +31,7 @@ namespace visBase
     class DataObjectGroup;
     class DrawStyle;
     class TextureChannel2RGBA;
+    class MarkerSet;
 }
 
 namespace visSurvey
@@ -97,8 +98,9 @@ public:
     virtual EM::SectionID	getSectionID(int visid) const		= 0;
     EM::SectionID		getSectionID(const TypeSet<int>* path) const;
 
-    EM::PosID			getPosAttribPosID(int attrib,
-					   const TypeSet<int>& path ) const;
+    EM::PosID			getPosAttribPosID(int attrib, 
+					 const TypeSet<int>& path, 
+					 const Coord3& clickeddisplaypos) const;
 
     bool			canRemoveSelection() const	{ return true; }
     void                        removeSelection(const Selector<Coord3>&,
@@ -138,7 +140,8 @@ protected:
     ZAxisTransform*			zaxistransform_;
     visBase::EventCatcher*		eventcatcher_;
 
-    ObjectSet<visBase::DataObjectGroup>	posattribmarkers_;
+    ObjectSet<visBase::MarkerSet>	posattribmarkers_;
+    
     TypeSet<int>			posattribs_;
     TypeSet<int>			parposattrshown_;
 

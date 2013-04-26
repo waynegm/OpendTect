@@ -307,8 +307,10 @@ void MPEClickCatcher::sendUnderlying2DSeis(
     if ( !emobj ) 
 	return;
     
-    const EM::PosID nodepid = emod->getPosAttribPosID(EM::EMObject::sSeedNode(),
-						      eventinfo.pickedobjids );
+    const Coord3 clickedpos = eventinfo.displaypickedpos;
+
+    EM::PosID nodepid = emod->getPosAttribPosID(EM::EMObject::sSeedNode(),
+					    eventinfo.pickedobjids,clickedpos );
     info().setNode( sequentSowing() ? EM::PosID(-1,-1,-1) : nodepid );
 
     mDynamicCastGet( const EM::Horizon2D*, hor2d, emobj );
@@ -409,8 +411,10 @@ void MPEClickCatcher::sendUnderlyingPlanes(
     if ( !emobj ) 
 	return;
     
+    const Coord3 clickedpos = eventinfo.displaypickedpos;
+
     const EM::PosID nodepid = emod->getPosAttribPosID(EM::EMObject::sSeedNode(),
-						      eventinfo.pickedobjids );
+					    eventinfo.pickedobjids,clickedpos);
     Coord3 nodepos = emobj->getPos( nodepid );
     info().setNode( sequentSowing() ? EM::PosID(-1,-1,-1) : nodepid );
     

@@ -1925,13 +1925,10 @@ void HorizonDisplay::updateSectionSeeds(
 
     for ( int idx=0; idx<posattribmarkers_.size(); idx++ )
     {
-	visBase::DataObjectGroup* group = posattribmarkers_[idx];
-	for ( int idy=0; idy<group->size(); idy++ )
+	visBase::MarkerSet* markerset = posattribmarkers_[idx];
+	markerset->turnOn( !displayonlyatsections_ );
+	for ( int idy=0; idy<markerset->getCoordinates()->size(); idy++ )
 	{
-	    mDynamicCastGet(visBase::MarkerSet*,markerset,group->getObject(idy))
-	    if ( !markerset ) continue;
-	
-	    markerset->turnOn( !displayonlyatsections_ );
 	    const visBase::Coordinates* markercoords = 
 			    markerset->getCoordinates();
 	    if ( markercoords->size() )

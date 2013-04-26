@@ -463,15 +463,14 @@ void Horizon2DDisplay::updateSeedsOnSections(
 {
     for ( int idx=0; idx<posattribmarkers_.size(); idx++ )
     {
-	visBase::DataObjectGroup* group = posattribmarkers_[idx];
-	for ( int idy=0; idy<group->size(); idy++ )
-	{
-	    mDynamicCastGet(visBase::MarkerSet*,markerset,group->getObject(idy));
-	    if ( !markerset ) continue;
+	visBase::MarkerSet* markerset = posattribmarkers_[idx];
+	markerset->turnOn( !displayonlyatsections_  );
 
-	    markerset->turnOn( !displayonlyatsections_ );
+	for ( int idy=0; idy<markerset->getCoordinates()->size(); idy++ )
+	{
 	    const visBase::Coordinates* markercoords = 
 		markerset->getCoordinates();
+
 	    if ( markercoords->size() )
 	    {
 		 Coord3 markerpos = markercoords->getPos( 0 );

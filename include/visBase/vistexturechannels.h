@@ -94,7 +94,7 @@ public:
 
     void			enableTextureInterpolation(bool);
     bool			textureInterpolationEnabled() const;
-    
+
 protected:
     friend			class ChannelInfo;
     void			update(int channel,bool tc2rgba);

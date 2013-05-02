@@ -35,7 +35,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vishorizondisplay.h"
 #include "vishorizonsection.h"
 #include "vismaterial.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismultitexture2.h"
 #include "vismpeeditor.h"
 #include "visplanedatadisplay.h"
@@ -66,7 +66,6 @@ FaultDisplay::FaultDisplay()
     , explicitintersections_( 0 )
     , displaytransform_( 0 )
     , activestick_( mUdf(int) )
-    , shapehints_( visBase::ShapeHints::create() )
     , showmanipulator_( false )
     , colorchange( this )
     , displaymodechange( this )
@@ -80,26 +79,22 @@ FaultDisplay::FaultDisplay()
 {
     activestickmarker_->ref();
     activestickmarker_->setPickable( false );
+
     if ( !activestickmarker_->getMaterial() )
 	activestickmarker_->setMaterial( new visBase::Material );
-    //activestickmarker_->insertNode(
-	    //activestickmarkerpickstyle_->getInventorNode() );
-    addChild( activestickmarker_->getInventorNode() );
+
+    addChild( activestickmarker_->osgNode() );
 
     getMaterial()->setAmbience( 0.2 );
-    shapehints_->ref();
-    addChild( shapehints_->getInventorNode() );
-    shapehints_->setVertexOrder( visBase::ShapeHints::CounterClockWise );
 
     for ( int idx=0; idx<3; idx++ )
     {
-	visBase::DataObjectGroup* group=visBase::DataObjectGroup::create();
-	group->ref();
-	addChild( group->getInventorNode() );
-	knotmarkers_ += group;
-	visBase::Material* knotmat = new visBase::Material;
-	//group->addObject( knotmat );
-	knotmat->setColor( idx ? Color(0,255,0) : Color(255,0,255) );
+	visBase::MarkerSet* markerset =visBase::MarkerSet::create();
+	markerset->ref();
+	addChild( markerset->osgNode() );
+	knotmarkersets_ += markerset;
+	markerset->setMarkersSingleColor( 
+	    idx ? Color(0,255,0) : Color(255,0,255) );
     }
 
     drawstyle_->ref();
@@ -154,13 +149,12 @@ FaultDisplay::~FaultDisplay()
     }
 
     if ( displaytransform_ ) displaytransform_->unRef();
-    shapehints_->unRef();
 
     activestickmarker_->unRef();
-    for ( int idx=knotmarkers_.size()-1; idx>=0; idx-- )
+    for ( int idx=knotmarkersets_.size()-1; idx>=0; idx-- )
     {
-	removeChild( knotmarkers_[idx]->getInventorNode() );
-	knotmarkers_.removeSingle( idx )->unRef();
+	removeChild( knotmarkersets_[idx]->osgNode() );
+	knotmarkersets_[idx]->unRef();
     }
 
     deepErase( stickintersectpoints_ );
@@ -200,7 +194,7 @@ EM::ObjectID FaultDisplay::getEMID() const
 
 
 #define mSetStickIntersectPointColor( color ) \
-    ((visBase::Material*) knotmarkers_[2]->getObject(0))->setColor(color);
+     knotmarkersets_[2]->setMarkersSingleColor( color ) ;
 
 #define mErrRet(s) { errmsg_ = s; return false; }
 
@@ -246,7 +240,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	paneldisplay_->setMaterial( 0 );
 	paneldisplay_->setSelectable( false );
 	paneldisplay_->setRightHandSystem( righthandsystem_ );
-	addChild( paneldisplay_->getInventorNode() );
+	addChild( paneldisplay_->osgNode() );
     }
 
     if ( !intersectiondisplay_ )
@@ -257,8 +251,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	intersectiondisplay_->setMaterial( 0 );
 	intersectiondisplay_->setSelectable( false );
 	intersectiondisplay_->setRightHandSystem( righthandsystem_ );
-	insertChild( childIndex(texture_->getInventorNode() ),
-		     intersectiondisplay_->getInventorNode() );
+	addChild( intersectiondisplay_->osgNode() );
 	intersectiondisplay_->turnOn( false );
     }
 
@@ -271,8 +264,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	    stickdisplay_->setMaterial( new visBase::Material );
 	stickdisplay_->setSelectable( false );
 	stickdisplay_->setRightHandSystem( righthandsystem_ );
-	insertChild( childIndex(texture_->getInventorNode() ),
-		     stickdisplay_->getInventorNode() );
+	addChild( stickdisplay_->osgNode() );
     }
 
     if ( !explicitpanels_ )
@@ -324,8 +316,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	viseditor_->setDisplayTransformation( displaytransform_ );
 	viseditor_->sower().alternateSowingOrder();
 	viseditor_->sower().setIfDragInvertMask();
-	insertChild( childIndex(texture_->getInventorNode() ),
-		viseditor_->getInventorNode() );
+	addChild( viseditor_->osgNode() );
     }
 
     RefMan<MPE::ObjectEditor> editor = MPE::engine().getEditor( emid, true );
@@ -627,8 +618,8 @@ void FaultDisplay::setDisplayTransformation( const mVisTrans* nt )
     if ( viseditor_ ) viseditor_->setDisplayTransformation( nt );
     activestickmarker_->setDisplayTransformation( nt );
 
-    for ( int idx=0; idx<knotmarkers_.size(); idx++ )
-	knotmarkers_[idx]->setDisplayTransformation( nt );
+    for ( int idx=0; idx<knotmarkersets_.size(); idx++ )
+	knotmarkersets_[idx]->setDisplayTransformation( nt );
 
     if ( displaytransform_ ) displaytransform_->unRef();
     displaytransform_ = nt;
@@ -822,18 +813,8 @@ void FaultDisplay::mouseCB( CallBacker* cb )
 }
 
 
-static bool isSameMarkerPos( const Coord3& pos1, const Coord3& pos2 )
-{
-    const Coord3 diff = pos2 - pos1;
-    float xymargin = 0.01f * SI().inlDistance();
-    if ( diff.x*diff.x + diff.y*diff.y > xymargin*xymargin )
-	return false;
-
-    return fabs(diff.z) < 0.01 * SI().zStep();
-}
-
-#define mMatchMarker( sid, sticknr, pos1, pos2 ) \
-    if ( isSameMarkerPos(pos1,pos2) ) \
+#define mMatchMarker( sid, sticknr, pos1, pos2,eps ) \
+    if ( pos1.isSameAs(pos2,eps) ) \
     { \
 	Geometry::FaultStickSet* fss = \
 				emfault_->geometry().sectionGeometry( sid ); \
@@ -866,18 +847,28 @@ void FaultDisplay::stickSelectCB( CallBacker* cb )
     if ( eventinfo.type!=visBase::MouseClick || !leftmousebutton )
 	return;
 
+    const double epsxy = getInlCrlSystem()->inlDistance()*0.1f;
+    const double epsz = 0.01 * getInlCrlSystem()->zStep();
+    const Coord3 eps( epsxy,epsxy,epsz );
     for ( int idx=0; idx<eventinfo.pickedobjids.size(); idx++ )
     {
+	const Coord3 selectpos = eventinfo.worldpickedpos;
 	const int visid = eventinfo.pickedobjids[idx];
 	visBase::DataObject* dataobj = visBase::DM().getObject( visid );
-	mDynamicCastGet( visBase::Marker*, marker, dataobj );
-	if ( marker )
+	mDynamicCastGet( visBase::MarkerSet*, markerset, dataobj );
+
+	if ( markerset )
 	{
+	    const int markeridx = markerset->findClosestMarker( selectpos );
+	    if( markeridx ==  -1 ) continue;
+
+	    const Coord3 markerpos = 
+		markerset->getCoordinates()->getPos( markeridx );
+
 	    for ( int sipidx=0; sipidx<stickintersectpoints_.size(); sipidx++ )
 	    {
 		const StickIntersectPoint* sip = stickintersectpoints_[sipidx];
-		mMatchMarker( sip->sid_, sip->sticknr_,
-			      marker->centerPos(), sip->pos_ );
+		mMatchMarker(sip->sid_,sip->sticknr_, markerpos,sip->pos_,eps );
 	    }
 
 	    PtrMan<EM::EMObjectIterator> iter =
@@ -890,7 +881,7 @@ void FaultDisplay::stickSelectCB( CallBacker* cb )
 
 		const int sticknr = pid.getRowCol().row;
 		mMatchMarker( pid.sectionID(), sticknr,
-			      marker->centerPos(), emfault_->getPos(pid) );
+			      markerpos, emfault_->getPos(pid),eps );
 	    }
 	}
     }
@@ -1262,8 +1253,7 @@ void FaultDisplay::updateHorizonIntersections( int whichobj,
 	line->setDisplayTransformation( displaytransform_ );
 	line->setSelectable( false );
 	line->setRightHandSystem( righthandsystem_ );
-	insertChild( childIndex(texture_->getInventorNode() ),
-		     line->getInventorNode() );
+	addChild( line->osgNode() );
 	line->turnOn( false );
 	Geometry::ExplFaultStickSurface* shape = 0;
 	mTryAlloc( shape, Geometry::ExplFaultStickSurface(0,mZScale()) );
@@ -1389,6 +1379,10 @@ bool FaultDisplay::isSelectableMarkerInPolySel(
     if ( !polysel->isInside(markerworldpos) )
 	return false;
 
+    const double epsxy = getInlCrlSystem()->inlDistance()*0.1f;
+    const double epsz = 0.01f * getInlCrlSystem()->zStep();
+    const Coord3 eps( epsxy,epsxy,epsz );
+
     TypeSet<int> pickedobjids;
     for ( int depthidx=0; true; depthidx++ )
     {
@@ -1402,12 +1396,12 @@ bool FaultDisplay::isSelectableMarkerInPolySel(
 
 	    const int visid = pickedobjids[idx];
 	    visBase::DataObject* dataobj = visBase::DM().getObject( visid );
-	    mDynamicCastGet( visBase::Marker*, marker, dataobj );
-	    if ( marker )
+	    mDynamicCastGet( visBase::MarkerSet*, markerset, dataobj );
+	    if ( markerset )
 	    {
-		if ( isSameMarkerPos(marker->centerPos(),markerworldpos) )
+		const int markeridx = markerset->findMarker(markerworldpos,eps);
+		if( markeridx >=0 ) 
 		    return true;
-
 		break;
 	    }
 	}
@@ -1488,30 +1482,28 @@ void FaultDisplay::updateEditorMarkers()
 }
 
 
-#define mAddKnotMarker( groupidx, style, pos ) \
-{ \
-    visBase::Marker* marker = visBase::Marker::create(); \
-    marker->setMarkerStyle( style ); \
-    marker->setMaterial(0); \
-    marker->setDisplayTransformation( displaytransform_ ); \
-    marker->setCenterPos( pos ); \
-    marker->setScreenSize(3); \
-    knotmarkers_[groupidx]->addObject( marker ); \
-}
-
 void FaultDisplay::updateKnotMarkers()
 {
     if ( !emfault_ || (viseditor_ && viseditor_->sower().moreToSow()) )
 	return;
 
-    for ( int idx=0; idx<knotmarkers_.size(); idx++ )
+    for ( int idx=0; idx<knotmarkersets_.size(); idx++ )
     {
-	while ( knotmarkers_[idx]->size() > 1 )
-	    knotmarkers_[idx]->removeObject( 1 );
+	visBase::MarkerSet* markerset = knotmarkersets_[idx];
+	markerset->clearMarkers();
+	markerset->setMarkerStyle( MarkerStyle3D::Sphere ); 
+	markerset->setMaterial(0); 
+	markerset->setDisplayTransformation( displaytransform_ ); 
+	markerset->setMarkersSingleColor( emfault_->preferredColor() );
+	markerset->setScreenSize(3); 
     }
 
     if ( !areSticksDisplayed() )
 	return;
+
+    int groupidx = !showmanipulator_ || !stickselectmode_  ? 2 : 0;
+
+    knotmarkersets_[groupidx]->setType( MarkerStyle3D::Sphere );
 
     for ( int idx=0; idx<stickintersectpoints_.size(); idx++ )
     {
@@ -1520,13 +1512,10 @@ void FaultDisplay::updateKnotMarkers()
 			    emfault_->geometry().sectionGeometry( sip->sid_ );
 	if ( !fss ) continue;
 
-	int groupidx = 0;
-	if ( !showmanipulator_ || !stickselectmode_ )
-	    groupidx = 2;
-	else if ( fss->isStickSelected(sip->sticknr_) )
+	if ( fss->isStickSelected(sip->sticknr_) )
 	    groupidx = 1;
 
-	mAddKnotMarker( groupidx, MarkerStyle3D::Sphere, sip->pos_ );
+	knotmarkersets_[groupidx]->getCoordinates()->addPos( sip->pos_ );
     }
 
     if ( !showmanipulator_ || !stickselectmode_ )
@@ -1547,7 +1536,9 @@ void FaultDisplay::updateKnotMarkers()
 
 	const int groupidx = fs->isStickSelected(sticknr) ? 1 : 0;
 	const MarkerStyle3D& style = emfault_->getPosAttrMarkerStyle(0);
-	mAddKnotMarker( groupidx, style, emfault_->getPos(pid) );
+	knotmarkersets_[groupidx]->setMarkerStyle( style );
+	knotmarkersets_[groupidx]->getCoordinates()->addPos(
+	    emfault_->getPos(pid) );
     }
 }
 

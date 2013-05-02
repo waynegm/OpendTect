@@ -209,7 +209,6 @@ protected:
 
     visBase::EventCatcher*		eventcatcher_;
     const mVisTrans*			displaytransform_;
-    visBase::ShapeHints*		shapehints_;
 
     visBase::GeomIndexedShape*		paneldisplay_;
     Geometry::ExplFaultStickSurface*	explicitpanels_;
@@ -249,7 +248,7 @@ protected:
 
     bool				stickselectmode_;
     bool				ctrldown_;
-    ObjectSet<visBase::DataObjectGroup>	knotmarkers_;
+    ObjectSet<visBase::MarkerSet>	knotmarkersets_;
 
     struct StickIntersectPoint
     {

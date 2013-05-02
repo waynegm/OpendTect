@@ -199,6 +199,13 @@ double Coord3::sqDistTo( const Coord3& b ) const
 }
 
 
+bool Coord3::isSameAs(const Coord3& pos, const Coord3& eps) const
+{
+    const Coord3 diff = *this - eps;
+    return fabs(diff.x)<eps.x && fabs(diff.y)<eps.y && fabs(diff.z)<eps.z;
+}
+
+
 const Coord3& Coord3::udf()
 {
    static Coord3 _udf( mUdf(double), mUdf(double), mUdf(double) );

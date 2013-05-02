@@ -24,6 +24,7 @@ namespace visBase
 { 
     class Transformation;
     class Lines;
+    class MarkerSet;
 }
 
 namespace Geometry { class FaultStickSet; class IndexedPrimitiveSet; } 
@@ -128,6 +129,7 @@ protected:
 					int sticknr,
 					TypeSet<Coord3>& intersectpoints) const;
 
+
     visBase::EventCatcher*	eventcatcher_;
     const mVisTrans*		displaytransform_;
 
@@ -150,7 +152,7 @@ protected:
 
     bool			ctrldown_;
 
-    ObjectSet<visBase::DataObjectGroup>	knotmarkers_;
+    ObjectSet<visBase::MarkerSet>  knotmarkersets_;
     Geometry::IndexedPrimitiveSet* lineprimitiveset_;
     struct StickIntersectPoint
     {

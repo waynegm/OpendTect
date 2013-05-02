@@ -128,6 +128,8 @@ public:
 			{ return Geom::Point2D<double>::distTo(b); }
     inline double	sqDistTo( const Geom::Point2D<double>& b ) const
 			{ return Geom::Point2D<double>::sqDistTo(b); }
+    inline bool		isSameAs(const Coord3& pos, const Coord3& eps) const;
+
 };
 
 

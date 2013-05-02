@@ -240,7 +240,7 @@ void MarkerSet::turnMarkerOn( unsigned int idx,bool yn )
 }
 
 
-const int MarkerSet::findClosestMarker( const Coord3& tofindpos, 
+int MarkerSet::findClosestMarker( const Coord3& tofindpos, 
 				 const bool scenespace )
 {
     double minsqdist = mUdf(double);
@@ -259,7 +259,7 @@ const int MarkerSet::findClosestMarker( const Coord3& tofindpos,
 }
 
 
-const int MarkerSet::findMarker( const Coord3& tofindpos, const Coord3& eps,  
+int MarkerSet::findMarker( const Coord3& tofindpos, const Coord3& eps,  
 				 const bool scenespace )
 {
     int minidx = findClosestMarker( tofindpos, scenespace );

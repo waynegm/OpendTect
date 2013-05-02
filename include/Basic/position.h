@@ -108,6 +108,7 @@ public:
     inline bool		isDefined() const;
     double		distTo(const Coord3&) const;
     double		sqDistTo(const Coord3&) const;
+    bool		isSameAs(const Coord3&, const Coord3&) const;
 
     inline double	dot( const Coord3& b ) const;
     inline Coord3	cross( const Coord3& ) const;

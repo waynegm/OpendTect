@@ -17,7 +17,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "separstr.h"
 #include "survinfo.h"
 #include "visdrawstyle.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vispolyline.h"
 #include "visrandompos2body.h"
@@ -75,6 +75,7 @@ void PickSetDisplay::setColor( Color nc )
 	bodydisplay_->setMaterial( new visBase::Material );
 
     bodydisplay_->getMaterial()->setColor( nc );
+    markerset_->setMarkersSingleColor( nc );
 }
 
 
@@ -117,7 +118,7 @@ bool PickSetDisplay::setBodyDisplay()
     {
 	bodydisplay_ = visBase::RandomPos2Body::create();
 	bodydisplay_->ref();
-	addChild( bodydisplay_->getInventorNode() );
+	addChild( bodydisplay_->osgNode() );
     }
     
     if ( !bodydisplay_->getMaterial() )
@@ -137,44 +138,33 @@ bool PickSetDisplay::setBodyDisplay()
 }
 
 
-
-visBase::VisualObject* PickSetDisplay::createLocation() const
-{
-    visBase::Marker* marker = visBase::Marker::create();
-    marker->setType( (MarkerStyle3D::Type) set_->disp_.markertype_ );
-    marker->setScreenSize( mCast(float,set_->disp_.pixsize_) );
-    marker->setMaterial( 0 );
-    if ( scene_ )
-	marker->setZStretch( scene_->getFixedZStretch()*scene_->getZScale()/2 );
-    return marker;
-}
-
-
 void PickSetDisplay::setPosition( int idx, const Pick::Location& loc )
 {
-    mDynamicCastGet(visBase::Marker*,marker,group_->getObject(idx));
-    marker->setCenterPos( loc.pos_ );
-    marker->setDirection( loc.dir_ );
-    BufferString dipvaluetext;
-    loc.getText( "Dip", dipvaluetext );
-    SeparString dipstr( dipvaluetext );
-    const float inldip = dipstr.getFValue( 0 );
-    const float crldip = dipstr.getFValue( 1 );
-    marker->setDip( inldip, crldip );
+    markerset_->getCoordinates()->setPos( idx, loc.pos_ );
+    // below should do later
+    //BufferString dipvaluetext;
+    //loc.getText( "Dip", dipvaluetext );
+    //SeparString dipstr( dipvaluetext );
+    //const float inldip = dipstr.getFValue( 0 );
+    //const float crldip = dipstr.getFValue( 1 );
+    //markerset_->setDip( inldip, crldip );
+    //markerset_->setDirection( loc.dir );
 }
 
 
 Coord3 PickSetDisplay::getPosition( int loc ) const 
 {
-    mDynamicCastGet( visBase::Marker*, marker, group_->getObject(loc) );
-    return marker->centerPos();
+    const visBase::Coordinates* markercoords = markerset_->getCoordinates();
+    if( markercoords->size() )
+	 return markercoords->getPos( loc );
+    return Coord3( 0,0,0 );
 }
 
 
 ::Sphere PickSetDisplay::getDirection( int loc ) const 
 {
-    mDynamicCastGet( visBase::Marker*, marker, group_->getObject(loc) );
-    return marker->getDirection();
+   // return markerset->getDirection();
+    return 0;  // to be implement later
 }
 
 
@@ -194,57 +184,57 @@ void PickSetDisplay::setChg( CallBacker* cb )
 
 void PickSetDisplay::dispChg( CallBacker* cb )
 {
-    mDynamicCastGet(visBase::Marker*,firstmarker,group_->getObject(0));
-    if ( firstmarker )
+    const int oldpixsz = (int)(markerset_->getScreenSize() + .5);
+    if ( oldpixsz != set_->disp_.pixsize_ )
     {
-	const int oldpixsz = (int)(firstmarker->getScreenSize() + .5);
-	if ( oldpixsz != set_->disp_.pixsize_ )
+	if ( needline_ && polyline_ )
 	{
-	    if ( needline_ && polyline_ )
-	    {
-		LineStyle ls; ls.width_ = set_->disp_.pixsize_;
-		polyline_->setLineStyle( ls );
-	    }
-
-	    for ( int idx=0; idx<group_->size(); idx++ )
-	    {
-		mDynamicCastGet(visBase::Marker*,marker,
-				group_->getObject(idx));
-		if ( marker )
-		    marker->setScreenSize( mCast(float,set_->disp_.pixsize_) );
-	    }
+	    LineStyle ls; ls.width_ = set_->disp_.pixsize_;
+	    polyline_->setLineStyle( ls );
 	}
 
-	if ( (int)firstmarker->getType() != set_->disp_.markertype_ )
-	{
-	    for ( int idx=0; idx<group_->size(); idx++ )
-	    {
-		mDynamicCastGet(visBase::Marker*,marker,
-				group_->getObject(idx))
-		if ( marker )
-		{
-		    marker->setType(
-			    (MarkerStyle3D::Type)set_->disp_.markertype_ );
-		}
-	    }
-	}
+	markerset_->setScreenSize(  mCast(float,set_->disp_.pixsize_) );
     }
+
+    if( markerset_->getType() != set_->disp_.markertype_)
+	markerset_->setType( (MarkerStyle3D::Type)set_->disp_.markertype_ );
 
     LocationDisplay::dispChg( cb );
 }
 
 
-int PickSetDisplay::isMarkerClick( const TypeSet<int>& path ) const
-{
-    for ( int idx=group_->size()-1; idx>=0; idx-- )
-    {
-	mDynamicCastGet(visBase::Marker*,marker,group_->getObject(idx));
-	if ( !marker )
-	    continue;
+//
+//void PickSetDisplay::setScene( Scene* scn )
+//{
+//    SurveyObject::setScene( scn );
+//    if ( scene_ ) 
+//	scene_->zstretchchange.notify( 
+//		mCB(this,PickSetDisplay,sceneZChangeCB) );
+//}
 
-	if ( path.indexOf(marker->id())!=-1 )
-	    return idx;
-    }
+//
+//void PickSetDisplay::sceneZChangeCB( CallBacker* )
+//{
+//    for ( int idx=0; idx<group_->size(); idx++ )
+//    {
+//	mDynamicCastGet(visBase::MarkerSet*,markerset,group_->getObject(idx));
+//	/*if ( markerset && scene_ )
+//	    markerset->setZStretch( scene_->getZStretch()*scene_->getZScale()/2 );*/
+//    }
+//}
+
+
+
+int PickSetDisplay::isMarkerClick( const Coord3& clickworldpos ) const
+{
+    const double epsxy = getInlCrlSystem()->inlDistance()*0.1f;
+    const double epsz = 0.01f * getInlCrlSystem()->zStep();
+    const Coord3 eps( epsxy,epsxy,epsz );
+    
+    const int markeridx = markerset_->findMarker( clickworldpos,eps );
+
+    if( markeridx >= 0 )
+	return markeridx;
 
     return -1;
 }

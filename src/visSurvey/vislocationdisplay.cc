@@ -21,6 +21,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visevent.h"
 #include "visdataman.h"
 #include "vismaterial.h"
+#include "vismarkerset.h"
 #include "vispolyline.h"
 #include "vissower.h"
 #include "vistransform.h"
@@ -56,7 +57,7 @@ static float findDistance( Coord3 p1, Coord3 p2, Coord3 p )
 
 LocationDisplay::LocationDisplay()
     : VisualObjectImpl( true )
-    , group_( visBase::DataObjectGroup::create() )
+    , markerset_( visBase::MarkerSet::create() )
     , eventcatcher_( 0 )
     , transformation_( 0 )
     , showall_( true )
@@ -71,21 +72,22 @@ LocationDisplay::LocationDisplay()
     , pickedsobjid_(-1)
     , voiidx_(-1)
 {
-    group_->ref();
-    addChild( group_->getInventorNode() );
+    markerset_->ref();
+    addChild( markerset_->osgNode() );
 
     setSetMgr( &Pick::Mgr() );
 
     sower_ = new Sower( this );
-    addChild( sower_->getInventorNode() );
+    addChild( sower_->osgNode() );
 }
     
 
 LocationDisplay::~LocationDisplay()
 {
     setSceneEventCatcher( 0 );
-    removeChild( group_->getInventorNode() );
-    group_->unRef();
+
+    removeChild( markerset_->osgNode() );
+    markerset_->unRef();
 
     if ( polyline_ )
     {
@@ -104,7 +106,7 @@ LocationDisplay::~LocationDisplay()
 	datatransform_->unRef();
     }
 
-    removeChild( sower_->getInventorNode() );
+    removeChild( sower_->osgNode() );
     delete sower_;
 }
 
@@ -120,6 +122,17 @@ void LocationDisplay::setSet( Pick::Set* s )
 
     set_ = s; 
     setName( set_->name() );
+
+    MarkerStyle3D markerstyle;
+    markerstyle.size_ = set_->disp_.pixsize_;
+    markerstyle.type_ = (MarkerStyle3D::Type) set_->disp_.markertype_;
+    markerset_->setMaterial( 0 );
+    markerset_->setMarkerStyle( markerstyle );
+    markerset_->setMarkersSingleColor( set_->disp_.color_ );
+
+    //   if ( scene_ ) // should do later
+    //markerset->setZStretch( scene_->getZStretch()*scene_->getZScale()/2 );
+
     fullRedraw();
 
     if ( !showall_ && scene_ )
@@ -191,18 +204,13 @@ void LocationDisplay::fullRedraw( CallBacker* )
 	    invalidpicks_ -= idx;
 	}
 
-	if ( idx<group_->size() )
-	    setPosition( idx, loc );
-	else
-	    addDisplayPick( loc, group_->size() );
+	setPosition( idx, loc );
+	markerset_->turnOn( turnon );
 
-	mDynamicCastGet( visBase::VisualObject*, vo,
-			 group_->getObject( idx ) );
-	if ( vo ) vo->turnOn( turnon );
     }
 
-    while ( idx<group_->size() )
-	group_->removeObject( idx );
+    while ( idx<markerset_->getCoordinates()->size() )
+	markerset_->removeMarker( idx );
 
     showLine( set_->disp_.connect_ != Pick::Set::Disp::None );
 }
@@ -216,14 +224,7 @@ void LocationDisplay::showAll( bool yn )
 	scene_->objectMoved(0);
 	return;
     }
-
-    for ( int idx=0; idx<group_->size(); idx++ )
-    {
-	mDynamicCastGet(visBase::VisualObject*, vo, group_->getObject( idx ) );
-	if ( !vo ) continue;
-
-	vo->turnOn( true );
-    }
+    markerset_->turnOn( true );
 }
 
 
@@ -361,7 +362,7 @@ void LocationDisplay::pickCB( CallBacker* cb )
 	     !OD::altKeyboardButton( eventinfo.buttonstate_ ) &&
 	     !OD::shiftKeyboardButton( eventinfo.buttonstate_ ) )
 	{
-	    const int selfpickidx = isMarkerClick( eventinfo.pickedobjids );
+	    const int selfpickidx = isMarkerClick( eventinfo.worldpickedpos );
 	    if ( selfpickidx!=-1 )
 	    {
 		setPickable( false );
@@ -395,7 +396,7 @@ void LocationDisplay::pickCB( CallBacker* cb )
 	    if ( eventinfo.pickedobjids.size() &&
 		 eventid==mousepressid_ )
 	    {
-		const int removeidx = isMarkerClick( eventinfo.pickedobjids );
+		const int removeidx = isMarkerClick( eventinfo.worldpickedpos );
 		if ( removeidx!=-1 ) removePick( removeidx );
 	    }
 
@@ -538,15 +539,13 @@ void LocationDisplay::locChg( CallBacker* cb )
 	    turnon = false;
 	}
 
-	addDisplayPick( loc, cd->loc_ );
+	setPosition( cd->loc_,loc );
+	markerset_->turnOn( turnon );
 
-	mDynamicCastGet( visBase::VisualObject*, vo,
-			 group_->getObject( cd->loc_ ) );
-	if ( vo ) vo->turnOn( turnon );
     }
     else if ( cd->ev_==Pick::SetMgr::ChangeData::ToBeRemoved )
     {
-	group_->removeObject( cd->loc_ );
+	markerset_->removeMarker( cd->loc_ );
 	invalidpicks_ -= cd->loc_;
     }
     else if ( cd->ev_==Pick::SetMgr::ChangeData::Changed )
@@ -564,9 +563,7 @@ void LocationDisplay::locChg( CallBacker* cb )
 	    invalidpicks_ -= cd->loc_;
 	}
 
-	mDynamicCastGet( visBase::VisualObject*, vo,
-			 group_->getObject( cd->loc_ ) );
-	if ( vo ) vo->turnOn( turnon );
+	markerset_->turnOn( turnon );
 	setPosition( cd->loc_, loc );
     }
 
@@ -590,6 +587,7 @@ void LocationDisplay::setChg( CallBacker* cb )
 void LocationDisplay::dispChg( CallBacker* )
 {
     getMaterial()->setColor( set_->disp_.color_ );
+    markerset_->setMarkersSingleColor( set_->disp_.color_  );
     showLine( set_->disp_.connect_ != Pick::Set::Disp::None );
 }
 
@@ -706,16 +704,6 @@ void LocationDisplay::removePick( int removeidx )
 }
 
 
-void LocationDisplay::addDisplayPick( const Pick::Location& loc, int idx )
-{
-    RefMan<visBase::VisualObject> visobj = createLocation();
-    visobj->setDisplayTransformation( transformation_ );
-
-    group_->addObject( visobj );
-    setPosition( idx, loc );
-}
-
-
 BufferString LocationDisplay::getManipulationString() const
 {
     BufferString str = "PickSet: "; str += name();
@@ -737,7 +725,7 @@ void LocationDisplay::otherObjectsMoved(
 {
     if ( showall_ && invalidpicks_.isEmpty() ) return;
 
-    for ( int idx=0; idx<group_->size(); idx++ )
+    for ( int idx=0; idx<markerset_->getCoordinates()->size(); idx++ )
     {
 	Coord3 pos = (*set_)[idx].pos_;
 	if ( datatransform_ ) pos.z = datatransform_->transform( pos );
@@ -779,8 +767,7 @@ void LocationDisplay::otherObjectsMoved(
 	    }
 	}
 
-	mDynamicCastGet(visBase::VisualObject*,vo,group_->getObject(idx));
-	vo->turnOn( newstatus );
+	markerset_->turnMarkerOn( idx, newstatus );
     }
 }
 
@@ -810,10 +797,8 @@ void LocationDisplay::setDisplayTransformation( const mVisTrans* newtr )
     if ( polyline_ )
 	polyline_->setDisplayTransformation( transformation_ );
 
-    for ( int idx=0; idx<group_->size(); idx++ )
-	group_->getObject(idx)->setDisplayTransformation( transformation_ );
-
     sower_->setDisplayTransformation( newtr );
+    markerset_->setDisplayTransformation( newtr );
 }
 
 
@@ -851,7 +836,7 @@ void LocationDisplay::setSceneEventCatcher( visBase::EventCatcher* nevc )
 
 int LocationDisplay::getPickIdx( visBase::DataObject* dataobj ) const
 {
-    return group_->getFirstIdx( dataobj );
+    return 0; // to be implemented
 }
 
 
@@ -892,7 +877,7 @@ const ZAxisTransform* LocationDisplay::getZAxisTransform() const
 }
 
 
-int LocationDisplay::isMarkerClick(const TypeSet<int>&) const
+int LocationDisplay::isMarkerClick(const Coord3& clickworldpos) const
 { return -1; }
 
 

@@ -52,11 +52,10 @@ public:
 
 protected:
 
-    visBase::VisualObject*	createLocation() const;
     void			setPosition(int loc,const Pick::Location&);
     Coord3			getPosition(int loc) const;
     ::Sphere			getDirection(int loc) const;
-    int				isMarkerClick(const TypeSet<int>&) const;
+    int				isMarkerClick(const Coord3&) const;
 
     void			dispChg(CallBacker*);
     void			locChg(CallBacker*);

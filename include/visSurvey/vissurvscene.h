@@ -34,7 +34,7 @@ namespace visBase
 {
     class Annotation;
     class EventCatcher;
-    class Marker;
+    class MarkerSet;
     class PolygonSelection;
     class SceneColTab;
     class TopBotImage;
@@ -199,7 +199,7 @@ protected:
     void			updateAnnotationText();
     void			updateTransforms(const HorSampling&);
     void			mouseMoveCB(CallBacker*);
-    visBase::Marker*		createMarker() const;
+    visBase::MarkerSet*		createMarkerSet() const;
     void			updateBaseMapCursor(const Coord&);
     static const Color&		cDefaultMarkerColor();
     
@@ -216,7 +216,7 @@ protected:
     BaseMapMarkers*		basemapcursor_;
 
     visBase::Annotation*	annot_;
-    visBase::Marker*		marker_;
+    visBase::MarkerSet*		markerset_;
     visBase::PolygonSelection*	polyselector_;
     Selector<Coord3>*		coordselector_;
     visBase::SceneColTab*	scenecoltab_;

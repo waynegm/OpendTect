@@ -23,7 +23,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visannot.h"
 #include "visdataman.h"
 #include "visevent.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vispolygonselection.h"
 #include "visscenecoltab.h"
@@ -58,7 +58,7 @@ static const char* sKeydTectScene()	{ return "dTect.Scene."; }
 Scene::Scene()
     : tempzstretchtrans_(0)
     , annot_(0)
-    , marker_(0)
+    , markerset_(0)
     , mouseposchange(this)
     , mouseposval_(0)
     , mouseposstr_("")
@@ -195,6 +195,7 @@ Scene::~Scene()
     delete coordselector_;
     delete &infopar_;
     delete zdomaininfo_;
+
 }
 
 
@@ -748,19 +749,19 @@ void Scene::setMarkerPos( const Coord3& coord, int sceneid )
     const bool defined = displaypos.isDefined();
     if ( !defined )
     {
-	if ( marker_ )
-	    marker_->turnOn( false );
+	if ( markerset_ )
+	    markerset_->turnOn( false );
 	return;
     }
 
-    if ( !marker_ )
+    if ( !markerset_ )
     {
-	marker_ = createMarker();
-	addUTMObject( marker_ );
+	markerset_ = createMarkerSet();
+	addUTMObject( markerset_ );
     }
 
-    marker_->turnOn( true );
-    marker_->setCenterPos( displaypos );
+    markerset_->turnOn( true );
+    markerset_->getCoordinates()->addPos( displaypos );
 }
 
 
@@ -801,57 +802,59 @@ void Scene::updateBaseMapCursor( const Coord& coord )
 }
 
 
-visBase::Marker* Scene::createMarker() const
+visBase::MarkerSet* Scene::createMarkerSet() const
 {
-    visBase::Marker* marker = visBase::Marker::create();
-    marker->setType( MarkerStyle3D::Cross );
-    marker->getMaterial()->setColor( cDefaultMarkerColor() );
-    marker->setScreenSize( 6 );
-    return marker;
+    visBase::MarkerSet* markerset = visBase::MarkerSet::create();
+    markerset->ref();
+    markerset->setType( MarkerStyle3D::Cross );
+    markerset->setMarkersSingleColor( cDefaultMarkerColor() );
+    markerset->setScreenSize( 6 );
+    markerset_->unRefNoDelete();
+    return markerset;
 }
 
 
 void Scene::setMarkerSize( float nv )
 {
-    if ( !marker_ )
+    if ( !markerset_ )
     {
-	marker_ = createMarker();
-	addUTMObject( marker_ );
-	marker_->turnOn( false );
+	markerset_ = createMarkerSet();
+	addUTMObject( markerset_ );
+	markerset_->turnOn( false );
     }
 
-    marker_->setScreenSize( nv );
+    markerset_->setScreenSize( nv );
 }
 
 
 float Scene::getMarkerSize() const
 {
-    if ( !marker_ )
-	return visBase::Marker::cDefaultScreenSize();
+    if ( !markerset_ )
+	return visBase::MarkerSet::cDefaultScreenSize();
 
-    return marker_->getScreenSize();
+    return markerset_->getScreenSize();
 }
 
 
 void Scene::setMarkerColor( const Color& nc )
 {
-    if ( !marker_ )
+    if ( !markerset_ )
     {
-	marker_ = createMarker();
-	addUTMObject( marker_ );
-	marker_->turnOn( false );
+	markerset_ = createMarkerSet();
+	addUTMObject( markerset_ );
+	markerset_->turnOn( false );
     }
 
-    marker_->getMaterial()->setColor( nc );
+    markerset_->setMarkersSingleColor( nc );
 }
 
 
 const Color& Scene::getMarkerColor() const
 {
-    if ( !marker_ )
+    if ( !markerset_ )
 	return cDefaultMarkerColor();
-
-    return marker_->getMaterial()->getColor();
+    static const Color singlecolor = markerset_->getMarkersSingleColor();
+    return singlecolor;
 }
 
 
@@ -873,7 +876,7 @@ void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
     int nrkids = 0;    
     for ( ; kid<size(); kid++ )
     {
-	if ( getObject(kid)==annot_ || (marker_ && getObject(kid)==marker_) ||
+	if ( getObject(kid)==annot_ || (markerset_ && getObject(kid)==markerset_) ||
 	     getObject(kid)==inlcrl2disptransform_ ||
 	     getObject(kid)==polyselector_ ) continue;
 

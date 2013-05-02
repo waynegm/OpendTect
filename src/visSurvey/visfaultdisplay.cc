@@ -1523,7 +1523,6 @@ void FaultDisplay::updateKnotMarkers()
 
     PtrMan<EM::EMObjectIterator> iter = emfault_->geometry().createIterator(-1);
     
-    int groupidx( 0 );
     while ( true )
     {
 	const EM::PosID pid = iter->next();

@@ -1522,6 +1522,8 @@ void FaultDisplay::updateKnotMarkers()
 	return;
 
     PtrMan<EM::EMObjectIterator> iter = emfault_->geometry().createIterator(-1);
+    
+    int groupidx( 0 );
     while ( true )
     {
 	const EM::PosID pid = iter->next();
@@ -1534,7 +1536,7 @@ void FaultDisplay::updateKnotMarkers()
 	if ( !fs || fs->isStickHidden(sticknr) )
 	    continue;
 
-	const int groupidx = fs->isStickSelected(sticknr) ? 1 : 0;
+	groupidx = fs->isStickSelected(sticknr) ? 1 : 0;
 	const MarkerStyle3D& style = emfault_->getPosAttrMarkerStyle(0);
 	knotmarkersets_[groupidx]->setMarkerStyle( style );
 	knotmarkersets_[groupidx]->getCoordinates()->addPos(

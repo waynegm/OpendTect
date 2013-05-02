@@ -1154,7 +1154,7 @@ void FaultStickSetDisplay::updateKnotMarkers()
 	markerset->setScreenSize(3); 
     }
 
-    int groupidx = !showmanipulator_ || !stickselectmode_  ? 2 : 0;
+    int groupidx = (!showmanipulator_ || !stickselectmode_)  ? 2 : 0;
 
     for ( int idx=0; idx<stickintersectpoints_.size(); idx++ )
     {
@@ -1172,6 +1172,8 @@ void FaultStickSetDisplay::updateKnotMarkers()
 	return;
 
     PtrMan<EM::EMObjectIterator> iter = emfss_->geometry().createIterator(-1);
+
+    int groupidx( 0 );
     while ( true )
     {
 	const EM::PosID pid = iter->next();
@@ -1184,7 +1186,7 @@ void FaultStickSetDisplay::updateKnotMarkers()
 	if ( !fss || fss->isStickHidden(sticknr) )
 	    continue;
 
-	const int groupidx = fss->isStickSelected(sticknr) ? 1 : 0;
+	groupidx = fss->isStickSelected(sticknr) ? 1 : 0;
 
 	const MarkerStyle3D& style = emfss_->getPosAttrMarkerStyle(0);
 	knotmarkersets_[groupidx]->setMarkerStyle( style );

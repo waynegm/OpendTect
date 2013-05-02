@@ -464,16 +464,14 @@ void Horizon2DDisplay::updateSeedsOnSections(
     for ( int idx=0; idx<posattribmarkers_.size(); idx++ )
     {
 	visBase::MarkerSet* markerset = posattribmarkers_[idx];
-	markerset->turnOn( !displayonlyatsections_  );
-
 	for ( int idy=0; idy<markerset->getCoordinates()->size(); idy++ )
 	{
+	    markerset->turnMarkerOn( idy,!displayonlyatsections_ );
 	    const visBase::Coordinates* markercoords = 
 		markerset->getCoordinates();
-
 	    if ( markercoords->size() )
 	    {
-		 Coord3 markerpos = markercoords->getPos( 0 );
+		 Coord3 markerpos = markercoords->getPos( idy );
 	         if ( zaxistransform_ )
 		    markerpos.z = zaxistransform_->transform( markerpos );
 		for ( int idz=0; idz<seis2dlist.size(); idz++ )
@@ -481,7 +479,7 @@ void Horizon2DDisplay::updateSeedsOnSections(
 		    const float dist = seis2dlist[idz]->calcDist( markerpos );
 		    if ( dist < seis2dlist[idz]->maxDist() )
 		    {
-			markerset->turnOn(true);
+			 markerset->turnMarkerOn( idy,true );
 			break;
 		    }
 		}

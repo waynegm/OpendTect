@@ -98,6 +98,11 @@ public:
     void		removeMarker(int idx);
 
     void		clearMarkers();
+    void		turnMarkerOn(unsigned int idx,bool);
+
+    const int		findClosestMarker(const Coord3&, bool scenespace=false);
+    const int		findMarker(const Coord3&, const Coord3& eps, 
+				   bool scenespace = false);
 
 protected:
 				~MarkerSet();

@@ -1926,21 +1926,21 @@ void HorizonDisplay::updateSectionSeeds(
     for ( int idx=0; idx<posattribmarkers_.size(); idx++ )
     {
 	visBase::MarkerSet* markerset = posattribmarkers_[idx];
-	markerset->turnOn( !displayonlyatsections_ );
 	for ( int idy=0; idy<markerset->getCoordinates()->size(); idy++ )
 	{
-	    const visBase::Coordinates* markercoords = 
-			    markerset->getCoordinates();
+	    markerset->turnMarkerOn( idy,!displayonlyatsections_ );
+	    const visBase::Coordinates* markercoords =
+					markerset->getCoordinates();
 	    if ( markercoords->size() )
 	    {
-		const Coord3 markerpos = markercoords->getPos( 0 );
+		const Coord3 markerpos = markercoords->getPos( idy );
 		for ( int idz=0; idz<planelist.size(); idz++ )
 		{
 		    const float dist = 
 			objs[planelist[idz]]->calcDist( markerpos );
 		    if ( dist < objs[planelist[idz]]->maxDist() )
 		    {
-			markerset->turnOn(true);
+			markerset->turnMarkerOn( idy,true );
 			break;
 		    }
 		}

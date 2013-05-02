@@ -62,7 +62,7 @@ Normals* MarkerSet::getNormals()
 
 void MarkerSet::setMaterial( visBase::Material* mat )
 {
-   if ( material_==mat ) return;
+   if ( mat && material_==mat ) return;
 
    if ( material_ )
        markerset_->setColorArray( 0 );
@@ -232,3 +232,46 @@ void MarkerSet::setDisplayTransformation( const mVisTrans* nt )
 
 const mVisTrans* MarkerSet::getDisplayTransformation() const
 { return displaytrans_; }
+
+
+void MarkerSet::turnMarkerOn( unsigned int idx,bool yn )
+{
+    markerset_->turnMarkerOn( idx, yn );
+}
+
+
+const int MarkerSet::findClosestMarker( const Coord3& tofindpos, 
+				 const bool scenespace )
+{
+    double minsqdist = mUdf(double);
+    int minidx = -1;
+    for ( int idx=0; idx<coords_->size(); idx++ )
+    {
+	const double sqdist = tofindpos.sqDistTo( 
+	    coords_->getPos( idx,scenespace ) );
+	if ( sqdist<minsqdist )
+	{
+	    minsqdist = sqdist;
+	    minidx = idx;
+	}
+    }
+    return minidx;
+}
+
+
+const int MarkerSet::findMarker( const Coord3& tofindpos, const Coord3& eps,  
+				 const bool scenespace )
+{
+    int minidx = findClosestMarker( tofindpos, scenespace );
+    if( minidx == -1 ) 
+	return minidx;
+
+    const Coord3 findedpos = coords_->getPos( minidx, scenespace );
+
+    if ( findedpos.isSameAs( tofindpos,eps ) )
+	return minidx;
+    return -1;
+}
+
+
+

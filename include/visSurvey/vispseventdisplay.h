@@ -101,10 +101,10 @@ protected:
     {
 					ParentAttachedObject(int);
 					~ParentAttachedObject();
-	visBase::DataObjectGroup*	separator_;
+	visBase::DataObjectGroup*	objectgroup_;
 	visBase::IndexedPolyLine*	lines_;
 
-	ObjectSet<visBase::Marker>	markers_;
+	visBase::MarkerSet*		markerset_;
 	ObjectSet<PreStack::EventSet>	eventsets_;
 	HorSampling			hrg_;
 
@@ -133,7 +133,7 @@ protected:
     ColTab::Mapper			ctabmapper_;
     ColTab::Sequence			ctabsequence_;
     MarkerStyle3D			markerstyle_;
-    visBase::DataObjectGroup*		eventseeds_;
+    visBase::MarkerSet*			eventmarkerset_;
 };
 
 } // namespace visSurvey

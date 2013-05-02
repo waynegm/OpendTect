@@ -35,7 +35,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visevent.h"
 #include "vishorizondisplay.h"
 #include "vismaterial.h"
-#include "vismarker.h"
+#include "vismarkerset.h"
 #include "vismultitexture2.h"
 #include "vispolyline.h"
 #include "visplanedatadisplay.h"
@@ -67,7 +67,6 @@ RandomTrackDisplay::RandomTrackDisplay()
     , triangles_(visBase::SplitTextureRandomLine::create())
     , dragger_(visBase::RandomTrackDragger::create())
     , polyline_(visBase::PolyLine::create())
-    , markergrp_(visBase::DataObjectGroup::create())
     , polylinemode_(false)
     , knotmoving_(this)
     , moving_(this)
@@ -78,6 +77,7 @@ RandomTrackDisplay::RandomTrackDisplay()
     , eventcatcher_(0)
     , depthrg_(SI().zRange(true)) 
     , voiidx_(-1)  
+    , markerset_( visBase::MarkerSet::create() )
 {
     TypeSet<int> randomlines;
     visBase::DM().getIDs( typeid(*this), randomlines );
@@ -103,21 +103,20 @@ RandomTrackDisplay::RandomTrackDisplay()
     
 
     dragger_->ref();
-    int channelidx = 
-	childIndex( channels_->getInventorNode() );
-    insertChild( channelidx, dragger_->getInventorNode() );
+    addChild( dragger_->osgNode() );
 
     dragger_->motion.notify( mCB(this,visSurvey::RandomTrackDisplay,knotMoved));
 
     triangles_->ref();
-    addChild( triangles_->getInventorNode() );
+    addChild( triangles_->osgNode() );
     
     polyline_->ref();
-    addChild( polyline_->getInventorNode() );
+    addChild( polyline_->osgNode() );
     polyline_->setMaterial( new visBase::Material );
    
-    markergrp_->ref();
-    addChild( markergrp_->getInventorNode() );
+    markerset_->ref();
+    addChild( markerset_->osgNode() );
+    markerset_->setMarkersSingleColor( polyline_->getMaterial()->getColor() );
 
     const StepInterval<float>& survinterval = SI().zRange(true);
     const StepInterval<float> inlrange( 
@@ -154,11 +153,12 @@ RandomTrackDisplay::~RandomTrackDisplay()
     setSceneEventCatcher( 0 );
     triangles_->unRef();
     dragger_->unRef();
-    removeChild( polyline_->getInventorNode() );
+    removeChild( polyline_->osgNode() );
     polyline_->unRef();
-    markergrp_->removeAll();
-    removeChild( markergrp_->getInventorNode() );
-    markergrp_->unRef();
+
+    removeChild( markerset_->osgNode() );
+    markerset_->unRef();
+
     deepErase( cache_ );
     DataPackMgr& dpman = DPM( DataPackMgr::FlatID() );
     for ( int idx=0; idx<datapackids_.size(); idx++ )
@@ -1134,7 +1134,7 @@ void RandomTrackDisplay::pickCB( CallBacker* cb )
 		    !OD::altKeyboardButton(eventinfo.buttonstate_) &&
 		    !OD::shiftKeyboardButton(eventinfo.buttonstate_) )
 	{
-	    removePickPos( eventinfo.pickedobjids );
+	    removePickPos( pos );
 	    eventcatcher_->setHandled();
 	    return;
 	}
@@ -1153,12 +1153,7 @@ void RandomTrackDisplay::setPolyLineMode( bool mode )
 {
     polylinemode_ = mode;
     polyline_->turnOn( polylinemode_ );
-    for ( int idx=0; idx<markergrp_->size(); idx++ )
-    {
-	mDynamicCastGet(visBase::Marker*,marker,markergrp_->getObject(idx));
-	if ( marker ) marker->turnOn( polylinemode_ );
-    }
-
+    markerset_->turnOn( polylinemode_ );
     triangles_->turnOn( !polylinemode_ );
     dragger_->turnOn( false );
 }
@@ -1201,40 +1196,27 @@ bool RandomTrackDisplay::checkValidPick( const visBase::EventInfo& evi,
 void RandomTrackDisplay::setPickPos( const Coord3& pos )
 {
     polyline_->addPoint( pos );
-    visBase::Marker* marker = visBase::Marker::create();
-    marker->setMaterial( new visBase::Material );
-    marker->getMaterial()->setColor( polyline_->getMaterial()->getColor() );
-    marker->setCenterPos( pos );
-    markergrp_->addObject( marker );
-    marker->turnOn( true );
+    markerset_->getCoordinates()->addPos( pos );
 }
   
 
-void RandomTrackDisplay::removePickPos( const TypeSet<int>& ids )
+void RandomTrackDisplay::removePickPos( const Coord3& pickpos )
 {
-    for ( int idx=0; idx<markergrp_->size(); idx++ )
-    {
-	mDynamicCastGet(const visBase::Marker*,marker,
-			markergrp_->getObject(idx));
-	if ( marker && ids.isPresent(marker->id()) )
-	{ 
-	    polyline_->removePoint( idx );
-	    markergrp_->removeObject( idx );
-	    break;
-	}
-    }
- 
+    const double epsxy = getInlCrlSystem()->inlDistance()*0.1f;
+    const double epsz = 0.01f * getInlCrlSystem()->zStep();
+    const Coord3 eps( epsxy,epsxy,epsz );
+    const int markeridx = markerset_->findMarker( pickpos,eps );
+    if ( markeridx == -1 )
+	return;
+    polyline_->removePoint( markeridx );
+    markerset_->removeMarker( markeridx );
 }
 
 
 void RandomTrackDisplay::setColor( Color color )
 {
     polyline_->getMaterial()->setColor( color );
-    for ( int idx=0; idx<markergrp_->size(); idx++ )
-    {
-	mDynamicCastGet(visBase::Marker*,marker,markergrp_->getObject(idx));
-	if ( marker ) marker->getMaterial()->setColor( color );
-    }
+    markerset_->setMarkersSingleColor( color );
 }
 
 

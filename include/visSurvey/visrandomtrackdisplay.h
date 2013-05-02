@@ -28,6 +28,7 @@ namespace visBase
     class EventCatcher;
     class PolyLine;
     class RandomTrackDragger; 
+    class MarkerSet;
 };
 
 namespace Attrib { class SelSpec; }
@@ -184,14 +185,14 @@ protected:
     bool			checkValidPick(const visBase::EventInfo&,
 					       const Coord3& pos) const;
     void			setPickPos(const Coord3& pos);
-    void			removePickPos( const TypeSet<int>& );
+    void			removePickPos(const Coord3&);
     void			dataTransformCB(CallBacker*);
     void			updateRanges(bool,bool);
 
     visBase::SplitTextureRandomLine* triangles_;
     visBase::RandomTrackDragger* dragger_;
     visBase::PolyLine*		polyline_;
-    visBase::DataObjectGroup*   markergrp_;
+    visBase::MarkerSet*		markerset_;
     visBase::EventCatcher*	eventcatcher_;
 
     ObjectSet<SeisTrcBuf>	cache_;

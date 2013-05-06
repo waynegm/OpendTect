@@ -35,6 +35,7 @@ namespace osg { class Vec3f; class Array; class Referenced; }
 #include <position.h>
 #include <osg/Vec4>
 #include <osg/Vec4d>
+#include <osg/Node>
 #include <color.h>
 #include <convert.h>
 
@@ -145,6 +146,26 @@ namespace Values
     };
 
 } //Namespace Values
+
+
+/*! The OneFrameCullDisabler may be used to break an OpenSceneGraph
+    chicken-and-egg problem that occurs when computing the initial
+    bounding box of a screen-sized object (see e.g. code comments at
+    osgText::TextBase::computeBound()). The initial underestimation
+    of its scale can make it become a victim of small feature culling
+    for as long as the user does not extremely zoom in on it. */
+
+mExpClass(visBase) OneFrameCullDisabler : public osg::NodeCallback
+{
+public:
+				OneFrameCullDisabler(osg::Node*);
+    virtual void		operator()(osg::Node*,osg::NodeVisitor*);
+};
+
+#define mAttachOneFrameCullDisabler( osgnode ) \
+    osg::ref_ptr<OneFrameCullDisabler> oneframeculldisablerof##osgnode = \
+				       new OneFrameCullDisabler( osgnode );
+
 
 #endif
 

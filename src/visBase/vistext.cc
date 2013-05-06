@@ -69,7 +69,8 @@ void Text::setPosition( const Coord3& pos, bool scenespace )
     if( !scenespace )
 	mVisTrans::transform( displaytrans_, pos, osgpos );
     else
-	osgpos =  Conv::to<osg::Vec3>(pos);
+	osgpos = Conv::to<osg::Vec3>(pos);
+
     setPosition( osgpos );
 }
     
@@ -132,15 +133,15 @@ Color Text::getColor() const
 
 void Text::setDisplayTransformation( const mVisTrans* newtrans )
 {
+    const Coord3 oldpos = getPosition();
+
     if ( displaytrans_ ) displaytrans_->unRef();
     displaytrans_ = newtrans;
     if ( displaytrans_ ) displaytrans_->ref();
 
-    const Coord3 oldpos = getPosition();
-    displaytrans_ = newtrans;
     setPosition( oldpos );
 }
-    
+   
 
 Text2::Text2()
     : VisualObjectImpl( false )
@@ -150,6 +151,7 @@ Text2::Text2()
     geode_->ref();
     geode_->setNodeMask( ~visBase::cBBoxTraversalMask() );
     addChild( geode_ );
+    mAttachOneFrameCullDisabler( geode_ );
 }
     
 

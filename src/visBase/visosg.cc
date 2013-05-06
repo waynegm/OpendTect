@@ -24,3 +24,18 @@ void visBase::refOsgPtr( const osg::Referenced* ptr )
     ptr->ref();
 }
 
+
+OneFrameCullDisabler::OneFrameCullDisabler( osg::Node* node )
+{
+    node->setCullingActive( false );
+    node->setCullCallback( this );
+    ref();
+}
+
+
+void OneFrameCullDisabler::operator()( osg::Node* node, osg::NodeVisitor* nv )
+{
+    node->setCullingActive( true );
+    node->removeCullCallback( this );
+    unref();
+}

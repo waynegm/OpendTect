@@ -319,8 +319,7 @@ public:
 
     void		addPack(::DataPack::ID,bool observe=false);
     			//!< Adds to list, but doesn't use for WVA or VD
-    void		usePack(bool wva,::DataPack::ID,bool usedefs=true,
-	    					bool updatebitmaps=true);
+    void		usePack(bool wva,::DataPack::ID,bool usedefs=true );
     			//!< Does not add new packs, just selects from added
     void		removePack(::DataPack::ID);
     void		setPack( bool wva, ::DataPack::ID id, bool obs,
@@ -339,6 +338,9 @@ public:
     virtual bool	isVertical() const		{ return true; }
     bool		isVisible(bool wva) const;
     			//!< Depends on show_ and availability of data
+    void		setVisible(bool wva, bool visibility);
+    			//!< Will also handleChange.
+    			//!< So, do not use unless you want both.
 
     enum DataChangeType	{ All, BitmapData, DisplayPars, Annot, Auxdata };
     virtual void	handleChange(DataChangeType,bool dofill=true)	= 0;
@@ -371,9 +373,8 @@ public:
     virtual void		addAuxData(AuxData* a)			= 0;
     virtual AuxData*		removeAuxData(AuxData* a)		= 0;
     virtual AuxData*		removeAuxData(int idx)			= 0;
-    void			removeAuxDatas(ObjectSet<AuxData>&,
-						 bool deleteaux=false);
-    void			removeAllAuxData(bool deleteaux=false);
+    void			removeAuxDatas(ObjectSet<AuxData>&);
+    void			removeAllAuxData();
 
 protected:
 

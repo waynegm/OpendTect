@@ -287,7 +287,7 @@ if( OD_MODULE_PROGS OR OD_MODULE_GUI_PROGS )
 	endif()
 
 	add_executable( ${TARGET_NAME} ${OD_EXEC_GUI_SYSTEM} ${EXEC} 
-			${OD_${EXEC}_RESOURCE} )
+			${OD_${TARGET_NAME}_RESOURCE} )
 	set( TARGET_PROPERTIES ${TARGET_NAME}
 	    PROPERTIES 
 	    LINK_FLAGS "${OD_PLATFORM_LINK_OPTIONS} ${OD_MODULE_LINK_OPTIONS}"
@@ -520,9 +520,10 @@ endmacro()
 #Get current year
 macro ( OD_CURRENT_YEAR RESULT)
     if (WIN32)
-        EXECUTE_PROCESS(COMMAND "powershell" " /C (get-date).year" OUTPUT_VARIABLE ${RESULT})
+        execute_process(COMMAND "powershell" " /C (get-date).year" OUTPUT_VARIABLE ${RESULT})
     elseif(UNIX)
-        EXECUTE_PROCESS(COMMAND "date" "+%Y" OUTPUT_VARIABLE ${RESULT})
+        execute_process(COMMAND "date" "+%Y" OUTPUT_VARIABLE ${RESULT})
+	string(REPLACE "\n" "" "${RESULT}" ${${RESULT}} ) 
     else (WIN32)
         MESSAGE(SEND_ERROR "date not implemented")
         SET(${RESULT} 0000)

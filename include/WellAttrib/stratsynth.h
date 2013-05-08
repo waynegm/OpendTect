@@ -34,13 +34,14 @@ class Wavelet;
 
 namespace Strat { class LayerModel; class LayerSequence; }
 namespace PreStack { class GatherSetDataPack; class Gather; } 
+namespace Seis { class RaySynthGenerator; }
 
 
 mStruct(WellAttrib) SynthGenParams
 {
 			SynthGenParams();
 
-    enum SynthType	{ PreStack, ZeroOffset, AngleStack };
+    enum SynthType	{ PreStack, ZeroOffset, AngleStack, AVOGradient };
     			DeclareEnumUtils(SynthType);
 
     SynthType		synthtype_;
@@ -48,6 +49,7 @@ mStruct(WellAttrib) SynthGenParams
     BufferString	inpsynthnm_;
     IOPar		raypars_;
     BufferString	wvltnm_;
+    Interval<float>	anglerg_;
     
     bool		hasOffsets() const;
     bool		isPreStack() const 	{ return synthtype_==PreStack; }
@@ -87,7 +89,8 @@ public:
     int					id_;
     virtual bool			isPS() const 		= 0;
     virtual bool			hasOffset() const 	= 0;
-    bool				isAngleStack() const;
+    virtual bool			isAngleStack() const;
+    virtual bool			isAVOGradient() const { return false; }
     virtual SynthGenParams::SynthType	synthType() const	= 0;
 
     virtual void			useGenParams(const SynthGenParams&);
@@ -131,20 +134,49 @@ public:
 };
 
 
-mExpClass(WellAttrib) AngleStackSyntheticData : public PostStackSyntheticData
+mExpClass(WellAttrib) PSBasedPostStackSyntheticData : public PostStackSyntheticData
 {
 public:
-				AngleStackSyntheticData(const SynthGenParams&,
-						SeisTrcBufDataPack&);
-				~AngleStackSyntheticData();
-    bool			isPS() const 	  { return false; }
-    bool			isAngleStack() const { return true; }
+				PSBasedPostStackSyntheticData(
+				    const SynthGenParams&,SeisTrcBufDataPack&);
+				~PSBasedPostStackSyntheticData();
     void			useGenParams(const SynthGenParams&);
     void			fillGenParams(SynthGenParams&) const;
+protected:
+    BufferString 		inpsynthnm_;
+    Interval<float>		anglerg_;
+};
+
+
+mExpClass(WellAttrib) AVOGradSyntheticData : public PSBasedPostStackSyntheticData
+{
+public:
+				AVOGradSyntheticData(
+				    const SynthGenParams& sgp,
+				    SeisTrcBufDataPack& sbufdp )
+				    : PSBasedPostStackSyntheticData(sgp,sbufdp)
+				{}
+    bool			isAVOGradient() const 	{ return true; }
+    bool			isAngleStack() const 	{ return false; }
+    SynthGenParams::SynthType	synthType() const
+				{ return SynthGenParams::AVOGradient; }
+protected:
+};
+
+
+mExpClass(WellAttrib) AngleStackSyntheticData : public PSBasedPostStackSyntheticData
+{
+public:
+				AngleStackSyntheticData(
+				    const SynthGenParams& sgp,
+				    SeisTrcBufDataPack& sbufdp )
+				    : PSBasedPostStackSyntheticData(sgp,sbufdp)
+				{}
+    bool			isAVOGradient() const 	{ return false; }
+    bool			isAngleStack() const 	{ return true; }
     SynthGenParams::SynthType	synthType() const
 				{ return SynthGenParams::AngleStack; }
 protected:
-    BufferString 		inpsynthnm_;
 };
 
 
@@ -215,13 +247,16 @@ public:
     SyntheticData* 		getSyntheticByIdx(int idx);
     void			clearSynthetics();
     void			generateOtherQuantities();
+    bool			createElasticModels();
+    void			clearElasticModels()	{ aimodels_.erase(); }
+    bool			hasElasticModels() const
+    				{ return aimodels_.size(); }
     static float		cMaximumVpWaterVel();
 
     const ObjectSet<SyntheticData>& synthetics() const 	{ return synthetics_; }
 
     void			setWavelet(const Wavelet*);
     const Wavelet*		wavelet() const { return wvlt_; }
-    bool			generate(const Strat::LayerModel&,SeisTrcBuf&);
     SynthGenParams&		genParams()  	{ return genparams_; }
 
 
@@ -254,6 +289,7 @@ protected:
     SynthGenParams		genparams_;
     PropertyRefSelection	props_;
     ObjectSet<SyntheticData> 	synthetics_;
+    TypeSet<ElasticModel>	aimodels_;
     int				lastsyntheticid_;
     const Wavelet*		wvlt_;
 
@@ -262,17 +298,22 @@ protected:
 
     bool			fillElasticModel(const Strat::LayerModel&,
 					ElasticModel&,int seqidx);
+    bool			adjustElasticModel(const Strat::LayerModel&,
+					TypeSet<ElasticModel>&,BufferString&);
     void			generateOtherQuantities( 
 	    				const PostStackSyntheticData& sd,
 	    				const Strat::LayerModel&);
-    SyntheticData* 		generateSD(const Strat::LayerModel&,
-					TaskRunner* tr=0);
-    SyntheticData* 		generateSD(const Strat::LayerModel&,
-	    				const SynthGenParams&,
+    SyntheticData* 		generateSD( TaskRunner* tr=0);
+    SyntheticData* 		generateSD( const SynthGenParams&,
 					TaskRunner* tr=0);
     SyntheticData*		createAngleStack(SyntheticData* sd,
 	    					 const CubeSampling&,
 						 const SynthGenParams&,
+						 TaskRunner*);
+    SyntheticData*		createAVOGradient(SyntheticData* sd,
+	    					 const CubeSampling&,
+						 const SynthGenParams&,
+						 const Seis::RaySynthGenerator&,
 						 TaskRunner*);
 };
 

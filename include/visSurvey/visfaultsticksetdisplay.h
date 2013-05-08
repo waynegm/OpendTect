@@ -108,7 +108,9 @@ protected:
 
     void			setActiveStick(const EM::PosID&);
 
-    static const char*		sKeyEarthModelID()	{ return "EM ID"; }
+    static const char*		sKeyEarthModelID();
+    static const char*		sKeyDisplayOnlyAtSections();
+
 
     void			mouseCB(CallBacker*);
     void			stickSelectCB(CallBacker*);

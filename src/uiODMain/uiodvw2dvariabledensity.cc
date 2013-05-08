@@ -81,13 +81,13 @@ bool uiODVW2DVariableDensityTreeItem::init()
     const DataPack* fdpv = vwr.pack( false );
     if ( fdpv )
 	dpid_ = fdpv->id();
+    const FlatView::DataDispPars& ddp = vwr.appearance().ddpars_;
 
     vwr.dataChanged.notify(
 	    mCB(this,uiODVW2DVariableDensityTreeItem,dataChangedCB) );
 
-    uitreeviewitem_->setCheckable( fdpv || dpid_!=DataPack::cNoID() );
-    if ( uitreeviewitem_->isCheckable() )
-    	uitreeviewitem_->setChecked( vwr.appearance().ddpars_.wva_.show_ );
+    uitreeviewitem_->setCheckable( fdpv && ddp.wva_.show_ );
+    uitreeviewitem_->setChecked( ddp.vd_.show_ );
 
     checkStatusChange()->notify(
 	    mCB(this,uiODVW2DVariableDensityTreeItem,checkCB) );
@@ -122,14 +122,7 @@ bool uiODVW2DVariableDensityTreeItem::select()
 void uiODVW2DVariableDensityTreeItem::checkCB( CallBacker* )
 {
     for ( int ivwr=0; ivwr<viewer2D()->viewwin()->nrViewers(); ivwr++ )
-    {
-	DataPack::ID id = DataPack::cNoID();
-	uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(ivwr);
-	FlatView::DataDispPars& ddp = vwr.appearance().ddpars_;
-	const bool ischecked = isChecked();
-	ddp.vd_.show_ = ischecked; if ( ischecked ) id = dpid_;
-	vwr.usePack( false, id, false );
-    }
+	viewer2D()->viewwin()->viewer(ivwr).setVisible( false, isChecked() );
 }
 
 
@@ -142,9 +135,10 @@ void uiODVW2DVariableDensityTreeItem::dataChangedCB( CallBacker* )
 
     uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(0);
     const DataPack* fdpv = vwr.pack( false );
-    uitreeviewitem_->setCheckable( fdpv || dpid_!=DataPack::cNoID() );
-    if ( uitreeviewitem_->isCheckable() )
-    	uitreeviewitem_->setChecked( vwr.appearance().ddpars_.vd_.show_ );
+    const FlatView::DataDispPars& ddp = vwr.appearance().ddpars_;
+
+    uitreeviewitem_->setCheckable( fdpv && ddp.wva_.show_ );
+    uitreeviewitem_->setChecked( ddp.vd_.show_ );
     if ( fdpv )	dpid_ = fdpv->id();
 
     if ( !fdpv )

@@ -33,7 +33,11 @@ file ( REMOVE ${OD_SOURCELIST_FILE} )
 
 set ( OD_EXEC_OUTPUT_RELPATH "bin/${OD_PLFSUBDIR}${OD_BUILDSUBDIR}" )
 set ( OD_EXEC_OUTPUT_PATH "${OD_BINARY_BASEDIR}/${OD_EXEC_OUTPUT_RELPATH}" )
-set ( OD_EXEC_INSTALL_PATH "${OD_EXEC_OUTPUT_RELPATH}" )
+if ( WIN32 )
+    set ( OD_EXEC_INSTALL_PATH "${OD_EXEC_OUTPUT_RELPATH}/${CMAKE_BUILD_TYPE}" )
+else()
+    set ( OD_EXEC_INSTALL_PATH "${OD_EXEC_OUTPUT_RELPATH}" )
+endif()
 set ( OD_BUILD_VERSION "${OpendTect_VERSION_MAJOR}.${OpendTect_VERSION_MINOR}.${OpendTect_VERSION_DETAIL}${OpendTect_VERSION_PATCH}")
 set ( OD_API_VERSION "${OpendTect_VERSION_MAJOR}.${OpendTect_VERSION_MINOR}.${OpendTect_VERSION_DETAIL}" )
 
@@ -67,7 +71,78 @@ macro ( OD_ADD_OPTIONAL_MODULES )
 endmacro()
 
 macro ( OD_INSTALL_LIBRARY SOURCE )
-  get_filename_component( PATH ${SOURCE} REALPATH )
-  get_filename_component( FILENAME ${SOURCE} NAME )
-  install( PROGRAMS ${PATH} DESTINATION ${OD_EXEC_OUTPUT_RELPATH} RENAME ${FILENAME} )
+    get_filename_component( PATH ${SOURCE} REALPATH )
+    get_filename_component( FILENAME ${SOURCE} NAME )
+    list( APPEND OD_MODULE_THIRD_PARTY_LIBS ${OD_THIRD_PARTY_LIBS} ${FILENAME} )
+    list( REMOVE_DUPLICATES OD_MODULE_THIRD_PARTY_LIBS )
+    set ( OD_THIRD_PARTY_LIBS ${OD_MODULE_THIRD_PARTY_LIBS} PARENT_SCOPE ) 
+    install( PROGRAMS ${PATH} DESTINATION ${OD_EXEC_OUTPUT_RELPATH} RENAME ${FILENAME} )
 endmacro()
+
+
+#Takes a library variable with both _RELEASE and _DEBUG variants, and constructs
+# a variable that combinse both
+
+macro ( OD_MERGE_LIBVAR VARNAME )
+    if ( ${${VARNAME}_RELEASE} STREQUAL "${VARNAME}_RELEASE-NOTFOUND" )
+	set( RELNOTFOUND 1 )
+    endif()
+    if ( ${${VARNAME}_DEBUG} STREQUAL "${VARNAME}_DEBUG-NOTFOUND" )
+	set( DEBNOTFOUND 1 )
+    endif()
+
+    if ( DEFINED RELNOTFOUND AND DEFINED DEBNOTFOUND )
+	message( FATAL_ERROR "${VARNAME} not found" )
+    endif()
+
+    if ( (NOT DEFINED RELNOTFOUND) )
+	if ( NOT DEFINED DEBNOTFOUND )
+	    set ( ${VARNAME} "optimized" ${${VARNAME}_RELEASE} "debug" ${${VARNAME}_DEBUG}  )
+	else()
+	    set ( ${VARNAME} ${${VARNAME}_RELEASE} )
+	endif()
+    else()
+	set ( ${VARNAME} ${${VARNAME}_DEBUG} )
+    endif()
+
+    unset( RELNOTFOUND )
+    unset( DEBNOTFOUND )
+endmacro()
+
+
+#Takes a list with both optimized and debug libraries, and removes one of them
+#According to BUILD_TYPE
+
+macro ( OD_FILTER_LIBRARIES INPUTLIST BUILD_TYPE )
+    unset( OUTPUT )
+    foreach ( LISTITEM ${${INPUTLIST}} )
+	if ( DEFINED USENEXT )
+	    if ( USENEXT STREQUAL "yes" )
+		list ( APPEND OUTPUT ${LISTITEM} )
+	    endif()
+	    unset( USENEXT )
+	else()
+	    if ( LISTITEM STREQUAL "debug" )
+		if ( "${BUILD_TYPE}" STREQUAL "Debug" )
+		    set ( USENEXT "yes" )
+		else()
+		    set ( USENEXT "no" )
+		endif()
+	    else()
+		if ( LISTITEM STREQUAL "optimized" )
+		    if ( "${BUILD_TYPE}" STREQUAL "Release" )
+			set ( USENEXT "yes" )
+		    else()
+			set ( USENEXT "no" )
+		    endif()
+		else()
+		    list ( APPEND OUTPUT ${LISTITEM} )
+		endif()
+	    endif()
+	endif()
+    endforeach()
+
+    set ( ${INPUTLIST} ${OUTPUT} )
+endmacro()
+
+

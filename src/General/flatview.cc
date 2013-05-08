@@ -485,23 +485,22 @@ void FlatView::Viewer::addAuxInfo( bool iswva, const Point& pt,
 }
 
 
-void FlatView::Viewer::removeAllAuxData( bool del )
+void FlatView::Viewer::removeAllAuxData()
 {
     while ( nrAuxData() )
-    {
-	AuxData* ad = removeAuxData( 0 );
-	if ( del ) delete ad;
-    }
+	delete removeAuxData( 0 );
 }
 
 
-void FlatView::Viewer::removeAuxDatas( ObjectSet<AuxData>& ads, bool del )
+void FlatView::Viewer::removeAuxDatas( ObjectSet<AuxData>& ads )
 {
+    const bool ismanaged = ads.isManaged();
     for ( int idx=ads.size()-1; idx>=0; idx -- )
     {
 	AuxData* ad = removeAuxData( ads[idx] );
-	if ( del ) delete ad;
+	if ( !ismanaged ) delete ad;
     }
+    ads.erase();
 }
 
 
@@ -540,9 +539,9 @@ void FlatView::Viewer::removePack( DataPack::ID id )
     if ( idx < 0 ) return;
 
     if ( wvapack_ && wvapack_->id() == id )
-	usePack( true, DataPack::cNoID(), false, false );
+	usePack( true, DataPack::cNoID(), false );
     if ( vdpack_ && vdpack_->id() == id )
-	usePack( false, DataPack::cNoID(), false, false );
+	usePack( false, DataPack::cNoID(), false );
 
     // Construction necessary because the release could trigger a new removePack
     const bool obs = obs_[idx];
@@ -552,11 +551,10 @@ void FlatView::Viewer::removePack( DataPack::ID id )
 }
 
 
-void FlatView::Viewer::usePack( bool wva, DataPack::ID id, bool usedefs,
-							bool updatebitmaps )
+void FlatView::Viewer::usePack( bool wva, DataPack::ID id, bool usedefs )
 {
     DataPack::ID curid = packID( wva );
-    if ( id == curid && !isVisible(wva) ) return;
+    if ( id == curid ) return;
 
     if ( id == DataPack::cNoID() )
 	(wva ? wvapack_ : vdpack_) = 0;
@@ -580,7 +578,8 @@ void FlatView::Viewer::usePack( bool wva, DataPack::ID id, bool usedefs,
 	if ( annot.x2_.name_.isEmpty() || annot.x2_.name_ == "X2" )
 	    annot.x2_.name_ = fdp->dimName( false );
     }
-    if ( updatebitmaps ) handleChange( BitmapData );
+    if ( id != DataPack::cNoID() )
+	handleChange( BitmapData );
 }
 
 
@@ -590,6 +589,14 @@ bool FlatView::Viewer::isVisible( bool wva ) const
 	return wvapack_ && appearance().ddpars_.wva_.show_;
     else
         return vdpack_ && appearance().ddpars_.vd_.show_;
+}
+
+
+void FlatView::Viewer::setVisible( bool wva, bool visibility )
+{
+    FlatView::DataDispPars& ddp = appearance().ddpars_;
+    ( wva ? ddp.wva_.show_ : ddp.vd_.show_ ) = visibility;
+    handleChange( BitmapData );
 }
 
 

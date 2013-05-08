@@ -22,7 +22,7 @@ class SeisPSReader;
 class IOObj;
 
 namespace PreStack { class ProcessManager; class Gather; 
-		     class VelocityBasedAngleComputer; }
+		     class AngleComputer; }
 
 
 namespace Attrib
@@ -65,10 +65,14 @@ public:
     static const char*  lsqtypeStr()		{ return "lsqtype"; }
     static const char*  offsaxisStr()		{ return "offsaxis"; }
     static const char*  valaxisStr()		{ return "valaxis"; }
-    static const char*  useazimStr()		{ return "useazim"; }
     static const char*  componentStr()		{ return "comp"; }
     static const char*  apertureStr()		{ return "aperture"; }
     static const char*  velocityIDStr()		{ return "velocityid"; }
+    static const char*  useangleStr()		{ return "useangle"; }
+    static const char*  angleStartStr()		{ return "anglestart"; }
+    static const char*  angleStopStr()		{ return "anglestop"; }
+    static const char*	thresholdParamStr()	{ return "thresholdparam"; }
+    static const char*	rayTracerStr()		{ return "raytracer"; }
 
     const PreStack::PropCalc::Setup&	setup() const	{ return setup_; }
     const MultiID&			psID() const	{ return psid_; }
@@ -77,6 +81,7 @@ public:
 					{ return velocityid_; }
 
     void                updateCSIfNeeded(CubeSampling&) const;
+    void		setAngleComp(PreStack::AngleComputer*);
 
 protected:
 
@@ -90,6 +95,7 @@ protected:
     bool		computeData(const DataHolder&,const BinID& relpos,
 				    int t0,int nrsamples,int threadid) const;
     void		prepPriorToBoundsCalc();
+    void		fillSmootheningPar(IOPar&);
 
     MultiID			psid_;
     IOObj*			psioobj_;
@@ -97,7 +103,7 @@ protected:
     int				component_;
     SeisPSReader*		psrdr_;
     PreStack::PropCalc*		propcalc_;
-    PreStack::VelocityBasedAngleComputer*    anglecomp_;
+    PreStack::AngleComputer*    anglecomp_;
 
     PreStack::ProcessManager*	preprocessor_;
     MultiID			preprocid_;

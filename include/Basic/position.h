@@ -259,11 +259,16 @@ public:
     static GeomID		std3DGeomID();
     static GeomID		cUndefGeomID();
     
+    bool			is2D() const
+    				{ return geomid_!=std3DGeomID(); }
     int&			trcNr()		{ return pos_.trcNr(); }
     int				trcNr() const	{ return pos_.trcNr(); }
     int&			lineNr()	{ return pos_.lineNr(); }
     int				lineNr() const	{ return pos_.lineNr(); }
     
+    bool			operator ==( const TraceID& a ) const
+    				{ return a.geomid_==geomid_ && a.pos_==pos_; }
+
     static const TraceID&	udf();
     
     bool			isUdf() const { return mIsUdf(pos_.trcNr()); }
@@ -360,7 +365,7 @@ mClass(Basic) Undef<Coord>
 public:
     static Coord	val()			{ return Coord::udf(); }
     static bool		hasUdf()		{ return true; }
-    static bool		isUdf( Coord& i )	{ return !i.isDefined(); }
+    static bool		isUdf( const Coord& i )	{ return !i.isDefined(); }
     static void		setUdf( Coord& i )	{ i = Coord::udf(); }
 };
 
@@ -375,7 +380,7 @@ mClass(Basic) Undef<Coord3>
 public:
     static Coord3	val()			{ return Coord3::udf(); }
     static bool		hasUdf()		{ return true; }
-    static bool		isUdf( Coord3& i )	{ return !i.isDefined(); }
+    static bool		isUdf( const Coord3& i)	{ return !i.isDefined(); }
     static void		setUdf( Coord3& i )	{ i = Coord3::udf(); }
 };
 

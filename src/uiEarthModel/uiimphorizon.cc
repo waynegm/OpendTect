@@ -216,6 +216,11 @@ void uiImportHorizon::inputChgd( CallBacker* cb )
 	if ( filludffld_ )
 	    filludffld_->setSensitive( false );
     }
+    else
+    {
+	delete scanner_;
+	scanner_ = 0;
+    }
 
     FilePath fnmfp( fnm );
     sImportFromPath = fnmfp.pathOnly();
@@ -270,7 +275,7 @@ void uiImportHorizon::scanPush( CallBacker* )
     const int df = n##ic##lnrg.start - ic##rg.start; \
     if ( df%2 && !(ic##rg.step%2) && !(n##ic##lnrg.step%2) ) \
     { \
-	BufferString msg = "The horizon is not compatible with suvrvey "; \
+	BufferString msg = "The horizon is not compatible with survey "; \
 	msg +=  "trace, do you want to continue?"; \
 	if ( !uiMSG().askGoOn(msg) ) \
     	    return false; \

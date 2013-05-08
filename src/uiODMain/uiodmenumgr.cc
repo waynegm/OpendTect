@@ -416,6 +416,9 @@ void uiODMenuMgr::fillProcMenu()
     if ( SI().has3D() )
     {
 	csoitm->insertItem(
+	    new uiMenuItem("Multi attribute ...",
+			mCB(&applMgr(),uiODApplMgr,createMultiAttribVol)) );
+	csoitm->insertItem(
 	    new uiMenuItem("Volume &Builder ...",
 			mCB(&applMgr(),uiODApplMgr,createVolProcOutput)) );
 	csoitm->insertItem(
@@ -427,6 +430,9 @@ void uiODMenuMgr::fillProcMenu()
 	csoitm->insertItem(
 	    new uiMenuItem("&Pre Stack processing ...",
 			mCB(&applMgr(),uiODApplMgr,processPreStack)) );
+	csoitm->insertItem(
+	    new uiMenuItem("&Create MultiCube DataStore ...",
+			mCB(&applMgr(),uiODApplMgr,createMultiCubeDS)) );
 	csoitm->insertItem(
 	    new uiMenuItem("Angle mute function ...",
 			mCB(&applMgr(),uiODApplMgr,genAngleMuteFunction) ));
@@ -1041,9 +1047,9 @@ void uiODMenuMgr::handleClick( CallBacker* cb )
     case mEditAttrMnuItm: 	applMgr().editAttribSet(); break;
     case mEdit2DAttrMnuItm: 	applMgr().editAttribSet(true); break;
     case mEdit3DAttrMnuItm: 	applMgr().editAttribSet(false); break;
-    case mSeisOutMnuItm:	applMgr().createVol( SI().has2D() ); break;
-    case mSeisOut2DMnuItm: 	applMgr().createVol(true); break;
-    case mSeisOut3DMnuItm: 	applMgr().createVol(false); break;
+    case mSeisOutMnuItm:	applMgr().createVol( SI().has2D(), false ); break;
+    case mSeisOut2DMnuItm: 	applMgr().createVol(true,false); break;
+    case mSeisOut3DMnuItm: 	applMgr().createVol(false,false); break;
     case mCreateSurf2DMnuItm: 	applMgr().createHorOutput(0,true); break;
     case mCreateSurf3DMnuItm: 	applMgr().createHorOutput(0,false); break;
     case mCompAlongHor2DMnuItm:	applMgr().createHorOutput(1,true); break;

@@ -295,16 +295,16 @@ void uiODApplMgr::editAttribSet( bool is2d )
 }
 
 void uiODApplMgr::processTime2Depth( CallBacker* )
-{
-    seisserv_->processTime2Depth();
-}
-
+{ seisserv_->processTime2Depth(); }
 
 void uiODApplMgr::processVelConv( CallBacker* )
-{
-    seisserv_->processVelConv();
-}
+{ seisserv_->processVelConv(); }
 
+void uiODApplMgr::createMultiCubeDS( CallBacker* )
+{ seisserv_->createMultiCubeDataStore(); }
+
+void uiODApplMgr::createMultiAttribVol( CallBacker* )
+{ attrserv_->outputVol( MultiID::udf(), false, true ); }
 
 void uiODApplMgr::setStereoOffset()
 {
@@ -1732,8 +1732,8 @@ bool uiODApplMgr::editNLA( bool is2d )
 { return attrvishandler_.editNLA( is2d ); }
 void uiODApplMgr::createHorOutput( int tp, bool is2d )
 { attrvishandler_.createHorOutput( tp, is2d ); }
-void uiODApplMgr::createVol( bool is2d )
-{ attrvishandler_.createVol( is2d ); }
+void uiODApplMgr::createVol( bool is2d, bool multiattrib )
+{ attrvishandler_.createVol( is2d, multiattrib ); }
 void uiODApplMgr::doWellXPlot( CallBacker* )
 { attrvishandler_.doXPlot(); }
 void uiODApplMgr::doAttribXPlot( CallBacker* )

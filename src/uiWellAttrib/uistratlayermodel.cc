@@ -185,11 +185,7 @@ void uiStratLayerModel::doBasicLayerModel()
 void uiStratLayerModel::doLayerModel( const char* modnm )
 {
     if ( Strat::RT().isEmpty() )
-    {
-	if ( uiMSG().askContinue( 
-		"No stratigraphic model found, please create one first" ) )
-	    StratTreeWin().popUp();
-    }
+	StratTreeWin().popUp();
     else
     {
 	uiStratLayerModelLauncher launcher;
@@ -495,7 +491,10 @@ void uiStratLayerModel::modSelChg( CallBacker* cb )
 
 void uiStratLayerModel::zoomChg( CallBacker* )
 {
-    moddisp_->setZoomBox( synthdisp_->curView(true) );
+    uiWorldRect wr( mUdf(float), 0, 0, 0 );
+    if ( synthdisp_->getSynthetics().size() )
+	wr = synthdisp_->curView( true );
+    moddisp_->setZoomBox( wr );
 }
 
 
@@ -740,8 +739,7 @@ void uiStratLayerModel::genModels( CallBacker* )
     seqdisp_->prepareDesc();
     Strat::LayerModelGenerator ex( desc_, lmp_.get(), nrmods );
     uiTaskRunner tr( this );
-    if ( !tr.execute(ex) )
-	return;
+    tr.execute( ex );
 
     setModelProps();
     setElasticProps();
@@ -921,6 +919,8 @@ void uiStratLayerModel::fillWorkBenchPars( IOPar& par ) const
 
 bool uiStratLayerModel::useSyntheticsPars( const IOPar& par ) 
 {
+    if ( !synthdisp_->prepareElasticModel() )
+	return false;
     return synthdisp_->usePar( par );
 }
 

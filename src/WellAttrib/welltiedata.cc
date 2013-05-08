@@ -20,6 +20,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "emhorizon2d.h"
 #include "emmanager.h"
 
+#include "wavelet.h"
 #include "welldata.h"
 #include "welld2tmodel.h"
 #include "wellextractdata.h"
@@ -30,7 +31,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "wellmarker.h"
 #include "welltrack.h"
 #include "wellwriter.h"
-#include "wavelet.h"
 
 #include "welltiecshot.h"
 #include "welltiedata.h"
@@ -81,8 +81,7 @@ Data::Data( const Setup& wts, Well::Data& wdata )
     , wd_(&wdata)
     , setup_(wts)
     , initwvlt_(*Wavelet::get(IOM().get( wts.wvltid_)))
-    , estimatedwvlt_(*Wavelet::get(IOM().get( wts.wvltid_)))
-    , isinitwvltactive_(true)
+    , estimatedwvlt_(*new Wavelet("Estimated wavelet"))
     , seistrc_(*new SeisTrc)
     , synthtrc_(*new SeisTrc)
     , trunner_(0)
@@ -105,25 +104,8 @@ Data::Data( const Setup& wts, Well::Data& wdata )
 	    stoptime = cs.zrg.stop;
     }
 
-    const Well::Log* velplog = wdata.logs().getLog( wts.vellognm_ );
-    if ( velplog )
-	dahrg_ = velplog->dahRange();
-    if ( !track.isEmpty() )
-	dahrg_.limitTo( track.dahRange() );
-
     tracerg_.set( 0.f, stoptime, cDefSeisSr() );
-    float twtstart = mMAX( 0.f, d2t->getTime( dahrg_.start, track ) );
-    twtstart = (float) mNINT32(twtstart/cDefSeisSr()) * cDefSeisSr();
-    float twtstop = d2t->getTime( dahrg_.stop, track );
-    twtstop = (float) mNINT32(twtstop/cDefSeisSr()) * cDefSeisSr();
-
-    dahrg_.start = d2t->getDah( twtstart, track );
-    dahrg_.stop = d2t->getDah( twtstop, track );
-    modelrg_ = StepInterval<float>( twtstart, twtstop, cDefSeisSr() );
-    twtstart += cDefSeisSr();
-    twtstop -= cDefSeisSr();
-    reflrg_.set( twtstart, twtstop, cDefSeisSr() );
-
+    computeExtractionRange();
     for ( int idx=0; idx<wdata.markers().size(); idx++ )
     {
 	dispparams_.allmarkernms_.add( wdata.markers()[idx]->name() );
@@ -131,9 +113,6 @@ Data::Data( const Setup& wts, Well::Data& wdata )
     }
 
     initwvlt_.reSample( cDefSeisSr() );
-
-    estimatedwvlt_ = initwvlt_;
-    estimatedwvlt_.setName( "Estimated wavelet" );
 }
 
 
@@ -146,6 +125,36 @@ Data::~Data()
     delete &seistrc_;
     delete &synthtrc_;
 }
+
+
+void Data::computeExtractionRange()
+{
+    if ( !wd_ )
+	return;
+
+    const Well::Log* velplog = wd_->logs().getLog( setup_.vellognm_ );
+    const Well::Track& track = wd_->track();
+    const Well::D2TModel* d2t = wd_->d2TModel();
+    if ( !velplog || !d2t || track.isEmpty() )
+	return;
+
+    dahrg_ = velplog->dahRange();
+    dahrg_.limitTo( track.dahRange() );
+    float twtstart = mMAX( 0.f, d2t->getTime( dahrg_.start, track ) );
+    float twtstop = d2t->getTime( dahrg_.stop, track );
+    twtstart = (float) mNINT32(twtstart/cDefSeisSr()) * cDefSeisSr();
+    twtstop = (float) mNINT32(twtstop/cDefSeisSr()) * cDefSeisSr();
+    modelrg_ = StepInterval<float>( twtstart, twtstop, cDefSeisSr() );
+
+    dahrg_.start = d2t->getDah( twtstart, track );
+    dahrg_.stop = d2t->getDah( twtstop, track );
+
+    twtstart += cDefSeisSr();
+    twtstop -= cDefSeisSr();
+    reflrg_.set( twtstart, twtstop, cDefSeisSr() );
+}
+
+
 
 
 void HorizonMgr::setUpHorizons( const TypeSet<MultiID>& horids, 
@@ -352,10 +361,10 @@ Server::Server( const WellTie::Setup& wts )
     Well::Data* wdata = wdmgr_->wd();
     if ( !wdata ) return; //TODO close + errmsg
 
-    data_ = new Data( wts, *wdata );
+    // Order below matters
     datawriter_ = new DataWriter( *wdata, wts.wellid_ );
-
-    d2tmgr_ = new D2TModelMgr( *wdata, *datawriter_, *data_ );
+    d2tmgr_ = new D2TModelMgr( *wdata, *datawriter_, wts );
+    data_ = new Data( wts, *wdata );
     dataplayer_ = new DataPlayer( *data_, wts.seisid_, &wts.linekey_ );
     pickmgr_ = new PickSetMgr( data_->pickdata_ );
     hormgr_ = new HorizonMgr( data_->horizons_ );
@@ -386,53 +395,120 @@ void Server::wellDataDel( CallBacker* )
 }
 
 
-bool Server::computeSynthetics()
+bool Server::computeSynthetics( const Wavelet& wvlt )
 {
-    if ( !dataplayer_->computeSynthetics() )
+    if ( !dataplayer_ )
+	return false;
+
+    if ( !dataplayer_->computeSynthetics(wvlt) )
 	{ errmsg_ = dataplayer_->errMSG(); return false; }
+
     return true;
 }
 
 
 bool Server::extractSeismics()
 {
+    if ( !dataplayer_ )
+	return false;
+
     if ( !dataplayer_->extractSeismics() )
 	{ errmsg_ = dataplayer_->errMSG(); return false; }
+
     return true;
 }
 
 
-bool Server::updateSynthetics()
+bool Server::updateSynthetics( const Wavelet& wvlt )
 {
-    if ( !dataplayer_->doFastSynthetics() )
+    if ( !dataplayer_ )
+	return false;
+
+    if ( !dataplayer_->doFastSynthetics(wvlt) )
 	{ errmsg_ = dataplayer_->errMSG(); return false; }
+
     return true;
 }
 
 
 bool Server::computeAdditionalInfo( const Interval<float>& zrg )
 {
+    if ( !dataplayer_ )
+	return false;
+
     if ( !dataplayer_->computeAdditionalInfo( zrg ) )
 	{ errmsg_ = dataplayer_->errMSG(); return false; }
+
     return true;
+}
+
+
+bool Server::computeCrossCorrelation()
+{
+    if ( !dataplayer_ )
+	return false;
+
+    if ( !dataplayer_->computeCrossCorrelation() )
+	{ errmsg_ = dataplayer_->errMSG(); return false; }
+
+    return true;
+}
+
+
+bool Server::computeEstimatedWavelet( int newsz )
+{
+    if ( !dataplayer_ )
+	return false;
+
+    if ( !dataplayer_->computeEstimatedWavelet( newsz ) )
+	{ errmsg_ = dataplayer_->errMSG(); return false; }
+
+    return true;
+}
+
+
+void Server::setCrossCorrZrg( const Interval<float>& zrg )
+{
+    if ( !dataplayer_ )
+	return;
+
+    dataplayer_->setCrossCorrZrg( zrg );
 }
 
 
 bool Server::hasSynthetic() const
 {
+    if ( !dataplayer_ )
+	return false;
+
     return dataplayer_->isOKSynthetic() && !wellid_.isEmpty();
 }
 
 
 bool Server::hasSeismic() const
 {
+    if ( !dataplayer_ )
+	return false;
+
     return dataplayer_->isOKSeismic();
 }
 
 
 bool Server::doSeismic() const
 {
+    if ( !dataplayer_ )
+	return false;
+
     return dataplayer_->hasSeisId();
+}
+
+
+void Server::updateExtractionRange()
+{
+    if ( !data_ )
+	return;
+
+    data_->computeExtractionRange();
 }
 
 }; //namespace WellTie

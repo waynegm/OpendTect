@@ -133,6 +133,7 @@ public:
 
     void		addPrimitiveSet(Geometry::PrimitiveSet*);
     void		removePrimitiveSet(const Geometry::PrimitiveSet*);
+    void		removeAllPrimitiveSets();
     int			nrPrimitiveSets() const;
     virtual void	touchPrimitiveSet(int)			{}
     Geometry::PrimitiveSet*	getPrimitiveSet(int);

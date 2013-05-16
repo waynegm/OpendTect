@@ -420,7 +420,14 @@ void VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
     
     primitivesets_.removeSingle( pidx )->unRef();
 }
-    
+
+
+void VertexShape::removeAllPrimitiveSets()
+{
+    for ( int idx = 0; idx < primitivesets_.size(); idx++ )
+	removePrimitiveSet( primitivesets_[idx] );
+}
+
     
 void VertexShape::addPrimitiveSetToScene( osg::PrimitiveSet* ps )
 {

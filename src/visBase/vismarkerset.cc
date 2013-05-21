@@ -18,6 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 
 #include <osgGeo/MarkerSet>
+#include <osgGeo/MarkerShape>
 
 #include <math.h>
 
@@ -132,20 +133,23 @@ void MarkerSet::setType( MarkerStyle3D::Type type )
     switch ( type )
     {
 	case MarkerStyle3D::Cube:
-	    markerset_->setShape( osgGeo::MarkerSet::Box );
+	    markerset_->setShape( osgGeo::MarkerShape::Box );
 	    break;
 	case MarkerStyle3D::Cone:
-	    markerset_->setShape( osgGeo::MarkerSet::Cone );
+	    markerset_->setShape( osgGeo::MarkerShape::Cone );
 	    break;
 	case MarkerStyle3D::Cylinder:
-	    markerset_->setShape( osgGeo::MarkerSet::Cylinder );
+	    markerset_->setShape( osgGeo::MarkerShape::Cylinder );
 	    break;
 	case MarkerStyle3D::Sphere:
-	    markerset_->setShape( osgGeo::MarkerSet::Sphere );
+	    markerset_->setShape( osgGeo::MarkerShape::Sphere );
+	    break;
+	case MarkerStyle3D::Cross:
+	    markerset_->setShape( osgGeo::MarkerShape::Cross );
 	    break;
 	default:
 	    pErrMsg("Shape not implemented");
-	    markerset_->setShape( osgGeo::MarkerSet::None );
+	    markerset_->setShape( osgGeo::MarkerShape::None );
     }
 
     markerstyle_.type_ = type;
@@ -162,6 +166,12 @@ void MarkerSet::setScreenSize( float sz )
 float MarkerSet::getScreenSize() const
 {
     return markerset_->getMarkerSize();
+}
+
+
+void MarkerSet::setMarkerResolution( float res )
+{
+    markerset_->setDetail( res );
 }
 
 

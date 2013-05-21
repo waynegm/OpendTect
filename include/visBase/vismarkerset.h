@@ -104,6 +104,10 @@ public:
     int			findMarker(const Coord3&, const Coord3& eps, 
 				   bool scenespace = false);
 
+    void		setMarkerResolution(float res);
+			/*!< The res value is between 0 and 1. It indicates the 
+			quality of marker visualization. */
+
 protected:
 				~MarkerSet();
     

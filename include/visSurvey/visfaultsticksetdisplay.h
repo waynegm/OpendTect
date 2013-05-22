@@ -25,6 +25,8 @@ namespace visBase
     class Transformation;
     class Lines;
     class MarkerSet;
+    class DrawStyle;
+    class PolygonOffset;
 }
 
 namespace Geometry { class FaultStickSet; class IndexedPrimitiveSet; } 
@@ -155,7 +157,6 @@ protected:
     bool			ctrldown_;
 
     ObjectSet<visBase::MarkerSet>  knotmarkersets_;
-    Geometry::IndexedPrimitiveSet* lineprimitiveset_;
     struct StickIntersectPoint
     {
 	Coord3			pos_;
@@ -164,6 +165,7 @@ protected:
     };
 
     ObjectSet<StickIntersectPoint> stickintersectpoints_;
+
 };
 
 } // namespace VisSurvey

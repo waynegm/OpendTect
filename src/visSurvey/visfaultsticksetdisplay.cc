@@ -35,7 +35,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistransform.h"
 #include "viscoord.h"
 #include "vissurvobj.h"
+#include "vispolygonoffset.h"
 #include "zdomain.h"
+#include "visdrawstyle.h"
 
 mCreateFactoryEntry( visSurvey::FaultStickSetDisplay );
 
@@ -64,12 +66,16 @@ FaultStickSetDisplay::FaultStickSetDisplay()
     , stickselectmode_(false)
 {
     sticks_->ref();
+    visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
+    polyoffset->setFactor( -1.0f );
+    polyoffset->setUnits( -1.0f );
     addChild( sticks_->osgNode() );
     sticks_->setName( "FaultSticks" );
-    lineprimitiveset_ = Geometry::IndexedPrimitiveSet::create( false );
-    sticks_->addPrimitiveSet( lineprimitiveset_ );
    
     activestick_->ref();
+    visBase::DrawStyle* ds = activestick_->addNodeState(new visBase::DrawStyle);
+    ds->setLineStyle( LineStyle( LineStyle::Solid, 3 ) );
+    activestick_->addNodeState( polyoffset );
     addChild( activestick_->osgNode() );
 
     for ( int idx=0; idx<3; idx++ )
@@ -116,7 +122,7 @@ FaultStickSetDisplay::~FaultStickSetDisplay()
 
     sticks_->unRef();
     activestick_->unRef();
-    
+
     for ( int idx=knotmarkersets_.size()-1; idx>=0; idx-- )
     {
 	removeChild( knotmarkersets_[idx]->osgNode() );
@@ -124,6 +130,7 @@ FaultStickSetDisplay::~FaultStickSetDisplay()
     }
 
     deepErase( stickintersectpoints_ );
+
 }
 
 
@@ -214,7 +221,7 @@ bool FaultStickSetDisplay::setEMID( const EM::ObjectID& emid )
     getMaterial()->setColor( emfss_->preferredColor() );
 
     mSetStickIntersectPointColor( emfss_->preferredColor() );
-    viseditor_->setMarkerSize(3);
+    viseditor_->setMarkerSize(10);
 
     updateSticks();
     updateKnotMarkers();
@@ -269,14 +276,14 @@ const mVisTrans* FaultStickSetDisplay::getDisplayTransformation() const
 
 void FaultStickSetDisplay::updateEditPids()
 {
-   /* if ( !emfss_ || (viseditor_ && viseditor_->sower().moreToSow()) )
+    if ( !emfss_ || (viseditor_ && viseditor_->sower().moreToSow()) )
 	return;
 
     editpids_.erase();
 
     for ( int sidx=0; !stickselectmode_ && sidx<emfss_->nrSections(); sidx++ )
     {
-	int sid = emfss_->sectionID( sidx );
+	EM::SectionID sid = emfss_->sectionID( sidx );
 	mDynamicCastGet( const Geometry::FaultStickSet*, fss,
 			 emfss_->sectionGeometry( sid ) );
 	if ( fss->isEmpty() )
@@ -297,7 +304,7 @@ void FaultStickSetDisplay::updateEditPids()
 	}
     }
     if ( fsseditor_ )
-	fsseditor_->editpositionchange.trigger();*/
+	fsseditor_->editpositionchange.trigger();
 }
 
 
@@ -305,8 +312,16 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 {
     if ( !emfss_ || (viseditor_ && viseditor_->sower().moreToSow()) )
 	return;
+    visBase::Lines* poly =  activeonly ? activestick_ : sticks_;
+    
+    poly->removeAllPrimitiveSets();
+    Geometry::IndexedPrimitiveSet* primitiveset = 
+	Geometry::IndexedPrimitiveSet::create( false );
+    poly->addPrimitiveSet( primitiveset );
 
-    visBase::Lines* poly = sticks_;
+    if ( poly->getCoordinates()->size() )
+	poly->getCoordinates()->setEmpty();
+
     TypeSet<int> crdidx;
     for ( int sidx=0; sidx<emfss_->nrSections(); sidx++ )
     {
@@ -473,7 +488,14 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 	}
     }
     
-    lineprimitiveset_->append( crdidx.arr(), crdidx.size() );
+    if( poly->getCoordinates()->size() )
+    {
+	primitiveset->append( crdidx.arr(), crdidx.size() );
+	poly->dirtyCoordinates();
+    }
+    else
+	poly->removeAllPrimitiveSets();
+
     if ( !activeonly )
 	updateSticks( true );
 }
@@ -514,9 +536,9 @@ void FaultStickSetDisplay::mouseCB( CallBacker* cb )
 
     mCBCapsuleUnpack(const visBase::EventInfo&,eventinfo,cb);
 
-    fsseditor_->setSowingPivot( disp2world(viseditor_->sower().pivotPos()) );
+  /*  fsseditor_->setSowingPivot( disp2world(viseditor_->sower().pivotPos()) );
     if ( viseditor_->sower().accept(eventinfo) )
-	return;
+	return;*/
 
     const EM::PosID mousepid =
 		    viseditor_->mouseClickDragger( eventinfo.pickedobjids );
@@ -592,8 +614,7 @@ void FaultStickSetDisplay::mouseCB( CallBacker* cb )
     if ( mousepid.isUdf() && !viseditor_->isDragging() )
 	setActiveStick( insertpid );
 
-    if ( locked_ || !pos.isDefined() ||
-	 eventinfo.type!=visBase::MouseClick || viseditor_->isDragging() )
+    if ( locked_ || !pos.isDefined() || viseditor_->isDragging() )
 	return;
 
     if ( !mousepid.isUdf() )
@@ -630,8 +651,8 @@ void FaultStickSetDisplay::mouseCB( CallBacker* cb )
     if ( !mousepid.isUdf() || OD::ctrlKeyboardButton(eventinfo.buttonstate_) )
 	return;
     
-    if ( viseditor_->sower().activate(emfss_->preferredColor(), eventinfo) )
-	return;
+ /*   if ( viseditor_->sower().activate(emfss_->preferredColor(), eventinfo) )
+	return;*/
 
     if ( eventinfo.pressed )
 	return;
@@ -1157,7 +1178,7 @@ void FaultStickSetDisplay::updateKnotMarkers()
 	markerset->setMarkerStyle( MarkerStyle3D::Sphere ); 
 	markerset->setMaterial(0); 
 	markerset->setDisplayTransformation( displaytransform_ ); 
-	markerset->setScreenSize(3); 
+	markerset->setScreenSize(7); 
     }
 
     int groupidx = (!showmanipulator_ || !stickselectmode_)  ? 2 : 0;

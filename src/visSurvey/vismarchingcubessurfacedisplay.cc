@@ -456,7 +456,7 @@ bool MarchingCubesDisplay::setEMID( const EM::ObjectID& emid,
 }
 
 
-void MarchingCubesDisplay::updateVisFromEM( bool onlyshape, TaskRunner* tr )
+bool MarchingCubesDisplay::updateVisFromEM( bool onlyshape, TaskRunner* tr )
 {
     if ( !onlyshape || !displaysurface_ )
     {
@@ -485,7 +485,7 @@ void MarchingCubesDisplay::updateVisFromEM( bool onlyshape, TaskRunner* tr )
 	displaysurface_->turnOn( true );
     }
 
-    displaysurface_->touch( !onlyshape, tr );
+    return displaysurface_->touch( !onlyshape, tr );
 }
 
 

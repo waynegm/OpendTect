@@ -31,7 +31,6 @@ class QGraphicsEllipseItem;
 class QGraphicsLineItem;
 class QGraphicsPathItem;
 class QGraphicsPixmapItem;
-class QGraphicsPolygonItem;
 class QGraphicsProxyWidget;
 class QGraphicsRectItem;
 class QGraphicsTextItem;
@@ -45,6 +44,7 @@ class ODGraphicsPixmapItem;
 class ODGraphicsPointItem;
 class ODGraphicsPolyLineItem;
 class ODGraphicsDynamicImageItem;
+class ODViewerTextItem;
 template <class T> class ODPolygon;
 
 
@@ -105,30 +105,25 @@ public:
 };
 
 
+
 mExpClass(uiBase) uiLineItem : public uiGraphicsItem
 {
 public:
     			uiLineItem();
-			uiLineItem(float x1,float y1,float x2,float y2,
-				   bool abspos);
-    			uiLineItem(const uiPoint& start,const uiPoint& stop,
-				   bool abspos);
-			uiLineItem(const uiPoint&,double angle,double len,
-				   bool abspos);
+    			uiLineItem(int x1,int y1,int x2,int y2);
+			uiLineItem(float x1,float y1,float x2,float y2);
+    			uiLineItem(const uiPoint& start,const uiPoint& stop);
+			uiLineItem(const uiPoint&,float angle,float len);
 			~uiLineItem();
 
     QGraphicsLineItem*	qLineItem()	{ return qlineitem_; }
     void 		setPenStyle(const LineStyle&,bool withalpha=false);
     void		setPenColor(const Color&,bool withalpha=false);
-    void		setLine(const uiPoint& start,const uiPoint& end,
-	    			bool abspos=true);
-    void		setLine(int x1,int y1,int x2,int y2,bool abspos=true);
-    void		setLine(float x1,float y1,float x2,float y2,
-				bool abspos=true);
+    void		setLine(const uiPoint& start,const uiPoint& end);
+    void		setLine(int x1,int y1,int x2,int y2);
+    void		setLine(float x1,float y1,float x2,float y2);
     void		setLine(const Geom::Point2D<float>&,
-				const Geom::Point2D<float>&,bool abspos=true);
-    void		setStartPos(const uiPoint&,bool abspos);
-    void		setEndPos(const uiPoint&,bool abspos);
+				const Geom::Point2D<float>&);
     uiRect		lineRect() const;
 
 protected:
@@ -192,10 +187,8 @@ public:
     			uiPolygonItem(const TypeSet<uiWorldPoint>&,
 				      bool fill);
     			uiPolygonItem(const ODPolygon<int>&,bool fill);
-    			uiPolygonItem(QGraphicsPolygonItem*);
 			~uiPolygonItem();
 
-    QGraphicsPolygonItem* qPolygonItem()	{ return qpolygonitem_; }
     void		fill();
     void		setPolygon(const TypeSet<uiPoint>&);
     void		setPolygon(const TypeSet<uiWorldPoint>&);
@@ -203,8 +196,8 @@ public:
 
 protected:
 
-    QGraphicsItem*	mkQtObj();
-    QGraphicsPolygonItem* qpolygonitem_;
+    QGraphicsItem*		mkQtObj();
+    ODGraphicsPolyLineItem*	qpolygonitem_;
 };
 
 
@@ -248,7 +241,7 @@ protected:
 mExpClass(uiBase) uiTextItem : public uiGraphicsItem
 {
 public:
-			uiTextItem(bool useodvwrtxtitem=false);
+			uiTextItem();
     			uiTextItem(const char*,const Alignment& al=Alignment());
     			uiTextItem(const uiPoint&,const char*,
 				   const Alignment& al=Alignment());
@@ -259,27 +252,14 @@ public:
     uiSize		getTextSize() const;
     void 		setAlignment(const Alignment&);
     void 		setText(const char*); 
-    void		setHtmlText(const char*);
     void		setTextColor(const Color&);
-
-    void		enableBackground(bool);
-    bool		backgroundEnabled() const;
-    void		setBackgroundColor(const Color&);
-    Color		getBackgroundColor() const;
-
-    QGraphicsTextItem*  qTextItem()	{ return qtextitem_; }
 
 protected:
 			uiTextItem(QGraphicsItem*);
 
-    QGraphicsItem* 	mkQtObj();
-    QGraphicsItem* 	mkODObj();
-    QGraphicsTextItem*	qtextitem_;
+    ODViewerTextItem* 	mkODObj();
+    ODViewerTextItem*	qtextitem_;
 
-    Alignment		al_;
-    uiWorldPoint	pos_;
-
-    void		updatePos();
     virtual void	stPos(float,float);
 };
 

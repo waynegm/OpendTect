@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "stratsynth.h"
 
 #include "array1dinterpol.h"
+#include "angles.h"
 #include "arrayndimpl.h"
 #include "attribsel.h"
 #include "attribengman.h"
@@ -28,6 +29,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "elasticpropsel.h"
 #include "flatposdata.h"
 #include "ioman.h"
+#include "mathfunc.h"
 #include "prestackattrib.h"
 #include "prestackgather.h"
 #include "prestackanglecomputer.h"
@@ -38,6 +40,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "seistrc.h"
 #include "seistrcprop.h"
 #include "survinfo.h"
+#include "statruncalc.h"
 #include "stratlayermodel.h"
 #include "stratlayersequence.h"
 #include "synthseis.h"
@@ -62,7 +65,7 @@ SynthGenParams::SynthGenParams()
     anglerg_ = sDefaultAngleRange;
     const BufferStringSet& facnms = RayTracer1D::factory().getNames( false );
     if ( !facnms.isEmpty() )
-	raypars_.set( sKey::Type(), facnms.get( facnms.size()-1 ) );
+	raypars_.set( sKey::Type(), facnms.get(0) );
 
     RayTracer1D::setIOParsToZeroOffset( raypars_ );
 }
@@ -202,7 +205,7 @@ bool StratSynth::removeSynthetic( const char* nm )
 
 SyntheticData* StratSynth::addSynthetic()
 {
-    SyntheticData* sd = generateSD( tr_ );
+    SyntheticData* sd = generateSD();
     if ( sd )
 	synthetics_ += sd;
     return sd;
@@ -211,7 +214,7 @@ SyntheticData* StratSynth::addSynthetic()
 
 SyntheticData* StratSynth::addSynthetic( const SynthGenParams& synthgen )
 {
-    SyntheticData* sd = generateSD( synthgen, tr_ );
+    SyntheticData* sd = generateSD( synthgen );
     if ( sd )
 	synthetics_ += sd;
     return sd;
@@ -225,7 +228,7 @@ SyntheticData* StratSynth::replaceSynthetic( int id )
     if ( !sd ) return 0;
 
     const int sdidx = synthetics_.indexOf( sd );
-    sd = generateSD( tr_ );
+    sd = generateSD();
     if ( sd )
     {
 	sd->setName( synthetics_[sdidx]->name() );
@@ -297,14 +300,8 @@ int StratSynth::nrSynthetics() const
 }
 
 
-float StratSynth::cMaximumVpWaterVel()
-{
-    return 1510.f;
-}
-
-
-SyntheticData* StratSynth::generateSD( TaskRunner* tr )
-{ return generateSD( genparams_, tr ); }
+SyntheticData* StratSynth::generateSD()
+{ return generateSD( genparams_ ); }
 
 #define mSetBool( str, newval ) \
 { \
@@ -382,7 +379,7 @@ proc->getProvider()->setPossibleVolume( cs );
 
 
 #define mCreateSeisBuf() \
-if ( !TaskRunner::execute(tr,*proc) ) \
+if ( !TaskRunner::execute(tr_,*proc) ) \
     mErrRet( proc->message(), delete sd; return 0 ) ; \
 const int crlstep = SI().crlStep(); \
 const BinID bid0( SI().inlRange(false).stop + SI().inlStep(), \
@@ -400,8 +397,7 @@ delete sd;
 SyntheticData* StratSynth::createAVOGradient( SyntheticData* sd,
 					     const CubeSampling& cs,
        					     const SynthGenParams& synthgenpar,
-					     const Seis::RaySynthGenerator& sg,
-       					     TaskRunner* tr )
+					     const Seis::RaySynthGenerator& sg )
 {
     mCreateDesc()
     mSetEnum(Attrib::PSAttrib::calctypeStr(),PreStack::PropCalc::LLSQ);
@@ -431,8 +427,7 @@ SyntheticData* StratSynth::createAVOGradient( SyntheticData* sd,
 
 SyntheticData* StratSynth::createAngleStack( SyntheticData* sd,
 					     const CubeSampling& cs,
-       					     const SynthGenParams& synthgenpar,
-       					     TaskRunner* tr )
+       					     const SynthGenParams& synthgenpar )
 {
     mCreateDesc();
     mSetEnum(Attrib::PSAttrib::calctypeStr(),PreStack::PropCalc::Stats);
@@ -444,31 +439,110 @@ SyntheticData* StratSynth::createAngleStack( SyntheticData* sd,
 }
 
 
-bool StratSynth::createElasticModels()
+class ElasticModelCreator : public ParallelTask
 {
-    clearElasticModels();
-    const int nraimdls = lm_.size();
-    for ( int idm=0; idm<nraimdls; idm++ )
+public:
+ElasticModelCreator( const Strat::LayerModel& lm, TypeSet<ElasticModel>& ems )
+    : ParallelTask( "Generating Elastic Models" )
+    , lm_(lm)
+    , aimodels_(ems)
+{
+    aimodels_.setSize( lm_.size(), ElasticModel() );
+}
+
+
+const char* message() const	{ return errmsg_.isEmpty() ? 0 : errmsg_; }
+
+protected :
+
+bool doWork( od_int64 start, od_int64 stop, int threadid )
+{
+    for ( int idm=(int) start; idm<=stop; idm++ )
     {
-	ElasticModel aimod; 
+	addToNrDone(1);
+	ElasticModel& curem = aimodels_[idm];
 	const Strat::LayerSequence& seq = lm_.sequence( idm ); 
 	const int sz = seq.size();
 	if ( sz < 1 )
 	    continue;
 
-	if ( !fillElasticModel( lm_, aimod, idm ) )
+	if ( !fillElasticModel(seq,curem) )
 	    return false; 
-
-	aimodels_ += aimod;
     }
 
+    return true;
+}
+
+bool fillElasticModel( const Strat::LayerSequence& seq, ElasticModel& aimodel )
+{
+    const ElasticPropSelection& eps = lm_.elasticPropSel();
+    const PropertyRefSelection& props = lm_.propertyRefs();
+
+    aimodel.erase();
+    BufferString errmsg;
+    if ( !eps.isValidInput(&errmsg) )
+    {
+	mutex_.lock();
+	errmsg_ = errmsg;
+	mutex_.unLock();
+	return false;
+    }
+
+    ElasticPropGen elpgen( eps, props );
+    const float srddepth = -1*mCast(float,SI().seismicReferenceDatum() );
+    int firstidx = 0;
+    if ( seq.startDepth() < srddepth )
+	firstidx = seq.nearestLayerIdxAtZ( srddepth );
+
+    for ( int idx=firstidx; idx<seq.size(); idx++ )
+    {
+	const Strat::Layer* lay = seq.layers()[idx];
+	float thickness = lay->thickness();
+	if ( idx == firstidx )
+	    thickness -= srddepth - lay->zTop();
+	if ( thickness < 1e-4 )
+	    continue;
+
+	float dval, pval, sval;
+	elpgen.getVals( dval, pval, sval, lay->values(), props.size() );
+
+	// Detect water - reset Vs
+	if ( pval < cMaximumVpWaterVel() )
+	    sval = 0;
+
+	aimodel += ElasticLayer( thickness, pval, sval, dval );
+    }
+
+    return true;
+}
+
+static float cMaximumVpWaterVel()
+{ return 1510.f; }
+
+od_int64 nrIterations() const
+{ return lm_.size(); }
+
+const Strat::LayerModel&	lm_;
+TypeSet<ElasticModel>&		aimodels_;
+Threads::Mutex			mutex_;
+BufferString			errmsg_;
+
+};
+
+
+bool StratSynth::createElasticModels()
+{
+    clearElasticModels();
+    
+    ElasticModelCreator emcr( lm_, aimodels_ );
+    if ( !TaskRunner::execute(tr_,emcr) )
+	return false;
     errmsg_.setEmpty();
-    return adjustElasticModel( lm_, aimodels_, errmsg_ );
+    return adjustElasticModel( lm_, aimodels_ );
 }
 
 
-SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar,
-				       TaskRunner* tr )
+SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar )
 {
     errmsg_.setEmpty(); 
 
@@ -496,7 +570,7 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar,
 	mErrRet( "Model has only one layer, please add another layer.", 
 		return 0; );
 
-    if ( !TaskRunner::execute( tr, synthgen) )
+    if ( !TaskRunner::execute( tr_, synthgen) )
 	return 0;
 
     const int crlstep = SI().crlStep();
@@ -514,7 +588,7 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar,
 	{
 	    SeisTrc* trc = trcs[idx];
 	    trc->info().binid = BinID( bid0.inl, bid0.crl + imdl * crlstep );
-	    trc->info().nr = imdl;
+	    trc->info().nr = imdl+1;
 	    cs.hrg.include( trc->info().binid );
 	    if ( !trc->isEmpty() )
 	    {
@@ -552,9 +626,9 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar,
 	sd = new PreStackSyntheticData( synthgenpar, *dp );
 
 	if ( synthgenpar.synthtype_ == SynthGenParams::AngleStack )
-	    sd = createAngleStack( sd, cs, synthgenpar, tr );
+	    sd = createAngleStack( sd, cs, synthgenpar );
 	else if ( synthgenpar.synthtype_ == SynthGenParams::AVOGradient )
-	    sd = createAVOGradient( sd, cs, synthgenpar, synthgen, tr );
+	    sd = createAVOGradient( sd, cs, synthgenpar, synthgen );
 	else
 	{
 	    mDynamicCastGet(PreStackSyntheticData*,presd,sd);
@@ -620,60 +694,102 @@ void StratSynth::generateOtherQuantities( const PostStackSyntheticData& sd,
 					  const Strat::LayerModel& lm ) 
 {
     const PropertyRefSelection& props = lm.propertyRefs();
+    const StepInterval<double>& zrg = sd.postStackPack().posData().range(false);
+
+    TypeSet<Interval<float> > seqtimergs;
+    ManagedObjectSet<Strat::LayerModel> layermodels;
+    for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+	layermodels += new Strat::LayerModel();
+
+    for ( int iseq=0; iseq<lm.size(); iseq ++ )
+    {
+	const Strat::LayerSequence& seq = lm.sequence( iseq ); 
+	const TimeDepthModel& t2d = *sd.d2tmodels_[iseq];
+	const Interval<float> seqdepthrg = seq.zRange();
+	const float seqstarttime = t2d.getTime(
+					 seq.layerIdxAtZ( seqdepthrg.start ) );
+	const float seqstoptime = t2d.getTime(
+					 seq.layerIdxAtZ( seqdepthrg.stop ) );
+	seqtimergs += Interval<float> ( seqstarttime, seqstoptime );
+	for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+	{
+	    Strat::LayerModel* lmsamp = layermodels[idz];
+	    if ( !lmsamp )
+		continue;
+
+	    lmsamp->addSequence();
+	    Strat::LayerSequence& curseq = lmsamp->sequence( iseq );
+	    const float time = mCast( float, zrg.atIndex(idz) );
+	    if ( !seqtimergs[iseq].includes(time,false) )
+		continue;
+
+	    const float dptstart = t2d.getDepth( time - (float)zrg.step );
+	    const float dptstop = t2d.getDepth( time + (float)zrg.step );
+	    Interval<float> depthrg( dptstart, dptstop );
+	    seq.getSequencePart( depthrg, true, curseq );
+	}
+    }
 
     for ( int iprop=1; iprop<props.size(); iprop++ )
     {
+	const bool propisvel = props[iprop]->stdType() == PropertyRef::Vel;
 	SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( sd.postStackPack() );
-
-	BufferString nm( "[" ); nm += props[iprop]->name(); nm += "]";
-
-	const StepInterval<double>& zrg = dp->posData().range( false );
-
 	SeisTrcBuf* trcbuf = new SeisTrcBuf( dp->trcBuf() );
 	const int bufsz = trcbuf->size();
-
 	for ( int iseq=0; iseq<lm.size(); iseq ++ )
 	{
-	    const Strat::LayerSequence& seq = lm.sequence( iseq ); 
-	    const TimeDepthModel& t2d = *sd.d2tmodels_[iseq];
+	    SeisTrc* rawtrc = iseq < bufsz ? trcbuf->get( iseq ) : 0;
+	    if ( !rawtrc )
+		continue;
 
-	    int layidx = 0;
-	    float laydpt = seq.startDepth();
-	    float val = mUdf(float);
-	    TypeSet<float> vals; 
+	    PointBasedMathFunction propvals( PointBasedMathFunction::Linear,
+		    			     PointBasedMathFunction::EndVal );
 	    for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
 	    {
 		const float time = mCast( float, zrg.atIndex(idz) );
-		const float dpt = t2d.getDepth( time );
+		if ( !seqtimergs[iseq].includes(time,false) )
+		    continue;
 
-		const Strat::Layer* lay = 0;
-		while ( layidx < seq.size() - 1 )
+		if ( !layermodels.validIdx(idz) )
+		    continue;
+
+		Strat::LayerSequence& seq = layermodels[idz]->sequence(iseq);
+		if ( seq.isEmpty() )
+		    continue;
+
+		Stats::CalcSetup laypropcalc( true );
+		laypropcalc.require( Stats::Average );
+		Stats::RunCalc<double> propval( laypropcalc );
+		for ( int ilay=0; ilay<seq.size(); ilay++ )
 		{
-		    if ( dpt <= laydpt )
-			break;
+		    const Strat::Layer* lay = seq.layers()[ilay];
+		    if ( !lay ) continue;
+		    const float val = lay->value(iprop);
+		    if ( mIsUdf(val) || ( propisvel && val < 1e-5f ) )
+			continue;
 
-		    lay = seq.layers()[layidx];
-		    laydpt += lay->thickness();
-		    layidx ++;
+		    propval.addValue( propisvel ? 1.f / val : val,
+			   	      lay->thickness() );
 		}
-		if ( lay && iprop < lay->nrValues() )
-		    val = lay->value( iprop );
+		const float val = mCast( float, propval.average() );
+		if ( mIsUdf(val) || ( propisvel && val < 1e-5f ) )
+		    continue;
 
-		vals += val;
+		propvals.add( time, propisvel ? 1.f / val : val );
 	    }
-	    SeisTrc* trc = iseq < bufsz ? trcbuf->get( iseq ) : 0;
-	    if ( !trc ) continue;
-	    //Array1DImpl<float> outvals( vals.size() );
-	    //AntiAlias( 1/(float)5, vals.size(), vals.arr(), outvals.arr() );
-	    for ( int idz=0; idz<vals.size(); idz++ )
-		trc->set( idz, vals[idz], 0 );
+	    for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+	    {
+		const float time = mCast( float, zrg.atIndex(idz) );
+		rawtrc->set( idz, propvals.getValue( time ), 0 );
+	    }
+	    // TODO: add Anti-Alias frequency filter
 	}
 
-
-	dp->setBuffer( trcbuf, Seis::Line, SeisTrcInfo::TrcNr );	
+	dp->setBuffer( trcbuf, Seis::Line, SeisTrcInfo::TrcNr );
+	BufferString nm( "[", props[iprop]->name(), "]" );
 	dp->setName( nm );
 	PropertyRefSyntheticData* prsd = 
-	    new PropertyRefSyntheticData( genparams_, *dp, *props[iprop] );
+	    	 new PropertyRefSyntheticData( genparams_, *dp, *props[iprop] );
 	prsd->id_ = ++lastsyntheticid_;
 	prsd->setName( nm );
 
@@ -689,54 +805,23 @@ const char* StratSynth::errMsg() const
 }
 
 
-bool StratSynth::fillElasticModel( const Strat::LayerModel& lm, 
-				ElasticModel& aimodel, int seqidx )
+const char* StratSynth::infoMsg() const
 {
-    const Strat::LayerSequence& seq = lm.sequence( seqidx ); 
-    const ElasticPropSelection& eps = lm.elasticPropSel();
-    const PropertyRefSelection& props = lm.propertyRefs();
-    if ( !eps.isValidInput(&errmsg_) )
-	return false; 
-
-    ElasticPropGen elpgen( eps, props );
-    const float srddepth = -1*mCast(float,SI().seismicReferenceDatum() );
-    int firstidx = 0;
-    if ( seq.startDepth() < srddepth )
-	firstidx = seq.nearestLayerIdxAtZ( srddepth );
-
-    for ( int idx=firstidx; idx<seq.size(); idx++ )
-    {
-	const Strat::Layer* lay = seq.layers()[idx];
-	float thickness = lay->thickness();
-	if ( idx == firstidx )
-	    thickness -= srddepth - lay->zTop();
-	if ( thickness < 1e-4 )
-	    continue;
-
-	float dval, pval, sval;
-	elpgen.getVals( dval, pval, sval, lay->values(), props.size() );
-
-	// Detect water - reset Vs
-	if ( pval < cMaximumVpWaterVel() )
-	    sval = 0;
-
-	aimodel += ElasticLayer( thickness, pval, sval, dval );
-    }
-
-    return true;
+    return infomsg_.isEmpty() ? 0 : infomsg_.buf();
 }
 
 
+
+
 #define mValidDensityRange( val ) \
-(!mIsUdf(val) && val>0.1 && val<10)
+(!mIsUdf(val) && val>100 && val<10000)
 #define mValidWaveRange( val ) \
 (!mIsUdf(val) && val>10 && val<10000)
 
 bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
-				     TypeSet<ElasticModel>& aimodels,
-       				     BufferString& infomsg )
+				     TypeSet<ElasticModel>& aimodels )
 {
-    infomsg.setEmpty();
+    infomsg_.setEmpty();
     for ( int midx=0; midx<aimodels.size(); midx++ )
     {
 	const Strat::LayerSequence& seq = lm.sequence( midx ); 
@@ -760,16 +845,6 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 		 !mValidWaveRange(layer.vel_) ||
 		 !mValidWaveRange(layer.svel_) )
 	    {
-		if ( infomsg.isEmpty() )
-		{
-		    infomsg += "Layer model contains invalid layer(s), "
-			       "first occurence found in layer '";
-		    infomsg += seq.layers()[idx]->name();
-		    infomsg += "' of pseudo well number ";
-		    infomsg += midx+1;
-		    infomsg += ". Invalid layers will be interpolated";
-		}
-
 		if ( !mValidDensityRange(layer.den_) )
 		{
 		    invaliddenscount++;
@@ -785,6 +860,17 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 		    invalidsvelcount++;
 		    svelvals.set( idx, mUdf(float) );
 		}
+		
+		if ( infomsg_.isEmpty() )
+		{
+		    infomsg_ += "Layer model contains invalid layer(s), "
+			       "first occurence found in layer '";
+		    infomsg_ += seq.layers()[idx]->name();
+		    infomsg_ += "' of pseudo well number ";
+		    infomsg_ += midx+1;
+		    infomsg_ += ". Invalid layers will be interpolated";
+		}
+
 	    }
 	}
 
@@ -792,16 +878,16 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 	     invalidvelcount>=aimodel.size() ||
 	     invaliddenscount>=aimodel.size() )
 	{
-	    infomsg.setEmpty();
-	    infomsg += "Cannot generate elastic model as all the values "
+	    errmsg_.setEmpty();
+	    errmsg_ += "Cannot generate elastic model as all the values "
 		       "of the properties ";
 	    if ( invaliddenscount>=aimodel.size() )
-		infomsg += "'Density' ";
+		errmsg_ += "'Density' ";
 	    if ( invalidvelcount>=aimodel.size() )
-		infomsg += "'Pwave Velocity' ";
+		errmsg_ += "'Pwave Velocity' ";
 	    if ( invalidsvelcount>=aimodel.size() )
-		infomsg += "'Swave Velocity' ";
-	    infomsg += "are invalid. Probably units are not set correctly";
+		errmsg_ += "'Swave Velocity' ";
+	    errmsg_ += "are invalid. Probably units are not set correctly";
 	    return false;
 	}
 
@@ -870,6 +956,30 @@ void StratSynth::snapLevelTimes( SeisTrcBuf& trcs,
 void StratSynth::setLevel( const Level* lvl )
 { delete level_; level_ = lvl; }
 
+
+
+void StratSynth::trimTraces( SeisTrcBuf& tbuf, float flatshift,
+			     const ObjectSet<const TimeDepthModel>& d2ts,
+			     float zskip ) const
+{
+    if ( mIsZero(zskip,mDefEps) )
+	return;
+
+    for ( int idx=0; idx<tbuf.size(); idx++ )
+    {
+	SeisTrc* trc = tbuf.get( idx );
+	SeisTrc* newtrc = new SeisTrc( *trc );
+	newtrc->info() = trc->info();
+	const TimeDepthModel& d2tmodel = *d2ts[idx];
+	const int startidx =
+	    trc->nearestSample( d2tmodel.getTime(zskip)-flatshift );
+	newtrc->reSize( trc->size()-startidx, false );
+	newtrc->setStartPos( trc->samplePos(startidx) );
+	for ( int sampidx=startidx; sampidx<trc->size(); sampidx++ )
+	    newtrc->set( sampidx-startidx, trc->get(sampidx,0), 0 );
+	delete tbuf.replace( idx, newtrc );
+    }
+}
 
 
 void StratSynth::flattenTraces( SeisTrcBuf& tbuf ) const
@@ -1010,7 +1120,7 @@ void PreStackSyntheticData::convertAngleDataToDegrees( PreStack::Gather* ag ) co
 	{
 	    const float radval = agdata.get( idx, idy );
 	    if ( mIsUdf(radval) ) continue;
-	    const float dval = Math::toDegrees( radval );
+	    const float dval =  Angle::rad2deg( radval );
 	    agdata.set( idx, idy, dval );
 	}
     }

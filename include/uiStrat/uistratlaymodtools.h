@@ -15,10 +15,10 @@ ________________________________________________________________________
 #include "uistratmod.h"
 #include "uidialog.h"
 #include "uigroup.h"
+class uiComboBox;
+class uiGenInput;
 class uiLabel;
 class uiSpinBox;
-class uiGenInput;
-class uiComboBox;
 class uiToolButton;
 namespace Strat { class Level; }
 
@@ -103,6 +103,8 @@ public:
     void	fillPar(IOPar&) const;
     bool	usePar(const IOPar&);
 
+    bool	allownoprop_;
+
 protected:
     
     static const char*		sKeyDisplayedProp();
@@ -133,13 +135,20 @@ protected:
 };
 
 
-class PropertySet;
+class PropertyRefSelection;
 
-mExpClass(uiStrat) uiStratLayModPropSelector : public uiDialog
+mExpClass(uiStrat) uiStratLayModFRPropSelector : public uiDialog
 {
 public:
 
-			uiStratLayModPropSelector(uiParent*,const PropertySet&);
+			uiStratLayModFRPropSelector(uiParent*,
+						  const PropertyRefSelection&);
+
+    bool		needsDisplay() const;
+    const char*		getSelVPName() const;
+    const char*		getSelVSName() const;
+    const char*		getSelDenName() const;
+
 protected:
 
     uiComboBox*		vpfld_;

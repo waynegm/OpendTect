@@ -176,32 +176,38 @@ uiLineItem::uiLineItem()
 {}
 
 
-uiLineItem::uiLineItem( const uiPoint& startpos, const uiPoint& endpos,
-			bool abspos )
+uiLineItem::uiLineItem( const uiPoint& startpos, const uiPoint& endpos )
     : uiGraphicsItem(mkQtObj())
 {
-    setLine( startpos, endpos, abspos );
+    setLine( startpos, endpos );
 }
 
 
-uiLineItem::uiLineItem( float x1, float y1, float x2, float y2, bool abspos )
+uiLineItem::uiLineItem( float x1, float y1, float x2, float y2 )
     : uiGraphicsItem(mkQtObj())
 {
-    setLine( mNINT32(x1), mNINT32(y1), mNINT32(x2), mNINT32(y2), abspos );
+    setLine( x1, y1, x2, y2 );
 }
 
 
-uiLineItem::uiLineItem( const uiPoint& pt, double angle, double len,
-			bool abspos )
+uiLineItem::uiLineItem( int x1, int y1, int x2, int y2 )
+: uiGraphicsItem(mkQtObj())
+{
+    setLine( x1, y1, x2, y2 );
+}
+
+
+uiLineItem::uiLineItem( const uiPoint& pt, float angle, float len )
     : uiGraphicsItem(mkQtObj())
 {
-    uiPoint endpt( pt );
-    double delta = len * cos( angle );
-    endpt.x += mNINT32(delta);
+    Geom::Point2D<float> ptf( pt.x, pt.y );
+    Geom::Point2D<float> endpt( ptf );
+    float delta = len * cos( angle );
+    endpt.x += delta;
     delta = -len * sin( angle );
-    endpt.y += mNINT32(delta);
+    endpt.y += delta;
 
-    setLine( pt, endpt, abspos );
+    setLine( ptf, endpt );
 }
 
 
@@ -217,43 +223,22 @@ QGraphicsItem* uiLineItem::mkQtObj()
 }
 
 
-void uiLineItem::setLine( const uiPoint& start, const uiPoint& end, bool abs )
-{ setLine( start.x, start.y, end.x, end.y, abs ); }
+void uiLineItem::setLine( const uiPoint& start, const uiPoint& end )
+{ setLine( start.x, start.y, end.x, end.y ); }
 
 void uiLineItem::setLine( const Geom::Point2D<float>& start,
-			  const Geom::Point2D<float>& end, bool abs )
-{ setLine( start.x, start.y, end.x, end.y, abs ); }
+			  const Geom::Point2D<float>& end )
+{ setLine( start.x, start.y, end.x, end.y ); }
 
-void uiLineItem::setLine( int x1, int y1, int x2, int y2, bool abs )
-{ setLine( (float)x1, (float)y1, (float)x2, (float)y2, abs ); }
+void uiLineItem::setLine( int x1, int y1, int x2, int y2 )
+{ setLine( (float)x1, (float)y1, (float)x2, (float)y2 ); }
 
 
-void uiLineItem::setLine( float x1, float y1, float x2, float y2, bool abs )
+void uiLineItem::setLine( float x1, float y1, float x2, float y2 )
 {
-    if ( !abs )
-	qlineitem_->setLine( x1, y1, x2, y2 );
-    else
-    {
-	qlineitem_->setLine( 0, 0, x2-x1, y2-y1 );
-	qlineitem_->setPos( x1, y1 );
-    }
+    qlineitem_->setLine( x1, y1, x2, y2 );
 }
 
-
-void uiLineItem::setStartPos( const uiPoint& start, bool abspos )
-{
-    QPointF qstoppos = qlineitem_->mapToScene( qlineitem_->line().p1() );
-    uiPoint stoppos( (int)qstoppos.x(), (int)qstoppos.y() );
-    setLine( start.x, start.y, stoppos.x, stoppos.y, abspos );
-}
-
-
-void uiLineItem::setEndPos( const uiPoint& end, bool abspos )
-{
-    QPointF qstartpos = qlineitem_->mapToScene( qlineitem_->line().p2() );
-    uiPoint startpos( (int)qstartpos.x(), (int)qstartpos.y() );
-    setLine( startpos.x, startpos.y, end.x, end.y, abspos );
-}
 
 
 uiRect uiLineItem::lineRect() const
@@ -374,12 +359,6 @@ void uiPixmapItem::setPixmap( const ioPixmap& pixmap )
 
 
 // uiPolygonItem
-uiPolygonItem::uiPolygonItem( QGraphicsPolygonItem* qtobj )
-    : uiGraphicsItem(qtobj)
-    , qpolygonitem_(qtobj)
-{}
-
-
 uiPolygonItem::uiPolygonItem()
     : uiGraphicsItem(mkQtObj())
 {}
@@ -406,7 +385,7 @@ uiPolygonItem::~uiPolygonItem()
 
 QGraphicsItem* uiPolygonItem::mkQtObj()
 {
-    qpolygonitem_ = new QGraphicsPolygonItem();
+    qpolygonitem_ = new ODGraphicsPolyLineItem();
     return qpolygonitem_;
 }
 
@@ -424,7 +403,7 @@ void uiPolygonItem::setPolygon( type ptlist ) \
     for ( unsigned int idx=0; idx<ptlist.size(); idx++ )\
 	qpolygonf[idx] = QPointF( (float) ptaccess[idx].x, \
 			         (float) ptaccess[idx].y );\
-    qpolygonitem_->setPolygon( qpolygonf ); \
+    qpolygonitem_->setPolyLine( qpolygonf, true ); \
 }
 
 
@@ -530,31 +509,28 @@ void uiRectItem::setRect( int x, int y, int width, int height )
 
 
 // uiTextItem
-uiTextItem::uiTextItem( bool useodvwrtxtitem )
-    : uiGraphicsItem(useodvwrtxtitem ? mkODObj() : mkQtObj())
-    , pos_(0,0)
-    , al_(Alignment::Left,Alignment::Top)
+uiTextItem::uiTextItem()
+    : uiGraphicsItem( mkODObj() )
 {
+    setAlignment( Alignment(Alignment::Left,Alignment::Top) );
 }
 
 
 uiTextItem::uiTextItem( const char* txt, const Alignment& al )
-    : uiGraphicsItem(mkQtObj())
-    , pos_(0,0)
-    , al_(al)
+    : uiGraphicsItem(mkODObj())
 {
     setText( txt );
+    setAlignment( al );
 }
 
 
 uiTextItem::uiTextItem( const uiPoint& pos, const char* txt,
 			const Alignment& al )
-    : uiGraphicsItem(mkQtObj())
-    , pos_(pos.x, pos.y )
-    , al_(al)
+    : uiGraphicsItem(mkODObj())
 {
     setText( txt );
-    updatePos();
+    setPos( pos );
+    setAlignment( al );
 }
 
 
@@ -563,16 +539,9 @@ uiTextItem::~uiTextItem()
 }
 
 
-QGraphicsItem* uiTextItem::mkQtObj()
+ODViewerTextItem* uiTextItem::mkODObj()
 {
-    qtextitem_ = new QGraphicsTextItem();
-    return qtextitem_;
-}
-
-
-QGraphicsItem* uiTextItem::mkODObj()
-{
-    qtextitem_ = new ODViewerTextItem();
+    qtextitem_ = new ODViewerTextItem( false );
     return qtextitem_;
 }
 
@@ -586,17 +555,7 @@ uiSize uiTextItem::getTextSize() const
 
 void uiTextItem::setText( const char* txt )
 {
-    const QString curtxt = qtextitem_->toPlainText();
-    if ( curtxt == txt ) return;
-
-    qtextitem_->setPlainText( QString(txt) );
-    updatePos();
-}
-
-
-void uiTextItem::setHtmlText( const char* txt )
-{
-    qtextitem_->setHtml( QString(txt) );
+    qtextitem_->setText( txt );
 }
 
 
@@ -606,10 +565,9 @@ void uiTextItem::setFont( const uiFont& font )
 }
 
 
-
 void uiTextItem::setFontData( const FontData& fd )
 {
-    QFont font = qtextitem_->font();
+    QFont font = qtextitem_->getFont();
     uiFont::setFontData( font, fd );
     qtextitem_->setFont( font );
 }
@@ -617,65 +575,45 @@ void uiTextItem::setFontData( const FontData& fd )
 
 void uiTextItem::setAlignment( const Alignment& al )
 {
-    al_ = al; updatePos();
+
+    switch ( al.hPos() )
+    {
+	case Alignment::Right:
+	    qtextitem_->setHAlignment( Qt::AlignRight );
+	    break;
+	case Alignment::HCenter:
+	    qtextitem_->setHAlignment( Qt::AlignHCenter );
+	    break;
+	case Alignment::Left:
+	    qtextitem_->setHAlignment( Qt::AlignLeft );
+	    break;
+    }
+    
+    switch ( al.vPos() )
+    {
+	case Alignment::Bottom:
+	    qtextitem_->setVAlignment( Qt::AlignBottom );
+	    break;
+	case Alignment::VCenter:
+	    qtextitem_->setVAlignment( Qt::AlignVCenter );
+	    break;
+	case Alignment::Top:
+	    qtextitem_->setVAlignment( Qt::AlignTop );
+	    break;
+    }
 }
 
 
 void uiTextItem::stPos( float x, float y )
 {
-    pos_ = uiWorldPoint(x,y); updatePos();
-}
-
-
-void uiTextItem::updatePos()
-{
-    QFontMetrics qfm( qtextitem_->font() );
-    const float txtwidth = qtextitem_->document()->size().width();
-    const float txtheight = qfm.height();
-    float movex = 0, movey = 0;
-    switch ( al_.hPos() )
-    {
-	case Alignment::Right:
-	    movex = -txtwidth;
-	    break;
-	case Alignment::HCenter:
-	    movex = -txtwidth/2;
-	    break;
-	case Alignment::Left:
-	    break;
-    }
-    
-    switch ( al_.vPos() )
-    {
-	case Alignment::Bottom:
-	    movey = -txtheight;
-	    break;
-	case Alignment::VCenter:
-	    movey = -txtheight/2;
-	    break;
-	case Alignment::Top:
-	    break;
-    }
-
-    qtextitem_->setPos( pos_.x+movex, pos_.y+movey );
+    qtextitem_->setPos( x, y );
 }
 
 
 void uiTextItem::setTextColor( const Color& col )
-{ qtextitem_->setDefaultTextColor( QColor(QRgb(col.rgb())) ); }
-
-void uiTextItem::enableBackground( bool yn )
-{}
-
-bool uiTextItem::backgroundEnabled() const
-{ return false; }
-
-void uiTextItem::setBackgroundColor( const Color& col )
-{}
-
-Color uiTextItem::getBackgroundColor() const
-{ return Color(); }
-
+{
+    qtextitem_->setPen( QPen(QColor(col.r(),col.g(), col.b())) );
+}
 
 
 // uiMarkerItem

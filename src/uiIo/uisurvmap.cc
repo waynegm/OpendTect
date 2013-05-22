@@ -91,19 +91,20 @@ void uiSurveyBoxObject::update()
     }
 
     for ( int idx=0; idx<edges_.size(); idx++ )
-	edges_[idx]->setLine( cpt[idx], idx!=3 ? cpt[idx+1] : cpt[0], true );
+	edges_[idx]->setLine( cpt[idx], idx!=3 ? cpt[idx+1] : cpt[0] );
 
     for ( int idx=0; idx<labels_.size(); idx++ )
     {
 	const int oppidx = idx < 2 ? idx + 2 : idx - 2;
 	const bool bot = cpt[idx].y > cpt[oppidx].y;
         BinID bid = si.transform( mapcnr[idx] );
-        const int spacing =  bot ? 10 : -10;
+	Alignment al( Alignment::HCenter, bot ? Alignment::Top : Alignment::Bottom );
 	BufferString annot;
         annot += bid.inl; annot += "/"; annot += bid.crl;
-	uiPoint txtpos( cpt[idx].x, cpt[idx].y+spacing );
+	uiPoint txtpos( cpt[idx].x, cpt[idx].y );
 	labels_[idx]->setPos( txtpos );
 	labels_[idx]->setText( annot.buf() );
+	labels_[idx]->setAlignment( al );
     }
 }
 
@@ -176,7 +177,7 @@ void uiNorthArrowObject::update()
     if ( !angleline_ || !anglelabel_ )
 	return;
 
-    angleline_->setLine( origin, uiPoint(origin.x+dxpix,yarrowtop), true );
+    angleline_->setLine( origin, uiPoint(origin.x+dxpix,yarrowtop) );
     float usrang100 = usrang * 100;
     if ( usrang100 < 0 ) usrang100 = -usrang100;
     int iusrang = (int)(usrang100 + .5);

@@ -36,6 +36,7 @@ public:
     virtual void	modelChanged()			= 0;
     virtual uiWorldRect	zoomBox() const			= 0;
     virtual void	setZoomBox(const uiWorldRect&)	= 0;
+    virtual float	getDisplayZSkip() const		= 0;
 
     const Strat::LayerModel& layerModel() const;
     const TypeSet<float>& levelDepths() const		{ return lvldpths_; }
@@ -47,7 +48,6 @@ public:
     void		setFlattened(bool yn);
     bool		isFluidReplOn() const		{ return fluidreplon_; }
     void		setFluidReplOn(bool yn)		{ fluidreplon_= yn; }
-    void		setFRPars( const IOPar& pars )	{ frpars_ = pars; }
 
     float		getLayerPropValue(const Strat::Layer&,
 	    				  const PropertyRef*,int) const;
@@ -67,7 +67,6 @@ protected:
     bool		flattened_;
     bool		fluidreplon_;
     TypeSet<float>	lvldpths_;
-    IOPar		frpars_;
 
     bool		haveAnyZoom() const;
     virtual void	drawSelectedSequence()		= 0;

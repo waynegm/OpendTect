@@ -325,16 +325,16 @@ if ( geom->type_==Geometry::IndexedGeometry::type ) \
     list##s_ = new##list##s; \
     list##geoms_ = new##list##geoms
 
-void GeomIndexedShape::touch( bool forall, TaskRunner* tr )
+bool GeomIndexedShape::touch( bool forall, TaskRunner* tr )
 {
     if ( !tryWriteLock() )
     {
 	pErrMsg("Could not lock");
-	return;
+	return false;
     }
 
-    if ( shape_ && shape_->needsUpdate() )
-	shape_->update( forall, tr );
+    if ( shape_ && shape_->needsUpdate() && !shape_->update( forall, tr ) )
+	return false;
 
     ObjectSet<SoIndexedShape> newstrips;
     ObjectSet<const Geometry::IndexedGeometry> newstripgeoms;
@@ -352,7 +352,7 @@ void GeomIndexedShape::touch( bool forall, TaskRunner* tr )
 	mRemoveOld( line );
 
 	writeUnLock();
-	return;
+	return false;
     }
 
     const ObjectSet<Geometry::IndexedGeometry>& geoms=shape_->getGeometry();
@@ -453,6 +453,7 @@ void GeomIndexedShape::touch( bool forall, TaskRunner* tr )
     mRemoveOld( line );
 
     writeUnLock();
+    return true;
 }
 
 

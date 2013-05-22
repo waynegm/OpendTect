@@ -89,7 +89,6 @@ void uiFlatViewer::reSizeCB( CallBacker* cb )
 {
     axesdrawer_.setViewRect( getViewRect() );
     bitmapdisp_->setViewRect( getViewRect() );
-    bitmapdisp_->update();
     updateTransforms();
 }
 
@@ -232,7 +231,7 @@ void uiFlatViewer::setView( const uiWorldRect& wr )
 	return;
 
     wr_ = wr;
-    if ( (wr_.left() > wr.right()) != appearance().annot_.x1_.reversed_ )
+ 	   if ( (wr_.left() > wr.right()) != appearance().annot_.x1_.reversed_ )
 	wr_.swapHor();
     if ( (wr_.bottom() > wr.top()) != appearance().annot_.x2_.reversed_ )
 	wr_.swapVer();
@@ -256,7 +255,7 @@ void uiFlatViewer::setViewToBoundingBox()
 
 void uiFlatViewer::handleChange( DataChangeType dct, bool dofill )
 {
-    if ( dct==Annot || dct==All )
+    if ( dct==Auxdata || dct==All )
 	mAddToQueue( auxdatawork_ );
 
     if ( dct==Annot || dct==All )
@@ -278,7 +277,6 @@ void uiFlatViewer::updateCB( CallBacker* )
 void uiFlatViewer::updateBitmapCB( CallBacker* )
 {
     MouseCursorChanger cursorchgr( MouseCursor::Wait );
-
     dataChanged.trigger();
     bitmapdisp_->update();
     dispParsChanged.trigger();

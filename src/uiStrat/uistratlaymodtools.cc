@@ -11,10 +11,10 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uistratlaymodtools.h"
 
-
 #include "keystrs.h"
-#include "property.h"
+#include "propertyref.h"
 #include "stratlevel.h"
+#include "stratlayermodel.h"
 #include "uicombobox.h"
 #include "uigeninput.h"
 #include "uilabel.h"
@@ -25,7 +25,7 @@ const char* uiStratGenDescTools::sKeyNrModels()
 { return "Nr models"; }
 
 const char* uiStratLayModEditTools::sKeyDisplayedProp()
-{return "Displayed property";}
+{ return "Displayed property"; }
 
 const char* uiStratLayModEditTools::sKeyDecimation()
 { return "Decimation"; }
@@ -70,7 +70,7 @@ uiStratGenDescTools::uiStratGenDescTools( uiParent* p )
     uiGroup* rightgrp = new uiGroup( this, "Right group" );
     const CallBack gocb( mCB(this,uiStratGenDescTools,genCB) );
     nrmodlsfld_ = new uiGenInput( rightgrp, "",
-	    			  IntInpSpec(25).setLimits(Interval<int>(1,10000)) );
+			  IntInpSpec(25).setLimits(Interval<int>(1,10000)) );
     nrmodlsfld_->setElemSzPol( uiObject::Small );
     nrmodlsfld_->setStretch( 0, 0 );
     nrmodlsfld_->setToolTip( "Number of models to generate", 0 );
@@ -120,6 +120,7 @@ uiStratLayModEditTools::uiStratLayModEditTools( uiParent* p )
     , dispZoomedChg(this)
     , dispLithChg(this)
     , flattenChg(this)
+    , allownoprop_(false)
 {
     uiGroup* leftgrp = new uiGroup( this, "Left group" );
     propfld_ = new uiComboBox( leftgrp, "Display property" );
@@ -190,16 +191,22 @@ static void setFldNms( uiComboBox* cb, const BufferStringSet& nms, bool wnone,
     cb->addItems( nms );
     if ( wall )
 	cb->addItem( sKey::All() );
-    if ( !selnm.isEmpty() ) 
-	def = nms.indexOf( selnm );
+
     if ( wnone ) def++;
-    if ( def > cb->size() ) def = cb->size() - 1;
-    cb->setCurrentItem( def );
+    if ( !selnm.isEmpty() ) 
+    {
+	def = cb->indexOf( selnm );
+	if ( def < 0 )
+	    def = 0;
+    }
+    if ( def >= cb->size() ) def = cb->size() - 1;
+    if ( def >= 0 )
+	cb->setCurrentItem( def );
 }
 
 
 void uiStratLayModEditTools::setProps( const BufferStringSet& nms )
-{ setFldNms( propfld_, nms, false, false, 0 ); }
+{ setFldNms( propfld_, nms, allownoprop_, false, 0 ); }
 void uiStratLayModEditTools::setLevelNames( const BufferStringSet& nms )
 { setFldNms( lvlfld_, nms, true, false, 0 ); }
 void uiStratLayModEditTools::setContentNames( const BufferStringSet& nms )
@@ -214,7 +221,16 @@ const char* uiStratLayModEditTools::selProp() const
 
 int uiStratLayModEditTools::selPropIdx() const
 {
-    return propfld_->isEmpty() ? 0 : propfld_->getIntValue() + 1;
+    if ( propfld_->isEmpty() )
+	return -1;
+    const int selidx = propfld_->getIntValue();
+    if ( selidx < 0 || (allownoprop_ && selidx == 0) )
+	return -1;
+
+    int propidx = selidx;
+    if ( !allownoprop_ )
+	propidx++;
+    return propidx;
 }
 
 
@@ -270,7 +286,7 @@ bool uiStratLayModEditTools::dispLith() const
 
 bool uiStratLayModEditTools::showFlattened() const
 {
-    return flattenedtb_->isOn();
+    return flattenedtb_->isOn() && (bool)selStratLevel();
 }
 
 
@@ -384,41 +400,58 @@ bool uiStratLayModEditTools::usePar( const IOPar& par )
 
 //-----------------------------------------------------------------------------
 
-uiStratLayModPropSelector::uiStratLayModPropSelector( uiParent* p,
-						    const PropertySet& propset )
+#define mCreatePropSelFld( propnm, txt, prop, prevbox ) \
+    uiLabeledComboBox* lblbox##propnm = new uiLabeledComboBox( this, txt ); \
+    propnm##fld_ = lblbox##propnm->box(); \
+    PropertyRefSelection subsel##propnm = proprefsel.subselect( prop );\
+    for ( int idx=0; idx<subsel##propnm.size(); idx++ )\
+	if ( subsel##propnm[idx] )\
+	    propnm##fld_->addItem( subsel##propnm[idx]->name() );\
+    if ( prevbox )\
+	lblbox##propnm->attach( alignedBelow, prevbox );
+
+
+uiStratLayModFRPropSelector::uiStratLayModFRPropSelector( uiParent* p,
+					const PropertyRefSelection& proprefsel )
 	: uiDialog(p,uiDialog::Setup("Property Selector",
-		    		     "Select a property for each type",
+		    		     "There are multiple properties referenced"
+				     " with the same type. \n" 
+				     "Please specify which one to use as: ",
 				     mTODOHelpID) )
 {
-    uiLabeledComboBox* lblbox1 = new uiLabeledComboBox(this, "Property for Vp");
-    vpfld_ = lblbox1->box();
-    ObjectSet<Property> propsvp;
-    propset.getPropertiesOfRefType( PropertyRef::Vel, propsvp );
-    for ( int idx=0; idx<propsvp.size(); idx++ )
-	if ( propsvp[idx] )
-	    vpfld_->addItem( propsvp[idx]->name() );
-
-    uiLabeledComboBox* lblbox2 = new uiLabeledComboBox(this, "Property for Vs");
-    vsfld_ = lblbox2->box();
-    ObjectSet<Property> propsvs;
-    propset.getPropertiesOfRefType( PropertyRef::Vel, propsvs );
-    for ( int idx=0; idx<propsvs.size(); idx++ )
-	if ( propsvs[idx] )
-	    vsfld_->addItem( propsvs[idx]->name() );
-
-    lblbox2->attach( alignedBelow, lblbox1 );
-
-    uiLabeledComboBox* lblbox3 = new uiLabeledComboBox( this,
-	    						"Property for Density");
-    denfld_ = lblbox3->box();
-    ObjectSet<Property> propsden;
-    propset.getPropertiesOfRefType( PropertyRef::Vel, propsden );
-    for ( int idx=0; idx<propsden.size(); idx++ )
-	if ( propsden[idx] )
-	    denfld_->addItem( propsden[idx]->name() );
-
-    lblbox3->attach( alignedBelow, lblbox2 );
-  
+    mCreatePropSelFld( den, "Reference for Density", PropertyRef::Den, 0 );
+    mCreatePropSelFld( vp, "Reference for Vp", PropertyRef::Vel, lblboxden );
+    mCreatePropSelFld( vs, "Reference for Vs", PropertyRef::Vel, lblboxvp );
 }
 
 
+bool uiStratLayModFRPropSelector::needsDisplay() const
+{
+    if ( vpfld_->size() ==2 && vsfld_->size() ==2 && denfld_->size() ==1
+	    && vsfld_->isPresent(Strat::LayerModel::defSVelStr()) )
+    {
+	vpfld_->setCurrentItem( 0 );
+	vsfld_->setCurrentItem( Strat::LayerModel::defSVelStr() );
+	return false;
+    }
+    
+    return vpfld_->size()>1 || vsfld_->size()>1 || denfld_->size()>1;
+}
+
+
+const char* uiStratLayModFRPropSelector::getSelVPName() const
+{
+    return vpfld_->text();
+}
+
+
+const char* uiStratLayModFRPropSelector::getSelVSName() const
+{
+    return vsfld_->text();
+}
+
+
+const char* uiStratLayModFRPropSelector::getSelDenName() const
+{
+    return denfld_->text();
+}

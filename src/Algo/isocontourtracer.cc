@@ -20,6 +20,8 @@ IsoContourTracer::IsoContourTracer( const Array2D<float>& field )
     , polyroi_( 0 )
     , minnrvertices_( 2 )
     , nrlargestonly_( -1 )
+    , edgevalue_( mUdf(float) )
+    , bendpointeps_( mUdf(float) )
 {}
 
 
@@ -48,6 +50,10 @@ void IsoContourTracer::selectPolyROI( const ODPolygon<float>* poly )
 { polyroi_ = poly; }
 
 
+void IsoContourTracer::setBendPointsOnly( float eps )
+{ bendpointeps_ = eps; }
+
+
 void IsoContourTracer::setMinNrVertices( int nr )
 { minnrvertices_ = nr>2 ? nr : 2; }
 
@@ -56,9 +62,19 @@ void IsoContourTracer::setNrLargestOnly( int nr )
 { nrlargestonly_ = nr>0 ? nr : -1; }
 
 
-#define mFieldX(idx) xsampling_.atIndex( xrange_.start+idx )
-#define mFieldY(idy) ysampling_.atIndex( yrange_.start+idy )
-#define mFieldZ(idx,idy) field_.get( xrange_.start+idx, yrange_.start+idy )
+void IsoContourTracer::setEdgeValue( float edgeval )
+{ edgevalue_ = edgeval; }
+
+
+#define mEdge			(mIsUdf(edgevalue_) ? 0 : 1)
+#define mOnEdge(xy,idx)		(idx<mEdge || idx>xy##range_.width()+mEdge)
+#define mFieldIdx(xy,idx)	(xy##range_.start + idx - mEdge)
+
+#define mFieldX(idx)		xsampling_.atIndex( mFieldIdx(x,idx) )
+#define mFieldY(idy)		ysampling_.atIndex( mFieldIdx(y,idy) )
+
+#define mFieldZ(idx,idy) ( mOnEdge(x,idx) || mOnEdge(y,idy) ? edgevalue_ : \
+			   field_.get(mFieldIdx(x,idx), mFieldIdx(y,idy)) )
 
 #define mMakeVertex( vertex, idx, idy, hor, frac ) \
 \
@@ -71,8 +87,8 @@ bool IsoContourTracer::getContours( ObjectSet<ODPolygon<float> >& contours,
 				    float z, bool closedonly ) const
 {
     deepErase( contours );
-    Array3DImpl<float>* crossings = 
-	new Array3DImpl<float>( xrange_.width()+1, yrange_.width()+1, 2 );
+    Array3DImpl<float>* crossings = new Array3DImpl<float>(
+		    xrange_.width()+2*mEdge+1, yrange_.width()+2*mEdge+1, 2 );
 
     findCrossings( *crossings, z );
     traceContours( *crossings, contours, closedonly );
@@ -222,6 +238,9 @@ void IsoContourTracer::traceContours( Array3DImpl<float>& crossings,
 			break;
 		    }
 		}
+
+		if ( !mIsUdf(bendpointeps_) )
+		    contour->keepBendPoints( bendpointeps_ );
 
 		const int sz = contour->size();
 		if ( sz<minnrvertices_ || (closedonly && !contour->isClosed()) )

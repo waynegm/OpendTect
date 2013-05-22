@@ -293,7 +293,6 @@ void uiTieWin::createDispPropFields( uiGroup* dispgrp )
     dispgrp->setHSpacing( 50 );
 
     zinftfld_ = new uiCheckBox( dispgrp, "Z in feet" );
-    zinftfld_->attach( hCentered );
     zintimefld_ = new uiCheckBox( dispgrp, "Z in time" );
     zintimefld_ ->attach( alignedAbove, zinftfld_ );
     
@@ -554,7 +553,7 @@ uiInfoDlg::uiInfoDlg( uiParent* p, Server& server )
     const int maxwvltsz = mNINT32( server_.data().getTraceRange().width() *
 	    			   SI().zDomain().userFactor() );
     estwvltlengthfld_ = new uiGenInput(wvltgrp,"Estimated wavelet length (ms)",
-   IntInpSpec( initwvltsz ).setLimits(Interval<int>(mMinWvltLength,maxwvltsz)));
+	IntInpSpec(initwvltsz,mMinWvltLength,maxwvltsz) );
     estwvltlengthfld_->attach( leftAlignedBelow, wvltscaler_ );
     estwvltlengthfld_->setElemSzPol( uiObject::Small );
     estwvltlengthfld_->valuechanged.notify( mCB(this,uiInfoDlg,
@@ -729,8 +728,7 @@ void uiInfoDlg::needNewEstimatedWvlt( CallBacker* )
     if ( !computeNewWavelet() )
 	return;
 
-    if ( !isInitWvltActive() )
-	wvltChanged(0);
+    wvltChanged(0);
 }
 
 

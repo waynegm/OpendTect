@@ -22,6 +22,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "welld2tmodel.h"
 #include "welllog.h"
 #include "welllogset.h"
+#include "wellman.h"
 #include "wellmarker.h"
 #include "welltransl.h"
 #include "wellreader.h"
@@ -104,6 +105,7 @@ void uiWellLogToolWinMgr::winClosed( CallBacker* cb )
 	    Well::Data wd; lds[idx]->getOutputLogs( wd.logs() );
 	    Well::Writer wrr( nm, wd );
 	    wrr.putLogs();
+	    Well::MGR().reload( lds[idx]->wellid_ );
 	}
 	welllogselfld_->update();
     }
@@ -180,7 +182,7 @@ uiWellLogToolWin::uiWellLogToolWin( uiParent* p, ObjectSet<LogData>& logs )
 	{
 	    uiWellLogDisplay::Setup su; su.samexaxisrange_ = true;
 	    uiWellLogDisplay* ld = new uiWellLogDisplay( wellgrp, su );
-	    ld->setPrefWidth( 150 ); ld->setPrefHeight( 650 );
+	    ld->setPrefWidth( 150 ); ld->setPrefHeight( 450 );
 	    zdisplayrg_.include( logdata.dahrg_ );
 	    if ( idlog ) ld->attach( rightOf, logdisps_[logdisps_.size()-1] );
 	    ld->attach( ensureBelow, wellnm );

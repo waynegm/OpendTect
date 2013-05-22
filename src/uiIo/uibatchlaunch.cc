@@ -27,6 +27,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "hostdata.h"
 #include "ioman.h"
 #include "iopar.h"
+#include "jobdescprov.h"
 #include "keystrs.h"
 #include "oddirs.h"
 #include "ptrman.h"
@@ -40,7 +41,6 @@ static const char* sSingBaseNm = "batch_processing";
 static const char* sMultiBaseNm = "cube_processing";
 static const char* sKeyClusterProc = "dTect.Enable Cluster Processing";
 static const char* sKeyClusterProcEnv = "DTECT_CLUSTER_PROC";
-static const char* sKeyNrInlJob = "MultiMachine.Nr inline per job";
 
 static bool enabClusterProc()
 {
@@ -56,9 +56,9 @@ static bool enabClusterProc()
 uiProcSettings::uiProcSettings( uiParent* p )
     : uiDialog(p,Setup("Processing settings",mNoDlgTitle,mTODOHelpID))
 {
-    int nrinl = 10;
-    Settings::common().get( sKeyNrInlJob, nrinl );
-    nrinlfld_ = new uiGenInput( this, "Nr inlines per job", IntInpSpec(nrinl) );
+    const int nrinl = InlineSplitJobDescProv::defaultNrInlPerJob();
+    nrinlfld_ = new uiGenInput( this, "Nr inlines per job",
+				IntInpSpec(nrinl,1,1000) );
 
     const bool enabclusterproc = enabClusterProc();
     clusterfld_ = new uiGenInput( this, "Enable cluster processing",
@@ -69,7 +69,7 @@ uiProcSettings::uiProcSettings( uiParent* p )
 
 bool uiProcSettings::acceptOK( CallBacker* )
 {
-    Settings::common().set( sKeyNrInlJob, nrinlfld_->getIntValue() );
+    InlineSplitJobDescProv::setDefaultNrInlPerJob( nrinlfld_->getIntValue() );
     Settings::common().setYN( sKeyClusterProc, clusterfld_->getBoolValue() );
     Settings::common().write( false );
     return true;
@@ -259,13 +259,13 @@ bool uiBatchLaunch::acceptOK( CallBacker* )
 	     .add( temppath.fileName() );
 	FilePath logfp( remfp );
 	logfp.setExtension( ".log", true );
-	iop_.set( sKey::LogFile(), logfp.fullPath() );
+	iop_.set( sKey::LogFile(), logfp.fullPath(hd->pathStyle()) );
 	if ( !iop_.write(parfname_,sKey::Pars()) )
 	{
 	    uiMSG().error( "Cannot write parameter file" );
             return false;
 	}
-	parfname_ = remfp.fullPath();
+	parfname_ = remfp.fullPath( hd->pathStyle() );
 	comm.add( "od_remexec " ).add( hostname_ )
 	    .add( " " ).add( progname_ ).add( " " );
     }

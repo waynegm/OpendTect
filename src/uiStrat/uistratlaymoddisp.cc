@@ -33,10 +33,10 @@ static const char* rcsID mUsedVar = "$Id$";
     if ( SI().depthsInFeet() ) var *= conv
 #define mGetRealZ(var) mGetConvZ(var,mFromFeetFactorF)
 #define mGetDispZ(var) mGetConvZ(var,mToFeetFactorF)
-#define mGetDispZrg(var) \
-    Interval<float> var( zrg_ ); \
+#define mGetDispZrg(src,target) \
+    Interval<float> target( src ); \
     if ( SI().depthsInFeet() ) \
-	var.scale( mToFeetFactorF )
+	target.scale( mToFeetFactorF )
 
 
 uiStratLayerModelDisp::uiStratLayerModelDisp( uiStratLayModEditTools& t,
@@ -77,19 +77,15 @@ void uiStratLayerModelDisp::selectSequence( int selidx )
 
 void uiStratLayerModelDisp::setFlattened( bool yn )
 {
-    if ( flattened_ != yn )
-    {
-	flattened_ = yn;
-	setZoomBox(uiWorldRect(mUdf(double),0,0,0));
-	modelChanged();
-    }
+    flattened_ = yn;
+    modelChanged();
 }
 
 
 bool uiStratLayerModelDisp::haveAnyZoom() const
 {
     const int nrseqs = layerModel().size();
-    mGetDispZrg(dispzrg);
+    mGetDispZrg(zrg_,dispzrg);
     uiWorldRect wr( 1, dispzrg.start, nrseqs, dispzrg.stop );
     return zoomBox().isInside( wr, 1e-5 );
 }
@@ -99,34 +95,7 @@ float uiStratLayerModelDisp::getLayerPropValue( const Strat::Layer& lay,
 						const PropertyRef* pr,
        						int propidx ) const
 {
-    if ( propidx < lay.nrValues() )
-    {
-	if ( isFluidReplOn() )
-	{
-	    const int nrunits = frpars_.size() / 2;
-	    BufferString namestr;
-	    if ( pr->isKnownAs("PVel") || pr->isKnownAs("SVel")
-		    		       || pr->isKnownAs("Den") )
-	    {
-		float vp, vs, den;
-		for ( int idx=0; idx<nrunits; idx++ )
-		{
-		    frpars_.get( IOPar::compKey(toString(idx),sKey::Name()),
-			    	 namestr );
-		    if ( !strcmp( namestr.buf(), lay.name() ) )
-		    {
-			frpars_.get(IOPar::compKey(toString(idx),sKey::Value()),
-				    vp, vs, den );
-			return pr->isKnownAs("PVel")
-				    ? vp : pr->isKnownAs("SVel") ? vs : den;
-		    }
-		}
-	    }
-	}
-	return lay.value( propidx );
-    }
-
-    return mUdf(float);
+    return propidx < lay.nrValues() ? lay.value( propidx ) : mUdf(float);
 }
 
 
@@ -438,12 +407,21 @@ void uiStratSimpleLayerModelDisp::setZoomBox( const uiWorldRect& wr )
 	// provided rect is always in system [0.5,N+0.5]
 	zoomwr_.setLeft( wr.left() + .5 );
 	zoomwr_.setRight( wr.right() + .5 );
-	zoomwr_.setTop( wr.bottom() );
-	zoomwr_.setBottom( wr.top() );
+	Interval<float> zrg( (float)wr.bottom(), (float)wr.top() );
+    	mGetDispZrg(zrg,dispzrg);
+	zoomwr_.setTop( dispzrg.start );
+	zoomwr_.setBottom( dispzrg.stop );
     }
     updZoomBox();
     if ( showzoomed_ )
 	forceRedispAll();
+}
+
+
+float uiStratSimpleLayerModelDisp::getDisplayZSkip() const
+{
+    if ( layerModel().isEmpty() ) return 0;
+    return layerModel().sequence(0).startDepth();
 }
 
 
@@ -522,14 +500,20 @@ void uiStratSimpleLayerModelDisp::getBounds()
 	mChckBnds(vrg.start,>,val);
 	mChckBnds(vrg.stop,<,val);
     mEndLayLoop()
-    zrg_ = mIsUdf(zrg.start) ? Interval<float>(0,1) : zrg;
+    if ( mIsUdf(zrg.start) )
+	zrg_ = Interval<float>( 0, 1 );
+    else
+    {
+	zrg_.start = zrg.start + getDisplayZSkip();
+	zrg_.stop = zrg.stop;
+    }
     vrg_ = mIsUdf(vrg.start) ? Interval<float>(0,1) : vrg;
 
     if ( mIsUdf(zoomwr_.left()) )
     {
 	zoomwr_.setLeft( 1 );
 	zoomwr_.setRight( nrseqs+1 );
-	mGetDispZrg(dispzrg);
+	mGetDispZrg(zrg_,dispzrg);
 	zoomwr_.setTop( dispzrg.stop );
 	zoomwr_.setBottom( dispzrg.start );
     }
@@ -579,7 +563,7 @@ void uiStratSimpleLayerModelDisp::doDraw()
     if ( !showzoomed_ )
     {
 	xax_->setBounds( Interval<float>(1,mCast(float,layerModel().size() )));
-    	mGetDispZrg(dispzrg);
+    	mGetDispZrg(zrg_,dispzrg);
 	yax_->setBounds( Interval<float>(dispzrg.stop,dispzrg.start) );
     }
     else
@@ -587,7 +571,7 @@ void uiStratSimpleLayerModelDisp::doDraw()
 	xax_->setBounds( Interval<float>((float)zoomwr_.left(),
 						(float)zoomwr_.right()) );
 	yax_->setBounds( Interval<float>((float)zoomwr_.top(),
-						(float)zoomwr_.bottom()) );
+		    	 		 (float)zoomwr_.bottom()) );
     }
 
     yax_->plotAxis(); xax_->plotAxis();
@@ -672,7 +656,7 @@ void uiStratSimpleLayerModelDisp::drawLevels()
 	const int xpix1 = getXPix( iseq, 0 );
 	const int xpix2 = getXPix( iseq, 1 );
 	uiLineItem* it = scene().addItem(
-	    new uiLineItem( uiPoint(xpix1,ypix), uiPoint(xpix2,ypix), true ) );
+	    new uiLineItem( uiPoint(xpix1,ypix), uiPoint(xpix2,ypix) ) );
 
 	it->setPenStyle( LineStyle(LineStyle::Solid,2,lvlcol_) );
 	it->setZValue( 999999 );
@@ -694,7 +678,7 @@ void uiStratSimpleLayerModelDisp::drawSelectedSequence()
     const int midpix = (int)( xpix1 + ( xpix2 - xpix1 ) /2 );
 
     uiLineItem* it = scene().addItem(
-	new uiLineItem( uiPoint(midpix,ypix1), uiPoint(midpix,ypix2), true ) );
+	new uiLineItem( uiPoint(midpix,ypix1), uiPoint(midpix,ypix2) ) );
 
     it->setPenStyle( LineStyle(LineStyle::Dot,2,Color::Black()) );
     it->setZValue( 9999999 );

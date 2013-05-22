@@ -128,9 +128,9 @@ void Scene::setup()
     //polyselector_->getMaterial()->setColor( Color(255,0,0) );
     //mTryAlloc( coordselector_, visBase::PolygonCoord3Selector(*polyselector_) );
 
-    //scenecoltab_ = visBase::SceneColTab::create();
-    //addUTMObject( scenecoltab_ );
-    //scenecoltab_->turnOn( false );
+    scenecoltab_ = visBase::SceneColTab::create();
+    addUTMObject( scenecoltab_ );
+    scenecoltab_->turnOn( false );
     
     topimg_ = visBase::TopBotImage::create();
     topimg_->setName( "TopImage");
@@ -760,8 +760,9 @@ void Scene::setMarkerPos( const Coord3& coord, int sceneid )
 	addUTMObject( markerset_ );
     }
 
-    markerset_->turnOn( true );
+    markerset_->clearMarkers();
     markerset_->getCoordinates()->addPos( displaypos );
+    markerset_->turnMarkerOn( 0, true );
 }
 
 
@@ -808,8 +809,8 @@ visBase::MarkerSet* Scene::createMarkerSet() const
     markerset->ref();
     markerset->setType( MarkerStyle3D::Cross );
     markerset->setMarkersSingleColor( cDefaultMarkerColor() );
-    markerset->setScreenSize( 6 );
-    markerset_->unRefNoDelete();
+    markerset->setScreenSize( 9 );
+    markerset->unRefNoDelete();
     return markerset;
 }
 

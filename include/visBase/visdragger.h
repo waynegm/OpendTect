@@ -18,18 +18,23 @@ ________________________________________________________________________
 #include "visosg.h"
 
 class Color;
+
 namespace osgManipulator { class Dragger; }
-namespace osg { class MatrixTransform; class Node; class Switch; }
+namespace osg 
+{ 
+    class MatrixTransform; 
+    class Node; 
+}
 
 namespace visBase
 {
 
-/*! \brief Class for simple draggers
+/*! \brief Class for simple dragger
 */
 
 class DraggerCallbackHandler;
 class Transformation;
-    
+
 mExpClass(visBase) DraggerBase : public DataObject
 {
 public:
@@ -46,14 +51,21 @@ protected:
     friend			class DraggerCallbackHandler;
 				DraggerBase();
     				~DraggerBase();
-    
+
+    virtual  void		notifyStart() = 0;
+    virtual  void		notifyStop() = 0;
+    virtual  void		notifyMove() = 0;
+
     const mVisTrans*		displaytrans_;
+    osgManipulator::Dragger*	osgdragger_;
+    osg::Group*			osgroot_;
     
     void			initDragger(osgManipulator::Dragger*);
     
 private:
     DraggerCallbackHandler*	cbhandler_;
-    osgManipulator::Dragger*	dragger_;
+
+
 };
 
 
@@ -70,39 +82,41 @@ public:
     void			setPos(const Coord3&);
     Coord3			getPos() const;
 
-    void			setSize(const Coord3&);
-    Coord3			getSize() const;
+    void			setSize(const float);
+    float			getSize() const;
 
     void			setRotation(const Coord3&,float);
     void			setDefaultRotation();
 
-    bool			turnOn(bool);
-    bool			isOn() const;
-
-    
-    void			setOwnShape(DataObject*,
-	    				    const char* partname );
-    				/*!< Sets a shape on the dragger.
-				    \note The object will not be reffed,
-					  so it's up to the caller to make sure
-					  it remains in memory */
+    void			setOwnShape(DataObject*,bool activeshape);
+    				/*!< Sets a shape on the dragger. */
     bool			selectable() const;
 
     NotifierAccess*		rightClicked() { return &rightclicknotifier_; }
     const TypeSet<int>*		rightClickedPath() const;
     const EventInfo*		rightClickedEventInfo() const;
+    void			updateDragger( bool active );
 
 protected:
     				~Dragger();
     void			triggerRightClick(const EventInfo* eventinfo);
-    osg::Node*			osgNode();
-    
+    virtual  void		notifyStart();
+    virtual  void		notifyStop();
+    virtual  void		notifyMove();
+    osg::MatrixTransform*	createDefaultDraggerGeometry();
+    osg::MatrixTransform*	createTranslateDefaultGeometry();
+    void			setScaleAndTranslation(bool move = false);
+
+
     Notifier<Dragger>		rightclicknotifier_;
     const EventInfo*		rightclickeventinfo_;
 
-    osg::Switch*		onoff_;
-    osgManipulator::Dragger*	dragger_;
-    osg::MatrixTransform*	positiontransform_;
+    DataObject*			inactiveshape_;
+    bool			ismarkershape_;
+    bool			is2dtranslate_;
+    Coord3			markerpos_;
+    float			draggersizescale_;
+    float			defaultdraggergeomsize_;
 };
 
 } // namespace visBase

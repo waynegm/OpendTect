@@ -19,13 +19,17 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osgManipulator/Translate1DDragger>
 #include <osgManipulator/Translate2DDragger>
 #include <osg/MatrixTransform>
+#include <osg/AutoTransform>
+#include <osg/ShapeDrawable>
+#include <osg/Geometry>
+#include <osg/LineWidth>
+#include <osgManipulator/Projector>
 
 mCreateFactoryEntry( visBase::Dragger );
 
 namespace visBase
 {
-    
-    
+
 class DraggerCallbackHandler : public osgManipulator::DraggerCallback
 {
 public:
@@ -47,23 +51,23 @@ protected:
 bool DraggerCallbackHandler::receive( const osgManipulator::MotionCommand& cmd )
 {
     if ( cmd.getStage()==osgManipulator::MotionCommand::START )
-	startmatrix_ = dragger_.dragger_->getMatrix();
+	startmatrix_ = dragger_.osgdragger_->getMatrix();
     
     if ( cmd.getStage()==osgManipulator::MotionCommand::START )
     {
-	dragger_.started.trigger();
+	dragger_.notifyStart();
     }
     else if ( cmd.getStage()==osgManipulator::MotionCommand::MOVE )
     {
-	dragger_.motion.trigger();
+	dragger_.notifyMove();
     }
     else if ( cmd.getStage()==osgManipulator::MotionCommand::FINISH )
     {
-	dragger_.finished.trigger();
-	if ( startmatrix_ != dragger_.dragger_->getMatrix() )
+	dragger_.notifyStop();
+	if ( startmatrix_ != dragger_.osgdragger_->getMatrix() )
 	    dragger_.changed.trigger();
     }
-    
+
     return true;
 }
 
@@ -75,40 +79,57 @@ DraggerBase::DraggerBase()
     , changed( this )
     , displaytrans_( 0 )
     , cbhandler_( 0 )
-    , dragger_( 0 )
-{}
+    , osgdragger_( 0 )
+    , osgroot_( new osg::Group )
+{
+    setOsgNode( osgroot_ );
+    setPickable( true );
+}
     
     
 DraggerBase::~DraggerBase()
 {
     if ( displaytrans_ ) displaytrans_->unRef();
-    if ( dragger_ ) dragger_->unref();
+
+    if( cbhandler_ )
+	cbhandler_->unref();
+
+    osgdragger_->removeDraggerCallback( cbhandler_ );
+   
+    if ( osgdragger_ ) 
+	osgdragger_->unref();
+
 }
 
 
 void DraggerBase::initDragger( osgManipulator::Dragger* d )
 {
-    if ( dragger_ )
+    if ( osgdragger_ )
     {
 	if ( cbhandler_ )
-	    dragger_->removeDraggerCallback( cbhandler_ );
-	
-	dragger_->unref();
+	    osgdragger_->removeDraggerCallback( cbhandler_ );
+	osgdragger_->unref();
     }
-    
-    if ( cbhandler_ ) cbhandler_->unref();
-    
-    dragger_ = d;
-    
-    if ( dragger_ )
+
+    if ( cbhandler_ ) 
+	cbhandler_->unref();
+
+    osgdragger_ = d;
+    osgdragger_->ref();
+
+    if ( osgdragger_ )
     {
-	dragger_->ref();
+	osgroot_->removeChildren( 0, osgroot_->getNumChildren() );
+	osgroot_->addChild( osgdragger_ );
+
 	cbhandler_ = new DraggerCallbackHandler( *this );
 	cbhandler_->ref();
-	dragger_->addDraggerCallback( cbhandler_ );
+	osgdragger_->setHandleEvents(true);
+	osgdragger_->addDraggerCallback( cbhandler_ );
     }
-}
+ }
     
+
 void DraggerBase::setDisplayTransformation( const mVisTrans* nt )
 {
     if ( displaytrans_ )
@@ -131,17 +152,16 @@ const mVisTrans* DraggerBase::getDisplayTransformation() const
 }
 
 
-
 Dragger::Dragger()
-    : positiontransform_( new osg::MatrixTransform )
-    , rightclicknotifier_(this)
+    : rightclicknotifier_(this)
     , rightclickeventinfo_( 0 )
-    , onoff_( new osg::Switch )
+    , inactiveshape_( 0 )
+    , ismarkershape_( true )
+    , draggersizescale_( 100 )
+    , defaultdraggergeomsize_( 0.025 )
 {
-    onoff_->ref();
-    onoff_->addChild( positiontransform_ );
     setDefaultRotation();
-    positiontransform_->ref();
+    turnOn( true );
 }
 
 
@@ -150,17 +170,10 @@ void Dragger::setDefaultRotation()
     setRotation( Coord3(0,1,0), -M_PI_2 );
 }
     
-    
-osg::Node* Dragger::osgNode()
-{
-    return onoff_;
-}
-    
 
 Dragger::~Dragger()
 {
-    onoff_->unref();
-    positiontransform_->unref();
+    unRefAndZeroPtr( inactiveshape_ );
 }
 
 
@@ -169,29 +182,69 @@ bool Dragger::selectable() const { return true; }
 
 void Dragger::setDraggerType( Type tp )
 {
-    positiontransform_->removeChild( dragger_ );
+    osgManipulator::Dragger* dragger( 0 );
 
     switch ( tp )
     {
 	case Translate1D:
-	    dragger_ = new osgManipulator::Translate1DDragger;
+	    dragger = new osgManipulator::Translate1DDragger;
+	    is2dtranslate_ = false;
 	    break;
 	case Translate2D:
-	    dragger_ = new osgManipulator::Translate2DDragger;
+	    dragger = new osgManipulator::Translate2DDragger;
+	    is2dtranslate_ = true;
 	    break;
 	case Translate3D:
 	case Scale3D:
 	    pErrMsg("Not impl");
     };
-    dragger_->ref();
-    positiontransform_->addChild( dragger_ );
-    pErrMsg("Setup callbacks");
+
+    if ( !dragger )
+	return;
+
+    initDragger( dragger );
 }
 
 
-void Dragger::setOwnShape( DataObject* newshape, const char* partname )
+void Dragger::notifyStart()
 {
-    pErrMsg("Not impl");
+    updateDragger( false );
+    started.trigger();
+}
+
+
+void Dragger::notifyStop()
+{
+    updateDragger( true );
+    finished.trigger();
+}
+
+
+void Dragger::notifyMove()
+{
+    setScaleAndTranslation( true );
+    motion.trigger();
+}
+
+
+void Dragger::setOwnShape( DataObject* newshape, bool activeshape )
+{
+    unRefAndZeroPtr( inactiveshape_ );
+    inactiveshape_ = newshape;
+}
+
+
+void Dragger::updateDragger( bool ismarkershape )
+{
+    ismarkershape_ = ismarkershape;
+    osgdragger_->removeChildren( 0 , osgdragger_->getNumChildren() );
+
+    if ( ismarkershape )
+	osgdragger_->addChild( inactiveshape_->osgNode() );
+    else 
+	osgdragger_->addChild( createDefaultDraggerGeometry() );
+    setScaleAndTranslation();
+
 }
 
 
@@ -210,69 +263,174 @@ const EventInfo* Dragger::rightClickedEventInfo() const
 { return rightclickeventinfo_; }
 
 
-bool Dragger::turnOn( bool yn )
+float Dragger::getSize() const
 {
-    const bool res = isOn();
-    if ( yn )
-	onoff_->setAllChildrenOn();
-    else
-	onoff_->setAllChildrenOff();
-
-    return res;
+    return draggersizescale_;
 }
 
 
-bool Dragger::isOn() const
+void Dragger::setSize( const float markersize )
 {
-    return onoff_->getValue( 0 );
+    draggersizescale_ = 1.6*markersize/defaultdraggergeomsize_;
 }
 
 
-void Dragger::setSize( const Coord3& size )
+void Dragger::setRotation( const Coord3& vec, float rotationangle )
 {
-    osg::Matrix osgmatrix = positiontransform_->getMatrix();
-    osgmatrix.makeScale( size.x/2, size.y/2, size.z/2 );
-    positiontransform_->setMatrix( osgmatrix );
-}
-
-
-Coord3 Dragger::getSize() const
-{
-    const osg::Matrix matrix = positiontransform_->getMatrix();
-    const osg::Vec3d vec = matrix.getScale();
-    return Coord3( vec.x()*2, vec.y()*2, vec.z()*2 );
-}
-
-
-void Dragger::setRotation( const Coord3& vec, float angle )
-{
-    osg::Matrix osgmatrix = positiontransform_->getMatrix();
-    osgmatrix.makeRotate( angle, osg::Vec3(vec.x,vec.y,vec.z));
-
-    positiontransform_->setMatrix( osgmatrix );
+    if( osgdragger_ )
+    {
+	osg::Quat rotation( rotationangle, 
+	    Conv::to<osg::Vec3>( vec ) );
+	osgdragger_->setMatrix( osg::Matrix( rotation ) );
+    }
 }
 
 
 void Dragger::setPos( const Coord3& pos )
 {
+    if ( !osgdragger_ ) return;
     Coord3 newpos;
     mVisTrans::transform( displaytrans_, pos, newpos );
+    markerpos_ = newpos;
+    updateDragger( true );
+}
+
+
+void Dragger::setScaleAndTranslation( bool move)
+{
+    float scale = ismarkershape_ ? 1.0f : draggersizescale_;
     
-    osg::Matrix osgmatrix = positiontransform_->getMatrix();
-    osgmatrix.makeTranslate( newpos.x, newpos.y, newpos.z );
-    positiontransform_->setMatrix( osgmatrix );
-    
-    if ( dragger_ ) dragger_->setMatrix( osg::Matrix::identity() );
+    osg::Vec3 trans;
+    if ( !move )
+	trans = Conv::to<osg::Vec3>( markerpos_ );
+    else 
+	trans = osgdragger_->getMatrix().getTrans();
+
+    osgdragger_->setMatrix( osg::Matrix::scale(scale, scale, scale ) * 
+	osg::Matrix::translate( Conv::to<osg::Vec3>( trans ) ) );
 }
 
 
 Coord3 Dragger::getPos() const
 {
-    osg::Vec3d pos = dragger_->getMatrix().getTrans();
-    pos = positiontransform_->getMatrix().preMult( pos );
+    if ( !osgdragger_ ) 
+	return Coord3( 0, 0, 0 );
+
+    osg::Vec3d pos = osgdragger_->getMatrix().getTrans();
     Coord3 coord;
     mVisTrans::transformBack( displaytrans_, pos, coord );
     return coord;
+}
+
+
+osg::MatrixTransform* Dragger::createDefaultDraggerGeometry()
+{
+    return createTranslateDefaultGeometry();
+}
+
+
+osg::MatrixTransform* Dragger::createTranslateDefaultGeometry()
+{
+    const osg::Vec4 arrowcolor ( 1.0f, 1.0f, 0.0f, 1.0f );
+
+    // Create a line.
+    osg::ref_ptr<osg::Geode> linegeode = new osg::Geode;
+    {
+	osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry();
+	osg::ref_ptr<osg::Vec3Array> vertices = new osg::Vec3Array( 2 );
+	(*vertices)[0] = osg::Vec3( 0.0f,0.0f,-0.5f );
+	(*vertices)[1] = osg::Vec3( 0.0f,0.0f,0.5f );
+
+	geometry->setVertexArray( vertices );
+	geometry->addPrimitiveSet(
+	    new osg::DrawArrays(osg::PrimitiveSet::LINES,0,2) );
+	linegeode->addDrawable( geometry );
+    }
+
+    // Turn of lighting for line and set line width.
+    osg::LineWidth* linewidth = new osg::LineWidth();
+    linewidth->setWidth(2.0f);
+    linegeode->getOrCreateStateSet()->setAttributeAndModes(
+	linewidth, osg::StateAttribute::ON);
+    linegeode->getOrCreateStateSet()->setMode(
+	GL_LIGHTING,osg::StateAttribute::OFF);
+
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+ 
+    // Create left cone.
+    {
+	osg::Cone* cone = new osg::Cone ( osg::Vec3(0.0f, 0.0f, -0.5f), 
+	    4*defaultdraggergeomsize_, 0.2 );
+	osg::Quat rotation; rotation.makeRotate(
+	    osg::Vec3(0.0f,0.0f,-1.0f), osg::Vec3( 0.0f, 0.0f, 1.0f) );
+	cone->setRotation( rotation );
+	osg::ShapeDrawable* conedrawble = new osg::ShapeDrawable( cone );
+	osg::TessellationHints* hint = new osg::TessellationHints;
+	hint->setDetailRatio( 0.8 );
+	conedrawble->setTessellationHints( hint );
+	conedrawble->setColor( arrowcolor );
+	geode->addDrawable( conedrawble ) ;
+    }
+
+    // Create right cone.
+    {
+	osg::Cone* cone = new osg::Cone (
+	    osg::Vec3( 0.0f, 0.0f, 0.5f ), 4*defaultdraggergeomsize_, 0.2 );
+	osg::ShapeDrawable* conedrawble = new osg::ShapeDrawable( cone );
+	osg::TessellationHints* hint = new osg::TessellationHints;
+	hint->setDetailRatio( 0.8 );
+	conedrawble->setTessellationHints( hint );
+	conedrawble->setColor( arrowcolor );
+	geode->addDrawable( conedrawble ) ;
+    }
+
+    // Create an invisible cylinder for picking the line.
+    {
+	osg::Cylinder* cylinder = new osg::Cylinder ( 
+	    osg::Vec3( 0.0f,0.0f,0.0f ), 0.015f, 1.0f );
+	osg::Drawable* drawable = new osg::ShapeDrawable( cylinder );
+	osgManipulator::setDrawableToAlwaysCull( *drawable );
+	geode->addDrawable( drawable );
+    }
+
+    geode->getOrCreateStateSet()->setMode(GL_NORMALIZE,osg::StateAttribute::ON);
+ 
+    // MatrixTransform to rotate the geometry according to the normal of the plane.
+    osg::MatrixTransform* xform = new osg::MatrixTransform;
+    // Create an arrow in the X axis.
+    {
+	osg::MatrixTransform* arrow = new osg::MatrixTransform;
+	arrow->addChild( linegeode );
+	arrow->addChild( geode );
+
+	// Rotate X-axis arrow appropriately.
+	osg::Quat rotation; rotation.makeRotate( 
+	    osg::Vec3( 1.0f, 0.0f, 0.0f ), osg::Vec3( 0.0f, 0.0f, 1.0f ) );
+	arrow->setMatrix( osg::Matrix( rotation ) );
+	xform->addChild( arrow );
+    }
+
+    if ( is2dtranslate_ )
+    // Create an arrow in the Z axis.
+    {
+	osg::Group* arrow = new osg::Group;
+	arrow->addChild( linegeode );
+	arrow->addChild( geode );
+	xform->addChild( arrow );
+    }
+
+    // Rotate the xform so that the geometry lies on the plane.
+    {
+	osg::ref_ptr<osgManipulator::PlaneProjector >projector = 
+	    new osgManipulator::PlaneProjector( osg::Plane( 0.0,1.0,0.0,0.0 ) );
+	osg::Vec3 normal = projector->getPlane().getNormal(); 
+	normal.normalize();
+	osg::Quat rotation; rotation.makeRotate(
+	    osg::Vec3( 0.0f, 1.0f, 0.0f ), normal );
+	xform->setMatrix( osg::Matrix( rotation ) );
+    }
+
+    return xform;
 }
 
 

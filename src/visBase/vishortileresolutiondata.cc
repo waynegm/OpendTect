@@ -59,6 +59,7 @@ TileResolutionData::TileResolutionData( const HorizonSectionTile* sectile,
     , sinanglexinl_( sin(SI().computeAngleXInl()) )		     
 
 {
+    geodes_->ref();
     const HorizonSection& section = sectile_->hrsection_;
     const int spacing = section.spacing_[resolution_];
     if ( spacing>=0 )
@@ -76,6 +77,7 @@ TileResolutionData::TileResolutionData( const HorizonSectionTile* sectile,
 TileResolutionData::~TileResolutionData()
 {
     unRefOsgPrimitiveSets();
+    geodes_->unref();
 }
 
 

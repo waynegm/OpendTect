@@ -208,7 +208,7 @@ bool EventCatchHandler::handle( const osgGA::GUIEventAdapter& ea,
 						 ea.getX(), ea.getY() );
 
     osgUtil::IntersectionVisitor iv( intersector.get() );
-    mDynamicCastGet( osg::View*, view, &aa );
+    mDynamicCastGet( osgViewer::View*, view, &aa );
 
     if ( view )
     {

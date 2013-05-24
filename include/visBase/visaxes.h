@@ -16,12 +16,12 @@ ________________________________________________________________________
 #include "visdata.h"
 
 
-namespace osg{ class Geode; }
 namespace osgGeo{ class AxesNode; }
 
 namespace visBase
 {
 
+class Camera;
     
 mExpClass(visBase) Axes : public DataObject
 {
@@ -29,12 +29,18 @@ public:
     static Axes*		create()
     				mCreateDataObj(Axes);
     void			setRadius(float);
-    float			getRadius() const;	
+    float			getRadius() const;
+    void			setLength(float);
+    float			getLength() const;
+    void			setPosition(float,float);
+    void			setSize(float rad, float len);
+    void			setMasterCamera(visBase::Camera*);
 
 protected:
     				~Axes();
 
     osgGeo::AxesNode*		axesnode_;
+    Camera*			mastercamera_;
     bool			ison_;
 };
 

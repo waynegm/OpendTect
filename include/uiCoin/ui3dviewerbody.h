@@ -102,7 +102,6 @@ protected:
     
     void				setupHUD();
     void				setupView();
-    void				setupAxes();
     void				qtEventCB(CallBacker*);
     
     static osgViewer::CompositeViewer*	getCompositeViewer();
@@ -135,7 +134,6 @@ protected:
     RefMan<visBase::DataObjectGroup>			hudscene_;
     
     uiEventFilter					eventfilter_;
-    osg::Camera*					axescamera_;
     RefMan<visBase::Axes>				axes_;
 };
 

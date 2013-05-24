@@ -113,8 +113,7 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     , hudscene_( 0 )
     , viewport_( new osg::Viewport )
     , compositeviewer_( 0 )
-    , axescamera_(0)
-    , axes_(0)
+    , axes_( 0 )
 {
     sceneroot_->ref();
     viewport_->ref();
@@ -185,65 +184,22 @@ void ui3DViewerBody::setupHUD()
     hudscene_->addObject( verthumbwheel_ );
     mAttachCB( verthumbwheel_->rotation, ui3DViewerBody,thumbWheelRotationCB);
 
-}
-
-
-void ui3DViewerBody::setupAxes()
-{
-    if ( axescamera_ )
-	return;
-    
-    axescamera_ = new osg::Camera;
-    axescamera_->setProjectionMatrixAsPerspective( 30.0f, 1.0f, 1.0f, 10.0f );
-    axescamera_->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
-    axescamera_->setViewMatrix(osg::Matrix::identity());
-    axescamera_->setClearMask(GL_DEPTH_BUFFER_BIT);
-    axescamera_->setRenderOrder(osg::Camera::POST_RENDER);
-    class AxesCameraUpdateCallback : public osg::NodeCallback 
-    {
-        public: 
-	virtual void operator()( osg::Node* node, osg::NodeVisitor* nv ) 
-	{ 
-	    if( nv->getVisitorType() == osg::NodeVisitor::UPDATE_VISITOR ) 
-	    { 
-		osg::Camera* camera = dynamic_cast<osg::Camera*>(node); 
-		if( camera && camera->getView()->getNumSlaves() > 0 ) 
-		{ 
-		    osg::View::Slave* slave = &camera->getView()->getSlave( 0 ); 
-		    if( slave->_camera.get() == camera ) 
-		    { 
-			osg::Camera* masterCam = camera->getView()->getCamera(); 
-			osg::Vec3 eye, center, up; 
-			masterCam->getViewMatrixAsLookAt( eye, center, up, 45 ); 
-			osg::Matrixd matrix; 
-			matrix.makeLookAt( eye-center, osg::Vec3(0, 0, 0), up ); 
-			camera->setViewMatrix( matrix ); 
-		    } 
-		} 
-	    } 
-
-	    traverse(node,nv); 
-	} 
-    };
-
-    axescamera_->setUpdateCallback(new AxesCameraUpdateCallback);
-    axescamera_->setAllowEventFocus(false);
     if ( !axes_ )
     {
 	axes_ = visBase::Axes::create();
-	axescamera_->addChild( axes_->osgNode() );
+	axes_->setSize( 5, 50 );
+	hudcamera->addChild( axes_->osgNode() );
+	if ( camera_ )
+	    axes_->setMasterCamera( camera_ );
     }
-    
-    axescamera_->setViewport( viewport_->width()-140, 0,  140, 140 );
-    getOsgCamera()->addChild( axescamera_ );
-    view_->addSlave( axescamera_, false );
 }
 
 
 void ui3DViewerBody::setupView()
 {
     camera_ = visBase::Camera::create();
-    
+    if ( axes_ )
+	axes_->setMasterCamera( camera_ );
     mDynamicCastGet(osg::Camera*, osgcamera, camera_->osgNode() );
     osgcamera->setGraphicsContext( getGraphicsContext() );
     osgcamera->setClearColor( osg::Vec4(0.0f, 0.0f, 0.5f, 1.0f) );
@@ -254,7 +210,7 @@ void ui3DViewerBody::setupView()
     view_->setCamera( osgcamera );
     view_->setSceneData( sceneroot_ );
     view_->addEventHandler( new osgViewer::StatsHandler );
-    
+        
     // Unlike Coin, default OSG headlight has zero ambiance
     view_->getLight()->setAmbient( osg::Vec4(0.6f,0.6f,0.6f,1.0f) );
     
@@ -346,8 +302,7 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
     
     horthumbwheel_->setPosition( true, 20, 10, 100, 15, -1 );
     verthumbwheel_->setPosition( false, 10, 20, 100, 15, -1 );
-    if ( axescamera_ )
-	axescamera_->setViewport( widget->width()-140, 0,  140, 140 );
+    axes_->setPosition( widget->width()-60, 60 );
 }
 
 
@@ -391,7 +346,6 @@ uiDirectViewBody::uiDirectViewBody( ui3DViewer& hndl, uiParent* parnt )
     
     setupHUD();
     setupView();
-    setupAxes();
 }
 
 
@@ -487,7 +441,7 @@ void ui3DViewerBody::setViewMode( bool yn, bool trigger )
     }
     else
     {
-	cursor.shape_ = MouseCursor::Arrow;
+	cursor.shape_ = MouseCursor::Arrow; 
     }
     
     mQtclass(QCursor) qcursor;

@@ -12,9 +12,9 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "visaxes.h"
 
-#include <osg/Node> 
-#include <osg/Geode>
-#include <osg/Drawable>
+#include "viscamera.h"
+
+#include <osg/Camera>
 #include <osgGeo/AxesNode>
 
 mCreateFactoryEntry( visBase::Axes );
@@ -25,6 +25,7 @@ namespace visBase
 
 Axes::Axes()
     : axesnode_(new osgGeo::AxesNode)
+    , mastercamera_(0)
 {
     setOsgNode( axesnode_ );
 }
@@ -32,7 +33,9 @@ Axes::Axes()
 
 Axes::~Axes()
 {
+   unRefPtr( mastercamera_ );
 }
+
 
 float Axes::getRadius() const
 {
@@ -45,5 +48,37 @@ void Axes::setRadius( float rad )
     axesnode_->setRadius( rad );
 }
 
+
+float Axes::getLength() const
+{
+    return axesnode_->getLength();
+}
+
+
+void Axes::setLength( float len )
+{
+    axesnode_->setLength( len );
+}
+
+
+void Axes::setPosition( float x, float y )
+{
+    axesnode_->setPosition( osg::Vec2(x,y) );
+}
+
+
+void Axes::setSize( float rad, float len )
+{
+    axesnode_->setSize( osg::Vec2(rad,len) );
+}
+
+
+void Axes::setMasterCamera( visBase::Camera* camera )
+{
+    mastercamera_ = camera;
+    mastercamera_->ref();
+    mDynamicCastGet(osg::Camera*, osgcamera, mastercamera_->osgNode() );
+    axesnode_->setMasterCamera( osgcamera );
+}
 
 } //namespace visBase

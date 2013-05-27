@@ -780,7 +780,7 @@ bool uiContourTreeItem::createIndexedPolyLines()
 
 #define mCreateAndRef(var,postfix)\
     {\
-    var = new visBase::##postfix;\
+    var = new visBase::postfix;\
     var->ref();\
     }
 

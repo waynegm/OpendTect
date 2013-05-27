@@ -67,7 +67,7 @@ SET( OD_PLUGINS
 	uiGoogleIO
 	uiGrav
 	uiHello
-	#uiHorizonAttrib
+	uiHorizonAttrib
 	uiImpGPR
 	uiMadagascar
 	uiMadagascarAttribs

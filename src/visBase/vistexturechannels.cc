@@ -522,12 +522,11 @@ void ChannelInfo::updateOsgImages()
 
 TextureChannels::TextureChannels()
     : tc2rgba_( 0 )
-    , osgtexture_( 0 )
+    , osgtexture_( new osgGeo::LayeredTexture )
     , interpolatetexture_( true )
 {
     turnOn( true );
 
-    osgtexture_ = new osgGeo::LayeredTexture;
     osgtexture_->invertUndefLayers();
     osgtexture_->setDataLayerFilterType( osgtexture_->compositeLayerId(),
 					 mGetFilterType );
@@ -542,7 +541,7 @@ TextureChannels::~TextureChannels()
     deepErase( channelinfo_ );
     setChannels2RGBA( 0 );
     
-    if ( osgtexture_ ) osgtexture_->unref();
+    osgtexture_->unref();
 }
 
 
@@ -582,13 +581,16 @@ int TextureChannels::getSize( unsigned char dim ) const
 
 bool TextureChannels::turnOn( bool yn )
 {
-    return !yn;
+    bool res = isOn();
+    osgtexture_->turnOn( yn );
+
+    return res;
 }
 
 
 bool TextureChannels::isOn() const
 {
-    return true;
+    return osgtexture_->isOn();
 }
 
 
@@ -600,16 +602,12 @@ int TextureChannels::addChannel()
 {
     TypeSet<int> osgids;
 
-    int osgid = -1;
-    if ( osgtexture_ )
-    {
-	osgid = osgtexture_->addDataLayer();
-	osgtexture_->setDataLayerUndefLayerID( osgid, osgid );
-	osgtexture_->setDataLayerUndefChannel( osgid, 3 );
-	const osg::Vec4f imageudfcolor( 1.0, 1.0, 1.0, 0.0 );
-	osgtexture_->setDataLayerImageUndefColor( osgid, imageudfcolor );
-	osgtexture_->setDataLayerFilterType( osgid, mGetFilterType );
-    }
+    const int osgid = osgtexture_->addDataLayer();
+    osgtexture_->setDataLayerUndefLayerID( osgid, osgid );
+    osgtexture_->setDataLayerUndefChannel( osgid, 3 );
+    const osg::Vec4f imageudfcolor( 1.0, 1.0, 1.0, 0.0 );
+    osgtexture_->setDataLayerImageUndefColor( osgid, imageudfcolor );
+    osgtexture_->setDataLayerFilterType( osgid, mGetFilterType );
 
     osgids += osgid;
 
@@ -679,11 +677,8 @@ void TextureChannels::removeChannel( int channel )
 
     PtrMan<ChannelInfo> info = channelinfo_[channel];
 
-    if ( osgtexture_ )
-    {
-	for ( int idx=info->getOsgIDs().size()-1; idx>=0; idx-- )
-	    osgtexture_->removeDataLayer( info->getOsgIDs()[idx] );
-    }
+    for ( int idx=info->getOsgIDs().size()-1; idx>=0; idx-- )
+	osgtexture_->removeDataLayer( info->getOsgIDs()[idx] );
 
     channelinfo_.removeSingle(channel);
 
@@ -941,7 +936,7 @@ void TextureChannels::enableTextureInterpolation( bool yn )
 {
     interpolatetexture_ = yn;
 
-    for ( int idx=0; osgtexture_ && idx<osgtexture_->nrDataLayers(); idx++ )
+    for ( int idx=0; idx<osgtexture_->nrDataLayers(); idx++ )
     {
 	const int layerid = osgtexture_->getDataLayerID( idx );
 	if ( osgtexture_->getDataLayerFilterType(layerid) != mGetFilterType )
@@ -954,5 +949,6 @@ bool TextureChannels::textureInterpolationEnabled() const
 {
     return interpolatetexture_;
 }
+
 
 }; // namespace visBase

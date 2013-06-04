@@ -409,10 +409,13 @@ void uiODPlaneDataTreeItem::movePlaneAndCalcAttribs( const CubeSampling& cs )
     mDynamicCastGet(visSurvey::PlaneDataDisplay*,pdd,
 	    	    visserv_->getObject(displayid_))
 
+    pdd->annotateNextUpdateStage( true );
     pdd->setCubeSampling( cs );
     pdd->resetManipulation();
-    for ( int attrib=visserv_->getNrAttribs(displayid_); attrib>=0; attrib--)
+    pdd->annotateNextUpdateStage( true );
+    for ( int attrib=visserv_->getNrAttribs(displayid_)-1; attrib>=0; attrib--)
 	visserv_->calculateAttrib( displayid_, attrib, false );
+    pdd->annotateNextUpdateStage( false );
 
     updateColumnText( uiODSceneMgr::cNameColumn() );
     updateColumnText( uiODSceneMgr::cColorColumn() );

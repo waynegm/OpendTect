@@ -142,6 +142,8 @@ public:
     const TypeSet<DataPack::ID>* getDisplayDataPackIDs(int attrib);
     float			getDisplayMinDataStep(bool x0) const;
 
+    virtual void		annotateNextUpdateStage(bool yn);
+
     static const char*		sKeyDepthKey()		{ return "DepthKey"; }
     static const char*		sKeyPlaneKey()		{ return "PlaneKey"; }
 
@@ -192,6 +194,7 @@ protected:
     void			triggerDeSel();
 
     CubeSampling		snapPosition(const CubeSampling&) const;
+    void			setUpdateStageTextureTransform();
     
     visBase::EventCatcher*		eventcatcher_;
     MouseCursor				mousecursor_;
@@ -217,6 +220,15 @@ protected:
 
     RefMan<const mVisTrans>		displaytrans_;
     RefMan<visBase::TextureRectangle>	texturerect_;
+
+    struct UpdateStageInfo
+    {
+	bool		refreeze_;
+	CubeSampling	oldcs_;
+	Orientation	oldorientation_;
+	Coord		oldimagesize_;
+    };
+    UpdateStageInfo			updatestageinfo_;
 
     static const char*		sKeyOrientation() { return "Orientation"; }
     static const char*		sKeyResolution()  { return "Resolution"; }

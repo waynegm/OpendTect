@@ -38,6 +38,28 @@ public:
 				mCreateDataObj(TextureRectangle);
 
     void			setTextureChannels(visBase::TextureChannels*);
+    visBase::TextureChannels*	getTextureChannels();
+
+    void			freezeDisplay(bool yn=true);
+    bool			isDisplayFrozen() const;
+    				/*!<As long as texture rectangle is frozen, 
+				    the display of (lengthy) changes to its
+				    geometry and/or texture is postponed.
+				    Avoids showing half-finished updates. */
+
+    void			setTextureShift(const Coord&);
+    				/*!<Shift of the texture envelope center
+				    (in pixel units) with regard to the
+				    center of the plane geometry. */
+    Coord			getTextureShift() const;
+
+    void			setTextureGrowth(const Coord&);
+				/*!<Size increase/decrease of the texture
+				    envelope (in pixel units). Its default
+				    size is one pixel shorter than the image
+				    envelope (half-a-pixel at every border). */
+    Coord			getTextureGrowth() const;
+
     void			setCenter(const Coord3& center);
     void			setWidth(const Coord3& width);
     				//!<One dim must be 0
@@ -46,7 +68,7 @@ public:
 
     void			swapTextureAxes(bool yn=true);
     bool			areTextureAxesSwapped() const;
-    
+
     void			setDisplayTransformation(const mVisTrans*);
 
 protected:

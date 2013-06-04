@@ -138,9 +138,9 @@ PlaneDataDisplay::PlaneDataDisplay()
 {
     texturerect_ = visBase::TextureRectangle::create();
     addChild( texturerect_->osgNode() );
-    
+
     texturerect_->setTextureChannels( channels_ );
-    
+
     addChild( dragger_->osgNode() );
 
     volumecache_.allowNull( true );
@@ -540,7 +540,7 @@ NotifierAccess* PlaneDataDisplay::getManipulationNotifier()
 
 int PlaneDataDisplay::nrResolutions() const
 {
-    return 3;
+    return 1;
 }
 
 
@@ -701,7 +701,6 @@ void PlaneDataDisplay::setRandomPosData( int attrib, const DataPointSet* data,
 void PlaneDataDisplay::setCubeSampling( const CubeSampling& wantedcs )
 {
     CubeSampling cs = snapPosition( wantedcs );
-    const HorSampling& hrg = cs.hrg;
 
     mDefineCenterAndWidth( cs );
     width[(int)orientation_] = 0;
@@ -712,7 +711,9 @@ void PlaneDataDisplay::setCubeSampling( const CubeSampling& wantedcs )
     setDraggerPos( cs );
     if ( gridlines_ ) gridlines_->setPlaneCubeSampling( cs );
 
-    curicstep_ = hrg.step;
+    curicstep_ = cs.hrg.step;
+
+    setUpdateStageTextureTransform();
 
     //channels_->clearAll();
     movefinished_.trigger();
@@ -890,8 +891,8 @@ void PlaneDataDisplay::setVolumeDataPackNoCache( int attrib,
     const bool usetf = tfpacks.size();
     if ( nrAttribs()>1 )
     {
-	const int oldchannelsz0 = channels_->getSize(1) / (resolution_+1);
-	const int oldchannelsz1 = channels_->getSize(2) / (resolution_+1);
+	const int oldchannelsz0 = channels_->getSize(1);
+	const int oldchannelsz1 = channels_->getSize(2);
 	
 	//check current attribe sizes
 	int newsz0 = 0, newsz1 = 0;
@@ -1076,11 +1077,8 @@ void PlaneDataDisplay::updateFromDisplayIDs( int attrib, TaskRunner* tr )
 	int sz0 = dparr.info().getSize(0);
 	int sz1 = dparr.info().getSize(1);
 
-	if ( !arr || resolution_>0 )
+	if ( !arr )
 	{
-	    sz0 *= (resolution_+1);
-	    sz1 *= (resolution_+1);
-
 	    const od_int64 totalsz = sz0*sz1;
 	    mDeclareAndTryAlloc( float*, tmparr, float[totalsz] );
 
@@ -1090,11 +1088,7 @@ void PlaneDataDisplay::updateFromDisplayIDs( int attrib, TaskRunner* tr )
 		continue;
 	    }
 
-	    if ( resolution_<1 )
-		dparr.getAll( tmparr );
-	    else
-	    	interpolArray( attrib, tmparr, sz0, sz1, dparr, tr );
-
+	    dparr.getAll( tmparr );
 	    arr = tmparr;
 	    cp = OD::TakeOverPtr;
 	}
@@ -1122,25 +1116,6 @@ const TypeSet<DataPack::ID>* PlaneDataDisplay::getDisplayDataPackIDs(int attrib)
 { 
     return displaycache_.validIdx(attrib) ? displaycache_[attrib] : 0; 
 } 
-
-
-inline int getPow2Sz( int actsz, bool above=true, int minsz=1,
-		      int maxsz=INT_MAX )
-{
-    char npow = 0; char npowextra = actsz == 1 ? 1 : 0;
-    int sz = actsz;
-    while ( sz>1 )
-    {
-	if ( above && !npowextra && sz % 2 )
-	npowextra = 1;
-	sz /= 2; npow++;
-    }
-
-    sz = intpow( 2, npow + npowextra );
-    if ( sz < minsz ) sz = minsz;
-    if ( sz > maxsz ) sz = maxsz;
-    return sz;
-}
 
 
 const Attrib::DataCubes* PlaneDataDisplay::getCacheVolume( int attrib ) const
@@ -1366,6 +1341,75 @@ void PlaneDataDisplay::setDisplayTransformation( const mVisTrans* t )
     displaytrans_ = t;
     texturerect_->setDisplayTransformation( t );
     dragger_->setDisplayTransformation( t );
+}
+
+
+void PlaneDataDisplay::annotateNextUpdateStage( bool yn )
+{
+    if ( !yn )
+    {
+	texturerect_->setTextureShift( Coord(0.0,0.0) );
+	texturerect_->setTextureGrowth( Coord(0.0,0.0) );
+    }
+    else if ( !getUpdateStageNr() )
+    {
+	updatestageinfo_.oldcs_ = getCubeSampling( false, true );
+	updatestageinfo_.oldorientation_ = orientation_;
+	updatestageinfo_.oldimagesize_.x = channels_->getSize(2);
+	updatestageinfo_.oldimagesize_.y = channels_->getSize(1);
+	updatestageinfo_.refreeze_ = true;
+    }
+    else if ( updatestageinfo_.refreeze_ )
+	texturerect_->freezeDisplay( false );	// thaw to refreeze
+
+    texturerect_->freezeDisplay( yn );
+    SurveyObject::annotateNextUpdateStage( yn );
+}
+
+
+void PlaneDataDisplay::setUpdateStageTextureTransform()
+{
+    if ( !getUpdateStageNr() )
+	return;
+
+    const CubeSampling& oldcs = updatestageinfo_.oldcs_;
+    const CubeSampling  newcs = getCubeSampling( false, true );
+
+    Coord samplingratio( updatestageinfo_.oldimagesize_.x/oldcs.nrZ(),
+			 updatestageinfo_.oldimagesize_.y/oldcs.nrInl() );
+    Coord startdif( (newcs.zrg.start-oldcs.zrg.start) / newcs.zrg.step,
+		    newcs.hrg.start.inl-oldcs.hrg.start.inl );
+    Coord growth( newcs.nrZ()-oldcs.nrZ(), newcs.nrInl()-oldcs.nrInl() );
+    updatestageinfo_.refreeze_ = newcs.hrg.start.crl==oldcs.hrg.start.crl;
+
+    if ( orientation_ == Inline )
+    {
+	samplingratio.y = updatestageinfo_.oldimagesize_.y / oldcs.nrCrl();
+	startdif.y = newcs.hrg.start.crl - oldcs.hrg.start.crl;
+	growth.y = newcs.nrCrl() - oldcs.nrCrl();
+	updatestageinfo_.refreeze_ = newcs.hrg.start.inl==oldcs.hrg.start.inl;
+    }
+
+    if ( orientation_ == Zslice )
+    {
+	samplingratio.x = updatestageinfo_.oldimagesize_.x / oldcs.nrCrl();
+	startdif.x = newcs.hrg.start.crl - oldcs.hrg.start.crl;
+	growth.x = newcs.nrCrl() - oldcs.nrCrl();
+	updatestageinfo_.refreeze_ = newcs.zrg.start==oldcs.zrg.start;
+    }
+
+    const int texturebordercoord = oldcs.nrInl() + oldcs.nrCrl() + oldcs.nrZ();
+    if ( updatestageinfo_.oldorientation_!=orientation_ )
+    {
+	startdif = Coord( texturebordercoord, texturebordercoord );
+	updatestageinfo_.refreeze_ = true;
+    }
+
+    startdif.x  *= samplingratio.x; startdif.y  *= samplingratio.y;
+    growth.x *= samplingratio.x; growth.y *= samplingratio.y;
+
+    texturerect_->setTextureGrowth( growth );
+    texturerect_->setTextureShift( -startdif - growth*0.5 ); 
 }
 
 

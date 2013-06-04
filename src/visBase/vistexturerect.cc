@@ -44,6 +44,34 @@ void TextureRectangle::setTextureChannels( visBase::TextureChannels* channels )
 }
 
 
+visBase::TextureChannels* TextureRectangle::getTextureChannels()
+{ return channels_; }
+
+
+void TextureRectangle::freezeDisplay( bool yn )
+{ textureplane_->freezeDisplay( yn ); }
+
+
+bool TextureRectangle::isDisplayFrozen() const
+{ return textureplane_->isDisplayFrozen(); }
+
+
+void TextureRectangle::setTextureShift( const Coord& shift )
+{ textureplane_->setTextureShift( Conv::to<osg::Vec2>(shift) ); }
+
+
+Coord TextureRectangle::getTextureShift() const
+{ return Conv::to<Coord>( textureplane_->getTextureShift() ); }
+
+
+void TextureRectangle::setTextureGrowth( const Coord& growth )
+{ textureplane_->setTextureGrowth( Conv::to<osg::Vec2>(growth) ); }
+
+
+Coord TextureRectangle::getTextureGrowth() const
+{ return Conv::to<Coord>( textureplane_->getTextureGrowth() ); }
+
+
 void TextureRectangle::setCenter( const Coord3& center )
 {
     osg::Vec3 osgcenter;

@@ -27,6 +27,7 @@ SurveyObject::SurveyObject()
     , inlcrlsystem_( 0 )
     , basemapobj_(0)
     , locked_(false)
+    , updatestagenr_( 0 )
 {
     setInlCrlSystem( SI().get3DGeometry(true) );
 }
@@ -139,6 +140,16 @@ const char* SurveyObject::getInlCrlSystemName() const
 {
     return inlcrlsystem_ ? inlcrlsystem_->name().str() : survname_.str();
 }
+
+
+void SurveyObject::annotateNextUpdateStage( bool yn )
+{
+    updatestagenr_ = yn ? updatestagenr_+1 : 0;
+}
+
+
+int SurveyObject::getUpdateStageNr() const
+{ return updatestagenr_; }
 
 
 void SurveyObject::fillSOPar( IOPar& par ) const

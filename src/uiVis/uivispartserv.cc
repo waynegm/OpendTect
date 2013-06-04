@@ -1843,9 +1843,14 @@ void uiVisPartServer::deselectObjCB( CallBacker* cb )
 		resetManipulation( oldsel );
 	    else
 	    {
+		so->annotateNextUpdateStage( true );
 		so->acceptManipulation();
+		so->annotateNextUpdateStage( true );
+
 		for ( int attrib=so->nrAttribs()-1; attrib>=0; attrib-- )
 		    calculateAttrib( oldsel, attrib, false );
+
+		so->annotateNextUpdateStage( false );
 	    }
 	}
 

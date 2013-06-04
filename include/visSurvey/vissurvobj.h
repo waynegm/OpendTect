@@ -289,6 +289,23 @@ public:
     virtual const ZAxisTransform* getZAxisTransform() const	 {return 0;}
     virtual bool		alreadyTransformed(int attrib) const;
 
+    virtual void		annotateNextUpdateStage(bool yn);
+    				/*!<Annotation to enumerate distinguishable
+				    stages in an update sequence. False resets
+				    updatestagenr_ to zero. For example:
+				    <code>
+					// no updating		#0
+					annotateNextUpdateStage( true );
+					// update geometry	#1
+					annotateNextUpdateStage( true );
+					// update textures	#2
+					annotateNextUpdateStage( false );
+					// no updating		#0
+				    </code>
+				    Derived class decides whether to neglect or
+				    act, e.g. by (de/re)freezing its display. */
+    int				getUpdateStageNr() const;
+
     virtual void		lock( bool yn )		{ locked_ = yn; }
     virtual bool		isLocked() const	{ return locked_; }
     virtual NotifierAccess*	getLockNotifier()	{ return 0; }
@@ -327,6 +344,7 @@ protected:
 
     mutable BufferString	errmsg_;
     Scene*			scene_;
+    int				updatestagenr_;
     bool			locked_;
     ObjectSet<BufferStringSet>	userrefs_;
 

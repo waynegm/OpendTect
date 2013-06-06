@@ -187,7 +187,7 @@ void ui3DViewerBody::setupHUD()
     if ( !axes_ )
     {
 	axes_ = visBase::Axes::create();
-	axes_->setSize( 5, 50 );
+	axes_->setSize( 5.0f, 55.0f );
 	hudcamera->addChild( axes_->osgNode() );
 	if ( camera_ )
 	    axes_->setMasterCamera( camera_ );
@@ -302,7 +302,8 @@ void ui3DViewerBody::reSizeEvent(CallBacker*)
     
     horthumbwheel_->setPosition( true, 20, 10, 100, 15, -1 );
     verthumbwheel_->setPosition( false, 10, 20, 100, 15, -1 );
-    axes_->setPosition( widget->width()-60, 60 );
+    const float offset = axes_->getLength() + 10;
+    axes_->setPosition( widget->width()-offset, offset );
 }
 
 

@@ -25,6 +25,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "welldata.h"
 #include "wellimpasc.h"
 #include "wellman.h"
+#include "wellmarker.h"
 #include "welltrack.h"
 #include "welltransl.h"
 #include "wellwriter.h"
@@ -39,6 +40,7 @@ static const char* rcsID mUsedVar = "$Id$";
 using namespace Well;
 
 
+// uiBulkTrackImport
 uiBulkTrackImport::uiBulkTrackImport( uiParent* p )
     : uiDialog(p,uiDialog::Setup("Well Track Import",mNoDlgTitle,mTODOHelpID))
     , fd_(BulkTrackAscIO::getDesc())
@@ -91,21 +93,9 @@ static IOObj* mkEntry( const CtxtIOObj& ctio, const char* nm )
 }
 
 
-#define mErrRet(s) { if ( s ) uiMSG().error(s); return false; }
-
-bool uiBulkTrackImport::acceptOK( CallBacker* )
+void uiBulkTrackImport::readFile( std::istream& istrm )
 {
-    const BufferString fnm( inpfld_->fileName() );
-    if ( fnm.isEmpty() )
-	mErrRet( "Please enter the input file name" )
-    StreamData sd( StreamProvider(fnm).makeIStream() );
-    if ( !sd.usable() )
-	mErrRet( "Cannot open input file" )
-
-    if ( !dataselfld_->commit() )
-	return false;
-
-    BulkTrackAscIO aio( *fd_, *sd.istrm );
+    BulkTrackAscIO aio( *fd_, istrm );
     BufferString wellnm, uwi; Coord3 crd;
     float md = mUdf(float);
     while ( aio.get(wellnm,crd,md,uwi) )
@@ -127,9 +117,43 @@ bool uiBulkTrackImport::acceptOK( CallBacker* )
 	if ( crd.isDefined() )
 	    wd->track().addPoint( crd.coord(), (float) crd.z, md );
     }
+}
 
+
+void uiBulkTrackImport::addD2T( BufferString& errmsg )
+{
+    if ( !SI().zIsTime() ) return;
+
+    const float vel = velocityfld_->getfValue();
+    if ( vel<=0 || mIsUdf(vel) )
+    {
+	errmsg ="Please enter a positive velocity for generating the D2T model";
+	return;
+    }
+
+    const float twtvel = vel * .5f;
+    for ( int idx=0; idx<wells_.size(); idx++ )
+    {
+	Well::Data* wd = wells_[idx];
+	const Well::Track& track = wd->track();
+
+	const float srd = mCast(float,SI().seismicReferenceDatum());
+	const float zstart = track.zRange().start;
+	const float zstop = track.zRange().stop;
+	const float dahstart = track.dahRange().start;
+	const float dahstop = track.dahRange().stop;
+
+	Well::D2TModel* d2t = new Well::D2TModel;
+	d2t->add( dahstart, (zstart+srd)/twtvel );
+	d2t->add( dahstop, (zstop+srd)/twtvel );
+	wd->setD2TModel( d2t );
+    }
+}
+
+
+void uiBulkTrackImport::write( BufferStringSet& errors )
+{
     // TODO: Check if name exists, ask user to overwrite or give new name
-    BufferStringSet errors;
     PtrMan<CtxtIOObj> ctxt = mMkCtxtIOObj( Well );
     for ( int idx=0; idx<wells_.size(); idx++ )
     {
@@ -143,8 +167,6 @@ bool uiBulkTrackImport::acceptOK( CallBacker* )
 	    continue;
 	}
 
-	wd->setD2TModel( new Well::D2TModel );
-
 	PtrMan<Translator> t = ioobj->createTranslator();
 	mDynamicCastGet(WellTranslator*,wtr,t.ptr())
 	if ( wtr && wtr->write(*wd,*ioobj) )
@@ -154,6 +176,32 @@ bool uiBulkTrackImport::acceptOK( CallBacker* )
 	msg.add( "to file:\n" ).add( ioobj->fullUserExpr(false) );
 	errors.add( msg );
     }
+}
+
+
+#define mErrRet(s) { if ( s ) uiMSG().error(s); return false; }
+
+bool uiBulkTrackImport::acceptOK( CallBacker* )
+{
+    const BufferString fnm( inpfld_->fileName() );
+    if ( fnm.isEmpty() )
+	mErrRet( "Please enter input file name" )
+
+    StreamData sd( StreamProvider(fnm).makeIStream() );
+    if ( !sd.usable() )
+	mErrRet( "Cannot open input file" )
+
+    if ( !dataselfld_->commit() )
+	return false;
+
+    readFile( *sd.istrm );
+    BufferString errmsg;
+    addD2T( errmsg );
+    if ( !errmsg.isEmpty() )
+	mErrRet( errmsg );
+
+    BufferStringSet errors;
+    write( errors );
 
     if ( errors.isEmpty() )
     {
@@ -167,6 +215,7 @@ bool uiBulkTrackImport::acceptOK( CallBacker* )
 }
 
 
+// uiBulkLogImport
 uiBulkLogImport::uiBulkLogImport( uiParent* p )
     : uiDialog(p,uiDialog::Setup("Bulk Log Import",mNoDlgTitle,mTODOHelpID))
 {
@@ -244,7 +293,7 @@ bool uiBulkLogImport::acceptOK( CallBacker* )
 }
 
 
-
+// uiBulkMarkerImport
 uiBulkMarkerImport::uiBulkMarkerImport( uiParent* p )
     : uiDialog(p,uiDialog::Setup("Bulk Marker Import",mNoDlgTitle,mTODOHelpID))
     , fd_(BulkMarkerAscIO::getDesc())
@@ -262,5 +311,129 @@ uiBulkMarkerImport::~uiBulkMarkerImport()
 
 bool uiBulkMarkerImport::acceptOK( CallBacker* )
 {
+    const BufferString fnm( inpfld_->fileName() );
+    if ( fnm.isEmpty() )
+	mErrRet( "Please enter input file name" )
+
+    StreamData sd( StreamProvider(fnm).makeIStream() );
+    if ( !sd.usable() )
+	mErrRet( "Cannot open input file" )
+
+    if ( !dataselfld_->commit() )
+	return false;
+
+    BufferStringSet wellnms;
+    ObjectSet<MarkerSet> markersets;
+    readFile( *sd.istrm, wellnms, markersets );
+
     return true;
+}
+
+
+void uiBulkMarkerImport::readFile( std::istream& istrm,
+				   BufferStringSet& wellnms,
+				   ObjectSet<MarkerSet>& markersets )
+{
+    BulkMarkerAscIO aio( *fd_, istrm );
+    BufferString markernm, wellnm, uwi;
+    float md = mUdf(float);
+    while ( aio.get(wellnm,md,markernm) )
+    {
+	int wellidx = wellnms.indexOf( wellnm );
+	if ( wellidx<0 )
+	{
+	    wellnms.add( wellnm );
+	    markersets += new MarkerSet;
+	    wellidx = wellnms.size()-1;
+	}
+
+	MarkerSet* mset = markersets[wellidx];
+	Marker* marker = new Marker( markernm, md );
+	mset->insertNew( marker );
+    }
+}
+
+
+class D2TModelData
+{
+public:
+D2TModelData( const char* wellnm )
+    : wellnm_(wellnm)	{}
+
+    BufferString	wellnm_; // can be UWI as well
+    TypeSet<float>	mds_;
+    TypeSet<float>	twts_;
+};
+
+// uiBulkD2TModelImport
+uiBulkD2TModelImport::uiBulkD2TModelImport( uiParent* p )
+    : uiDialog(p,uiDialog::Setup("Bulk D2TModel Import",
+				 mNoDlgTitle,mTODOHelpID))
+    , fd_(BulkD2TModelAscIO::getDesc())
+{
+    inpfld_ = new uiFileInput( this, "Input Depth/Time Model file",
+			       uiFileInput::Setup());
+
+    dataselfld_ = new uiTableImpDataSel( this, *fd_, "107.0.9" );
+    dataselfld_->attach( alignedBelow, inpfld_ );
+}
+
+
+uiBulkD2TModelImport::~uiBulkD2TModelImport()
+{}
+
+
+bool uiBulkD2TModelImport::acceptOK( CallBacker* )
+{
+    const BufferString fnm( inpfld_->fileName() );
+    if ( fnm.isEmpty() )
+	mErrRet( "Please enter input file name" )
+
+    StreamData sd( StreamProvider(fnm).makeIStream() );
+    if ( !sd.usable() )
+	mErrRet( "Cannot open input file" )
+
+    if ( !dataselfld_->commit() )
+	return false;
+
+    ObjectSet<D2TModelData> data;
+    readFile( *sd.istrm, data );
+
+    return true;
+}
+
+
+static int getIndex( const ObjectSet<D2TModelData>& data,
+		     const BufferString& wellnm )
+{
+    if ( wellnm.isEmpty() ) return -1;
+
+    for ( int idx=0; idx<data.size(); idx++ )
+	if ( data[idx]->wellnm_ == wellnm )
+	    return idx;
+
+    return -1;
+}
+
+void uiBulkD2TModelImport::readFile( std::istream& istrm,
+				     ObjectSet<D2TModelData>& data )
+{
+    BulkD2TModelAscIO aio( *fd_, istrm );
+    BufferString wellnm;
+    float md = mUdf(float);
+    float twt = mUdf(float);
+    while ( aio.get(wellnm,md,twt) )
+    {
+	int wellidx = getIndex( data, wellnm );
+	if ( wellidx<0 )
+	{
+	    D2TModelData* d2t = new D2TModelData( wellnm );
+	    data += d2t;
+	    wellidx = data.size()-1;
+	}
+
+	D2TModelData* d2t = data[wellidx];
+	d2t->mds_ += md;
+	d2t->twts_ += twt;
+    }
 }

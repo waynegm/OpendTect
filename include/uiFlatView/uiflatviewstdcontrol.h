@@ -81,11 +81,12 @@ protected:
     uiFlatViewColTabEd*	ctabed_;
 
     virtual void	finalPrepare();
+    void		clearToolBar();
     void		updatePosButtonStates();
     void		doZoom(bool in,uiFlatViewer&,FlatView::ZoomMgr&);
 
     virtual void	coltabChg(CallBacker*);
-    void		dispChgCB(CallBacker*);
+    virtual void	dispChgCB(CallBacker*);
     virtual void	editCB(CallBacker*);
     void		flipCB(CallBacker*);
     void		helpCB(CallBacker*);
@@ -102,7 +103,7 @@ protected:
     virtual void	wheelMoveCB(CallBacker*);
     virtual void	zoomCB(CallBacker*);
 
-    virtual bool		handleUserClick();
+    virtual bool	handleUserClick();
 
     uiMenuHandler&      menu_;
     MenuItem           	propertiesmnuitem_;

@@ -135,9 +135,10 @@ bool Strat::LaySeqAttribSet::putTo( std::ostream& strm ) const
 
 
 Strat::LaySeqAttribCalc::LaySeqAttribCalc( const Strat::LaySeqAttrib& desc,
-					   const Strat::LayerModel& lm )
+				   const Strat::LayerModel& lm )
     : attr_(desc)
     , validx_(-1)
+    , extrgates_(*new TypeSet<Interval<float> >)
 {
     if ( attr_.islocal_ )
     {
@@ -188,54 +189,58 @@ float Strat::LaySeqAttribCalc::getValue( const LayerSequence& seq,
 float Strat::LaySeqAttribCalc::getLocalValue( const LayerSequence& seq,
 					  const Interval<float>& zrg ) const
 {
-    const ObjectSet<Layer>& lays = seq.layers();
-    const int nrlays = lays.size();
-    if ( validx_ < 0 || nrlays < 1 )
+    if ( validx_ < 0 || seq.isEmpty() )
 	return mUdf(float);
 
-    int layidx = 0;
-    while ( layidx < nrlays && lays[layidx]->zBot() <= zrg.start )
-	layidx++;
-
-    TypeSet<float> vals; TypeSet<float> wts;
-    const float midz = zrg.center();
-    for ( ; layidx < nrlays && lays[layidx]->zTop() <= zrg.stop; layidx++ )
+    const ObjectSet<Layer>& lays = seq.layers();
+    if ( statupscl_ == Stats::TakeNearest )
     {
-	const Strat::Layer& lay = *lays[layidx];
-	Interval<float> insiderg( lay.zTop(), lay.zBot() );
-	if ( statupscl_ == Stats::TakeNearest )
-	{
-	   if ( insiderg.includes(midz,true) )
-		{ vals += lay.value(validx_); wts += 1; break; }
-	   continue;
-	}
+	const float depth = zrg.center();
+	const int ilay = seq.layerIdxAtZ( depth );
+	if ( !lays.validIdx(ilay) )
+	    return mUdf(float);
 
-	if ( insiderg.start < zrg.start ) insiderg.start = zrg.start;
-	if ( insiderg.stop > zrg.stop ) insiderg.stop = zrg.stop;
-	const float wt = insiderg.width();
-	if ( wt < 1e-6 ) continue;
-	const float val = lay.value( validx_ );
-	if ( mIsUdf(val) ) continue;
-	vals += val; wts += wt;
+	const float propval = lays[ilay]->value( validx_ );
+	return propval;
     }
 
-    const int nrvals = vals.size();
-    if ( nrvals < 1 )
+    LayerSequence* newseq = new LayerSequence( &seq.propertyRefs() );
+    seq.getSequencePart( zrg, true, *newseq );
+    if ( !newseq || newseq->isEmpty() )
 	return mUdf(float);
-    applyTransform( vals );
-    if ( nrvals == 1 || statupscl_ == Stats::TakeNearest )
-	return vals[0];
 
+    TypeSet<float> vals; TypeSet<float> wts;
+    const PropertyRef* prop = seq.propertyRefs().validIdx(validx_) ?
+			      seq.propertyRefs()[validx_] : 0;
+    const bool propisvel = prop && prop->stdType() == PropertyRef::Vel;
+    for ( int ilay=0; ilay < newseq->size(); ilay++ )
+    {
+	const Strat::Layer* lay = newseq->layers()[ilay];
+	if ( !lay )
+	    continue;
+
+	const float thickness = lay->thickness();
+	const float propval = lay->value( validx_ );
+	if ( mIsUdf(propval) || mIsUdf(thickness) || thickness < 1e-5f ||
+		(propisvel && propval < 1e-5f) )
+	    continue;
+
+	wts += thickness;
+	vals += propisvel ? 1.f / propval : propval;
+    }
+
+    if ( vals.isEmpty() )
+	return mUdf(float);
+
+    applyTransform( vals );
     Stats::CalcSetup rcsu( true );
     rcsu.require( stattype_ );
     Stats::RunCalc<float> rc( rcsu );
     for ( int idx=0; idx<vals.size(); idx++ )
-    {
-	if ( !mIsUdf(vals[idx]) )
-	    rc.addValue( vals[idx], wts[idx] );
-    }
+	rc.addValue( vals[idx], wts[idx] );
 
-    return (float)rc.getValue( stattype_ );
+    const float rcout = mCast( float, rc.getValue( stattype_ ) );
+    return propisvel ? 1.f / rcout : rcout;
 }
 
 
@@ -253,13 +258,17 @@ static bool allLithAreUndef( const Strat::LayerSequence& seq )
 
 float Strat::LaySeqAttribCalc::getGlobalValue( const LayerSequence& seq ) const
 {
-    if ( validx_ < 0 ) return mUdf(float);
+    if ( validx_ < 0 || seq.isEmpty() )
+	return mUdf(float);
+
+    const ObjectSet<Layer>& lays = seq.layers();
+    const int nrlays = seq.size();
 
     ObjectSet<const Strat::Layer> layers;
     const bool isallundef = allLithAreUndef( seq );
-    for ( int ilay=0; ilay<seq.size(); ilay++ )
+    for ( int ilay=0; ilay<nrlays; ilay++ )
     {
-	const Strat::Layer* lay = seq.layers()[ilay];
+	const Strat::Layer* lay = lays[ilay];
 	for ( int iun=0; iun<units_.size(); iun++ )
 	{
 	    if ( units_[iun]->isParentOf( lay->unitRef() ) &&
@@ -272,34 +281,39 @@ float Strat::LaySeqAttribCalc::getGlobalValue( const LayerSequence& seq ) const
 
     TypeSet<float> vals; TypeSet<float> wts;
     const bool isthick = &attr_.prop_ == &Strat::Layer::thicknessRef();
+    const PropertyRef* prop = seq.propertyRefs().validIdx(validx_) ?
+			      seq.propertyRefs()[validx_] : 0;
+    const bool propisvel = prop && prop->stdType() == PropertyRef::Vel;
     for ( int ilay=0; ilay<layers.size(); ilay++ )
     {
-	const Strat::Layer& lay = *layers[ilay];
-	const float val = lay.value( validx_ );
-	if ( !mIsUdf(val) )
-	{
-	    vals += val;
-	    if ( !isthick )
-		wts += lay.thickness();
-	}
+	const Strat::Layer* lay = layers[ilay];
+	if ( !lay )
+	    continue;
+
+	const float thickness = lay->thickness();
+	const float propval =  isthick ? thickness
+	    			       : lay->value( validx_ );
+
+	if ( mIsUdf(propval) || mIsUdf(thickness) || thickness < 1e-5f ||
+	     (propisvel && propval < 1e-5f) )
+	    continue;
+
+	wts += thickness;
+	vals += propisvel ? 1.f / propval : propval;
     }
 
     if ( vals.isEmpty() )
 	return mUdf(float);
-    applyTransform( vals );
-    if ( vals.size() == 1 )
-	return vals[0];
 
+    applyTransform( vals );
     Stats::CalcSetup rcsu( !isthick );
     rcsu.require( stattype_ );
     Stats::RunCalc<float> rc( rcsu );
     for ( int idx=0; idx<vals.size(); idx++ )
-    {
-	if ( !mIsUdf(vals[idx]) )
-	    rc.addValue( vals[idx], isthick ? 1 : wts[idx] );
-    }
+	rc.addValue( vals[idx], isthick ? 1.f : wts[idx] );
 
-    return (float)rc.getValue( stattype_ );
+    const float rcout = mCast( float, rc.getValue( stattype_ ) );
+    return propisvel ? 1.f / rcout : rcout;
 }
 
 
@@ -334,15 +348,17 @@ void Strat::LaySeqAttribCalc::applyTransform( TypeSet<float>& vals ) const
 
 
 Strat::LayModAttribCalc::LayModAttribCalc( const Strat::LayerModel& lm,
-					   const Strat::LaySeqAttribSet& lsas,
-					   DataPointSet& res )
+			 const Strat::LaySeqAttribSet& lsas,
+			 DataPointSet& res )
     : Executor("Attribute extraction")
     , lm_(lm)
     , dps_(res)
+    , extrgates_(*new TypeSet<TypeSet<Interval<float> > >)
     , seqidx_(0)
     , msg_("Extracting layer attributes")
     , calczwdth_(SI().zRange(false).step / 2)
 {
+    // calczwdth_ default only used if no valid extrgates_ is provided
     if ( SI().zIsTime() )
 	calczwdth_ *= 2000;
 
@@ -354,6 +370,9 @@ Strat::LayModAttribCalc::LayModAttribCalc( const Strat::LayerModel& lm,
 	    continue;
 
 	LaySeqAttribCalc* calc = new LaySeqAttribCalc( lsa, lm );
+	if ( extrgates_.validIdx(idx) )
+	    calc->setExtrGates( extrgates_[idx] );
+
 	calcs_ += calc;
 	dpscidxs_ += dpsidx;
     }
@@ -378,6 +397,8 @@ int Strat::LayModAttribCalc::nextStep()
 	return Finished();
 
     const LayerSequence& seq = lm_.sequence( mCast(int,seqidx_) );
+    BufferString errmsg = "No extraction interval specified ";
+    errmsg.add( "for pseudo-well number " );
     DataPointSet::RowID dpsrid = 0;
     while ( dpsrid < dpssz && dps_.trcNr(dpsrid) != seqidx_ + 1 )
 	dpsrid++;
@@ -385,15 +406,43 @@ int Strat::LayModAttribCalc::nextStep()
     const int dpthidx = dps_.indexOf( sKey::Depth() );
     if ( dpthidx < 0 )
 	mErrRet("No 'Depth' column in input data")
-    const bool zinft = SI().depthsInFeet();
 
+    const bool zinft = SI().depthsInFeet();
+    int pointidx = 0;
     while ( dpsrid < dpssz && dps_.trcNr(dpsrid) == seqidx_ + 1 )
     {
 	DataPointSet::DataRow dr( dps_.dataRow(dpsrid) );
 	float* dpsvals = dps_.getValues( dpsrid );
 	float z = dpsvals[dpthidx];
-	if ( zinft ) z *= mFromFeetFactorF;
-	const Interval<float> zrg( z-calczwdth_, z+calczwdth_ );
+	if ( zinft )
+	   z *= mFromFeetFactorF;
+
+	Interval<float> zrg;
+	const int seqnb = mCast( int, seqidx_ );
+	if ( extrgates_.isEmpty() )
+	{
+	    if( mIsUdf(calczwdth_) )
+		mErrRet( "Neither calculation width nor extraction gate set" )
+
+	    zrg.setFrom( Interval<float>(z-calczwdth_, z+calczwdth_) );
+	}
+	else
+	{
+	    if ( !extrgates_.validIdx(seqnb) )
+	    {
+		errmsg.add( seqnb+1 );
+		mErrRet( errmsg )
+	    }
+
+	    if ( !extrgates_[seqnb].validIdx(pointidx) )
+	    {
+		errmsg.add( seqnb+1 );
+		mErrRet( errmsg )
+	    }
+
+	    zrg.setFrom( extrgates_[seqnb][pointidx] );
+	}
+
 	for ( int idx=0; idx<dpscidxs_.size(); idx++ )
 	{
 	    const float val = calcs_[idx]->getValue( seq, zrg );
@@ -401,6 +450,7 @@ int Strat::LayModAttribCalc::nextStep()
 	}
 
 	dpsrid++;
+	pointidx++;
     }
 
     seqidx_++;

@@ -18,7 +18,6 @@ ________________________________________________________________________
 #include "veldesc.h"
 #include "keystrs.h"
 #include "factory.h"
-#include "ailayer.h"
 
 template <class T> class ValueSeries;
 
@@ -41,13 +40,11 @@ public:
 
     bool		setModel(const float* dpths,const float* times,int sz);
 
-    float		getDepth(int idx) const;
-    float		getTime(int idx) const;
-    float		getLastTime() const;
-
     float		getDepth(float time) const;
     float		getTime(float depth) const;
     float	 	getVelocity(float depth) const;
+    float		getFirstTime() const;
+    float		getLastTime() const;
 
     static float	getDepth(const float* dpths,const float* times,int sz,
 	    			float time);
@@ -55,6 +52,11 @@ public:
 				float depth);
     static float 	getVelocity(const float* dpths,const float* times,
 	    				int sz,float depth);
+
+    			// use only if you're sure about what you're doing
+    float		getDepth(int idx) const;
+    float		getTime(int idx) const;
+
 protected:
 
     static float	convertTo(const float* dpths,const float* times,int sz,
@@ -344,27 +346,6 @@ mGlobal(Algo) void resampleContinuousData(const float* inarr,const float* t_in,
 				int nr_in,const SamplingData<double>& sd_out,
 				int nr_out,float* outarr);
 
-
-/* Block velocities and resamples depths and vel arrays at bend points */
-mGlobal(Algo) void BendPointVelBlock(TypeSet<float>& dpts,TypeSet<float>& vels,
-				float threshold,TypeSet<int>* remidxs=0);
-
-/*! Block elastic model so that no blocks have larger differences than
-   the threshold. Attempts will be made to put boundaries at large
-   changes.
-   \param pvelonly Will use density and SVel as well if false */
-
-mGlobal(Algo) void BlockElasticModel(const ElasticModel& inmdl,
-				      ElasticModel& outmdl,
-				      float relthreshold,
-				      bool pvelonly);
-
-/*!Ensures that all layers in the elastic model are not thicker than
-   a maximum thickness. Splits the blocks if necessary */
-
-mGlobal(Algo) void SetMaxThicknessElasticModel(const ElasticModel& inmdl,
-					ElasticModel& outmdl,
-					float maxthickness);
 
 /*!Compute depth values for the times in timesampling, using v0 and dv. v0 is
    the interval velocity at depth v0depth. v0depth is also the depth at t=0. */

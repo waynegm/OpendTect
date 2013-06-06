@@ -30,7 +30,7 @@ const char* SeisPSIOProvider::sKeyCubeID = "=Cube.ID";
 
 SeisPSIOProviderFactory& SPSIOPF()
 {
-    static SeisPSIOProviderFactory* theinst = 0;
+    static PtrMan<SeisPSIOProviderFactory> theinst = 0;
     if ( !theinst ) theinst = new SeisPSIOProviderFactory;
     return *theinst;
 }
@@ -98,9 +98,9 @@ SeisPS2DReader* SeisPSIOProviderFactory::get2DReader( const IOObj& ioobj,
 {
     if ( provs_.isEmpty() ) return 0;
     const SeisPSIOProvider* prov = provider( ioobj.translator() );
-    SeisPS2DReader* reader =
-	prov ? prov->make2DReader( ioobj.fullUserExpr(true), lnm ) : 0;
 
+    SeisPS2DReader* reader = prov ? 
+	prov->make2DReader( ioobj.fullUserExpr(true), lnm ) : 0;
     if ( reader )
 	reader->usePar( ioobj.pars() );
 

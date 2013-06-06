@@ -71,6 +71,8 @@ uiStratSynthDisp::uiStratSynthDisp( uiParent* p, const Strat::LayerModel& lm )
     , prestackwin_(0)		      
     , currentwvasynthetic_(0)
     , currentvdsynthetic_(0)
+    , autoupdate_(true)
+    , isbrinefilled_(true)
     , taskrunner_( new uiTaskRunner(this) )
 {
     stratsynth_.setTaskRunner( taskrunner_ );
@@ -166,7 +168,8 @@ uiStratSynthDisp::uiStratSynthDisp( uiParent* p, const Strat::LayerModel& lm )
     control_ = new uiMultiFlatViewControl( *vwr_, fvsu );
     control_->zoomChanged.notify( mCB(this,uiStratSynthDisp,zoomChg) );
 
-    offsetChged(0);
+    displayPostStackSynthetic( currentwvasynthetic_, true );
+    displayPostStackSynthetic( currentvdsynthetic_, false );
 
     //mTriggerInstanceCreatedNotifier();
 }
@@ -250,7 +253,7 @@ void uiStratSynthDisp::setDispEach( int de )
 {
     dispeach_ = de;
     displayPostStackSynthetic( currentwvasynthetic_, true );
-    displayPostStackSynthetic( currentvdsynthetic_, true );
+    displayPostStackSynthetic( currentvdsynthetic_, false );
 }
 
 
@@ -393,7 +396,7 @@ void uiStratSynthDisp::drawLevel()
 	}
     }
 
-    vwr_->handleChange( FlatView::Viewer::Annot, true );
+    vwr_->handleChange( FlatView::Viewer::Auxdata, true );
 }
 
 
@@ -599,7 +602,15 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
 	vwr_->removePack( vwr_->packID(wva) ); 
     vwr_->removeAllAuxData();
     d2tmodels_ = 0;
-    if ( !sd ) return;
+    if ( !sd )
+    {
+	SeisTrcBuf* disptbuf = new SeisTrcBuf( true );
+	SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( disptbuf, Seis::Line, 
+					SeisTrcInfo::TrcNr, "Forward Modeling");
+	DPM( DataPackMgr::FlatID() ).add( dp );
+	vwr_->setPack( wva, dp->id(), false, !hadpack );
+	return;
+    }
 
     mDynamicCastGet(const PreStackSyntheticData*,presd,sd);
     mDynamicCastGet(const PostStackSyntheticData*,postsd,sd);
@@ -625,8 +636,8 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
 
     SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( disptbuf, Seis::Line, 
 				    SeisTrcInfo::TrcNr, "Forward Modeling" );
-    dp->setName( sd->name() );
     DPM( DataPackMgr::FlatID() ).add( dp );
+    dp->setName( sd->name() );
 
     d2tmodels_ = &sd->d2tmodels_;
     for ( int idx=0; idx<d2tmodels_->size(); idx++ )
@@ -695,6 +706,21 @@ void uiStratSynthDisp::displayPreStackSynthetic( const SyntheticData* sd )
     }
 
     prestackwin_->setGathers( gatherinfos );
+    for ( int idx=0; idx<prestackwin_->nrViewers(); idx++ )
+    {
+	uiFlatViewer& vwr = prestackwin_->viewer( idx );
+	ColTab::MapperSetup& vdmapper =
+	    vwr.appearance().ddpars_.vd_.mappersetup_;
+	vdmapper.cliprate_ = Interval<float>(0.0,0.0);
+	vdmapper.autosym0_ = false;
+	vdmapper.symmidval_ = mUdf(float);
+	vwr.appearance().ddpars_.vd_.ctab_ = "Rainbow";
+	ColTab::MapperSetup& wvamapper =
+	    vwr.appearance().ddpars_.wva_.mappersetup_;
+	wvamapper.cliprate_ = Interval<float>(0.0,0.0);
+	wvamapper.autosym0_ = true;
+	wvamapper.symmidval_ = 0.0f;
+    }
 }
 
 
@@ -772,6 +798,7 @@ void uiStratSynthDisp::doModelChange()
     MouseCursorChanger mcs( MouseCursor::Busy );
 
     d2tmodels_ = 0;
+    if ( !autoupdate_ ) return;
     
     if ( stratsynth_.errMsg() )
 	mErrRet( stratsynth_.errMsg(), return )
@@ -798,13 +825,20 @@ void uiStratSynthDisp::updateSynthetic( const char* synthnm, bool wva )
     uiComboBox* datalist = wva ? wvadatalist_ : vddatalist_;
     if ( !datalist->isPresent(syntheticnm) )
 	return;
+    SyntheticData* cursd = stratsynth_.getSynthetic( synthnm );
+    SynthGenParams curgp;
+    cursd->fillGenParams( curgp );
+    if ( !(curgp == stratsynth_.genParams()) )
+    {
+	stratsynth_.removeSynthetic( syntheticnm );
+	SyntheticData* sd = stratsynth_.addSynthetic();
+	if ( !sd )
+	    mErrRet(stratsynth_.errMsg(), return );
+	updateSyntheticList( wva );
+	synthsChanged.trigger();
+    }
+
     datalist->setCurrentItem( syntheticnm );
-    stratsynth_.removeSynthetic( syntheticnm );
-    SyntheticData* sd = stratsynth_.addSynthetic();
-    if ( !sd )
-	mErrRet(stratsynth_.errMsg(), return );
-    synthsChanged.trigger();
-    updateSyntheticList( wva );
     setCurrentSynthetic( wva );
 }
 
@@ -820,11 +854,15 @@ void uiStratSynthDisp::syntheticChanged( CallBacker* cb )
     else
 	syntheticnm = wvadatalist_->text();
 
+    FixedString curvdsynthnm( currentvdsynthetic_->name().buf() );
     updateSynthetic( syntheticnm, true );
     updateSyntheticList( false );
     displaySynthetic( currentwvasynthetic_ );
-    if ( syntheticnm == currentvdsynthetic_->name() )
+    if ( syntheticnm == curvdsynthnm )
+    {
+	setCurrentSynthetic( false );
 	displayPostStackSynthetic( currentvdsynthetic_, false );
+    }
 }
 
 
@@ -835,6 +873,10 @@ void uiStratSynthDisp::syntheticRemoved( CallBacker* cb )
     synthsChanged.trigger();
     updateSyntheticList( true );
     updateSyntheticList( false );
+    setCurrentSynthetic( true );
+    setCurrentSynthetic( false );
+    displayPostStackSynthetic( currentwvasynthetic_, true );
+    displayPostStackSynthetic( currentvdsynthetic_, false );
 }
 
 
@@ -996,6 +1038,8 @@ bool uiStratSynthDisp::usePar( const IOPar& par )
 	int nrsynths;
 	stratsynthpar->get( sKeyNrSynthetics(), nrsynths );
 	stratsynth_.clearSynthetics();
+	currentvdsynthetic_ = 0;
+	currentwvasynthetic_ = 0;
 	wvadatalist_->setEmpty();
 	for ( int idx=0; idx<nrsynths; idx++ )
 	{

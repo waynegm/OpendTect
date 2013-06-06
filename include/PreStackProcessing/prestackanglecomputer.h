@@ -22,6 +22,7 @@ ________________________________________________________________________
 #include "refcount.h"
 
 template <class T> class Array2D;
+class FFTFilter;
 class MultiID;
 class RayTracer1D;
 class VelocityDesc;
@@ -67,8 +68,12 @@ protected:
 
     bool			fillandInterpArray(Array2D<float>& angledata);
     Gather*			computeAngleData();
-    void			averageSmoothing(Array2D<float>& angledata);
-    void			fftSmoothing(Array2D<float>& angledata);
+    void			averageSmooth(Array2D<float>& angledata);
+    void			fftSmooth(Array2D<float>& angledata);
+    void			fftTimeSmooth(::FFTFilter& fftfilter,
+					      Array2D<float>& angledata);
+    void			fftDepthSmooth(::FFTFilter& fftfilter,
+					       Array2D<float>& angledata);
     
     IOPar			iopar_;
     FlatPosData			outputsampling_;
@@ -140,10 +145,10 @@ public:
     };
 				ModelBasedAngleComputer();
 				
-    void			setElasticModel(const ElasticModel& em,
-						const TraceID& trcid,
+    void			setElasticModel(const TraceID& trcid,
 	    					bool doblock,
-						bool pvelonly=true );
+						bool pvelonly,
+	   					ElasticModel& em);
     void			setRayTracer(const RayTracer1D* rt,
 	    				     const TraceID&);
     const ElasticModel&		curElasticModel() const;

@@ -307,6 +307,8 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
     , analtb_(0)
     , lmp_(*new uiStratLayerModelLMProvider)
     , synthp_(*new uiStratSyntheticsProvider)
+    , needtoretrievefrpars_(false)
+    , automksynth_(true)
     , newModels(this)				   
     , levelChanged(this)				   
     , waveletChanged(this)
@@ -383,6 +385,7 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
     modtools_->dispEachChg.notify( mCB(this,uiStratLayerModel,dispEachChg) );
     modtools_->selLevelChg.notify( mCB(this,uiStratLayerModel,levelChg) );
     modtools_->flattenChg.notify( mCB(this,uiStratLayerModel,levelChg) );
+    modtools_->mkSynthChg.notify( mCB(this,uiStratLayerModel,mkSynthChg) );
     gentools_->openReq.notify( mCB(this,uiStratLayerModel,openGenDescCB) );
     gentools_->saveReq.notify( mCB(this,uiStratLayerModel,saveGenDescCB) );
     gentools_->propEdReq.notify( mCB(this,uiStratLayerModel,manPropsCB) );
@@ -502,6 +505,20 @@ bool uiStratLayerModel::canShowFlattened() const
 }
 
 
+void uiStratLayerModel::mkSynthChg( CallBacker* cb )
+{
+    automksynth_ = modtools_->mkSynthetics();
+    synthdisp_->setAutoUpdate( automksynth_ );
+    if ( automksynth_ )
+    {
+	useSyntheticsPars( desc_.getWorkBenchParams() );
+	synthdisp_->modelChanged();
+	mDynamicCastGet(uiMultiFlatViewControl*,mfvc,synthdisp_->control());
+	if ( mfvc ) mfvc->reInitZooms();
+    }
+}
+
+
 void uiStratLayerModel::levelChg( CallBacker* cb )
 {
     moddisp_->setFlattened( modtools_->showFlattened() );
@@ -524,7 +541,9 @@ void uiStratLayerModel::modSelChg( CallBacker* cb )
 
 void uiStratLayerModel::zoomChg( CallBacker* )
 {
-    uiWorldRect wr( mUdf(float), 0, 0, 0 );
+    if ( !automksynth_ )
+	return;
+    uiWorldRect wr( mUdf(double), 0, 0, 0 );
     synthdisp_->setDisplayZSkip( moddisp_->getDisplayZSkip(), false );
     if ( synthdisp_->getSynthetics().size() )
 	wr = synthdisp_->curView( true );
@@ -722,18 +741,22 @@ bool uiStratLayerModel::openGenDesc()
 
     delete elpropsel_; elpropsel_ = 0;
     
-    CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(),
-	    		    const_cast<uiStratLayerModel*>(this) );
-    const_cast<uiStratLayerModel*>(this)->retrieveRequired.trigger( &caps );
-
     BufferString edtyp;
     descctio_.ctxt.toselect.require_.get( sKey::Type(), edtyp );
     BufferString profilestr( "Profile" );
     if ( !profilestr.isStartOf(edtyp) )
     {
+	needtoretrievefrpars_ = true;
 	gentools_->genReq.trigger();
 	//Set when everything is in place.
     }
+    else
+    {
+	CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(),
+				const_cast<uiStratLayerModel*>(this) );
+	const_cast<uiStratLayerModel*>(this)->retrieveRequired.trigger( &caps );
+    }
+
 
     if ( !useDisplayPars( desc_.getWorkBenchParams() ))
 	return false;
@@ -768,8 +791,11 @@ void uiStratLayerModel::seqSel( CallBacker* )
 
 void uiStratLayerModel::modEd( CallBacker* )
 {
-    useSyntheticsPars( desc_.getWorkBenchParams() );
     synthdisp_->setDisplayZSkip( moddisp_->getDisplayZSkip(), true );
+    useSyntheticsPars( desc_.getWorkBenchParams() );
+    synthdisp_->modelChanged();
+    mDynamicCastGet(uiMultiFlatViewControl*,mfvc,synthdisp_->control());
+    if ( mfvc ) mfvc->reInitZooms();
 }
 
 
@@ -793,7 +819,17 @@ void uiStratLayerModel::genModels( CallBacker* )
     useSyntheticsPars( desc_.getWorkBenchParams() );
 
     synthdisp_->setDisplayZSkip( moddisp_->getDisplayZSkip(), true );
-    levelChg( 0 );
+
+    if ( needtoretrievefrpars_ )
+    {
+	CBCapsule<IOPar*> caps( &desc_.getWorkBenchParams(),
+				const_cast<uiStratLayerModel*>(this) );
+	const_cast<uiStratLayerModel*>(this)->retrieveRequired.trigger( &caps );
+	needtoretrievefrpars_ = false;
+    }
+    else
+	levelChg( 0 );
+
     newModels.trigger();
 
     mDynamicCastGet(uiMultiFlatViewControl*,mfvc,synthdisp_->control());
@@ -821,6 +857,9 @@ void uiStratLayerModel::setModelProps()
 
 void uiStratLayerModel::setElasticProps()
 {
+    if ( !automksynth_ )
+	return;
+
     if ( !elpropsel_ )
     {
 	elpropsel_ = new ElasticPropSelection;
@@ -878,6 +917,7 @@ void uiStratLayerModel::displayFRResult( bool usefr, bool parschanged, bool fwd 
 
 	synthp_.edstratsynth_ = new StratSynth( lmp_.modled_ );
 	synthp_.edstratsynth_->setWavelet( wavelet() );
+	synthp_.edstratsynth_->createElasticModels();
 	synthp_.edstratsynth_->addDefaultSynthetic();
     }
 
@@ -965,7 +1005,7 @@ void uiStratLayerModel::fillWorkBenchPars( IOPar& par ) const
 
 bool uiStratLayerModel::useSyntheticsPars( const IOPar& par ) 
 {
-    if ( !synthdisp_->prepareElasticModel() )
+    if ( !automksynth_ || !synthdisp_->prepareElasticModel() )
 	return false;
     return synthdisp_->usePar( par );
 }

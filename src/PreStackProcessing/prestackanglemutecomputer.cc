@@ -85,11 +85,15 @@ bool AngleMuteComputer::doWork( od_int64 start, od_int64 stop, int thread )
     for ( od_int64 pidx=start; pidx<=stop && shouldContinue(); pidx++ )
     {
 	curbid = hrg.atIndex( pidx );
-	TypeSet<ElasticLayer> layers; SamplingData<float> sd;
+	ElasticModel layers;
+	SamplingData<float> sd;
 	if ( !getLayers( curbid, layers, sd ) )
 	    continue;
 
 	rtrunner->addModel( layers, true );
+	if ( !rtrunner->prepareRayTracers() )
+	    continue;
+
 	if ( !rtrunner->execute( false ) )
 	    { errmsg_ = rtrunner->errMsg(); continue; }
 
@@ -130,9 +134,13 @@ bool AngleMuteComputer::doWork( od_int64 start, od_int64 stop, int thread )
 	    const float lastzpos = sd.start + sd.step*(nrlayers-1);
 	    const float lastsinangle = 
 		rtrunner->rayTracers()[0]->getSinAngle(nrlayers-1,lastioff);
+
 	    const float cosangle = Math::Sqrt(1-lastsinangle*lastsinangle);
-	    const float doff = thk*lastsinangle/cosangle;
-	    mutefunc->add( lastzpos, offsets[lastioff]+doff );
+	    if ( cosangle > 0 )
+	    {
+		const float doff = thk*lastsinangle/cosangle;
+		mutefunc->add( lastzpos, offsets[lastioff]+doff );
+	    }
 	}
 
 	mutefuncs += mutefunc;

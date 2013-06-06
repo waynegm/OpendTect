@@ -21,6 +21,8 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <iostream>
 
+#define mBytesToKBFactor 1024
+
 #define mDirCheck( dir ) \
     if ( !File::exists(dir) ) \
 { \
@@ -185,7 +187,7 @@ int Zipper::nextStep()
 	return ErrorOccurred();
 
     nrdone_++;
-    if ( nrdone_ < totalNr() )
+    if ( nrdone_ < ziphd_.getAllFileNames().size() )
 	return MoreToDo();
 
     return ziphd_.setEndOfArchiveHeaders() ? Finished() : ErrorOccurred();
@@ -193,11 +195,11 @@ int Zipper::nextStep()
 
 
 od_int64 Zipper::nrDone() const
-{ return nrdone_; }
+{ return ziphd_.getNrDoneSize()/mBytesToKBFactor; }
 
 
 od_int64 Zipper::totalNr() const
-{ return ziphd_.getAllFileNames().size(); }
+{ return ziphd_.getTotalSize()/mBytesToKBFactor; }
 
 
 const char* Zipper::nrDoneText() const
@@ -229,6 +231,35 @@ bool ZipUtils::unZipArchive( const char* srcfnm,const char* basepath,
 }
 
 
+bool ZipUtils::unZipArchives( const BufferStringSet& archvs,const char* basepath,
+			     BufferString& errmsg, TaskRunner* tr )
+{
+    ExecutorGroup execgrp( "Archive unpacker" );
+    for ( int idx=0; idx<archvs.size(); idx++ )
+    {
+	ZipHandler* ziphdler = new ZipHandler;
+	const BufferString& archvnm = archvs.get( idx );
+	if ( !ziphdler->initUnZipArchive(archvnm,basepath) )
+	{
+	    errmsg = ziphdler->errorMsg();
+	    return false;
+	}
+
+	UnZipper* exec = new UnZipper( *ziphdler );
+	execgrp.add( exec );
+    }
+
+
+    if ( !(TaskRunner::execute(tr,execgrp)) )
+    {
+	errmsg = execgrp.message();
+	return false;
+    }
+
+    return true;
+}
+
+
 bool ZipUtils::unZipFile( const char* srcfnm, const char* fnm, const char* path,
 			  BufferString& errmsg )
 {
@@ -246,16 +277,16 @@ int UnZipper::nextStep()
 	return ErrorOccurred();
 
     nrdone_++;
-    return nrDone() < totalNr() ? MoreToDo() : Finished();
+    return nrdone_ < ziphd_.getCumulativeFileCount() ? MoreToDo() : Finished();
 }
 
 
 od_int64 UnZipper::nrDone() const
-{ return nrdone_; }
+{ return ziphd_.getNrDoneSize()/mBytesToKBFactor; }
 
 
 od_int64 UnZipper::totalNr() const
-{ return ziphd_.getCumulativeFileCount(); }
+{ return ziphd_.getTotalSize()/mBytesToKBFactor; }
 
 
 const char* UnZipper::nrDoneText() const

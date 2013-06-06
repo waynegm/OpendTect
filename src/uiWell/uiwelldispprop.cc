@@ -135,7 +135,7 @@ void uiWellTrackDispProperties::doPutToScreen()
     int style = trackprops().font_.weight()>FontData::Normal ? 1 : 0;
     if ( trackprops().font_.isItalic() )
 	style += 2;
-    szfld_->setValue( props().size_ > 0 ? props().size_ : 1 );
+
     nmstylefld_->setValue( style );
 }
 
@@ -261,10 +261,20 @@ void uiWellMarkersDispProperties::setSelNames()
 }
 
 
+void uiWellMarkersDispProperties::setAllMarkerNames(
+					const BufferStringSet& allmarkernms )
+{
+    displaymarkersfld_->setEmpty();
+    displaymarkersfld_->addItems( allmarkernms );
+    setSelNames();
+}
+
+
 void uiWellMarkersDispProperties::resetProps(
 				Well::DisplayProperties::Markers& pp )
 {
     props_ = &pp;
+    setSelNames();
 }
 
 
@@ -425,7 +435,7 @@ uiWellLogDispProperties::uiWellLogDispProperties( uiParent* p,
     seiscolorfld_->attach( alignedBelow, lblr_ );
     seiscolorfld_->display(false);
 
-    lblo_ = new uiLabeledSpinBox( this, "Overlap(%)" );
+    lblo_ = new uiLabeledSpinBox( this, "Overlap" );
     ovlapfld_ = lblo_->box();
     ovlapfld_->setInterval( 0, 100, 20 );
     lblo_->attach( rightOf, lblr_ );

@@ -45,7 +45,22 @@ TimeDepthModel::~TimeDepthModel()
 
 
 bool TimeDepthModel::isOK() const
-{ return times_ && depths_ && sz_ >= 0; }
+{ return times_ && depths_ && sz_ > 0; }
+
+
+#ifdef __debug__
+# define mChkIdx \
+    if ( idx >= sz_ ) \
+    { \
+	BufferString msg("sz_=",sz_, " asked "); msg.add( idx ); \
+	pErrMsg(msg); \
+	idx = sz_ - 1; \
+    }
+#else
+# define mChkIdx \
+    if ( idx >= sz_ ) \
+	idx = sz_ - 1;
+#endif
 
 
 float TimeDepthModel::getDepth( float time ) const
@@ -53,7 +68,7 @@ float TimeDepthModel::getDepth( float time ) const
 
 
 float TimeDepthModel::getDepth( int idx ) const
-{ return isOK() ? depths_[idx] : mUdf(float); }
+{ mChkIdx; return isOK() ? depths_[idx] : mUdf(float); }
 
 
 float TimeDepthModel::getTime( float dpt ) const
@@ -61,7 +76,11 @@ float TimeDepthModel::getTime( float dpt ) const
 
 
 float TimeDepthModel::getTime( int idx ) const
-{ return isOK() ? times_[idx] : mUdf(float); }
+{ mChkIdx; return isOK() ? times_[idx] : mUdf(float); }
+
+
+float TimeDepthModel::getFirstTime() const
+{ return isOK() ? times_[0] : mUdf(float); }
 
 
 float TimeDepthModel::getLastTime() const
@@ -1380,241 +1399,6 @@ void sampleIntvThomsenPars( const float* inarr, const float* t_in, int nr_in,
     }
 }
 
-
-void BendPointVelBlock( TypeSet<float>& dpts, TypeSet<float>& vels, 
-			float threshold, TypeSet<int>* remidxs )
-{
-    if ( dpts.size() != vels.size() ) 
-	return;
-
-    TypeSet<Coord> velsc; 
-    for ( int idvel=0; idvel<vels.size(); idvel++ )
-	velsc += Coord( dpts[idvel], vels[idvel] );
-
-    BendPointFinder2D finder( velsc, threshold );
-    if ( !finder.execute() ||  finder.bendPoints().isEmpty() )
-	return;
-
-    const TypeSet<int>& bpidvels = finder.bendPoints();
-    int bpidvel = 0; TypeSet<int> torem;
-    for ( int idvel=0; idvel<velsc.size(); idvel++ )
-    {
-	if ( idvel !=  bpidvels[bpidvel] )
-	    torem += idvel;
-	else
-	    bpidvel ++;
-    }
-
-    for ( int idvel=torem.size()-1; idvel>=0; idvel-- )
-    {
-	vels.removeSingle( torem[idvel] );
-	dpts.removeSingle( torem[idvel] );
-    }
-    if ( remidxs )
-	*remidxs = torem;
-}
-
-#define mAddBlock( block ) \
-    if ( blocks.size() && block.start<blocks[0].start ) \
-	blocks.insert( 0, block ); \
-    else \
-	blocks += block
-
-
-void BlockElasticModel( const ElasticModel& inmdl, ElasticModel& outmdl,
-		        float relthreshold, bool pvelonly )
-{
-    const int modelsize = inmdl.size();
-
-    if ( modelsize == 0 )
-	return;
-
-#define mVal(comp,idx) values[comp*modelsize+idx]
-
-    TypeSet<float> values( modelsize, mUdf(float) );
-    for ( int idx=0; idx<modelsize; idx++ )
-    {
-	const float pvel = inmdl[idx].vel_;
-	values[idx] = pvel;
-	if ( mIsUdf(pvel) || mIsZero(pvel,1e-3) )
-	    return;
-    }
-
-    int nrcomp = 1;
-    if ( !pvelonly )
-    {
-	for ( int idx=0; idx<modelsize; idx++ )
-	{
-	    const float den = inmdl[idx].den_;
-	    values += den;
-	    if ( mIsUdf(den) || mIsZero(den,1e-3) )
-		return;
-	}
-
-	nrcomp++;
-
-	bool dosvel = true;
-	TypeSet<float> svals( modelsize, mUdf(float) );
-	for ( int idx=0; idx<modelsize; idx++ )
-	{
-	    const float svel = inmdl[idx].svel_;
-	    svals[idx] = svel;
-	    if ( mIsUdf(svel) || mIsZero(svel,1e-3) )
-	    {
-		dosvel = false;
-		break;
-	    }
-	}
-	if ( dosvel )
-	{
-	    values.append( svals );
-	    nrcomp++;
-	}
-    }
-
-#define mValRatio(comp,idx) valuesratio[comp*modelsize+idx]
-
-    TypeSet<float> valuesratio = values;
-    for ( int icomp=0; icomp<nrcomp; icomp++ )
-    {
-	mValRatio( icomp, 0 ) = 0;
-	const float* compvals = &values[icomp*modelsize];
-	float prevval = *compvals;
-	for ( int idx=1; idx<modelsize; idx++ )
-	{
-	    const float curval = compvals[idx];
-	    mValRatio( icomp, idx) = curval < prevval
-				   ? prevval / curval - 1.f
-				   : curval / prevval - 1.f;
-	    prevval = curval;
-	}
-    }
-
-    TypeSet<Interval<int> > investigationqueue;
-    investigationqueue += Interval<int>( 0, modelsize-1 );
-    TypeSet<Interval<int> > blocks;
-    
-    while ( investigationqueue.size() )
-    {
-	Interval<int> curblock = investigationqueue.pop();
-	
-	while ( true )
-	{
-	    const int width = curblock.width();
-	    if ( width==0 )
-	    {
-		mAddBlock( curblock );
-		break;
-	    }
-	    
-	    TypeSet<int> bendpoints;
-	    const int last = curblock.start + width;
-	    TypeSet<float> firstval( nrcomp, mUdf(float) );
-	    TypeSet< Interval<float> > valranges;
-	    float maxvalratio = 0;
-	    for ( int icomp=0; icomp<nrcomp; icomp++ )
-	    {
-		firstval[icomp] = mVal( icomp, curblock.start );
-		Interval<float> valrange(  firstval[icomp],  firstval[icomp] );
-		valranges += valrange;
-	    }
-
-	    for ( int idx=curblock.start+1; idx<=last; idx++ )
-	    {
-		for ( int icomp=0; icomp<nrcomp; icomp++ )
-		{
-		    const float curval = mVal( icomp, idx );
-		    valranges[icomp].include( curval );
-
-		    const float valratio = mValRatio( icomp, idx );
-		    if ( valratio >= maxvalratio )
-		    {
-			if ( !mIsEqual( valratio, maxvalratio, 1e-5 ) )
-			    bendpoints.erase();
-
-			bendpoints += idx;
-			maxvalratio = valratio;
-		    }
-		}
-	    }
-
-	    if ( maxvalratio<=relthreshold )
-	    {
-		mAddBlock( curblock );
-		break;
-	    }
-	    
-	    int bendpoint = curblock.center();
-	    if ( bendpoints.isEmpty() )
-	    {
-		pFreeFnErrMsg("Should never happen", "BlockElasticModel");
-	    }
-	    else if ( bendpoints.size()==1 )
-	    {
-		bendpoint = bendpoints[0];
-	    }
-	    else
-	    {
-		const int middle = bendpoints.size()/2;
-		bendpoint = bendpoints[middle];
-	    }
-	    
-	    investigationqueue += Interval<int>( curblock.start, bendpoint-1);
-	    curblock = Interval<int>( bendpoint, curblock.stop );
-	}
-    }
-    
-    ElasticModel output;
-    for ( int idx=0; idx<blocks.size(); idx++ )
-    {
-	const Interval<int> curblock = blocks[idx];
-
-	double thicknesssum = 0;
-	double wvelsum = 0;
-	double wsvelsum = 0;
-	double wdenssum = 0;
-	for ( int idy=curblock.start; idy<=curblock.stop; idy++ )
-	{
-	    const double thickness = inmdl[idy].thickness_;
-	    thicknesssum += thickness;
-	    wvelsum += inmdl[idy].vel_*thickness;
-	    wsvelsum += inmdl[idy].svel_*thickness,
-	    wdenssum += inmdl[idy].den_*thickness;
-	}
-	
-	output += ElasticLayer( (float) thicknesssum,
-			       mCast(float,wvelsum/thicknesssum),
-			       mCast(float,wsvelsum/thicknesssum),
-			       mCast(float,wdenssum/thicknesssum));
-    }
-    
-    outmdl = output;
-}
-
-
-void SetMaxThicknessElasticModel( const ElasticModel& inmdl,
-       				ElasticModel& outmdl, float maxthickness )
-{
-    ElasticModel output;
-    const int initialsz = inmdl.size();
-    int nbinsert = mUdf(int);
-
-    for ( int lidx=0; lidx<initialsz; lidx++ )
-    {
-	const float thickness = inmdl[lidx].thickness_;
-	ElasticLayer newlayer = inmdl[lidx];
-	nbinsert = 1;
-	if ( thickness > maxthickness )
-	{
-	    nbinsert = mCast( int, thickness/maxthickness );
-	    newlayer.thickness_ /= (float)nbinsert;
-	}
-	for ( int nlidx=0; nlidx<nbinsert; nlidx++ )
-	    output += newlayer;
-    }
-
-    outmdl = output;
-}
 
 #define mSmallNumber 1e-7
 

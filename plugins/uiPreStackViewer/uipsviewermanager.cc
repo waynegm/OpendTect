@@ -141,13 +141,6 @@ void uiViewer3DMgr::createMenuCB( CallBacker* cb )
     viewermenuitem_.removeItems();
 
     const int idxof = psv ? viewers3d_.indexOf(psv) : -1;
-    if ( idxof >=0 )
-    {
-	BufferStringSet vwrtypes;
-	vwrtypes.add( "Single &gather" );
-	vwrtypes.add( "Multiple &gathers" );
-	viewermenuitem_.createItems( vwrtypes );
-    }
     if ( idxof < 0  )
     {
 	mResetMenuItem( &proptymenuitem_ );
@@ -245,7 +238,7 @@ void uiViewer3DMgr::handleMenuCB( CallBacker* cb )
    	    psv->flatViewer()->setResolution( 
 		    resolutionmenuitem_.itemIndex(mnuid) );
     }
-    else if ( viewermenuitem_.itemIndex(mnuid)==1 )
+    else if ( mnuid == viewermenuitem_.id )
     {
 	menu->setIsHandled( true );
 	multiviewers2d_ += createMultiGather2DViewer( *psv );
@@ -277,7 +270,7 @@ int uiViewer3DMgr::getSceneID( int mnid )
     {
 	TypeSet<int> scenechildren;
 	visserv_->getChildIds( sceneids[idx], scenechildren );
-	if ( scenechildren.indexOf(mnid)>=0 )
+	if ( scenechildren.isPresent(mnid) )
 	{
 	    sceneid = sceneids[idx];
 	    break;

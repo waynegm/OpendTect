@@ -10,7 +10,7 @@ set(OSG_DIR "" CACHE PATH "OSG Location" )
 
 macro(OD_SETUP_OSG)
     if ( (NOT DEFINED OSGGEO_DIR) OR (OSGGEO_DIR STREQUAL "") )
-	set(OSGGEO_DIR ${OSG_DIR})
+        set(OSGGEO_DIR ${OSG_DIR})
     endif()
 
     list(APPEND CMAKE_MODULE_PATH ${OSGGEO_DIR}/share/CMakeModules )

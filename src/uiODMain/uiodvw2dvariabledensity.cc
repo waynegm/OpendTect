@@ -33,7 +33,6 @@ ________________________________________________________________________
 #include "filepath.h"
 #include "flatposdata.h"
 #include "ioobj.h"
-#include "iopar.h"
 #include "keystrs.h"
 #include "linekey.h"
 #include "pixmap.h"
@@ -280,8 +279,10 @@ bool uiODVW2DVariableDensityTreeItem::handleSelMenu( int mnuid )
 	    }
 	    else
 	    {
-		const Interval<float> zrg( (float) dprdm->posData().range(false).start, 
-					   (float) dprdm->posData().range(false).stop );
+		const Interval<float> zrg(
+			mCast(float,dprdm->posData().range(false).start),
+			mCast(float,dprdm->posData().range(false).stop) );
+
 		TypeSet<BinID> bids;
 		if ( dprdm->pathBIDs() )
 		    bids = *dprdm->pathBIDs();
@@ -344,21 +345,29 @@ bool uiODVW2DVariableDensityTreeItem::handleSelMenu( int mnuid )
 
     viewer2D()->setSelSpec( &selas, false );
 
-    ColTab::MapperSetup mapper;
-    ColTab::Sequence seq( 0 );
-
     PtrMan<IOObj> ioobj = attrserv->getIOObj( selas );
     if ( ioobj )
     {
 	FilePath fp( ioobj->fullUserExpr(true) );
 	fp.setExtension( "par" );
 	IOPar iop;
-	if ( iop.read( fp.fullPath(), sKey::Pars()) && !iop.isEmpty() )
+	if ( iop.read(fp.fullPath(),sKey::Pars()) && !iop.isEmpty() )
 	{
+	    ColTab::Sequence seq( 0 );
 	    const char* ctname = iop.find( sKey::Name() );
-	    vwr.appearance().ddpars_.vd_.ctab_ = ctname;
 	    seq = ColTab::Sequence( ctname );
 	    displayMiniCtab( &seq );
+
+	    ColTab::MapperSetup mapper;
+	    mapper.usePar( iop );
+
+	    for ( int ivwr=0; ivwr<viewer2D()->viewwin()->nrViewers(); ivwr++ )
+	    {
+		FlatView::DataDispPars& ddp = 
+		    viewer2D()->viewwin()->viewer(ivwr).appearance().ddpars_;
+		ddp.vd_.ctab_ = ctname;
+		ddp.vd_.mappersetup_ = mapper;
+	    }
 	}
     }
 

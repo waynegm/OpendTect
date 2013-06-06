@@ -69,12 +69,13 @@ uiStratGenDescTools::uiStratGenDescTools( uiParent* p )
 
     uiGroup* rightgrp = new uiGroup( this, "Right group" );
     const CallBack gocb( mCB(this,uiStratGenDescTools,genCB) );
-    nrmodlsfld_ = new uiGenInput( rightgrp, "",
-			  IntInpSpec(25).setLimits(Interval<int>(1,10000)) );
-    nrmodlsfld_->setElemSzPol( uiObject::Small );
+    nrmodlsfld_ = new uiSpinBox( rightgrp );
+    nrmodlsfld_->setInterval( Interval<int>(1,10000) );
+    nrmodlsfld_->setValue( 25 );
+    nrmodlsfld_->setFocusChangeTrigger( false );
     nrmodlsfld_->setStretch( 0, 0 );
-    nrmodlsfld_->setToolTip( "Number of models to generate", 0 );
-    nrmodlsfld_->updateRequested.notify( gocb );
+    nrmodlsfld_->setToolTip( "Number of models to generate" );
+    nrmodlsfld_->valueChanged.notify( gocb );
     uiToolButton* gotb = new uiToolButton( rightgrp, "go",
 	    			"Generate this amount of models", gocb );
     nrmodlsfld_->attach( leftOf, gotb );
@@ -85,7 +86,7 @@ uiStratGenDescTools::uiStratGenDescTools( uiParent* p )
 
 int uiStratGenDescTools::nrModels() const
 {
-    return nrmodlsfld_->getIntValue();
+    return nrmodlsfld_->getValue();
 }
 
 
@@ -120,6 +121,7 @@ uiStratLayModEditTools::uiStratLayModEditTools( uiParent* p )
     , dispZoomedChg(this)
     , dispLithChg(this)
     , flattenChg(this)
+    , mkSynthChg(this)
     , allownoprop_(false)
 {
     uiGroup* leftgrp = new uiGroup( this, "Left group" );
@@ -150,11 +152,17 @@ uiStratLayModEditTools::uiStratLayModEditTools( uiParent* p )
 				mCB(this,uiStratLayModEditTools,dispEachCB) );
 
     uiGroup* rightgrp = new uiGroup( this, "Right group" );
+    mksynthtb_ = new uiToolButton( rightgrp, "autogensynth",
+			"Automatically create synthetics when on",
+			mCB(this,uiStratLayModEditTools,showFlatCB) );
+    mksynthtb_->setToggleButton( true );
+    mksynthtb_->setOn( true );
     flattenedtb_ = new uiToolButton( rightgrp, "flattenseis",
 			"Show flattened when on",
 			mCB(this,uiStratLayModEditTools,showFlatCB) );
     flattenedtb_->setToggleButton( true );
     flattenedtb_->setOn( false );
+    flattenedtb_->attach( leftOf, mksynthtb_ );
     lithtb_ = new uiToolButton( rightgrp, "lithologies",
 			"Show lithology colors when on",
 			mCB(this,uiStratLayModEditTools,dispLithCB) );
@@ -290,6 +298,12 @@ bool uiStratLayModEditTools::showFlattened() const
 }
 
 
+bool uiStratLayModEditTools::mkSynthetics() const
+{
+    return mksynthtb_->isOn();
+}
+
+
 void uiStratLayModEditTools::setSelProp( const char* sel )
 {
     propfld_->setText( sel );
@@ -373,8 +387,6 @@ void uiStratLayModEditTools::fillPar( IOPar& par ) const
 	cb( 0 ); \
     } \
 }
-
-
 
 
 bool uiStratLayModEditTools::usePar( const IOPar& par )

@@ -20,6 +20,9 @@ ________________________________________________________________________
 #include "uiodviewer2dmgr.h"
 #include "uitaskrunner.h"
 #include "uitreeview.h"
+#include "filepath.h"
+#include "ioobj.h"
+#include "keystrs.h"
 
 #include "attribdatacubes.h"
 #include "attribdatapack.h"
@@ -231,8 +234,10 @@ bool uiODVW2DWiggleVarAreaTreeItem::handleSelMenu( int mnuid )
 		    			    DataPack::cNoID() );
 	    else
 	    {
-		const Interval<float> zrg( (float) dprdm->posData().range(false).start,
-					   (float) dprdm->posData().range(false).stop );
+		const Interval<float> zrg(
+			mCast(float,dprdm->posData().range(false).start),
+			mCast(float,dprdm->posData().range(false).stop) );
+
 		TypeSet<BinID> bids;
 		if ( dprdm->pathBIDs() )
 		    bids = *dprdm->pathBIDs();
@@ -294,6 +299,27 @@ bool uiODVW2DWiggleVarAreaTreeItem::handleSelMenu( int mnuid )
     if ( newid == DataPack::cNoID() ) return true;
 
     viewer2D()->setSelSpec( &selas, true );
+
+    PtrMan<IOObj> ioobj = attrserv->getIOObj( selas );
+    if ( ioobj )
+    {
+	FilePath fp( ioobj->fullUserExpr(true) );
+	fp.setExtension( "par" );
+	IOPar iop;
+	if ( iop.read(fp.fullPath(),sKey::Pars()) && !iop.isEmpty() )
+	{
+	    ColTab::MapperSetup mapper;
+	    mapper.usePar( iop );
+
+	    for ( int ivwr=0; ivwr<viewer2D()->viewwin()->nrViewers(); ivwr++ )
+	    {
+		FlatView::DataDispPars& ddp =
+		    viewer2D()->viewwin()->viewer(ivwr).appearance().ddpars_;
+    		ddp.wva_.mappersetup_ = mapper;
+	    }
+	}
+    }
+
     viewer2D()->setUpView( newid, true );
 
     return false;

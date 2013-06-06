@@ -159,7 +159,7 @@ void uiObjFileMan::selChg( CallBacker* cb )
     saveNotes(0);
     delete curioobj_;
     curioobj_ = selgrp_->nrSel() > 0 ? IOM().get(selgrp_->selected(0)) : 0;
-    
+
     ownSelChg();
     if ( curioobj_ )
 	mkFileInfo();

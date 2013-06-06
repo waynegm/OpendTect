@@ -15,6 +15,7 @@ static const char* rcsID mUnusedVar = "$Id$";
 # endif
 
 #include <QtGui/QApplication>
+#include <QtGui/QFileDialog>
 
 #include <osgViewer/Viewer>
 #include <osgGA/TrackballManipulator>
@@ -31,28 +32,30 @@ static const char* rcsID mUnusedVar = "$Id$";
 int main( int argc, char** argv )
 {
     SetProgramArgs( argc, argv );
-    if ( argc!=2 )
-    {
-	std::cout << "Syntax: " << argv[0] << " <filename>\n";
-	return 1;
-    }
-    
-    BufferString file = argv[1];
 
-    if ( !File::exists(file) )
-    {
-	std::cout << "File " << file.buf() << " could not be found.\n";
-	return 1;
-    }
-    
+    BufferString file;
+    if ( argc>1 )
+	file = argv[1];
+
     QApplication app(argc, argv);    
     osgQt::initQtWindowingSystem();
+
+    while ( !File::exists(file) )
+    {
+	QString newfile = QFileDialog::getOpenFileName( );
+	file = newfile.toAscii().constData();
+
+	if ( file.isEmpty() )
+	{
+	    std::cout << "Please select a osg file.\n" ;
+	    return 1;
+	}
+    }
 
     osg::Node* root = osgDB::readNodeFile( file.buf() );
 
     if ( !root )
     {
-	std::cout << "File " << file.buf() << " could not be read.\n";
 	return 1;
     }
     

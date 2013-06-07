@@ -21,14 +21,15 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistext.h"
 #include "vistexturechannels.h"
 #include "vistexturechannel2rgba.h"
+#include "vistexturepanelstrip.h"
 #include "vistransform.h"
-#include "vissplittextureseis2d.h"
 
 #include "array2dresample.h"
 #include "arrayndimpl.h"
 #include "arrayndslice.h"
 #include "attribdataholder.h"
 #include "attribdatapack.h"
+#include "bendpointfinder.h"
 #include "coltabmapper.h"
 #include "genericnumer.h"
 #include "ioman.h"
@@ -66,7 +67,8 @@ Seis2DDisplay::Seis2DDisplay()
     : MultiTextureSurveyObject( true )
     , transformation_(0)
     , geometry_(*new PosInfo::Line2DData)
-    , triangles_( visBase::SplitTextureSeis2D::create() )	 
+    , panelstrip_( visBase::TexturePanelStrip::create() )	 
+    , linename_( visBase::Text2::create() )
     , geomchanged_(this)
     , maxtrcnrrg_(INT_MAX,INT_MIN,1)
     , datatransform_(0)
@@ -76,15 +78,15 @@ Seis2DDisplay::Seis2DDisplay()
     geometry_.setZRange( StepInterval<float>(mUdf(float),mUdf(float),1) );
     cache_.allowNull();
 
-    linename_ = visBase::Text2::create();
+    panelstrip_->ref();
+    addChild( panelstrip_->osgNode() );
+    panelstrip_->setTextureChannels( channels_ );
+    panelstrip_->swapTextureAxes();
+    panelstrip_->smoothNormals();
+
     linename_->ref();
+    addChild( linename_->osgNode() );
     linename_->addText();
-    
-    insertChild( childIndex(channels_->osgNode()),
-	linename_->osgNode() );
-    
-    triangles_->ref();
-    addChild( triangles_->osgNode() );
     
     getMaterial()->setColor( Color::White() );
     getMaterial()->setAmbience( 0.8 );
@@ -94,11 +96,8 @@ Seis2DDisplay::Seis2DDisplay()
 
 Seis2DDisplay::~Seis2DDisplay()
 {
-    if ( linename_ )
-    {
-	removeChild( linename_->osgNode() );
-	linename_->unRef();
-    }
+    removeChild( linename_->osgNode() );
+    linename_->unRef();
 
     delete &geometry_;
 
@@ -109,7 +108,7 @@ Seis2DDisplay::~Seis2DDisplay()
     for ( int idx=0; idx<datapackids_.size(); idx++ )
 	dpman.release( datapackids_[idx] );
     
-    triangles_->unRef();
+    panelstrip_->unRef();
     setZAxisTransform( 0,0 );
 }
 
@@ -123,12 +122,13 @@ void Seis2DDisplay::setLineInfo( const MultiID& lid, const char* lnm )
 
     geomid_ = S2DPOS().getGeomID( seis2dobj->name(), lnm );
     setName( lnm );
-    if ( linename_ )
+
+    if ( scene_ )
     {
-	if ( scene_ )
-	    setAnnotColor( scene_->getAnnotColor() );
-	linename_->text()->setText( lnm );
+	setAnnotColor( scene_->getAnnotColor() );
+	linename_->text()->setFontData( scene_->getAnnotFont() );
     }
+    linename_->text()->setText( lnm );
 }
 
 
@@ -152,14 +152,18 @@ void Seis2DDisplay::setGeometry( const PosInfo::Line2DData& geometry )
     const TypeSet<PosInfo::Line2DPos>& linepositions = geometry.positions();
     const int tracestep = geometry.trcNrRange().step;
     maxtrcnrrg_.set( INT_MAX, INT_MIN, tracestep );
-    triangles_->setPath( linepositions );
 
     const int possz = linepositions.size();
     trcdisplayinfo_.alltrcnrs.erase();	
+    trcdisplayinfo_.alltrcpos.erase();	
+    trcdisplayinfo_.alltrcnrs.setCapacity( possz );
+    trcdisplayinfo_.alltrcpos.setCapacity( possz );
+
     for ( int idx=0; idx<possz; idx++ )
     {
 	maxtrcnrrg_.include( linepositions[idx].nr_, false );
 	trcdisplayinfo_.alltrcnrs += linepositions[idx].nr_;
+	trcdisplayinfo_.alltrcpos += linepositions[idx].coord_;
     }
 
     trcdisplayinfo_.zrg.step = datatransform_ ? datatransform_->getGoodZStep()
@@ -201,13 +205,13 @@ void Seis2DDisplay::setZRange( const StepInterval<float>& nzrg )
 	trcdisplayinfo_.zrg.stop = trcdisplayinfo_.zrg.start +
 	    (mMaxImageSize-1) * trcdisplayinfo_.zrg.step;
     
-    updateVizPath();
+    updatePanelStripZRange();
     geomchanged_.trigger();
 }
 
 
-StepInterval<float>
-	Seis2DDisplay::getZRange( bool displayspace, int attrib ) const
+StepInterval<float> Seis2DDisplay::getZRange( bool displayspace,
+					      int attrib ) const
 {
     const bool alreadytransformed = alreadyTransformed( attrib );
     if ( alreadytransformed )
@@ -242,10 +246,7 @@ void Seis2DDisplay::setTraceNrRange( const Interval<int>& trcrg )
     trcdisplayinfo_.rg.stop = -1;
 
     if ( maxtrcnrrg_.isRev() )
-    {
-	pErrMsg("Geometry not set");
-	return;
-    }
+	mRetErrGeo;
 
     const Interval<int> rg( maxtrcnrrg_.limitValue(trcrg.start),
 			    maxtrcnrrg_.limitValue(trcrg.stop) );
@@ -276,7 +277,7 @@ void Seis2DDisplay::setTraceNrRange( const Interval<int>& trcrg )
 	mRetErrGeo;
 
     trcdisplayinfo_.size = trcdisplayinfo_.rg.width(false) + 1;
-    updateVizPath();
+    updatePanelStripPath();
 }
 
 
@@ -391,7 +392,7 @@ void Seis2DDisplay::setData( int attrib,
 		{
 		    const int trcnr =
 			trcdisplayinfo_.alltrcnrs[crlidx+startidx];
-		    const int trcidx =  data2dh.indexOf( trcnr );
+		    const int trcidx = data2dh.indexOf( trcnr );
 		    const float* trcptr = slice2d.getData();
 		    const ValueSeries<float>* stor = slice2d.getStorage();
 		    od_int64 offset = slice2d.info().getOffset( trcidx, 0 );
@@ -483,19 +484,11 @@ void Seis2DDisplay::setData( int attrib,
 
 	if ( !seriesidx )
 	{
-	    sz0 = usedarr->info().getSize(0) * (resolution_+1);
-	    sz1 = usedarr->info().getSize(1) * (resolution_+1);
-
-	    //If the size is too big to display, use low resolution only
-	    if ( sz0 > mMaxImageSize && resolution_ > 0 )
-		sz0 = usedarr->info().getSize(0);
-	    
-	    if ( sz1 > mMaxImageSize && resolution_ > 0 )
-		sz1 = usedarr->info().getSize(1);
+	    sz0 = usedarr->info().getSize(0);
+	    sz1 = usedarr->info().getSize(1);
 	}
 
-	ValueSeries<float>* stor =
-	    !resolution_ && !tmparr ? usedarr->getStorage() : 0;
+	ValueSeries<float>* stor = tmparr ? 0 : usedarr->getStorage();
 	bool ownsstor = false;
 
 	//We are only interested in the global, permanent storage
@@ -516,62 +509,114 @@ void Seis2DDisplay::setData( int attrib,
 	    if ( ownsstor ) delete stor;
 	    return;
 	}
-	
-	if ( ownsstor )
-	{
-	    if ( resolution_==0 )
-		usedarr->getAll( *stor );
-	    else
-	    {
-		// Copy all the data from usedarr to an Array2DImpl and pass 
-		// this object to Array2DReSampler. This copy is done because 
-		// Array2DReSampler will access the input using the "get" 
-		// method. The get method of Array2DImpl is much faster than 
-		// that of Seis2DArray.
-		Array2DImpl<float> sourcearr2d( usedarr->info() );
-		if ( !sourcearr2d.isOK() )
-		{
-		    channels_->turnOn( false );
-		    pErrMsg(
-			"Insufficient memory; cannot display the 2D seismics.");
-		    return;
-		}
-	    
-		sourcearr2d.copyFrom( *usedarr );
 
-		Array2DReSampler<float,float> 
-			resampler( sourcearr2d, *stor, sz0, sz1, true );
-		resampler.setInterpolate( true );
-		TaskRunner::execute( tr, resampler );
-	    }
-	}
+	if ( ownsstor )
+	    usedarr->getAll( *stor );
 
 	channels_->setSize( 1, sz0, sz1 );
 	channels_->setUnMappedVSData(attrib, seriesidx, stor, 
 			ownsstor ? OD::TakeOverPtr : OD::UsePtr, tr);
     }
 
-    triangles_->setTextureZPixelsAndPathScale( sz1, resolution_+1 );
     channels_->turnOn( true );
 }
 
 
-void Seis2DDisplay::updateVizPath()
+void Seis2DDisplay::updatePanelStripPath()
 {
-    triangles_->setDisplayedGeometry( trcdisplayinfo_.rg, trcdisplayinfo_.zrg );
-    if ( trcdisplayinfo_.size )
-    	updateLineNamePos();
+    BendPointFinder2D finder(
+		    trcdisplayinfo_.alltrcpos.arr() + trcdisplayinfo_.rg.start,
+		    trcdisplayinfo_.size, 1.0 );
+    finder.execute();
+    const TypeSet<int>& bendpoints = finder.bendPoints();
+
+    TypeSet<int> knots;
+    knots += trcdisplayinfo_.rg.start + bendpoints[0];
+
+    for ( int idx=1; idx<bendpoints.size(); idx++ )
+    {
+	const int start = trcdisplayinfo_.rg.start + bendpoints[idx-1];
+	const int stop = trcdisplayinfo_.rg.start + bendpoints[idx];
+	for ( int posidx=start+1; posidx<stop; posidx++ )
+	{
+	    const Coord pos = trcdisplayinfo_.alltrcpos[posidx];
+	    const float d0 = pos.distTo( trcdisplayinfo_.alltrcpos[posidx-1] );
+	    const float d1 = pos.distTo( trcdisplayinfo_.alltrcpos[posidx+1] );
+	    if ( (d0+d1)>0.0 && fabs(d0-d1)/(d0+d1)>0.1 )
+		knots += posidx;
+	}
+	knots += trcdisplayinfo_.rg.start + bendpoints[idx];
+    }
+
+    TypeSet<Coord> path;
+    TypeSet<float> mapping;
+    path.setCapacity( knots.size() );
+    mapping.setCapacity( knots.size() );
+
+    for ( int idx=0; idx<knots.size(); idx++ )
+    {
+	path += trcdisplayinfo_.alltrcpos[knots[idx]];
+	mapping += knots[idx] - trcdisplayinfo_.rg.start;
+    }
+
+    panelstrip_->setPath( path );
+    panelstrip_->setPath2TextureMapping( mapping );
+
+    if ( getUpdateStageNr() )
+    {
+	panelstrip_->setPathTextureShift(
+		    updatestageinfo_.oldtrcrgstart_-trcdisplayinfo_.rg.start );
+    }
+
+    updateLineNamePos();
+}
+
+
+void Seis2DDisplay::updatePanelStripZRange()
+{
+    panelstrip_->setZRange( trcdisplayinfo_.zrg );
+    const Interval<float> mapping( 0, trcdisplayinfo_.zrg.nrSteps() );
+    panelstrip_->setZRange2TextureMapping( mapping );
+
+    if ( getUpdateStageNr() )
+    {
+	const float diff =
+		    updatestageinfo_.oldzrgstart_ - trcdisplayinfo_.zrg.start;
+
+	panelstrip_->setZTextureShift( diff/trcdisplayinfo_.zrg.step );
+    }
+
+    updateLineNamePos();
+}
+
+
+void Seis2DDisplay::annotateNextUpdateStage( bool yn )
+{
+    if ( !yn )
+    {
+	panelstrip_->setPathTextureShift( 0.0 );
+	panelstrip_->setZTextureShift( 0.0 );
+    }
+    else if ( !getUpdateStageNr() )
+    {
+	updatestageinfo_.oldtrcrgstart_ = trcdisplayinfo_.rg.start;
+	updatestageinfo_.oldzrgstart_ = trcdisplayinfo_.zrg.start;
+    }
+    else
+	panelstrip_->freezeDisplay( false );	// thaw to refreeze
+
+    panelstrip_->freezeDisplay( yn );
+    SurveyObject::annotateNextUpdateStage( yn );
 }
 
 
 void Seis2DDisplay::updateLineNamePos()
 {
-    if ( !linename_ ) return;
+    const int trcidx = trcdisplayinfo_.rg.start;
+    if ( !trcdisplayinfo_.alltrcpos.validIdx(trcidx) )
+	return;
 
-    const visBase::Coordinates* coords = triangles_->getCoordinates();
-    if ( !coords ) return;
-
-    Coord3 pos = coords->getPos( 0 );
+    Coord3 pos( trcdisplayinfo_.alltrcpos[trcidx], trcdisplayinfo_.zrg.start );
     linename_->text()->setPosition( pos );
 }
 
@@ -582,7 +627,6 @@ SurveyObject* Seis2DDisplay::duplicate( TaskRunner* tr ) const
     s2dd->setGeometry( geometry_ );
     s2dd->setZRange( trcdisplayinfo_.zrg );
     s2dd->setTraceNrRange( getTraceNrRange() );
-    s2dd->setResolution( getResolution(), tr );
     s2dd->setLineInfo( linesetid_, getLineName() );
 
     for ( int idx=0; idx<nrAttribs(); idx++ )
@@ -634,9 +678,8 @@ void Seis2DDisplay::setDisplayTransformation( const mVisTrans* tf )
     transformation_ = tf;
     transformation_->ref();
     
-    triangles_->setDisplayTransformation( transformation_ );
-    if ( linename_ )
-	linename_->setDisplayTransformation( transformation_ );
+    panelstrip_->setDisplayTransformation( transformation_ );
+    linename_->setDisplayTransformation( transformation_ );
 }
 
 
@@ -657,11 +700,11 @@ void Seis2DDisplay::showLineName( bool yn )
 
 
 bool Seis2DDisplay::lineNameShown() const
-{ return linename_ ? linename_->isOn() : false; }
+{ return linename_->isOn(); }
 
 
 int Seis2DDisplay::nrResolutions() const
-{ return 3; }
+{ return 1; }
 
 
 void Seis2DDisplay::setResolution( int res, TaskRunner* tr )
@@ -672,10 +715,6 @@ void Seis2DDisplay::setResolution( int res, TaskRunner* tr )
     resolution_ = res;
     updateDataFromCache( tr );
 }
-
-
-int Seis2DDisplay::getResolution() const
-{ return resolution_; }
 
 
 SurveyObject::AttribFormat Seis2DDisplay::getAttributeFormat( int ) const
@@ -1147,12 +1186,13 @@ int Seis2DDisplay::usePar( const IOPar& par )
     }
     
     setName( linename );
-    if ( linename_ )
+
+    if ( scene_ )
     {
-	if ( scene_ )
-	    setAnnotColor( scene_->getAnnotColor() );
-	linename_->text()->setText( linename.buf() );
+	setAnnotColor( scene_->getAnnotColor() );
+	linename_->text()->setFontData( scene_->getAnnotFont() );
     }
+    linename_->text()->setText( linename.buf() );
 
     return 1;
 }

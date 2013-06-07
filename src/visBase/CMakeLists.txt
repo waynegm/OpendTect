@@ -72,7 +72,6 @@ SET(OD_MODULE_SOURCES
 	   visshapescale.cc
 	   vissplittexturerandomline.cc
 	   vissplittexture2rectangle.cc
-	   vissplittextureseis2d.cc
 	   vistext.cc
 	   vistexture.cc
 	   vistexture2.cc
@@ -82,6 +81,7 @@ SET(OD_MODULE_SOURCES
 	   vistexturechannel2rgba.cc
            vistexturechannel2voldata.cc
 	   vistexturerect.cc
+	   vistexturepanelstrip.cc
 	   visthumbwheel.cc
 	   vistopbotimage.cc
 	   vistransform.cc

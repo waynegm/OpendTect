@@ -27,7 +27,7 @@ namespace visBase
 {
     class Text2;
     class Transformation;
-    class SplitTextureSeis2D;
+    class TexturePanelStrip;
 }
 
 namespace Attrib  { class Data2DArray; }
@@ -93,7 +93,6 @@ public:
     float			calcDist(const Coord3&) const;
 
     int				nrResolutions() const;
-    int				getResolution() const;
     void			setResolution(int,TaskRunner*);
 
     Pol2D3D                     getAllowedDataType() const	{return Only2D;}
@@ -131,6 +130,8 @@ public:
 
     static Seis2DDisplay*	getSeis2DDisplay(const MultiID&,const char*);
 
+    virtual void		annotateNextUpdateStage(bool yn);
+
     void			fillPar(IOPar&) const;
     int				usePar(const IOPar&);
 
@@ -148,11 +149,12 @@ protected:
 					      const Coord3&,float&) const;
 
     const Interval<int>		getSampleRange() const;
-    void			updateVizPath();
+
+    void			updatePanelStripPath();
     				/*!<Sets the coordinates to the path in
-				    geometry_, limited by the current
-				    trcnrrg_. Will also update the
-				    z-coordinates & texture coordinates.*/
+				    geometry_, limited by current trcnrrg_.
+				    Will also update texture coordinates.*/
+    void			updatePanelStripZRange();
 
     void			updateLineNamePos();
     void			setData(int attrib,const Attrib::Data2DArray&,
@@ -164,7 +166,7 @@ protected:
 
     mutable int			prevtrcidx_;
 
-    visBase::SplitTextureSeis2D*		triangles_;
+    visBase::TexturePanelStrip*			panelstrip_;
     ObjectSet<const Attrib::Data2DArray>	cache_;
     TypeSet<DataPack::ID>			datapackids_;
     MultiID					linesetid_;
@@ -174,6 +176,7 @@ protected:
     struct TraceDisplayInfo
     {
 	TypeSet<int>		alltrcnrs;
+	TypeSet<Coord>		alltrcpos;
 	Interval<int>		rg;
 	int			size;
 	StepInterval<float>	zrg;
@@ -188,6 +191,13 @@ protected:
     PosInfo::GeomID		geomid_;
     ZAxisTransform*		datatransform_;
     int				voiidx_;
+
+    struct UpdateStageInfo
+    {
+	float oldtrcrgstart_;
+	float oldzrgstart_;
+    }; 
+    UpdateStageInfo		updatestageinfo_;
 
     static const char*		sKeyLineSetID();
     static const char*		sKeyTrcNrRange();

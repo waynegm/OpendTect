@@ -175,11 +175,11 @@ protected:
 
     struct TraceDisplayInfo
     {
-	TypeSet<int>		alltrcnrs;
-	TypeSet<Coord>		alltrcpos;
-	Interval<int>		rg;
-	int			size;
-	StepInterval<float>	zrg;
+	TypeSet<int>		alltrcnrs_;
+	TypeSet<Coord>		alltrcpos_;
+	Interval<int>		rg_;
+	int			size_;
+	StepInterval<float>	zrg_;
     };
     TraceDisplayInfo		trcdisplayinfo_;
     StepInterval<int>		maxtrcnrrg_;

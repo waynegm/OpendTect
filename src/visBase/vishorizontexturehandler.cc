@@ -335,14 +335,12 @@ void HorizonTextureHandler::updateTexture(int channel,int sectionid,
     for ( int idx=0; idx<nrversions; idx++ )
 	channels_->setUnMappedData( channel, idx, versiondata[idx],
 	OD::TakeOverPtr, 0 );
-
-    updateTileTextureOrigin( RowCol( 0, 0 ) );
-
 }
 
 
 void HorizonTextureHandler::updateTileTextureOrigin(const RowCol& textureorigin)
 {
+    // TODO: Is currently unused textureorigin parameter still needed?
     std::vector<float> sorigins, torigins;
     osgGeo::LayeredTexture* texture = channels_->getOsgTexture(); 
 

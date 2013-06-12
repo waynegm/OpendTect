@@ -56,7 +56,15 @@ HorizonSectionOsgCallBack::HorizonSectionOsgCallBack( HorizonSection* hrsection 
 
 void HorizonSectionOsgCallBack::operator()(osg::Node* node,osg::NodeVisitor* nv)
 { 
-    if( nv->getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
+    if( nv->getVisitorType()==osg::NodeVisitor::UPDATE_VISITOR )
+    {
+	if ( hrsection_->getOsgTexture()->needsRetiling() )
+	{
+	    hrsection_->hortexturehandler_->updateTileTextureOrigin(
+		    hrsection_->origin_ );
+	}
+    }
+    else if( nv->getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
     {
 	osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
 	const osg::Vec3 projectiondirection = getPrjectionDirection( cv );
@@ -111,6 +119,7 @@ HorizonSection::HorizonSection()
     : VisualObjectImpl( false )
     , transformation_( 0 )
     , geometry_( 0 )
+    , origin_( 0, 0 )
     , displayrrg_( -1, -1, 0 )
     , displaycrg_( -1, -1, 0 )
     , userchangedisplayrg_( false )			      
@@ -132,6 +141,8 @@ HorizonSection::HorizonSection()
     setLockable();
     osghorizon_->ref();
     osghorizon_->setCullCallback( new HorizonSectionOsgCallBack( this ) );
+    osghorizon_->setUpdateCallback( osghorizon_->getCullCallback() );
+
     addChild( osghorizon_ );
 
     hortexturehandler_->ref();
@@ -276,8 +287,6 @@ void HorizonSection::setDisplayRange( const StepInterval<int>& rrg,
 
     configSizeParameters();
     surfaceChange( 0, 0 );
-
-    hortexturehandler_->updateTileTextureOrigin( origin_ );
     setResolution( desiredresolution_, 0 );
 }
 

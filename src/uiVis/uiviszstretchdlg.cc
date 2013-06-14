@@ -172,6 +172,13 @@ bool uiZStretchDlg::acceptOK( CallBacker* )
 }
 
 
+bool uiZStretchDlg::rejectOK( CallBacker* )
+{
+    setZStretch( initslval_, false );
+    return true;
+}
+
+
 void uiZStretchDlg::sliderMove( CallBacker* )
 {
     const float slval = sliderfld_->sldr()->getValue();

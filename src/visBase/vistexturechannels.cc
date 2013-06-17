@@ -607,6 +607,7 @@ int TextureChannels::addChannel()
     osgtexture_->setDataLayerUndefChannel( osgid, 3 );
     const osg::Vec4f imageudfcolor( 1.0, 1.0, 1.0, 0.0 );
     osgtexture_->setDataLayerImageUndefColor( osgid, imageudfcolor );
+    osgtexture_->setDataLayerBorderColor( osgid, imageudfcolor );
     osgtexture_->setDataLayerFilterType( osgid, mGetFilterType );
 
     osgids += osgid;

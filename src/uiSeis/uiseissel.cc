@@ -73,12 +73,10 @@ static void adaptCtxt( const IOObjContext& ct, const uiSeisSel::Setup& su,
     }
 
     if ( ctxt.deftransl.isEmpty() )
-    {
 	ctxt.deftransl = su.geom_ == Seis::Line ? "2D"
 				: CBVSSeisTrcTranslator::translKey();
-	ctxt.toselect.allowtransls_ = ctxt.deftransl;
-    }
-    else if ( !ctxt.forread )
+
+    if ( !ctxt.forread )
 	ctxt.toselect.allowtransls_ = ctxt.deftransl;
     else if ( !ctxt.toselect.allowtransls_.isEmpty() )
     {
@@ -632,10 +630,12 @@ void uiSeisSel::commitSucceeded()
 void uiSeisSel::processInput()
 {
     obtainIOObj();
+    if ( !workctio_.ioobj && !workctio_.ctxt.forread )
+	return;
+    
     setAttrNm( workctio_.ioobj ? LineKey( getInput() ).attrName() : "" );
     uiIOObjSel::fillPar( dlgiopar_ );
-    if ( workctio_.ioobj || workctio_.ctxt.forread )
-	updateInput();
+    updateInput();
 }
 
 

@@ -138,7 +138,6 @@ Strat::LaySeqAttribCalc::LaySeqAttribCalc( const Strat::LaySeqAttrib& desc,
 				   const Strat::LayerModel& lm )
     : attr_(desc)
     , validx_(-1)
-    , extrgates_(*new TypeSet<Interval<float> >)
 {
     if ( attr_.islocal_ )
     {
@@ -189,7 +188,7 @@ float Strat::LaySeqAttribCalc::getValue( const LayerSequence& seq,
 float Strat::LaySeqAttribCalc::getLocalValue( const LayerSequence& seq,
 					  const Interval<float>& zrg ) const
 {
-    if ( validx_ < 0 || seq.isEmpty() )
+    if ( validx_ < 0 || seq.isEmpty() || zrg.stop < zrg.start )
 	return mUdf(float);
 
     const ObjectSet<Layer>& lays = seq.layers();
@@ -353,10 +352,10 @@ Strat::LayModAttribCalc::LayModAttribCalc( const Strat::LayerModel& lm,
     : Executor("Attribute extraction")
     , lm_(lm)
     , dps_(res)
-    , extrgates_(*new TypeSet<TypeSet<Interval<float> > >)
     , seqidx_(0)
     , msg_("Extracting layer attributes")
     , calczwdth_(SI().zRange(false).step / 2)
+    , stoplvl_(0)
 {
     // calczwdth_ default only used if no valid extrgates_ is provided
     if ( SI().zIsTime() )
@@ -369,11 +368,7 @@ Strat::LayModAttribCalc::LayModAttribCalc( const Strat::LayerModel& lm,
 	if ( dpsidx < 0 )
 	    continue;
 
-	LaySeqAttribCalc* calc = new LaySeqAttribCalc( lsa, lm );
-	if ( extrgates_.validIdx(idx) )
-	    calc->setExtrGates( extrgates_[idx] );
-
-	calcs_ += calc;
+	calcs_ += new LaySeqAttribCalc( lsa, lm );
 	dpscidxs_ += dpsidx;
     }
 }
@@ -382,10 +377,15 @@ Strat::LayModAttribCalc::LayModAttribCalc( const Strat::LayerModel& lm,
 Strat::LayModAttribCalc::~LayModAttribCalc()
 {
     deepErase( calcs_ );
+    deepErase( extrgates_ );
 }
 
 
 #define mErrRet(s) { msg_ = s; return ErrorOccurred(); }
+
+
+od_int64 Strat::LayModAttribCalc::totalNr() const
+{ return lm_.size(); }
 
 
 int Strat::LayModAttribCalc::nextStep()
@@ -396,6 +396,9 @@ int Strat::LayModAttribCalc::nextStep()
     if ( seqidx_ >= lm_.size() )
 	return Finished();
 
+    const int dpsdepthidx = dps_.indexOf( sKey::Depth() );
+    if ( dpsdepthidx<0 )
+	mErrRet( "No depth data found" )
     const LayerSequence& seq = lm_.sequence( mCast(int,seqidx_) );
     BufferString errmsg = "No extraction interval specified ";
     errmsg.add( "for pseudo-well number " );
@@ -409,6 +412,9 @@ int Strat::LayModAttribCalc::nextStep()
 
     const bool zinft = SI().depthsInFeet();
     int pointidx = 0;
+    const float stoplvldpth = stoplvl_ ? seq.depthPositionOf( *stoplvl_ )
+					: mUdf(float);
+
     while ( dpsrid < dpssz && dps_.trcNr(dpsrid) == seqidx_ + 1 )
     {
 	DataPointSet::DataRow dr( dps_.dataRow(dpsrid) );
@@ -434,19 +440,34 @@ int Strat::LayModAttribCalc::nextStep()
 		mErrRet( errmsg )
 	    }
 
-	    if ( !extrgates_[seqnb].validIdx(pointidx) )
+	    const ExtrGateSet& gateset( *extrgates_[seqnb] );
+	    if ( !gateset.validIdx(pointidx) )
 	    {
 		errmsg.add( seqnb+1 );
 		mErrRet( errmsg )
 	    }
 
-	    zrg.setFrom( extrgates_[seqnb][pointidx] );
+	    zrg.setFrom( gateset[pointidx] );
 	}
 
-	for ( int idx=0; idx<dpscidxs_.size(); idx++ )
+	bool paststop = false;
+	if ( !mIsUdf(stoplvldpth) )
 	{
-	    const float val = calcs_[idx]->getValue( seq, zrg );
-	    dpsvals[ dpscidxs_[idx] ] = val;
+	    if ( stoplvldpth < zrg.center() )
+		paststop = true;
+	    else
+		zrg.stop = stoplvldpth;
+	}
+
+	if ( paststop )
+	    dps_.setInactive( dpsrid, true );
+	else
+	{
+	    for ( int idx=0; idx<dpscidxs_.size(); idx++ )
+	    {
+		const float val = calcs_[idx]->getValue( seq, zrg );
+		dpsvals[ dpscidxs_[idx] ] = val;
+	    }
 	}
 
 	dpsrid++;
@@ -454,5 +475,22 @@ int Strat::LayModAttribCalc::nextStep()
     }
 
     seqidx_++;
-    return seqidx_ >= lm_.size() ? Finished() : MoreToDo();
+    return seqidx_ >= lm_.size() ? doFinish() : MoreToDo();
+}
+
+
+void Strat::LayModAttribCalc::setExtrGates(
+	const ObjectSet<Strat::LayModAttribCalc::ExtrGateSet>& extrgts,
+	const Strat::Level* stoplvl )
+{
+    stoplvl_ = stoplvl;
+    deepErase( extrgates_ );
+    deepCopy( extrgates_, extrgts );
+}
+
+
+int Strat::LayModAttribCalc::doFinish()
+{
+    dps_.purgeInactive();
+    return Finished();
 }

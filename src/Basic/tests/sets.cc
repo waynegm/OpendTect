@@ -9,6 +9,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "typeset.h"
 #include "objectset.h"
+#include "commandlineparser.h"
 
 #include <iostream>
 
@@ -170,7 +171,7 @@ static int testObjSetFind()
 
 int main( int narg, char** argv )
 {
-    SetProgramArgs( narg, argv );
+    od_init_test_program( narg, argv );
 
     int res = testTypeSetFind();
     res += testTypeSetSetFns();

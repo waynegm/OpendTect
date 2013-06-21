@@ -13,10 +13,11 @@ ________________________________________________________________________
 
 -*/
 
-
 #include "visbasemod.h"
 #include "sets.h"
 #include "visdatagroup.h"
+
+/*!\brief Open Scene Graph*/
 
 namespace osg { class Group; }
 

@@ -48,6 +48,8 @@ uiStratLayerModelDisp::uiStratLayerModelDisp( uiStratLayModEditTools& t,
     , selseqidx_(-1)
     , flattened_(false)
     , fluidreplon_(false)
+    , frtxtitm_(0)
+    , isbrinefilled_(true)
     , sequenceSelected(this)
     , genNewModelNeeded(this)
     , rangeChanged(this)   
@@ -96,6 +98,21 @@ float uiStratLayerModelDisp::getLayerPropValue( const Strat::Layer& lay,
        						int propidx ) const
 {
     return propidx < lay.nrValues() ? lay.value( propidx ) : mUdf(float);
+}
+
+
+void uiStratLayerModelDisp::displayFRText()
+{
+    if ( !frtxtitm_ )
+	frtxtitm_ = scene().addItem( new uiTextItem( "<---empty--->",
+				 mAlignment(HCenter,VCenter) ) );
+    frtxtitm_->setText( isbrinefilled_ ? "Brine filled" : "Hydrocarbon filled");
+    frtxtitm_->setPenColor( Color::Black() );
+    const int xpos = mNINT32( scene().width()/2 );
+    const int ypos = mNINT32( scene().height()-10 );
+    frtxtitm_->setPos( uiPoint(xpos,ypos) );
+    frtxtitm_->setZValue( 999999 );
+    frtxtitm_->setVisible( fluidreplon_ );
 }
 
 
@@ -210,12 +227,13 @@ void uiStratSimpleLayerModelDisp::eraseAll()
     lvldpths_.erase();
     delete selseqitm_; selseqitm_ = 0;
     delete emptyitm_; emptyitm_ = 0;
+    delete frtxtitm_; frtxtitm_ = 0;
 }
 
 
-uiGraphicsScene& uiStratSimpleLayerModelDisp::scene()
+uiGraphicsScene& uiStratSimpleLayerModelDisp::scene() const
 {
-    return gv_->scene();
+    return const_cast<uiStratSimpleLayerModelDisp*>(this)->gv_->scene();
 }
 
 
@@ -643,6 +661,7 @@ void uiStratSimpleLayerModelDisp::doDraw()
 
     drawLevels();
     drawSelectedSequence();
+    displayFRText();
     updZoomBox();
 }
 

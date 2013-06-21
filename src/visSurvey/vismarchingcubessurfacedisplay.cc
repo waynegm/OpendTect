@@ -192,7 +192,7 @@ MarchingCubesDisplay::getColTabMapperSetup( int attrib, int version ) const
 void MarchingCubesDisplay::setColTabMapperSetup( int attrib,
 	const ColTab::MapperSetup& setup, TaskRunner* tr )
 {
-    if ( !attrib )
+    if ( !attrib && displaysurface_ )
 	displaysurface_->getShape()->setDataMapper( setup, tr );
 }
 
@@ -451,8 +451,7 @@ bool MarchingCubesDisplay::setEMID( const EM::ObjectID& emid,
     emsurface_ = emmcsurf;
     emsurface_->ref();
 
-    updateVisFromEM( false, tr );
-    return true;
+    return updateVisFromEM( false, tr );
 }
 
 
@@ -481,7 +480,14 @@ bool MarchingCubesDisplay::updateVisFromEM( bool onlyshape, TaskRunner* tr )
 		SamplingData<float>(emsurface_->crlSampling()),
 				    emsurface_->zSampling() );
 
-	displaysurface_->setSurface( emsurface_->surface(), tr );
+	if ( !displaysurface_->setSurface( emsurface_->surface(), tr ) )
+	{
+	    removeChild( displaysurface_->getInventorNode() );
+	    displaysurface_->unRef();
+	    displaysurface_ = 0;
+	    return false;
+	}
+	else
 	displaysurface_->turnOn( true );
     }
 

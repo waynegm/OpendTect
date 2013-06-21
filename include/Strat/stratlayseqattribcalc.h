@@ -20,6 +20,7 @@ class DataPointSet;
 
 namespace Strat
 {
+class Level;
 class UnitRef;
 class Lithology;
 class LayerModel;
@@ -40,9 +41,6 @@ public:
     float		getValue(const LayerSequence&,
 	    			 const Interval<float>& zrange) const;
     
-    void		setExtrGates(const TypeSet<Interval<float> >& extrgates)
-						 { extrgates_ = extrgates; }
-
 protected:
 
     const LaySeqAttrib&			attr_;
@@ -52,19 +50,22 @@ protected:
     int					validx_;
     ObjectSet<const Strat::UnitRef>	units_;
     ObjectSet<const Strat::Lithology>	liths_;
-    TypeSet<Interval<float> >&		extrgates_;
 
     float		getLocalValue(const LayerSequence&,
 	    			      const Interval<float>&) const;
     float		getGlobalValue(const LayerSequence&) const;
     void		applyTransform(TypeSet<float>&) const;
 
+    friend class	LayModAttribCalc;
 };
 
 
 mExpClass(Strat) LayModAttribCalc : public Executor
 {
 public:
+
+    typedef TypeSet<Interval<float> > ExtrGateSet;
+
     			LayModAttribCalc(const LayerModel&,
 				     const LaySeqAttribSet&,
 				     DataPointSet&);
@@ -73,14 +74,13 @@ public:
     			// point-specific extraction gates have precedence over
     			// global calczwdth_
     void		setCalcZWidth( float w ) { calczwdth_ = w; }
-    void		setExtrGates(
-			const TypeSet<TypeSet<Interval<float> > >& extrgates )
-						   { extrgates_ = extrgates; }
+    void		setExtrGates(const ObjectSet<ExtrGateSet>&,
+				const Strat::Level* stoplvl=0);
 
     const char*		message() const		{ return msg_.buf(); }
     const char*		nrDoneText() const	{ return "Models handled";}
     od_int64		nrDone() const		{ return seqidx_; }
-    od_int64		totalNr() const		{ return calcs_.size(); }
+    od_int64		totalNr() const;
     int			nextStep();
 
     static const char*	sKeyModelIdx()		{ return "Model Index"; }
@@ -94,7 +94,10 @@ protected:
     DataPointSet&		dps_;
     BufferString		msg_;
     float			calczwdth_;
-    TypeSet<TypeSet<Interval<float> > >&	extrgates_;
+    ObjectSet<ExtrGateSet>	extrgates_;
+    const Strat::Level*		stoplvl_;
+
+    int				doFinish();
 
 };
 

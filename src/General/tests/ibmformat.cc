@@ -11,6 +11,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "math2.h"
 #include "task.h"
 #include "limits.h"
+#include "commandlineparser.h"
 
 #include <iostream>
 
@@ -88,7 +89,7 @@ public:
     
 int main( int narg, char** argv )
 {
-    SetProgramArgs( narg, argv );
+    od_init_test_program( narg, argv );
 #define mComp( v1, v2 ) ( v1==v2 )
     int buf;
     int resbuf;

@@ -268,6 +268,9 @@ void MPEDisplay::setSelSpec( int attrib, const Attrib::SelSpec& as )
     const char* usrref = as.userRef();
     BufferStringSet* attrnms = new BufferStringSet();
     attrnms->add( usrref );
+    if ( userrefs_.isEmpty() )
+	userrefs_ += attrnms;
+    else
     delete userrefs_.replace( attrib, attrnms );
 
     if ( ( !usrref || !*usrref ) && channels_->getChannels2RGBA() )
@@ -552,7 +555,7 @@ void MPEDisplay::mouseClickCB( CallBacker* cb )
 	 OD::shiftKeyboardButton(eventinfo.buttonstate_) &&
 	 !OD::ctrlKeyboardButton(eventinfo.buttonstate_) &&
 	 !OD::altKeyboardButton(eventinfo.buttonstate_) &&
-	 eventinfo.pickedobjids.indexOf(id())!=-1 )
+	 eventinfo.pickedobjids.isPresent(id()) )
     {
 	if ( eventinfo.pressed )
 	{
@@ -573,7 +576,7 @@ void MPEDisplay::mouseClickCB( CallBacker* cb )
 	      OD::shiftKeyboardButton(eventinfo.buttonstate_) &&
 	      !OD::ctrlKeyboardButton(eventinfo.buttonstate_) &&
 	      !OD::altKeyboardButton(eventinfo.buttonstate_) &&
-	      eventinfo.pickedobjids.indexOf(id())!=-1 && isDraggerShown() )
+	      eventinfo.pickedobjids.isPresent(id()) && isDraggerShown() )
     {
 	if ( eventinfo.pressed )
 	{
@@ -595,7 +598,7 @@ void MPEDisplay::mouseClickCB( CallBacker* cb )
 	      !OD::ctrlKeyboardButton(eventinfo.buttonstate_) &&
 	      !OD::altKeyboardButton(eventinfo.buttonstate_) &&
 	      isBoxDraggerShown() &&
-	      eventinfo.pickedobjids.indexOf(boxdragger_->id())==-1 )
+	      !eventinfo.pickedobjids.isPresent(boxdragger_->id()) )
     {
 	showBoxDragger( false );
 	sceneeventcatcher_->setHandled();
@@ -1186,7 +1189,7 @@ void MPEDisplay::getChildren( TypeSet<int>&res ) const
 
 bool MPEDisplay::isSelected() const
 {
-    return visBase::DM().selMan().selected().indexOf( id()) != -1;	
+    return visBase::DM().selMan().selected().isPresent( id());	
 }
 
 

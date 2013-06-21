@@ -803,7 +803,7 @@ bool ZipHandler::initAppend( const char* srcfnm, const char* fnm )
     else
     { mErrRet( fnm, " does not exist", "") }
 
-    osd_ = makeOStreamForAppend( srcfnm );
+    osd_ = StreamProvider( srcfnm ).makeOStream( true, true );
     if ( !osd_.usable() )
     { mWriteErr( srcfnm ) }
 
@@ -980,9 +980,9 @@ bool ZipHandler::readCentralDirHeader( ObjectSet<ZipFileInfo>* zfileinfo )
 	    readXtraFldForZIP64(headerbuff + mCentralHeaderSize, xtrafldlength);
 
 	if ( zfileinfo )
-	    *zfileinfo += new ZipFileInfo( srcfile_, compfilesize_,
+	    *zfileinfo += new ZipFileInfo( headerfnm, compfilesize_,
 					   uncompfilesize_, 
-offsetoflocalheader_ );
+                                           offsetoflocalheader_ );
 
 	totalsize_ += uncompfilesize_;
 	ptrlocation = ptrlocation
@@ -1076,11 +1076,9 @@ bool ZipHandler::readZIP64EndOfCentralDirLocator()
 bool ZipHandler::readZIP64EndOfCentralDirRecord()
 {
     char headerbuff[mZIP64EndOfDirRecordSize];
-    od_int64 ptrlocation;
     char sig[mSizeFourBytes];
     mZIP64EndOfDirRecordHeaderSig( sig );
     StrmOper::seek( *isd_.istrm, offsetofcentraldir_ );
-    ptrlocation = StrmOper::tell( *isd_.istrm );
     isd_.istrm->read( mCast(char*,headerbuff), mSizeFourBytes );
     headerbuff[mSizeFourBytes] = 0;
     if ( *mCast(od_uint32*,headerbuff) != *mCast(od_uint32*,sig) )
@@ -1367,11 +1365,7 @@ bool ZipHandler::doZUnCompress()
     do
     {
 	if ( count <= compfilesize_ )
-	{
-	    od_int64 ptr1 = StrmOper::tell( *isd_.istrm );
 	    isd_.istrm->read( in, chunksize );
-	    ptr1 = StrmOper::tell( *isd_.istrm );
-	}
 	else
 	{
 	    isd_.istrm->read( in, compfilesize_ % chunksize);
@@ -1572,17 +1566,6 @@ bool ZipHandler::setTimeDateModified( const char* fnm, od_uint16 timeindos,
 	return false;
 #endif
     return true;
-}
-
-
-StreamData ZipHandler::makeOStreamForAppend( const char* fnm ) const
-{
-    StreamData sd;
-    std::fstream* os = new std::fstream( fnm, std::ios::ios_base::in 
-					    | std::ios::ios_base::out 
-					    | std::ios::ios_base::binary);
-    sd.ostrm = os;
-    return sd;
 }
 
 

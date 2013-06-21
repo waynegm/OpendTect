@@ -104,7 +104,7 @@ int Coordinates::nextID( int previd ) const
     int res = previd+1;
     while ( res<sz )
     {
-	if ( unusedcoords_.indexOf(res)==-1 )
+	if ( !unusedcoords_.isPresent(res) )
 	    return res;
 	else
 	    res++;
@@ -179,7 +179,7 @@ bool Coordinates::isDefined( int idx ) const
 {
     Threads::MutexLocker lock( mutex_ );
     if ( idx<0 || idx>=mArrSize ||
-	 unusedcoords_.indexOf( idx )!=-1 )
+	 unusedcoords_.isPresent( idx ) )
 	return false;
 
     const float* coord = (*mGetOsgVec3Arr(osgcoords_))[idx].ptr();
@@ -305,7 +305,7 @@ void Coordinates::setPositions( const TypeSet<Coord3>& pos)
 {
     for ( int idx=0; idx<mArrSize; idx++ )
     {
-	if ( unusedcoords_.indexOf(idx)!=-1 )
+	if ( unusedcoords_.isPresent(idx) )
 	    continue;
 
 	setPosWithoutLock(idx, pos[idx], false );

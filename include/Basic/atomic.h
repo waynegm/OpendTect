@@ -81,7 +81,7 @@ private:
 
 
 #ifdef __win__
-#define mAtomicPointerType od_uint64
+#define mAtomicPointerType long long
 #else
 #define mAtomicPointerType T*
 #endif
@@ -298,11 +298,7 @@ bool Atomic<T>::weakSetIfEqual( T newval, T& expected )
 template <class T> inline
 T Atomic<T>::exchange( T newval )
 {
-    T expected = val_;
-    while ( !weakSetIfEqual( newval, expected ) )
-    {}
-    
-    return expected;
+    return __sync_lock_test_and_set( &val_, newval );
 }
 #endif //__GCCATOMICS__
 
@@ -333,6 +329,7 @@ T Atomic<T>::get() const
 	return *valptr_;
 }
 
+
 template <class T> inline
 T Atomic<T>::exchange( T newval )
 {
@@ -350,7 +347,6 @@ T Atomic<T>::operator=(T val)
 	*valptr_ = val;
 	return *valptr_;
 }
-
 
 
 template <class T> inline
@@ -545,14 +541,14 @@ bool Atomic<int>::weakSetIfEqual(int newval, int& expected )
 template <> inline
 int Atomic<int>::operator += (int b)
 {
-    return InterlockedAdd( (volatile long*) valptr_, b );
+    return InterlockedExchangeAdd( (volatile long*) valptr_, b ) + b;
 }
 	 
 	 
 template <> inline
 int Atomic<int>::operator -= (int b)
 {
-    return InterlockedAdd( (volatile long*) valptr_, -b );
+    return InterlockedExchangeAdd( (volatile long*) valptr_, -b ) -b;
 }
 	 
 	 
@@ -625,14 +621,14 @@ bool Atomic<long>::weakSetIfEqual(long newval, long& expected )
 template <> inline
 long Atomic<long>::operator += (long b)
 {
-    return InterlockedAdd( valptr_, (long) b );
+    return  InterlockedExchangeAdd( valptr_, (long) b ) + b;
 }
 
 
 template <> inline
 long Atomic<long>::operator -= (long b)
 {
-    return InterlockedAdd( valptr_, -b );
+    return  InterlockedExchangeAdd( valptr_, -b ) - b;
 }
 
 

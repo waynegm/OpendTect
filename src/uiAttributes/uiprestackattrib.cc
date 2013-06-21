@@ -153,11 +153,15 @@ bool uiPreStackAttrib::setAngleParameters( const Attrib::Desc& desc )
 {
     mIfGetString( Attrib::PSAttrib::velocityIDStr(), mid, 
 		  params_.velvolmid_=mid )
+		  
+    Interval<int> anglerange, normalanglevalrange( 0, 90 );
     mIfGetInt( Attrib::PSAttrib::angleStartStr(), start,
-		 params_.anglerange_.start=start )
-    mIfGetInt( Attrib::PSAttrib::angleStopStr(), stop, 
-		 params_.anglerange_.stop=stop )
-		 
+		anglerange.start=start )
+    mIfGetInt( Attrib::PSAttrib::angleStopStr(), stop,
+		anglerange.stop=stop )
+    if ( normalanglevalrange.includes(anglerange,false) )
+	params_.anglerange_ = anglerange;
+
     anglecompgrp_->updateFromParams();
 
     BufferString raytracerparam;
@@ -181,24 +185,28 @@ bool uiPreStackAttrib::setAngleParameters( const Attrib::Desc& desc )
 	float windowparam = mUdf(float); 
 	mIfGetFloat( PreStack::AngleComputer::sKeyWinParam(), winpar,
 		     windowparam=winpar )
-	smpar.set( PreStack::AngleComputer::sKeyWinParam(), windowparam );
+	if ( !mIsUdf(windowparam) )
+	    smpar.set( PreStack::AngleComputer::sKeyWinParam(), windowparam );
 
 	float windowlength = mUdf(float);
 	mIfGetFloat( PreStack::AngleComputer::sKeyWinLen(), winlen,
 		     windowlength=winlen )
-	smpar.set( PreStack::AngleComputer::sKeyWinLen(), windowlength );
+	if ( !mIsUdf(windowlength) )
+	    smpar.set( PreStack::AngleComputer::sKeyWinLen(), windowlength );
     }
     else if ( smoothtype == PreStack::AngleComputer::FFTFilter )
     {
 	float f3freq = mUdf(float); 
 	mIfGetFloat( PreStack::AngleComputer::sKeyFreqF3(), freq, 
 		    f3freq=freq  )
-	smpar.set( PreStack::AngleComputer::sKeyFreqF3(), f3freq );
+	if ( !mIsUdf(f3freq) )
+	    smpar.set( PreStack::AngleComputer::sKeyFreqF3(), f3freq );
 
 	float f4freq = mUdf(float);
 	mIfGetFloat( PreStack::AngleComputer::sKeyFreqF4(), freq, 
 		    f4freq=freq )
-	smpar.set( PreStack::AngleComputer::sKeyFreqF4(), f4freq );
+	if ( !mIsUdf(f4freq) )
+	    smpar.set( PreStack::AngleComputer::sKeyFreqF4(), f4freq );
     }
 
     return true;

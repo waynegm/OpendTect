@@ -73,13 +73,13 @@ if(UNIX) #Apple an Linux
 		set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wignored-qualifiers" )
 	    endif()
 
-	    set ( CMAKE_CXX_FLAGS "-Wno-non-template-friend ${CMAKE_CXX_FLAGS}" )
-
-	    if ( (CMAKE_CXX_COMPILER STREQUAL "/usr/bin/g++4") OR
-		 (CMAKE_C_COMPILER STREQUAL "/usr/bin/gcc4") )
-		set( CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2" )
-		set( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O2" )
+	    if ( GCC_VERSION VERSION_LESS 4.2 )
+		message( "Turning down gcc optimization to -O1" )
+		set( CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O1" )
+		set( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1" )
 	    endif()
+
+	    set ( CMAKE_CXX_FLAGS "-Wno-non-template-friend ${CMAKE_CXX_FLAGS}" )
 	endif(CMAKE_COMPILER_IS_GNUCC)
 
     endif()
@@ -121,10 +121,11 @@ if(WIN32)
     set ( OD_SET_TARGET_PROPERTIES 1 )
 
     set (OD_LIB_LINKER_NEEDS_ALL_LIBS 1)
-    set  ( OD_PLATFORM_LINK_OPTIONS "/LARGEADDRESSAWARE" )
+    set  ( OD_PLATFORM_LINK_OPTIONS "/LARGEADDRESSAWARE /debug" ) #/debug will enable the generation of pdb-files.
+    
     set (OD_EXTRA_COINFLAGS " /DCOIN_DLL /DSIMVOLEON_DLL /DSOQT_DLL /wd4244" )
     add_definitions("/Ob1 /vmg /Zc:wchar_t- /EHsc")
-    add_definitions("/MP")
+    #add_definitions("/MP")
     set (EXTRA_LIBS "ws2_32" "shlwapi")
     add_definitions(  "\"-DmUnusedVar=\"")
     add_definitions(  "\"-DmUsedVar=\"")
@@ -149,11 +150,7 @@ if(WIN32)
     add_definitions( /wd4512 ) # class' : assignment operator could not be generated (not important)
     add_definitions( /wd4127 ) # conditional expression is constant, e.g. while ( true )
     add_definitions( /wd4189 ) # local variable is initialized but not referenced
-
-    #These two should be enabled when someone will go over the code and clean up.
     add_definitions( /wd4305 ) # truncation from dowble to float
-    #add_definitions( /wd4244 ) # conversion' conversion from 'type1' to 'type2', possible loss of data ( _int64 to int ) 
-
 
     set (OD_STATIC_EXTENSION ".lib")
     set (OD_EXECUTABLE_EXTENSION ".exe" )
@@ -161,6 +158,7 @@ if(WIN32)
         set  ( OD_PLFSUBDIR "win64" )
     else()
         set  ( OD_PLFSUBDIR "win32" )
+	add_definitions( /wd4244 ) # conversion' conversion from 'type1' to 'type2', possible loss of data ( _int64 to int ) 
     endif()
 
     set  ( OD_GUI_SYSTEM "WIN32" )

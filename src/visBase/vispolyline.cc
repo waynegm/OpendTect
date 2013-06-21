@@ -109,7 +109,7 @@ PolyLine3D::PolyLine3D()
 void PolyLine3D::setLineStyle( const LineStyle& lst )
 {
     lst_ = lst_;
-    osgpoly_->setRadius( lst.width_*0.5f );
+    osgpoly_->setRadius( lst.width_ );
 }
 
 

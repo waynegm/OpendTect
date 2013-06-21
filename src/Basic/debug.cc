@@ -28,8 +28,25 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <iostream>
 #include <fstream>
+#include <signal.h>
 
 static std::ostream* dbglogstrm = 0;
+
+
+void od_test_prog_crash_handler(int)
+{
+    std::cout << "Program crashed.\n";
+    exit( 1 );
+}
+
+
+void od_init_test_program(int argc, char** argv )
+{
+    SetProgramArgs( argc, argv );
+    signal(SIGSEGV, od_test_prog_crash_handler );
+    SetCrashOnProgrammerError( 1 );
+}
+
 
 
 mExternC(Basic) void od_debug_init(void)
@@ -90,7 +107,12 @@ namespace DBG
 
 bool crashOnNaN()
 {
-    static bool dohide = GetEnvVarYN( "OD_DONT_CRASH_ON_NOT_NORMAL_NUMBER" );
+#ifdef __debug__
+    static bool dohide = GetEnvVarYN("OD_DONT_CRASH_ON_NOT_NORMAL_NUMBER", 0);
+#else
+    static bool dohide = GetEnvVarYN("OD_DONT_CRASH_ON_NOT_NORMAL_NUMBER", 1);
+#endif
+
     return !dohide;
 }
 

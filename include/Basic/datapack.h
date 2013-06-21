@@ -64,12 +64,17 @@ public:
 
     virtual bool	isOK() const 		{ return true; }
 
+    void		prepareUpdate()		{ updatelock_.lock(); }
+    void		updateFinished()	{ updatelock_.unLock(); }
+    Threads::Mutex&	getUpdateLock() const	{ return updatelock_; }
+
 protected:
 
     const ID			id_;
     const BufferString		category_;
     mutable int			nrusers_;
     mutable Threads::Mutex	nruserslock_;
+    mutable Threads::Mutex	updatelock_;
 
     static ID		getNewID(); 	//!< ensures a global data pack ID
     static float	sKb2MbFac();	//!< 1 / 1024

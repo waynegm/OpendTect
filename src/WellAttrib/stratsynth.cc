@@ -27,6 +27,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "binidvalset.h"
 #include "datapackbase.h"
 #include "elasticpropsel.h"
+#include "fourier.h"
+#include "fftfilter.h"
 #include "flatposdata.h"
 #include "ioman.h"
 #include "mathfunc.h"
@@ -280,6 +282,11 @@ SyntheticData* StratSynth::getSyntheticByIdx( int idx )
 }
 
 
+const SyntheticData* StratSynth::getSyntheticByIdx( int idx ) const
+{
+    return synthetics_.validIdx( idx ) ?  synthetics_[idx] : 0;
+}
+
 
 SyntheticData* StratSynth::getSynthetic( const  PropertyRef& pr )
 {
@@ -462,8 +469,7 @@ bool doWork( od_int64 start, od_int64 stop, int threadid )
 	addToNrDone(1);
 	ElasticModel& curem = aimodels_[idm];
 	const Strat::LayerSequence& seq = lm_.sequence( idm ); 
-	const int sz = seq.size();
-	if ( sz < 1 )
+	if ( seq.isEmpty() )
 	    continue;
 
 	if ( !fillElasticModel(seq,curem) )
@@ -503,7 +509,7 @@ bool fillElasticModel( const Strat::LayerSequence& seq, ElasticModel& aimodel )
 	if ( thickness < 1e-4 )
 	    continue;
 
-	float dval, pval, sval;
+	float dval =mUdf(float), pval = mUdf(float), sval = mUdf(float);
 	elpgen.getVals( dval, pval, sval, lay->values(), props.size() );
 
 	// Detect water - reset Vs
@@ -534,10 +540,26 @@ bool StratSynth::createElasticModels()
 {
     clearElasticModels();
     
+    if ( lm_.isEmpty() )
+    	return false;
+    
     ElasticModelCreator emcr( lm_, aimodels_ );
     if ( !TaskRunner::execute(tr_,emcr) )
 	return false;
+    bool modelsvalid = false;
+    for ( int idx=0; idx<aimodels_.size(); idx++ )
+    {
+	if ( !aimodels_[idx].isEmpty() )
+	{
+	    modelsvalid = true;
+	    break;
+	}
+    }
+
     errmsg_.setEmpty();
+    if ( !modelsvalid )
+    	return false;
+    
     return adjustElasticModel( lm_, aimodels_ );
 }
 
@@ -677,7 +699,7 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar )
 
 void StratSynth::generateOtherQuantities()
 {
-    if ( !synthetics_.size() ) return;
+    if ( synthetics_.isEmpty() ) return;
 
     for ( int idx=0; idx<synthetics_.size(); idx++ )
     {
@@ -698,7 +720,8 @@ void StratSynth::generateOtherQuantities( const PostStackSyntheticData& sd,
 
     TypeSet<Interval<float> > seqtimergs;
     ManagedObjectSet<Strat::LayerModel> layermodels;
-    for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+    const int sz = zrg.nrSteps() + 1;
+    for ( int idz=0; idz<sz; idz++ )
 	layermodels += new Strat::LayerModel();
 
     for ( int iseq=0; iseq<lm.size(); iseq ++ )
@@ -709,7 +732,7 @@ void StratSynth::generateOtherQuantities( const PostStackSyntheticData& sd,
 	const float seqstarttime = t2d.getTime( seqdepthrg.start );
 	const float seqstoptime = t2d.getTime( seqdepthrg.stop );
 	seqtimergs += Interval<float> ( seqstarttime, seqstoptime );
-	for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+	for ( int idz=0; idz<sz; idz++ )
 	{
 	    Strat::LayerModel* lmsamp = layermodels[idz];
 	    if ( !lmsamp )
@@ -742,7 +765,7 @@ void StratSynth::generateOtherQuantities( const PostStackSyntheticData& sd,
 
 	    PointBasedMathFunction propvals( PointBasedMathFunction::Linear,
 		    			     PointBasedMathFunction::EndVal );
-	    for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+	    for ( int idz=0; idz<sz; idz++ )
 	    {
 		const float time = mCast( float, zrg.atIndex(idz) );
 		if ( !seqtimergs[iseq].includes(time,false) )
@@ -775,12 +798,23 @@ void StratSynth::generateOtherQuantities( const PostStackSyntheticData& sd,
 
 		propvals.add( time, propisvel ? 1.f / val : val );
 	    }
-	    for ( int idz=0; idz<zrg.nrSteps()+1; idz++ )
+
+	    Array1DImpl<float> proptr( sz );
+	    for ( int idz=0; idz<sz; idz++ )
 	    {
 		const float time = mCast( float, zrg.atIndex(idz) );
-		rawtrc->set( idz, propvals.getValue( time ), 0 );
+		proptr.set( idz, propvals.getValue( time ) );
 	    }
-	    // TODO: add Anti-Alias frequency filter
+
+	    const float step = mCast( float, zrg.step );
+	    ::FFTFilter filter( sz, step );
+	    const float f4 = 1.f / (2.f * step );
+	    filter.setLowPass( f4 );
+	    if ( !filter.apply(proptr) )
+		continue;
+
+	    for ( int idz=0; idz<sz; idz++ )
+		rawtrc->set( idz, proptr.get( idz ), 0 );
 	}
 
 	dp->setBuffer( trcbuf, Seis::Line, SeisTrcInfo::TrcNr );
@@ -812,9 +846,15 @@ const char* StratSynth::infoMsg() const
 
 
 #define mValidDensityRange( val ) \
-(!mIsUdf(val) && val>100 && val<10000)
+(mIsUdf(val) || (val>100 && val<10000))
 #define mValidWaveRange( val ) \
-(!mIsUdf(val) && val>10 && val<10000)
+(mIsUdf(val) || (val>10 && val<10000))
+
+#define mAddValToMsg( var, isdens ) \
+infomsg_ += "( sample value "; \
+infomsg_ += var; \
+infomsg_ += isdens ? "kg/m3" : "m/s"; \
+infomsg_ += ") \n";
 
 bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 				     TypeSet<ElasticModel>& aimodels )
@@ -861,12 +901,29 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 		
 		if ( infomsg_.isEmpty() )
 		{
-		    infomsg_ += "Layer model contains invalid layer(s), "
-			       "first occurence found in layer '";
+		    infomsg_ += "Layer model contains invalid values of "
+				"following properties :\n";
+		    if ( !mValidDensityRange(layer.den_) )
+		    {
+			infomsg_ += "'Density'";
+			mAddValToMsg( layer.den_, true );
+		    }
+		    if ( !mValidWaveRange(layer.vel_) )
+		    {
+			infomsg_ += "'P-Wave'";
+			mAddValToMsg( layer.vel_, false );
+		    }
+		    if ( !mValidWaveRange(layer.svel_) )
+		    {
+			infomsg_ += "'S-Wave'";
+			mAddValToMsg( layer.svel_, false );
+		    }
+
+		    infomsg_ += "First occurence found in layer '";
 		    infomsg_ += seq.layers()[idx]->name();
 		    infomsg_ += "' of pseudo well number ";
 		    infomsg_ += midx+1;
-		    infomsg_ += ". Invalid layers will be interpolated";
+		    infomsg_ += ". Invalid values will be interpolated";
 		}
 
 	    }
@@ -879,12 +936,23 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 	    errmsg_.setEmpty();
 	    errmsg_ += "Cannot generate elastic model as all the values "
 		       "of the properties ";
+	    const ElasticLayer& layer = aimodel[0];
 	    if ( invaliddenscount>=aimodel.size() )
+	    {
 		errmsg_ += "'Density' ";
+		mAddValToMsg( layer.den_, true );
+	    }
 	    if ( invalidvelcount>=aimodel.size() )
+	    {
 		errmsg_ += "'Pwave Velocity' ";
+		mAddValToMsg( layer.vel_, false );
+	    }
 	    if ( invalidsvelcount>=aimodel.size() )
+	    {
 		errmsg_ += "'Swave Velocity' ";
+		mAddValToMsg( layer.svel_, false );
+	    }
+
 	    errmsg_ += "are invalid. Probably units are not set correctly";
 	    return false;
 	}

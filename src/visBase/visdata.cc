@@ -10,6 +10,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "errh.h"
 #include "keystrs.h"
+#include "thread.h"
 #include "visdataman.h"
 #include "visselman.h"
 #include "vismaterial.h"

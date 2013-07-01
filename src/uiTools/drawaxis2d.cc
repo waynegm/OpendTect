@@ -258,12 +258,13 @@ uiGraphicsSceneAxisMgr::uiGraphicsSceneAxisMgr( uiGraphicsView& view )
     mAddMask( bottommask_ );
     mAddMask( leftmask_ );
     mAddMask( rightmask_ );
-    mAttachCB( uifont_.changed, uiGraphicsSceneAxisMgr,updateFontSizeCB);
+    mAttachCB( uifont_.changed, uiGraphicsSceneAxisMgr::updateFontSizeCB );
 }
 
 
 uiGraphicsSceneAxisMgr::~uiGraphicsSceneAxisMgr()
 {
+    detachAllNotifiers();
     delete xaxis_; delete yaxis_;
 }
 

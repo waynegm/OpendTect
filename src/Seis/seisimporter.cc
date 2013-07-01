@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "seistrc.h"
 #include "seiswrite.h"
 
+#include "thread.h"
 #include "threadwork.h"
 #include "binidsorting.h"
 #include "cbvsreadmgr.h"
@@ -49,7 +50,8 @@ SeisImporter::SeisImporter( SeisImporter::Reader* r, SeisTrcWriter& w,
         , maxqueuesize_( Threads::getNrProcessors()*100 )
 {
     queueid_ = Threads::WorkManager::twm().addQueue(
-					Threads::WorkManager::SingleThread );
+					Threads::WorkManager::SingleThread,
+					"SeisImporter");
 }
 
 

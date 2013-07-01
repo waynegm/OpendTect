@@ -119,7 +119,7 @@ void VisualObjectImpl::setMaterial( Material* nm )
     if ( material_ )
     {
 	material_->ref();
-	mAttachCB( material_->change, VisualObjectImpl, materialChangeCB );
+	mAttachCB( material_->change, VisualObjectImpl::materialChangeCB );
 	ss->setDataVariance( osg::Object::DYNAMIC );
 	addNodeState( material_ );
     }

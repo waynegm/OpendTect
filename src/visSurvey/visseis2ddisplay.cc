@@ -542,8 +542,8 @@ void Seis2DDisplay::updatePanelStripPath()
 	for ( int posidx=start+1; posidx<stop; posidx++ )
 	{
 	    const Coord pos = trcdisplayinfo_.alltrcpos_[posidx];
-	    const float d0 = pos.distTo( trcdisplayinfo_.alltrcpos_[posidx-1] );
-	    const float d1 = pos.distTo( trcdisplayinfo_.alltrcpos_[posidx+1] );
+	    const double d0 = pos.distTo( trcdisplayinfo_.alltrcpos_[posidx-1] );
+	    const double d1 = pos.distTo( trcdisplayinfo_.alltrcpos_[posidx+1] );
 	    if ( (d0+d1)>0.0 && fabs(d0-d1)/(d0+d1)>0.1 )
 		knots += posidx;
 	}
@@ -558,7 +558,7 @@ void Seis2DDisplay::updatePanelStripPath()
     for ( int idx=0; idx<knots.size(); idx++ )
     {
 	path += trcdisplayinfo_.alltrcpos_[knots[idx]];
-	mapping += knots[idx] - trcdisplayinfo_.rg_.start;
+	mapping += mCast(float,knots[idx] - trcdisplayinfo_.rg_.start);
     }
 
     panelstrip_->setPath( path );
@@ -601,8 +601,8 @@ void Seis2DDisplay::annotateNextUpdateStage( bool yn )
     }
     else if ( !getUpdateStageNr() )
     {
-	updatestageinfo_.oldtrcrgstart_ = trcdisplayinfo_.rg_.start;
-	updatestageinfo_.oldzrgstart_ = trcdisplayinfo_.zrg_.start;
+	updatestageinfo_.oldtrcrgstart_ = mCast(float,trcdisplayinfo_.rg_.start);
+	updatestageinfo_.oldzrgstart_ = mCast(float,trcdisplayinfo_.zrg_.start);
     }
     else
 	panelstrip_->freezeDisplay( false );	// thaw to refreeze

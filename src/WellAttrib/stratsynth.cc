@@ -417,6 +417,7 @@ SyntheticData* StratSynth::createAVOGradient( SyntheticData* sd,
 	mErrRet( proc->message(), delete sd; return 0 ) ;
     PreStack::ModelBasedAngleComputer* anglecomp =
 	new PreStack::ModelBasedAngleComputer;
+    anglecomp->setFFTSmoother( 10.f, 15.f );
     const ObjectSet<RayTracer1D>& rts = sg.rayTracers();
     for ( int idx=0; idx<rts.size(); idx++ )
     {
@@ -862,7 +863,7 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
     infomsg_.setEmpty();
     for ( int midx=0; midx<aimodels.size(); midx++ )
     {
-	const Strat::LayerSequence& seq = lm.sequence( midx ); 
+	const Strat::LayerSequence& seq = lm.sequence( midx );
 	ElasticModel& aimodel = aimodels[midx];
 	Array1DImpl<float> densvals( aimodel.size() );
 	Array1DImpl<float> velvals( aimodel.size() );
@@ -974,6 +975,7 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 	    layer.vel_ = velvals.get( idx );
 	    layer.svel_ = svelvals.get( idx );
 	}
+	aimodel.upscale( 5.0f );
     }
 
     return true;
@@ -1200,6 +1202,7 @@ void PreStackSyntheticData::createAngleData( const ObjectSet<RayTracer1D>& rts,
     ObjectSet<PreStack::Gather> anglegathers;
     const ObjectSet<PreStack::Gather>& gathers = preStackPack().getGathers();
     PreStack::ModelBasedAngleComputer anglecomp;
+    anglecomp.setFFTSmoother( 10.f, 15.f );
     for ( int idx=0; idx<rts.size(); idx++ )
     {
 	if ( !gathers.validIdx(idx) )

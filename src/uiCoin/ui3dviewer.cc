@@ -121,7 +121,7 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     eventfilter_.addEventType( uiEventFilter::Resize );
     eventfilter_.addEventType( uiEventFilter::Show );
     
-    mAttachCB( eventfilter_.eventhappened, uiDirectViewBody, qtEventCB );
+    mAttachCB( eventfilter_.eventhappened, ui3DViewerBody::qtEventCB );
 }
 
 
@@ -178,11 +178,11 @@ void ui3DViewerBody::setupHUD()
     
     horthumbwheel_ = visBase::ThumbWheel::create();
     hudscene_->addObject( horthumbwheel_ );
-    mAttachCB( horthumbwheel_->rotation, ui3DViewerBody,thumbWheelRotationCB);
+    mAttachCB( horthumbwheel_->rotation, ui3DViewerBody::thumbWheelRotationCB);
     
     verthumbwheel_ = visBase::ThumbWheel::create();
     hudscene_->addObject( verthumbwheel_ );
-    mAttachCB( verthumbwheel_->rotation, ui3DViewerBody,thumbWheelRotationCB);
+    mAttachCB( verthumbwheel_->rotation, ui3DViewerBody::thumbWheelRotationCB);
 
     if ( !axes_ )
     {

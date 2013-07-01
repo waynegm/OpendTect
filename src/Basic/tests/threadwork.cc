@@ -8,6 +8,7 @@
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "threadwork.h"
+#include "thread.h"
 #include "keystrs.h"
 #include "commandlineparser.h"
 #include "bufstring.h"
@@ -111,7 +112,7 @@ public:
 
 	for ( int idx=0; idx<queuetype.size(); idx++ )
 	{
-    	    int queueid = workmanager.addQueue( queuetype[idx] );	    
+    	    int queueid = workmanager.addQueue( queuetype[idx], "Test" );	    
 	    const char* queuetypename = typenames.get(idx).buf();
 	    CallBackTestClass testwork;
 	    
@@ -146,7 +147,7 @@ public:
 	    if ( queuetype[idx] == Threads::WorkManager::Manual )
 		continue;
 
-    	    queueid = workmanager.addQueue( queuetype[idx] );	    
+    	    queueid = workmanager.addQueue( queuetype[idx], "Test" );	    
 
 	    testwork.reset();
 	    mAddMultipleJobs( testwork, queueid );
@@ -193,6 +194,8 @@ public:
 				"No pending work left after removeQueue." );
 	}
 
+	//workmanager.emptyQueue( workmanager.cDefaultQueueID(), true );
+
 	return true;
     }
 
@@ -224,8 +227,9 @@ int main( int narg, char** argv )
     SetProgramArgs( narg, argv );
     const bool quiet = CommandLineParser().hasKey( sKey::Quiet() );
     WorkManagerTester tester;
-    return tester.runCallBackTests(quiet) && tester.testWorkResults(quiet)
-	? 0
-	: 1;
+    if ( tester.runCallBackTests(quiet) && tester.testWorkResults(quiet) )
+	ExitProgram( 0 );
+
+    ExitProgram( 1 );
 }
 

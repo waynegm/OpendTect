@@ -199,12 +199,13 @@ void HorizonSection::setDisplayTransformation( const mVisTrans* nt )
 void HorizonSection::setWireframeColor( Color col )
 { 
     HorizonSectionTile** tileptrs = tiles_.getData();
-    Threads::SpinLockLocker setcolorlock ( spinlock_ );
+    spinlock_.lock();
     for ( int idx=0; idx<tiles_.info().getTotalSz(); idx++ )
     {
 	if ( tileptrs[idx] )
 	    tileptrs[idx]->setLineColor( col );
     }
+    spinlock_.unLock();
 }
 
 

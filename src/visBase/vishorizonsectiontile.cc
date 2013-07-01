@@ -50,7 +50,7 @@ HorizonSectionTile::HorizonSectionTile( const visBase::HorizonSection& section,
     , gluegeom_( new osg::Geometry )
     , gluenormals_ ( new osg::Vec3Array )
     , tesselationqueueid_( Threads::WorkManager::twm().addQueue(
-    Threads::WorkManager::MultiThread ) )
+    Threads::WorkManager::MultiThread, "Tessalation" ) )
 {
     refOsgPtr( osgswitchnode_ );
     tileresolutiondata_.allowNull();

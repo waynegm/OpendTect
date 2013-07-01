@@ -17,10 +17,33 @@ static const char* rcsID mUsedVar = "$Id$";
 namespace Threads
 {
 
+const Threads::WorkManager* thetwm = 0;
+
+static void shutdownTWM()
+{
+   WorkManager::twm().shutdown();
+}
+
+
 Threads::WorkManager& WorkManager::twm()
 {
-    static Threads::WorkManager twm_( Threads::getNrProcessors()*2 );
-    return twm_;
+    static PtrMan<Threads::WorkManager> twm_= 0;
+    if ( !twm_ )
+    {
+	Threads::WorkManager* newtwm =
+	    new Threads::WorkManager( Threads::getNrProcessors()*2 );
+	if ( !twm_.setIfNull( newtwm ) )
+	{
+	    delete newtwm;
+	}
+	else
+	{
+	    thetwm = newtwm;
+	    NotifyExitProgram( &shutdownTWM );
+	}
+    }
+
+    return *twm_;
 }
 
 
@@ -247,9 +270,10 @@ void Threads::WorkThread::assignTask(const ::Threads::Work& newtask,
 Threads::WorkManager::WorkManager( int nrthreads )
     : workloadcond_( *new ConditionVar )
     , isidle( this )
+    , isShuttingDown( this )
     , freeid_( cDefaultQueueID() )
 {
-    addQueue( MultiThread );
+    addQueue( MultiThread, "Default queue" );
 
     if ( nrthreads == -1 )
 	nrthreads = Threads::getNrProcessors();
@@ -270,15 +294,44 @@ Threads::WorkManager::WorkManager( int nrthreads )
 
 Threads::WorkManager::~WorkManager()
 {
-    while ( queueids_.size() )
-	removeQueue( queueids_[0], false );
+    if ( this==thetwm && queueids_.size() )
+    {
+	pErrMsg("Default queue is not empty. "
+	        "Please call twm().shutdown() before exiting main program,"
+		"or exit with ExitProgram()");
+    }
 
-    deepErase( threads_ );
+    shutdown();
+
     delete &workloadcond_;
 }
 
 
-int Threads::WorkManager::addQueue( QueueType type )
+void Threads::WorkManager::shutdown()
+{
+    isShuttingDown.trigger();
+
+    if ( queueids_.size()>1 )
+    {
+	BufferString msg("All queues are not removed. Remaining queues: ");
+	for ( int idx=1; idx<queueids_.size(); idx++ )
+	{
+	    if ( idx>1 )
+		msg.add( ", " );
+	    msg.add( queuenames_[idx] );
+	}
+	
+	pErrMsg( msg.buf() );
+    }
+
+    while ( queueids_.size() )
+	removeQueue( queueids_[0], false );
+
+    deepErase( threads_ );
+}
+
+
+int Threads::WorkManager::addQueue( QueueType type, const char* nm )
 {
     Threads::MutexLocker lock( workloadcond_ );
 
@@ -287,6 +340,7 @@ int Threads::WorkManager::addQueue( QueueType type )
     queueids_ += id;
     queuetypes_ += type;
     queueworkload_ += 0;
+    queuenames_ += nm;
     queueisclosing_ += false;
 
     return id;
@@ -366,13 +420,16 @@ inline void Threads::WorkManager::reduceWorkload( int queueidx )
 void Threads::WorkManager::emptyQueue( int queueid, bool finishall )
 {
     Threads::MutexLocker lock(workloadcond_);
-    const int queueidx = queueids_.indexOf( queueid );
+    int queueidx = queueids_.indexOf( queueid );
 
     if ( finishall )
     {
 	//Wait for all threads to exit
 	while ( queueworkload_[queueidx] || queueSizeNoLock( queueid ) )
+	{
 	    workloadcond_.wait();
+	    queueidx = queueids_.indexOf( queueid );
+    }
     }
     else
     {
@@ -407,13 +464,17 @@ void Threads::WorkManager::removeQueue( int queueid, bool finishall )
     Threads::MutexLocker lock(workloadcond_);
 
     while ( queueworkload_[queueidx] )
+    {
 	workloadcond_.wait();
+	queueidx = queueids_.indexOf( queueid );
+    }
 
     queueidx = queueids_.indexOf( queueid );
     queueworkload_.removeSingle( queueidx );
     queuetypes_.removeSingle( queueidx );
     queueids_.removeSingle( queueidx );
     queueisclosing_.removeSingle( queueidx );
+    queuenames_.removeSingle( queueidx );
 }
 
 

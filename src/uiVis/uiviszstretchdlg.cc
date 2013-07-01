@@ -52,18 +52,17 @@ uiZStretchDlg::uiZStretchDlg( uiParent* p )
 
 	scenefld_ = new uiLabeledComboBox( this, scenenms, "Apply scaling to" );
 	scenefld_->box()->setCurrentItem( 1 );
-	mAttachCB( scenefld_->box()->selectionChanged,uiZStretchDlg,sceneSel );
+	mAttachCB( scenefld_->box()->selectionChanged, uiZStretchDlg::sceneSel );
     }
 
     sliderfld_ = new uiSliderExtra( this, uiSliderExtra::Setup("Z stretch")
 				     .withedit(true).nrdec(3).logscale(true),
 	   				"Z stretch slider" );
-    mAttachCB( sliderfld_->sldr()->valueChanged,
-	       uiZStretchDlg, sliderMove );
+    mAttachCB( sliderfld_->sldr()->valueChanged,uiZStretchDlg::sliderMove );
     if ( scenefld_ )
 	sliderfld_->attach( alignedBelow, scenefld_ );
 
-    mAttachCB( preFinalise(), uiZStretchDlg, doFinalise );
+    mAttachCB( preFinalise(), uiZStretchDlg::doFinalise );
 }
 
 
@@ -79,13 +78,13 @@ void uiZStretchDlg::doFinalise( CallBacker* )
     {
 	ioPixmap vwallpm( "view_all" );
 	vwallbut_ = new uiPushButton( grp, "&Fit to scene", vwallpm, true );
-	mAttachCB( vwallbut_->activated, uiZStretchDlg, butPush );
+	mAttachCB( vwallbut_->activated, uiZStretchDlg::butPush );
     }
     if ( homecb.willCall() )
     {
 	ioPixmap homepm( "home" );
 	uiButton* homebut = new uiPushButton( grp, "To &Home", homepm, true );
-	mAttachCB( homebut->activated, uiZStretchDlg, butPush );
+	mAttachCB( homebut->activated, uiZStretchDlg::butPush );
 	if ( vwallbut_ )
 	    homebut->attach( rightOf, vwallbut_ );
     }

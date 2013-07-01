@@ -49,7 +49,8 @@ uiFlatViewer::uiFlatViewer( uiParent* p )
     , dispParsChanged(this)
 {
     updatequeueid_ =
-	Threads::WorkManager::twm().addQueue( Threads::WorkManager::Manual );
+	Threads::WorkManager::twm().addQueue( Threads::WorkManager::Manual,
+		 			      "FlatViewer");
 
     view_->preDraw.notify( mCB(this,uiFlatViewer,updateCB ) );
     view_->disableScrollZoom();
@@ -65,12 +66,13 @@ uiFlatViewer::uiFlatViewer( uiParent* p )
     bitmapdisp_->setExtraFactor( extfac_ );
     worldgroup_->add( bitmapdisp_->getDisplay() );
     axesdrawer_.setZvalue( mAxisZStart );
-    mAttachCB( axesdrawer_.layoutChanged(), uiFlatViewer, reSizeCB );
+    mAttachCB( axesdrawer_.layoutChanged(), uiFlatViewer::reSizeCB );
 }
 
 
 uiFlatViewer::~uiFlatViewer()
 {
+    detachAllNotifiers();
     Threads::WorkManager::twm().removeQueue( updatequeueid_, false );
 
     delete &axesdrawer_;

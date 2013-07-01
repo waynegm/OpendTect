@@ -8,6 +8,8 @@
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "thread.h"
+
+#include "atomic.h"
 #include "genc.h"
 #include "keystrs.h"
 #include "string2.h"
@@ -20,7 +22,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #define mPrintResult(func) \
 { \
 	if ( quiet ) \
-	    std::cout << "Data type in test: " << valtype << " \n"; \
+        { \
+	    std::cout << "\nData type in test: " << valtype; \
+	    std::cout << "\n====================\n"; \
+	} \
 	std::cerr << "Atomic = " << atomic.get() << " in function: "; \
 	std::cerr << func << " failed!\n"; \
 	stopflag = true; \
@@ -29,7 +34,7 @@ static const char* rcsID mUsedVar = "$Id$";
 else \
 { \
 	std::cout << "Atomic = " << atomic.get() << " in function: "; \
-	std::cerr << func << " passed!\n"; \
+	std::cerr << func << " OK\n"; \
 }
 
 #define mRunTest( func, finalval ) \
@@ -67,7 +72,10 @@ bool testAtomic( const char* valtype, bool quiet )
     Threads::Atomic<T> atomic( 0 );
 
     if ( !quiet )
-	std::cout << "Data type in test: " << valtype << " \n";
+    {
+	std::cout << "\nData type in test: " << valtype;
+	std::cout << "\n====================\n";
+    }
 
     mRunTest( !atomic.strongSetIfEqual( 1, 2 ), 0 ); //0
     mRunTest( !atomic.strongSetIfEqual( 1, 2 ), 0 ); //0
@@ -125,7 +133,8 @@ bool testAtomic( const char* valtype, bool quiet )
 	    break;
     }
     
-    BufferString message("strongSetIfEqual stresstest: nrattempts = ", toString(idx) );
+    BufferString message("strongSetIfEqual stresstest: nrattempts = ",
+	    		 toString(idx) );
     message += ", successfound=";
     message += toString(successfound);
     message += ", failurefound=";
@@ -142,15 +151,196 @@ bool testAtomic( const char* valtype, bool quiet )
     return true;
 }
 
+#undef mRunTest
+
+#define mRunTest( desc, test ) \
+{ \
+    if ( (test) ) \
+    { \
+	if ( !quiet ) \
+	{ \
+	    std::cout << desc << ":"; \
+	    std::cout << " OK\n"; \
+	} \
+    } \
+    else \
+    { \
+	std::cout << desc << ":"; \
+	std::cout << " Fail\n"; \
+	return false; \
+    } \
+}
+
+
+/* Locker class that
+1. Starts a thread that does a trylock
+2. Waits for the new thread has tried to do the trylock.
+3. At this point (after the contructor), the res_ variable can be examined
+4. The unLockIfLocked() is called, and the other thead unlocks the mutex
+5. After unLockIfLocked() is called, the class cannot be used again.
+*/
+
+template <class T>
+struct LockerTester : public CallBacker
+{
+    LockerTester( T& thelock )
+	: lock_( thelock )
+	, res_( false )
+	, hastried_( false )
+	, canunlock_( false )
+	, thread_( mCB( this, LockerTester, tryLock ) )
+    {
+	hastriedlock_.lock();
+	while ( !hastried_ )
+	    hastriedlock_.wait();
+	hastriedlock_.unLock();
+    }
+
+    void unLockIfLocked()
+    {
+	canunlocklock_.lock();
+	canunlock_ = true;
+	canunlocklock_.signal( true );
+	canunlocklock_.unLock();
+	
+	thread_.waitForFinish();
+    }
+
+    void tryLock(CallBacker*)
+    {
+	res_ = lock_.tryLock();
+	hastriedlock_.lock();
+	hastried_ = true;
+	hastriedlock_.signal( true );
+	hastriedlock_.unLock();
+
+	canunlocklock_.lock();
+	while ( !canunlock_ )
+	    canunlocklock_.wait();
+
+	canunlocklock_.unLock();
+	if ( res_ )
+	    lock_.unLock();
+    }
+
+    bool			res_;
+    bool			hastried_;
+    bool			canunlock_;
+    T&				lock_;
+    Threads::ConditionVar	hastriedlock_;
+    Threads::ConditionVar	canunlocklock_;
+
+    				//Must be at bottom
+    Threads::Thread		thread_;
+};
+
+
+template <class T> inline
+bool testLock( bool quiet, bool testcount, const char* type )
+{
+    if ( !quiet )
+    {
+	std::cout << "\n" << type << " tests\n====================\n";
+    }
+
+    {
+	T lock( false );
+	Threads::SpinLock* spinlock = testcount
+	    ? (Threads::SpinLock*) &lock
+	    : 0;
+
+	if ( spinlock )
+	    mRunTest( "Inital count", spinlock->count()==0 );
+	mRunTest( "tryLock on unlocked lock", lock.tryLock() );
+	if ( spinlock )
+	    mRunTest( "Locked count", spinlock->count()==1 );
+	mRunTest( "tryLock on locked lock", !lock.tryLock() );
+	if ( spinlock )
+	    mRunTest( "Locked count after lock attempt", spinlock->count()==1 );
+	lock.unLock();
+
+	//No lock
+	mRunTest( "tryLock on unlocked lock (2)", lock.tryLock() );
+	lock.unLock();
+
+	//No lock
+	LockerTester<T> otherthreadlocker( lock );
+	mRunTest( "tryLock on unlocked lock from other thread",
+		  otherthreadlocker.res_ );
+	mRunTest( "tryLock on lock that is locked in other thread",
+		  !lock.tryLock() );
+	otherthreadlocker.unLockIfLocked();
+
+	//No lock
+	lock.lock();
+	mRunTest( "tryLock on locked lock (2)", !lock.tryLock() );
+	lock.unLock();
+
+	lock.lock();
+	LockerTester<T> otherthreadlocker2( lock );
+	mRunTest( "tryLock on locked lock from other thread",
+		  !otherthreadlocker2.res_ );
+	otherthreadlocker2.unLockIfLocked();
+	lock.unLock();
+	//No lock
+    }
+
+
+    {
+	T rlock( true );
+	Threads::SpinLock* spinlock = testcount
+	    ? (Threads::SpinLock*) &rlock
+	    : 0;
+
+	if ( spinlock )
+	    mRunTest( "Inital count", spinlock->count()==0 );
+	mRunTest( "tryLock on unlocked recursive lock", rlock.tryLock() );
+	if ( spinlock )
+	    mRunTest( "Locked count on single locked recursive lock",
+		  spinlock->count()==1 );
+	mRunTest( "tryLock on locked recursive lock", rlock.tryLock() );
+	if ( spinlock )
+	    mRunTest( "Locked count on double locked recursive lock",
+		  spinlock->count()==2 );
+	rlock.unLock();
+	rlock.unLock();
+	mRunTest( "tryLock on unlocked recursive lock (2)", rlock.tryLock() );
+	rlock.unLock();
+
+	//No lock
+	LockerTester<T> otherthreadlocker( rlock );
+	mRunTest( "tryLock on unlocked lock from other thread",
+		  otherthreadlocker.res_ );
+	mRunTest( "tryLock on lock that is locked in other thread",
+		  !rlock.tryLock() );
+	otherthreadlocker.unLockIfLocked();
+
+	//No lock
+	rlock.lock();
+	mRunTest( "tryLock on locked recursive lock (2)", rlock.tryLock() );
+	rlock.unLock();
+	rlock.unLock();
+
+	rlock.lock();
+	LockerTester<T> otherthreadlocker2( rlock );
+	mRunTest( "tryLock on locked lock from other thread",
+		  !otherthreadlocker2.res_ );
+	otherthreadlocker2.unLockIfLocked();
+	rlock.unLock();
+    }
+
+    return true;
+}
+
 
 #define mRunTestWithType(thetype) \
     if ( !testAtomic<thetype>( " " #thetype " ", quiet ) ) \
-	return 1
+	ExitProgram( 1 );
 
 
 int main( int narg, char** argv )
 {
-    SetProgramArgs( narg, argv );
+    od_init_test_program( narg, argv );
 
     CommandLineParser parser;
     const bool quiet = parser.hasKey( sKey::Quiet() );
@@ -169,5 +359,12 @@ int main( int narg, char** argv )
     mRunTestWithType(unsigned int);
     mRunTestWithType(short);
     mRunTestWithType(unsigned short);
-    return 0;
+
+    if ( !testLock<Threads::Mutex>( quiet, false, "Mutex" ) )
+	ExitProgram( 1 );
+
+    if ( !testLock<Threads::SpinLock>( quiet, true, "SpinLock" ) )
+	ExitProgram( 1 );
+
+    ExitProgram( 0 );
 }

@@ -256,7 +256,14 @@ void uiStratSimpleLayerModelDisp::mouseMoved( CallBacker* )
     IOPar statusbarmsg;
     statusbarmsg.set( "Model Number", getClickedModelNr() );
     const MouseEvent& mev = gv_->getMouseEventHandler().event();
-    const float depth = yax_->getVal( mev.pos().y );
+    float depth = yax_->getVal( mev.pos().y );
+    if ( !Math::IsNormalNumber(depth) )
+    {
+	static bool havewarned = false;
+	if ( !havewarned )
+	    { havewarned = true; pErrMsg("Invalid number from axis handler"); }
+	depth = 0;
+    }
     statusbarmsg.set( "Depth", depth );
     infoChanged.trigger( statusbarmsg, this );
 }
@@ -455,6 +462,8 @@ void uiStratSimpleLayerModelDisp::updZoomBox()
 {
     if ( zoomwr_.width() < 0.001 || !zoomboxitm_ || !xax_ )
 	{ if ( zoomboxitm_ ) zoomboxitm_->setVisible( false ); return; }
+    if ( mIsUdf(zoomwr_.left()) )
+	getBounds();
 
     const int xpix = xax_->getPix( (float)zoomwr_.left() );
     const int ypix = yax_->getPix( (float)zoomwr_.top() );

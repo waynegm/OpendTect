@@ -31,17 +31,14 @@ public:
 	, yrg_( 0 )
 	, zrg_( 0 )
         , updatecoords_( updatecoords )
+	, modelslocker_(is.getSurface()->modelslock_)
     {
-	is.getSurface()->modelslock_.readLock();
 	MarchingCubeLookupTable::get(); // just to have the table ready
     }
 
     ~ExplicitMarchingCubesSurfaceUpdater()
     {
-	surface_.getSurface()->modelslock_.readUnLock();
-	delete xrg_;
-	delete yrg_;
-	delete zrg_;
+	delete xrg_; delete yrg_; delete zrg_;
     }
     
     void setUpdateCoords( bool yn ) { updatecoords_ = yn; }
@@ -139,6 +136,8 @@ protected:
     int					totalnr_;
     ExplicitMarchingCubesSurface&	surface_;
     bool				updatecoords_;
+    Threads::Locker			modelslocker_;
+
 };
 
 
@@ -199,17 +198,18 @@ void ExplicitMarchingCubesSurface::setSurface( MarchingCubesSurface* ns )
 }
 
 
+#define mGetWriteLock4CoordIndices(nm) \
+    Threads::Locker nm( coordindiceslock_, Threads::Locker::WriteLock )
+
+
 void ExplicitMarchingCubesSurface::removeAll( bool deep )
 {
-    coordindiceslock_.writeLock();
+    mGetWriteLock4CoordIndices(ilckr);
     if ( coordlist_ && deep )
     {
 	int idxs[] = { 0, 0, 0 };
 	if ( !coordindices_.isValidPos( idxs ) )
-	{
-	    coordindiceslock_.writeUnLock();
 	    return;
-	}
 	
 	do 
 	{
@@ -223,14 +223,12 @@ void ExplicitMarchingCubesSurface::removeAll( bool deep )
 	    }
 	} while ( coordindices_.next( idxs ) );
     }
+    coordindices_.setEmpty();
+    ilckr.unlockNow();
 
-    coordindices_.empty();
-    coordindiceslock_.writeUnLock();
-
-    geometrieslock_.writeLock();
-    ibuckets_.empty();
+    mGetIndexedShapeWriteLocker4Geometries();
+    ibuckets_.setEmpty();
     deepErase( geometries_ );
-    geometrieslock_.writeUnLock();
 }
 
 
@@ -396,7 +394,7 @@ ExplicitMarchingCubesSurface::getAxisScale( int dim ) const
 #define mEndTriangleStrip \
     const int bsz = coordindices.size(); \
     if ( bsz<3 ) \
-	coordindices.erase(); \
+	coordindices.setEmpty(); \
     else if ( coordindices[bsz-1]!=-1 ) \
     { \
 	if ( coordindices[bsz-2]==-1 ) \
@@ -435,19 +433,14 @@ bool ExplicitMarchingCubesSurface::updateIndices( const int* pos )
 
     Geometry::IndexedGeometry* bucket = 0;
     int bucketidx[3];
-    geometrieslock_.readLock();
+    Threads::Locker lckr( geometrieslock_ );
     if ( ibuckets_.findFirst( indicesbucket, bucketidx ) )
-    {
 	bucket = ibuckets_.getRef( bucketidx, 0 );
-	geometrieslock_.readUnLock();
-    }
     else
     {
-	if ( !geometrieslock_.convReadToWriteLock() &&
+	if ( !lckr.convertToWriteLock() &&
 	      ibuckets_.findFirst( indicesbucket, bucketidx ) )
-	{
 	    bucket = ibuckets_.getRef( bucketidx, 0 );
-	}
 	else
 	{
 	    bucket = new Geometry::IndexedGeometry(
@@ -457,9 +450,8 @@ bool ExplicitMarchingCubesSurface::updateIndices( const int* pos )
 	    ibuckets_.add( &bucket, indicesbucket );
 	    geometries_ += bucket;
 	}
-
-	geometrieslock_.writeUnLock();
     }
+    lckr.unlockNow();
 
     const char* tableindices = table.indices_[submodel];
 
@@ -588,7 +580,7 @@ bool ExplicitMarchingCubesSurface::updateIndices( const int* pos )
 
     mEndTriangleStrip;
 
-    Threads::MutexLocker lock( bucket->lock_ );
+    Threads::Locker lock( bucket->lock_ );
     bucket->coordindices_.append( coordindices );
     bucket->normalindices_.append( coordindices );
 
@@ -652,17 +644,13 @@ bool ExplicitMarchingCubesSurface::getCoordIndices( const int* pos, int* res )
 	return false;
 
     int cidxs[3];
-    coordindiceslock_.readLock();
+    Threads::Locker lckr( coordindiceslock_ );
     if ( !coordindices_.findFirst( pos, cidxs ) )
-    {
-	coordindiceslock_.readUnLock();
 	return false;
-    }
 
     int* indices = &coordindices_.getRef( cidxs, 0 );
 
     memcpy( res, indices, sizeof(int)*3 );
-    coordindiceslock_.readUnLock();
     return true;
 }
 
@@ -713,30 +701,23 @@ bool ExplicitMarchingCubesSurface::updateCoordinates( const int* modelidxs )
     if ( !surface_->models_.getPos( modelidxs, pos ) )
 	return false;
 
-
     int cidxs[3];
-    coordindiceslock_.readLock();
+    Threads::Locker lckr( coordindiceslock_ );
     if ( !coordindices_.findFirst( pos, cidxs ) )
     {
 	int indices[] = { -1, -1, -1 };
 	if ( !updateCoordinate( pos, modelidxs, indices ) )
-	{
-	    coordindiceslock_.readUnLock();
 	    return false;
-	}
 
-	if ( coordindiceslock_.convReadToWriteLock() ||
+	if ( lckr.convertToWriteLock() ||
 	     !coordindices_.findFirst( pos, cidxs ) )
 	    coordindices_.add( indices, pos );
 
-	coordindiceslock_.writeUnLock();
 	return true;
     }
 
     int* indices = &coordindices_.getRef( cidxs, 0 );
     const int res = updateCoordinate( pos, modelidxs, indices );
-    coordindiceslock_.readUnLock();
-
     return res;
 }
 

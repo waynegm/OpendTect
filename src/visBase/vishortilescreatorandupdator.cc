@@ -369,7 +369,7 @@ void HorTilesCreatorAndUpdator::updateTilesAutoResolution(
 
     HorizonSectionTile** tileptrs = horsection_->tiles_.getData();
 
-    Threads::SpinLockLocker applyreslock ( spinlock_ ); // below process should be fast
+    spinlock_.lock();
     for ( int idx=0; idx<tilesz; idx++ )
     {
 	if ( tileptrs[idx] )
@@ -378,6 +378,7 @@ void HorTilesCreatorAndUpdator::updateTilesAutoResolution(
 		tileptrs[idx]->getActualResolution() );
 	}
     }
+    spinlock_.unLock();
 }
 
 

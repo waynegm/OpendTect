@@ -10,6 +10,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "dataclipper.h"
 
 #include "arraynd.h"
+#include "atomic.h"
 #include "math2.h"
 #include "iopar.h"
 #include "simpnumer.h"
@@ -107,10 +108,10 @@ public:
 	
 	if ( localsamples.size() )
 	{
-	    Threads::SpinLockLocker lock( lock_ );
-	   
+	    lock_.lock();
 	    append( samples_, localsamples );
 	    absoluterg_.include( localrg, false );
+	    lock_.unLock();
 	}
 	
 	return true;

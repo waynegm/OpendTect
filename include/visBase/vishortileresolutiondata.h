@@ -20,6 +20,7 @@ ________________________________________________________________________
 #include "typeset.h"
 #include "vistransform.h"
 #include "zaxistransform.h"
+#include "thread.h"
 
 #if defined(visBase_EXPORTS) || defined(VISBASE_EXPORTS)
 #include <osg/BoundingBox>

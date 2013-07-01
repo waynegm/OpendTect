@@ -15,6 +15,7 @@ ________________________________________________________________________
 
 #include "threadwork.h"
 #include "task.h"
+#include "thread.h"
 #include "ranges.h"
 
 namespace osg { class CullStack; }

@@ -16,6 +16,8 @@ ________________________________________________________________________
 #include "geomelement.h"
 #include "rowcol.h"
 #include "refcount.h"
+#include "thread.h"
+
 
 class TaskRunner;
 

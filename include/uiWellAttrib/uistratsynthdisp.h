@@ -15,10 +15,14 @@ ________________________________________________________________________
 #include "uiwellattribmod.h"
 #include "uigroup.h"
 #include "uiflatviewslicepos.h"
-#include "stratsynth.h"
 
 class TimeDepthModel;
 class SeisTrcBuf;
+class StratSynth;
+class SyntheticData;
+class PropertyRef;
+class PropertyRefSelection;
+class TaskRunner;
 class Wavelet;
 class uiComboBox;
 class uiFlatViewer;
@@ -29,7 +33,7 @@ class uiSeisWaveletSel;
 class uiSynthSlicePos;
 class uiToolButton;
 class uiToolButtonSetup;
-namespace Strat { class LayerModel; }
+namespace Strat { class LayerModel; class LayerModelProvider; }
 namespace FlatView { class AuxData; }
 namespace PreStackView { class uiSyntheticViewer2DMainWin; }
 
@@ -38,14 +42,16 @@ mExpClass(uiWellAttrib) uiStratSynthDisp : public uiGroup
 {
 public:
 
-    			uiStratSynthDisp(uiParent*,const Strat::LayerModel&,
-					 const Strat::LayerModel&);
+    			uiStratSynthDisp(uiParent*,
+					 const Strat::LayerModelProvider&);
     			~uiStratSynthDisp();
 
     const Strat::LayerModel& layerModel() const;	
     const char*		levelName() const;
     const MultiID&	waveletID() const;
     const Wavelet*	getWavelet() const;
+    inline const StratSynth& curSS() const
+    			{ return *(!useed_ ? stratsynth_ : edstratsynth_); }
 
     const ObjectSet<SyntheticData>& getSynthetics() const;
     SyntheticData*	getCurrentSyntheticData(bool wva=true) const;
@@ -100,7 +106,7 @@ protected:
     int			longestaimdl_;
     StratSynth*		stratsynth_;
     StratSynth*		edstratsynth_;
-    const Strat::LayerModel& lm_;
+    const Strat::LayerModelProvider& lmp_;
     int			selectedtrace_;
     int			dispeach_;
     float		dispskipz_;
@@ -140,6 +146,8 @@ protected:
     void		updateFields();
     void		updateSynthetic(const char* nm,bool wva);
     void		updateSyntheticList(bool wva);
+    inline StratSynth&	curSS()
+    			{ return *(!useed_ ? stratsynth_ : edstratsynth_); }
 
     void		drawLevel();
     void		displayFRText();

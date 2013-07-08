@@ -202,6 +202,10 @@ Threads::Mutex::Mutex( bool recursive )
     : qmutex_( new QMutex( recursive
 		? QMutex::Recursive : QMutex::NonRecursive) )
 #endif
+#ifdef __debug__
+    , lockingthread_( 0 )
+    , count_( 0 )
+#endif
 {}
 
 

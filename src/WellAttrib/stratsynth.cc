@@ -11,6 +11,8 @@ static const char* rcsID mUsedVar = "$Id$";
 
 
 #include "stratsynth.h"
+#include "syntheticdataimpl.h"
+#include "stratsynthlevel.h"
 
 #include "array1dinterpol.h"
 #include "angles.h"
@@ -148,19 +150,27 @@ void SynthGenParams::createName( BufferString& nm ) const
 
 
 
-StratSynth::StratSynth( const Strat::LayerModel& lm )
-    : lm_(lm)
+StratSynth::StratSynth( const Strat::LayerModelProvider& lmp, bool useed )
+    : lmp_(lmp)
+    , useed_(useed)
     , level_(0)  
     , tr_(0)
     , wvlt_(0)
     , lastsyntheticid_(0)
-{}
+{
+}
 
 
 StratSynth::~StratSynth()
 {
     deepErase( synthetics_ );
     setLevel( 0 );
+}
+
+
+const Strat::LayerModel& StratSynth::layMod() const
+{
+    return lmp_.getEdited( useed_ );
 }
 
 
@@ -248,7 +258,7 @@ SyntheticData* StratSynth::addDefaultSynthetic()
     SyntheticData* sd = addSynthetic();
 
     mDynamicCastGet(PostStackSyntheticData*,psd,sd);
-    if ( psd )  generateOtherQuantities( *psd, lm_ );
+    if ( psd )  generateOtherQuantities( *psd, layMod() );
 
     return sd;
 }
@@ -541,10 +551,10 @@ bool StratSynth::createElasticModels()
 {
     clearElasticModels();
     
-    if ( lm_.isEmpty() )
+    if ( layMod().isEmpty() )
     	return false;
     
-    ElasticModelCreator emcr( lm_, aimodels_ );
+    ElasticModelCreator emcr( layMod(), aimodels_ );
     if ( !TaskRunner::execute(tr_,emcr) )
 	return false;
     bool modelsvalid = false;
@@ -561,7 +571,7 @@ bool StratSynth::createElasticModels()
     if ( !modelsvalid )
     	return false;
     
-    return adjustElasticModel( lm_, aimodels_ );
+    return adjustElasticModel( layMod(), aimodels_ );
 }
 
 
@@ -569,7 +579,7 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar )
 {
     errmsg_.setEmpty(); 
 
-    if ( lm_.isEmpty() ) 
+    if ( layMod().isEmpty() ) 
     {
 	errmsg_ = "Empty layer model.";
 	return 0;
@@ -602,7 +612,7 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar )
 
     ObjectSet<SeisTrcBuf> tbufs;
     CubeSampling cs( false );
-    for ( int imdl=0; imdl<lm_.size(); imdl++ )
+    for ( int imdl=0; imdl<layMod().size(); imdl++ )
     {
 	Seis::RaySynthGenerator::RayModel& rm = synthgen.result( imdl );
 	ObjectSet<SeisTrc> trcs; rm.getTraces( trcs, true );
@@ -708,7 +718,7 @@ void StratSynth::generateOtherQuantities()
 	mDynamicCastGet(const PostStackSyntheticData*,pssd,sd);
 	mDynamicCastGet(const PropertyRefSyntheticData*,prsd,sd);
 	if ( !pssd || prsd ) continue;
-	return generateOtherQuantities( *pssd, lm_ );
+	return generateOtherQuantities( *pssd, layMod() );
     }
 }
 
@@ -982,15 +992,40 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
 }
 
 
-void StratSynth::snapLevelTimes( SeisTrcBuf& trcs, 
-			const ObjectSet<const TimeDepthModel>& d2ts ) 
+void StratSynth::getLevelDepths( const Strat::Level& lvl,
+				 TypeSet<float>& zvals ) const
+{
+    zvals.setEmpty();
+    for ( int iseq=0; iseq<layMod().size(); iseq++ )
+	zvals += layMod().sequence(iseq).depthPositionOf( lvl );
+}
+
+
+static void convD2T( TypeSet<float>& zvals,
+		     const ObjectSet<const TimeDepthModel>& d2ts )
+{
+    for ( int imdl=0; imdl<zvals.size(); imdl++ )
+	zvals[imdl] = d2ts.validIdx(imdl) && !mIsUdf(zvals[imdl]) ? 
+	    	d2ts[imdl]->getTime( zvals[imdl] ) : mUdf(float);
+}
+
+
+void StratSynth::getLevelTimes( const Strat::Level& lvl,
+				const ObjectSet<const TimeDepthModel>& d2ts,
+				TypeSet<float>& zvals ) const
+{
+    getLevelDepths( lvl, zvals );
+    convD2T( zvals, d2ts );
+}
+
+
+void StratSynth::getLevelTimes( SeisTrcBuf& trcs, 
+			const ObjectSet<const TimeDepthModel>& d2ts ) const
 {
     if ( !level_ ) return;
 
     TypeSet<float> times = level_->zvals_;
-    for ( int imdl=0; imdl<times.size(); imdl++ )
-	times[imdl] = d2ts.validIdx(imdl) && !mIsUdf(times[imdl]) ? 
-	    	d2ts[imdl]->getTime( times[imdl] ) : mUdf(float);
+    convD2T( times, d2ts );
 
     for ( int idx=0; idx<trcs.size(); idx++ )
     {
@@ -1021,7 +1056,7 @@ void StratSynth::snapLevelTimes( SeisTrcBuf& trcs,
 }
 
 
-void StratSynth::setLevel( const Level* lvl )
+void StratSynth::setLevel( const StratSynthLevel* lvl )
 { delete level_; level_ = lvl; }
 
 
@@ -1157,6 +1192,17 @@ const SeisTrc* PostStackSyntheticData::getTrace( int seqnr ) const
 { return postStackPack().trcBuf().get( seqnr ); }
 
 
+SeisTrcBufDataPack& PostStackSyntheticData::postStackPack()
+{
+    return static_cast<SeisTrcBufDataPack&>( datapack_ );
+}
+
+
+const SeisTrcBufDataPack& PostStackSyntheticData::postStackPack() const
+{
+    return static_cast<const SeisTrcBufDataPack&>( datapack_ );
+}
+
 
 PreStackSyntheticData::PreStackSyntheticData( const SynthGenParams& sgp,
 					     PreStack::GatherSetDataPack& dp)
@@ -1174,6 +1220,18 @@ PreStackSyntheticData::~PreStackSyntheticData()
 {
     if ( angledp_ )
 	DPM( DataPackMgr::CubeID() ).release( angledp_->id() );
+}
+
+
+PreStack::GatherSetDataPack& PreStackSyntheticData::preStackPack()
+{
+    return static_cast<PreStack::GatherSetDataPack&>( datapack_ );
+}
+
+
+const PreStack::GatherSetDataPack& PreStackSyntheticData::preStackPack() const
+{
+    return static_cast<const PreStack::GatherSetDataPack&>( datapack_ );
 }
 
 

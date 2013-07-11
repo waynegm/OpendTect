@@ -58,7 +58,6 @@ public:
     bool		createsNormals() const       { return true; }
     
     bool		update(bool forceall,TaskRunner*);
-    void		setRightHandedNormals(bool yn);
 
 protected:
 
@@ -67,6 +66,9 @@ protected:
     void		removeAll(bool);
     void		addToGeometries(IndexedGeometry*);
     void		removeFromGeometries(const IndexedGeometry*);
+    void		addToTrianglePrimitiveSet(Geometry::PrimitiveSet*,
+						  int,int,int);
+
 
     bool		displaypolygons_;
     bool		displaybody_;

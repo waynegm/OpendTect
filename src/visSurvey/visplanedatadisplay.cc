@@ -147,9 +147,7 @@ PlaneDataDisplay::PlaneDataDisplay()
     rposcache_.allowNull( true );
     dragger_->ref();
 
-    int channelidx = childIndex( channels_->getInventorNode() );
-
-    insertChild( channelidx++, dragger_->getInventorNode() );
+    addChild( dragger_->osgNode() );
     dragger_->motion.notify( mCB(this,PlaneDataDisplay,draggerMotion) );
     dragger_->finished.notify( mCB(this,PlaneDataDisplay,draggerFinish) );
     dragger_->rightClicked()->notify(
@@ -168,7 +166,7 @@ PlaneDataDisplay::PlaneDataDisplay()
     material_->setDiffIntensity( 0.2 );
 
     gridlines_->ref();
-    insertChild( channelidx, gridlines_->getInventorNode() );
+    addChild( gridlines_->osgNode() );
 
     updateRanges( true, true );
 

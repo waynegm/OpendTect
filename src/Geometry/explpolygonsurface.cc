@@ -104,9 +104,10 @@ bool ExplPolygonSurface::update( bool forceall, TaskRunner* tr )
 
     if ( displaypolygons_ )
     {
-	polygondisplay_->coordindices_.erase();
+	Geometry::PrimitiveSet* idxps = polygondisplay_->getCoordsPrimitiveSet();
+	idxps->setEmpty();
 	for ( int idx=0; idx<plgcrdindices.size(); idx++ )
-    	    polygondisplay_->coordindices_ += plgcrdindices[idx];
+    	    idxps->append( plgcrdindices[idx] );
 
 	polygondisplay_->ischanged_ = true;
     }
@@ -114,11 +115,26 @@ bool ExplPolygonSurface::update( bool forceall, TaskRunner* tr )
     if ( displaybody_ && !updateBodyDisplay() )
 	return false;
 
-    setRightHandedNormals( true );
     needsupdate_ = true;
     return true;
 }
 
+void ExplPolygonSurface::addToTrianglePrimitiveSet(Geometry::PrimitiveSet* ps, 
+    int idx1, int idx2, int idx3 )
+{
+    if ( !ps ) return;
+    Geometry::IndexedPrimitiveSet* idxps = (Geometry::IndexedPrimitiveSet*) ps;
+
+    const int pssize = idxps->size();
+    const int nrtriangles = pssize/3;
+
+    const bool reverse = bool( nrtriangles%2 ) ? false : true;
+    const int startidx = reverse ? idx3 : idx1;
+    const int endidx = reverse ? idx1 : idx3;
+    idxps->append( startidx );
+    idxps->append( idx2 );
+    idxps->append( endidx );
+}
 
 bool ExplPolygonSurface::updateBodyDisplay()
 {
@@ -126,13 +142,14 @@ bool ExplPolygonSurface::updateBodyDisplay()
     if ( sampsz<3 || surface_->nrPolygons()<2 )
 	return true;
 
+    Geometry::IndexedPrimitiveSet* idxps = 
+	(Geometry::IndexedPrimitiveSet*)bodytriangle_->getCoordsPrimitiveSet();
+
     if ( sampsz==3 )
     {
-	bodytriangle_->coordindices_.erase();
- 	bodytriangle_->coordindices_ += 0;
- 	bodytriangle_->coordindices_ += 1;
- 	bodytriangle_->coordindices_ += 2;
-       	bodytriangle_->coordindices_ += -1;
+	idxps->setEmpty();
+	addToTrianglePrimitiveSet( 
+	    bodytriangle_->getCoordsPrimitiveSet(), 0, 1, 2 );
  	bodytriangle_->ischanged_ = true;
  	return true;	
     }
@@ -169,7 +186,7 @@ bool ExplPolygonSurface::updateBodyDisplay()
 	    invalidknots += idx;
     }
    
-    bodytriangle_->coordindices_.erase();
+    idxps->setEmpty();
     bool allvalid = !invalidknots.size();
     for ( int idx=0; idx<nrindices/3; idx++ )
     {
@@ -178,10 +195,9 @@ bool ExplPolygonSurface::updateBodyDisplay()
 			    invalidknots.validIdx(sampleindices_[3*idx+2]) ) )
 	    continue;
 
-	bodytriangle_->coordindices_ += sampleindices_[3*idx];
-	bodytriangle_->coordindices_ += sampleindices_[3*idx+1];
-	bodytriangle_->coordindices_ += sampleindices_[3*idx+2];
-	bodytriangle_->coordindices_ += -1;
+	addToTrianglePrimitiveSet( 
+	    bodytriangle_->getCoordsPrimitiveSet(), sampleindices_[3*idx], 
+	    sampleindices_[3*idx+1], sampleindices_[3*idx+2] );
     }
 
     bodytriangle_->ischanged_ = true;
@@ -323,28 +339,6 @@ void ExplPolygonSurface::removeFromGeometries( const IndexedGeometry* ig )
 }
 
 
-void ExplPolygonSurface::setRightHandedNormals( bool yn )
-{
-    if ( yn==righthandednormals_ )
-	return;
-
-    IndexedShape::setRightHandedNormals( yn );
-
-    if ( !normallist_ )
-	return;
-
-    int id = -1;
-    while ( true )
-    {
-	id = normallist_->nextID( id );
-	if ( id==-1 )
-	    break;
-
-	normallist_->set( id, -normallist_->get( id ) );
-    }
-}
-
-
 void ExplPolygonSurface::updateGeometries()
 {
     if ( !displaybody_ && bodytriangle_ )
@@ -354,7 +348,7 @@ void ExplPolygonSurface::updateGeometries()
     else if ( !bodytriangle_ && displaybody_ )
     {
 	bodytriangle_ = new IndexedGeometry( IndexedGeometry::TriangleStrip,
-	       IndexedGeometry::PerVertex, coordlist_, normallist_, 0 );
+					     coordlist_, normallist_, 0 );
 
 	addToGeometries( bodytriangle_ );
     }
@@ -366,7 +360,7 @@ void ExplPolygonSurface::updateGeometries()
     else if ( !polygondisplay_ && displaypolygons_ )
     {
 	polygondisplay_ = new IndexedGeometry( IndexedGeometry::Lines, 
-		IndexedGeometry::PerFace, coordlist_, normallist_, 0 );
+					       coordlist_, normallist_, 0 );
 
 	addToGeometries( polygondisplay_ );
     }

@@ -751,12 +751,17 @@ bool FaultTraceExtractor3D::extractFaultTrace( int idx )
     if ( !idxdshape->update(true,0) )
 	return false;
 
-    const Geometry::IndexedGeometry* idxgeom = idxdshape->getGeometry()[0];
-    if ( !idxgeom ) return false;
+    Geometry::IndexedGeometry* idxgeom = idxdshape->getGeometry()[0];
+    
+    Geometry::PrimitiveSet* idxps = idxgeom->getCoordsPrimitiveSet();
+
+    TypeSet<int> coordindices;
+    for ( int index = 0; index< idxps->size(); index++ )
+	coordindices += idxps->get( index );
 
     FaultTrace* flttrc = clist->clone();
     flttrc->ref();
-    flttrc->setIndices( idxgeom->coordindices_ );
+    flttrc->setIndices( coordindices );
     flttrc->setIsInl( isinl );
     flttrc->setEditedOnCrl( editedoncrl_ );
     flttrc->setLineNr( linenr );

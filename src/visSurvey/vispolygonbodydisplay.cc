@@ -52,7 +52,7 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     , displaytransform_( 0 )
     , nearestpolygon_( mUdf(int) )
     , nearestpolygonmarker_( visBase::IndexedPolyLine3D::create() )
-    , shapehints_( visBase::ShapeHints::create() )
+  //  , shapehints_( visBase::ShapeHints::create() )
     , showmanipulator_( false )
     , displaypolygons_( false )
     , drawstyle_( new visBase::DrawStyle )
@@ -62,22 +62,22 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     if ( !nearestpolygonmarker_->getMaterial() )
 	nearestpolygonmarker_->setMaterial( new visBase::Material );
     //nearestpolygonmarker_->insertNode(
-	    //nearestpolygonmarkerpickstyle_->getInventorNode() );
-    addChild( nearestpolygonmarker_->getInventorNode() );
+	    //nearestpolygonmarkerpickstyle_->osgNode() );
+    addChild( nearestpolygonmarker_->osgNode() );
 
     getMaterial()->setAmbience( 0.2 );
-    shapehints_->ref();
-    addChild( shapehints_->getInventorNode() );
-    shapehints_->setVertexOrder( visBase::ShapeHints::CounterClockWise );
+    //shapehints_->ref();
+    //addChild( shapehints_->osgNode() );
+    //shapehints_->setVertexOrder( visBase::ShapeHints::CounterClockWise );
 
     drawstyle_->ref();
-    //addChild( drawstyle_->getInventorNode() );
+    //addChild( drawstyle_->osgNode() );
     drawstyle_->setLineStyle( LineStyle(LineStyle::Solid,2) );
 
     intsurf_->ref();
     intsurf_->turnOn( false );
     //intsurf_->turnOnForegroundLifter( true );
-    addChild( intsurf_->getInventorNode() );
+    addChild( intsurf_->osgNode() );
 }
 
 
@@ -116,13 +116,13 @@ PolygonBodyDisplay::~PolygonBodyDisplay()
     delete explicitpolygons_;
     delete explicitintersections_;
 
-    shapehints_->unRef();
+//    shapehints_->unRef();
     nearestpolygonmarker_->unRef();
 
-    //removeChild( drawstyle_->getInventorNode() );
+    //removeChild( drawstyle_->osgNode() );
     drawstyle_->unRef(); drawstyle_ = 0;
     
-    removeChild( intsurf_->getInventorNode() );
+    removeChild( intsurf_->osgNode() );
     intsurf_->unRef();
 }
 
@@ -236,7 +236,7 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
 	bodydisplay_->setMaterial( 0 );
 	bodydisplay_->setSelectable( false );
 	bodydisplay_->setRightHandSystem( righthandsystem_ );
-	addChild( bodydisplay_->getInventorNode() );
+	addChild( bodydisplay_->osgNode() );
     }
 
     if ( !intersectiondisplay_ )
@@ -247,7 +247,7 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
 	intersectiondisplay_->setMaterial( 0 );
 	intersectiondisplay_->setSelectable( false );
 	intersectiondisplay_->setRightHandSystem( righthandsystem_ );
-	addChild( intersectiondisplay_->getInventorNode() );
+	addChild( intersectiondisplay_->osgNode() );
 	intersectiondisplay_->turnOn( false );
 
 	setLineRadius( intersectiondisplay_ );
@@ -262,7 +262,7 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
 	    polygondisplay_->setMaterial( new visBase::Material );
 	polygondisplay_->setSelectable( false );
 	polygondisplay_->setRightHandSystem( righthandsystem_ );
-	addChild( polygondisplay_->getInventorNode() );
+	addChild( polygondisplay_->osgNode() );
 
 	setLineRadius( polygondisplay_ );
     }
@@ -305,7 +305,7 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
 	viseditor_->setSceneEventCatcher( eventcatcher_ );
 	viseditor_->setDisplayTransformation( displaytransform_ );
 	viseditor_->sower().alternateSowingOrder();
-	addChild( viseditor_->getInventorNode() );
+	addChild( viseditor_->osgNode() );
     }
 
     RefMan<MPE::ObjectEditor> editor = MPE::engine().getEditor( emid, true );

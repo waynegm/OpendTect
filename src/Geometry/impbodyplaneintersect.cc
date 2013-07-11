@@ -102,9 +102,7 @@ bool ImplicitBodyPlaneIntersector::compute()
     if ( !tesselator.execute() )
 	return false;
 
-    geo->coordindices_ = tesselator.getIndices();
-    if ( normallist )
-	geo->normalindices_ = geo->coordindices_;
+    geo->appendCoordIndices( tesselator.getIndices() );
     geo->ischanged_ = true;
 
     return true;

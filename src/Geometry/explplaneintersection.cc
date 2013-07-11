@@ -143,25 +143,28 @@ bool doWork( od_int64 start, od_int64 stop, int )
 
     for ( int idx=mCast(int,start); idx<=stop; idx++, addToNrDone(1) )
     {
-	const IndexedGeometry* inputgeom =
+	const IndexedGeometry* geom =
 	    explsurf_.getShape()->getGeometry()[idx];
+	IndexedGeometry* inputgeom = const_cast<IndexedGeometry*>( geom );
+
+	Geometry::PrimitiveSet* idxps = inputgeom->getCoordsPrimitiveSet();
 
 	Threads::Locker inputlock( inputgeom->lock_ );
 
-	if ( inputgeom->type_==IndexedGeometry::Triangles )
+	if ( inputgeom->primitivetype_==IndexedGeometry::Triangles )
 	{
-	    for ( int idy=0; idy<inputgeom->coordindices_.size()-2; idy+=3 )
+	    for ( int idy=0; idy<idxps->size()-2; idy+=3 )
 	    {
-		intersectTriangle( inputgeom->coordindices_[idy],
-				   inputgeom->coordindices_[idy+1],
-				   inputgeom->coordindices_[idy+2] );
+		intersectTriangle( idxps->get(idy),
+				   idxps->get(idy+1),
+				   idxps->get(idy+2) );
 	    }
 	}
-	else if ( inputgeom->type_==IndexedGeometry::TriangleStrip )
+	else if ( inputgeom->primitivetype_==IndexedGeometry::TriangleStrip )
 	{
-	    for ( int idy=0; idy<inputgeom->coordindices_.size(); idy++ )
+	    for ( int idy=0; idy<idxps->size(); idy++ )
 	    {
-		if ( inputgeom->coordindices_[idy]==-1 )
+		if ( idxps->get(idy)==-1 )
 		{
 		    idy += 2;
 		    continue;
@@ -170,17 +173,17 @@ bool doWork( od_int64 start, od_int64 stop, int )
 		if ( idy<2 )
 		    continue;
 
-		intersectTriangle( inputgeom->coordindices_[idy-2],
-				   inputgeom->coordindices_[idy-1],
-				   inputgeom->coordindices_[idy] );
+		intersectTriangle( idxps->get(idy-2),
+				   idxps->get(idy-1),
+				   idxps->get(idy) );
 	    }
 	}
-	else if ( inputgeom->type_==IndexedGeometry::TriangleFan )
+	else if ( inputgeom->primitivetype_==IndexedGeometry::TriangleFan )
 	{
 	    int center = 0;
-	    for ( int idy=0; idy<inputgeom->coordindices_.size(); idy++ )
+	    for ( int idy=0; idy<idxps->size(); idy++ )
 	    {
-		if ( inputgeom->coordindices_[idy]==-1 )
+		if ( idxps->get(idy)==-1 )
 		{
 		    center = idy+1;
 		    idy += 2;
@@ -190,9 +193,9 @@ bool doWork( od_int64 start, od_int64 stop, int )
 		if ( idy<2 )
 		    continue;
 
-		intersectTriangle( inputgeom->coordindices_[center],
-				   inputgeom->coordindices_[idy-1],
-				   inputgeom->coordindices_[idy] );
+		intersectTriangle( idxps->get(center),
+				   idxps->get(idy-1),
+				   idxps->get(idy) );
 	    }
 	}
     }
@@ -248,6 +251,9 @@ void intersectTriangle( int lci0, int lci1, int lci2 )
 
     const Coord3 trianglenormal = ((c1-c0).cross(c2-c0)).normalize();
     const Plane3 triangleplane( trianglenormal, c0, false );
+
+    Geometry::PrimitiveSet* idxps = output_->getCoordsPrimitiveSet();
+
 
     for ( int planeidx=explsurf_.nrPlanes()-1; planeidx>=0; planeidx-- )
     {
@@ -387,11 +393,9 @@ void intersectTriangle( int lci0, int lci1, int lci2 )
 
 	Threads::Locker reslock( output_->lock_ );
 
-	if ( output_->coordindices_.size() )
-	    output_->coordindices_ += -1;
+	idxps->append( ci0 );
+	idxps->append( ci1 );
 
-	output_->coordindices_ += ci0;
-	output_->coordindices_ += ci1;
 	output_->ischanged_ = true;
 
 	TypeSet<Coord3>& crds = explsurf_.pis_[planeidx].knots_;
@@ -626,7 +630,6 @@ bool ExplPlaneIntersection::update( bool forceall, TaskRunner* tr )
     if ( !intersection_ )
     {
 	intersection_ = new IndexedGeometry( IndexedGeometry::Lines,
-					     IndexedGeometry::PerFace,
 					     coordlist_ );
 	mGetIndexedShapeWriteLocker4Geometries();
 	geometries_ += intersection_;

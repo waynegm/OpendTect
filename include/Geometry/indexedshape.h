@@ -13,8 +13,8 @@ ________________________________________________________________________
 
 #include "geometrymod.h"
 #include "sets.h"
+#include "thread.h"
 #include "callback.h"
-#include "threadlock.h"
 #include "ptrman.h"
 #include "refcount.h"
 #include "geometry.h"
@@ -28,15 +28,19 @@ namespace Geometry
     
 mExpClass(Geometry) PrimitiveSet
 { mRefCountImplNoDestructor(PrimitiveSet);
+
 public:
     enum 	PrimitiveType{Points,Lines,Triangles,
 			      LineStrips,TriangleStrip,TriangleFan,Other};
 		DeclareEnumUtils(PrimitiveType);
     
-    
-
     virtual int			size() const				= 0;
     virtual int			get(int) const 				= 0;
+    virtual int			indexOf(const int)			= 0;
+    virtual void		append( int )				= 0;
+    virtual void		append(const int*,int num)		= 0;
+    virtual void		setEmpty()				= 0;
+    virtual void		getAll(TypeSet<int>&,bool) const;
     
     virtual PrimitiveType	getPrimitiveType() const;
     virtual void		setPrimitiveType(PrimitiveType tp);
@@ -53,13 +57,9 @@ public:
     static IndexedPrimitiveSet*	create(bool large);
 				/*!<Set large if you will have larger indices
 				    than 65535 */
-    
-    virtual void		setEmpty()			= 0;
-    virtual void		append( int )			= 0;
     virtual int			pop()				= 0;
     virtual int			set(int,int) 			= 0;
     virtual void		set(const int*,int num)		= 0;
-    virtual void		append(const int*,int num)	= 0;
 };
    
     
@@ -69,6 +69,8 @@ public:
     static RangePrimitiveSet*	create();
     virtual void		setRange(const Interval<int>&)	= 0;
     virtual Interval<int>	getRange() const		= 0;
+    virtual int			indexOf(const int)		= 0;
+    virtual void		getAll(TypeSet<int>&,bool) const;
 };
     
     
@@ -88,18 +90,18 @@ protected:
     static PtrMan<PrimitiveSetCreator>	creator_;
 };
 
-/*!A geomtetry that is defined by a number of coordinates (defined outside
-   the class), by specifying connections between the coordiates. */
+/*!A geometry that is defined by a number of coordinates (defined outside
+   the class), by specifying connections between the coordinates. */
 
 mExpClass(Geometry) IndexedGeometry
 {
 public:
     enum	Type { Points, Lines, Triangles, TriangleStrip, TriangleFan };
-    enum	NormalBinding { PerVertex, PerFace };
+    enum	SetType { IndexSet = 0, RangeSet };
 
-    		IndexedGeometry(Type,NormalBinding=PerFace,
-				Coord3List* coords=0, Coord3List* normals=0,
-				Coord3List* texturecoords=0);
+    		IndexedGeometry(Type,Coord3List* coords=0, Coord3List* normals=0,
+				Coord3List* texturecoords=0,
+				SetType settype =IndexSet );
 		/*!<If coords or normals are given, used indices will be
 		    removed when object deleted or removeAll is called. If
 		    multiple geometries are sharing the coords/normals, 
@@ -115,29 +117,31 @@ public:
     void	hide(bool yn)				{ ishidden_ = yn; }
 
 
+    void	  appendCoordIndices(const TypeSet<int>&);
+    PrimitiveSet* getCoordsPrimitiveSet()		{ return primitiveset_; }
+
+
     mutable Threads::Lock		lock_;
-
-    Type				type_;
-    NormalBinding			normalbinding_;
-    
-    ObjectSet<PrimitiveSet>		primitivesets_;
-
-    TypeSet<int>			coordindices_;
-    TypeSet<int>			texturecoordindices_;
-    TypeSet<int>			normalindices_;
-
     mutable bool			ischanged_;
-	
-protected:
-    bool				ishidden_;
 
+    Type				primitivetype_;
+    SetType				primitivesettype_;
+
+
+protected:
+    void	appendCoordIndicesAsTriangles(const TypeSet<int>&);
+    void	appendCoordIndicesAsTriangleStrips(const TypeSet<int>&);
+    void	appendCoordIndicesAsTriangleFan(const TypeSet<int>&);
+
+    bool				ishidden_;
     Coord3List*				coordlist_;
     Coord3List*				texturecoordlist_;
     Coord3List*				normallist_;
+    Geometry::PrimitiveSet*		primitiveset_;
 };
 
 
-/*!Defines a shape with coodinates and connections between them. The shape
+/*!Defines a shape with coordinates and connections between them. The shape
    is defined in an ObjectSet of IndexedGeometry. All IndexedGeometry share
    one common coordinate and normal list. */
 
@@ -151,7 +155,7 @@ public:
     virtual bool	needsUpdate() const			{ return true; }
     virtual bool	update(bool forceall,TaskRunner* =0)	{ return true; }
 
-    virtual void	setRightHandedNormals(bool);
+    virtual void	setRightHandedNormals(bool) {}
     virtual void	removeAll(bool deep);
     			/*!<deep will remove all things from lists
 			    (coords,normals++). Non-deep will just leave them
@@ -162,9 +166,17 @@ public:
     virtual bool	createsTextureCoords() const 	{ return false; }
 
     const ObjectSet<IndexedGeometry>&	getGeometry() const;
+    ObjectSet<IndexedGeometry>&	getGeometry();
+    const Coord3List*		coordList() const ;
+    Coord3List*			coordList();
+    //const Coord3List*		coordList() const 	{ return coordlist_; }
+    //Coord3List*			coordList()	 	{ return coordlist_; }
 
-    const Coord3List*		coordList() const 	{ return coordlist_; }
-    Coord3List*			coordList()	 	{ return coordlist_; }
+    const Coord3List*		normalCoordList() const { return normallist_; }
+    Coord3List*			normalCoordList()	{ return normallist_; }
+
+    const Coord3List*		textureCoordList() const{ return coordlist_; }
+    Coord3List*			textureCoordList()	{ return coordlist_; }
 
     int				getVersion() const	{ return version_; }
 
@@ -187,9 +199,8 @@ private:
     int				version_;
 };
 
-
 #define mGetIndexedShapeWriteLocker4Geometries() \
-        Threads::Locker lckr( geometrieslock_, Threads::Locker::WriteLock )
+    Threads::Locker lckr( geometrieslock_, Threads::Locker::WriteLock )
 
 
 mExpClass(Geometry) ExplicitIndexedShape : public IndexedShape, public CallBacker

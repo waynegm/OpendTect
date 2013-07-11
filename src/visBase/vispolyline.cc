@@ -15,7 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 
 #include <osgGeo/PolyLine>
-#include <osg/Switch>
+#include <osg/Node>
 #include <osg/Geode>
 
 mCreateFactoryEntry( visBase::PolyLine );
@@ -100,7 +100,7 @@ PolyLine3D::PolyLine3D()
 {
     node_ = osgpoly_ = new osgGeo::PolyLineNode;
     osgpoly_->ref();
-    osgswitch_->addChild( node_ );
+    setOsgNode( node_ );
     osgpoly_->setVertexArray( coords_->osgArray() );
 }
 

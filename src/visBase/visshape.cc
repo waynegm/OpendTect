@@ -466,7 +466,8 @@ public:
 
     virtual int	indexOf(const int idx)
     {
-	T::iterator res = std::find( element_->begin(), element_->end(), idx );
+	typename T::const_iterator res = std::find( 
+	    element_->begin(), element_->end(), idx );
 	if ( res==element_->end() ) return -1;
 	return mCast( int,res-element_->begin() );
     }

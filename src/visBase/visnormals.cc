@@ -15,6 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "trigonometry.h"
 #include "thread.h"
 #include "vistransform.h"
+#include "task.h"
 
 #include <osg/Array>
 

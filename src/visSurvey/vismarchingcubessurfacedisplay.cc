@@ -27,6 +27,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismarchingcubessurface.h"
 #include "visplanedatadisplay.h"
 #include "vismaterial.h"
+#include "vistransform.h"
 
 
 mCreateFactoryEntry( visSurvey::MarchingCubesDisplay );
@@ -40,6 +41,8 @@ MarchingCubesDisplay::MarchingCubesDisplay()
     , displaysurface_( 0 )
     , impbody_( 0 )
     , displayintersections_( false )		   
+    , model2displayspacetransform_( 0 )
+
 {
     cache_.allowNull( true );
     setColor( getRandomColor( false ) );
@@ -69,6 +72,9 @@ MarchingCubesDisplay::~MarchingCubesDisplay()
 	DPM( DataPackMgr::PointID() ).release( cache_[idx]->id() );
 	delete cache_[idx];
     }
+
+    if ( model2displayspacetransform_ )
+	model2displayspacetransform_->unRef();
 }
 
 
@@ -92,7 +98,7 @@ bool MarchingCubesDisplay::setVisSurface(visBase::MarchingCubesSurface* surface)
 {
     if ( displaysurface_ )
     {
-	removeChild( displaysurface_->getInventorNode() );
+	removeChild( displaysurface_->osgNode() );
 	displaysurface_->unRef();
 	displaysurface_ = 0;
     }
@@ -139,8 +145,7 @@ bool MarchingCubesDisplay::setVisSurface(visBase::MarchingCubesSurface* surface)
     displaysurface_ = surface;
     displaysurface_->ref();
     displaysurface_->setSelectable( false );
-    displaysurface_->setRightHandSystem( righthandsystem_ );
-    addChild( displaysurface_->getInventorNode() );
+    addChild( displaysurface_->osgNode() );
 
     if ( displaysurface_->getMaterial() )
 	getMaterial()->setFrom( *displaysurface_->getMaterial() );
@@ -192,7 +197,7 @@ MarchingCubesDisplay::getColTabMapperSetup( int attrib, int version ) const
 void MarchingCubesDisplay::setColTabMapperSetup( int attrib,
 	const ColTab::MapperSetup& setup, TaskRunner* tr )
 {
-    if ( !attrib && displaysurface_ )
+    if ( !attrib )
 	displaysurface_->getShape()->setDataMapper( setup, tr );
 }
 
@@ -330,7 +335,22 @@ void MarchingCubesDisplay::getRandomPos( DataPointSet& dps,
 					 TaskRunner* tr ) const
 {
     if ( displaysurface_ )
-	displaysurface_->getShape()->getAttribPositions( dps, tr );
+    {
+	SamplingData<float> inlinesampling = emsurface_->inlSampling();
+	SamplingData<float> crlinesampling = emsurface_->crlSampling();
+	SamplingData<float> zsampling = emsurface_->zSampling();
+
+	visBase::Transformation* toincrltransf 
+	    = visBase::Transformation::create();
+	toincrltransf->ref();
+	toincrltransf->setScale(
+	    Coord3(inlinesampling.step, crlinesampling.step, zsampling.step));
+	toincrltransf->setTranslation(
+	    Coord3(inlinesampling.start,crlinesampling.start, zsampling.start));
+	
+	displaysurface_->getShape()->getAttribPositions(dps, toincrltransf,tr);
+	toincrltransf->unRef();
+    }
 }
 
 
@@ -451,7 +471,7 @@ bool MarchingCubesDisplay::setEMID( const EM::ObjectID& emid,
     emsurface_ = emmcsurf;
     emsurface_->ref();
 
-    return updateVisFromEM( false, tr );
+   return updateVisFromEM( false, tr );
 }
 
 
@@ -471,23 +491,16 @@ bool MarchingCubesDisplay::updateVisFromEM( bool onlyshape, TaskRunner* tr )
 	    displaysurface_->setMaterial( 0 );
 	    displaysurface_->setSelectable( false );
 	    displaysurface_->setRightHandSystem( righthandsystem_ );
-	    addChild( displaysurface_->getInventorNode() );
+	    addChild( displaysurface_->osgNode() );
 	    materialChangeCB( 0 );
 	}
 
 	displaysurface_->setScales(
-		SamplingData<float>(emsurface_->inlSampling()),
-		SamplingData<float>(emsurface_->crlSampling()),
-				    emsurface_->zSampling() );
+	    SamplingData<float>(emsurface_->inlSampling()),
+	    SamplingData<float>(emsurface_->crlSampling()),
+	    emsurface_->zSampling() );
 
-	if ( !displaysurface_->setSurface( emsurface_->surface(), tr ) )
-	{
-	    removeChild( displaysurface_->getInventorNode() );
-	    displaysurface_->unRef();
-	    displaysurface_ = 0;
-	    return false;
-	}
-	else
+	displaysurface_->setSurface( emsurface_->surface(), tr );
 	displaysurface_->turnOn( true );
     }
 
@@ -602,20 +615,30 @@ int MarchingCubesDisplay::usePar( const IOPar& par )
 
 void MarchingCubesDisplay::setDisplayTransformation( const mVisTrans* nt)
 {
-    if ( displaysurface_ ) displaysurface_->setDisplayTransformation( nt );
+    if ( emsurface_ )
+    {
+	SamplingData<float> inlinesampling = emsurface_->inlSampling();
+	SamplingData<float> crlinesampling = emsurface_->crlSampling();
+	SamplingData<float> zsampling = emsurface_->zSampling();
+
+	model2displayspacetransform_ = visBase::Transformation::create();
+	model2displayspacetransform_->ref();
+	model2displayspacetransform_->setScale(
+	    Coord3(inlinesampling.step, crlinesampling.step, zsampling.step));
+	model2displayspacetransform_->setTranslation(
+	    Coord3(inlinesampling.start,crlinesampling.start, zsampling.start));
+
+	*model2displayspacetransform_ *= *nt;
+
+    }
+
+    if ( displaysurface_ ) 
+	displaysurface_->setDisplayTransformation(model2displayspacetransform_);
 
     for ( int idx=0; idx<intsinfo_.size(); idx++ )
-	intsinfo_[idx]->visshape_->setDisplayTransformation( nt );
-}
+	intsinfo_[idx]->visshape_->setDisplayTransformation(
+	model2displayspacetransform_ );
 
-
-void MarchingCubesDisplay::setRightHandSystem( bool yn )
-{
-    visBase::VisualObjectImpl::setRightHandSystem( yn );
-    if ( displaysurface_ ) displaysurface_->setRightHandSystem( yn );
-
-    for ( int idx=0; idx<intsinfo_.size(); idx++ )
-	intsinfo_[idx]->visshape_->setRightHandSystem( yn );
 }
 
 
@@ -730,7 +753,7 @@ void MarchingCubesDisplay::otherObjectsMoved(
 	     (whichobj<0 && activepids.isPresent(ipid)) )
 	    continue;
 
-	removeChild( intsinfo_[idx]->visshape_->getInventorNode() );	
+	removeChild( intsinfo_[idx]->visshape_->osgNode() );	
 	delete intsinfo_.removeSingle( idx );
     }
 
@@ -753,7 +776,7 @@ void MarchingCubesDisplay::otherObjectsMoved(
 	pi->visshape_->setRightHandSystem( righthandsystem_ );
 	pi->visshape_->setMaterial( getMaterial() );
 	pi->visshape_->turnOn( displayintersections_ );
-	addChild( pi->visshape_->getInventorNode() );
+	addChild( pi->visshape_->osgNode() );
 
 	CubeSampling cs = activeplanes[idx]->getCubeSampling(true,true,-1);
 	PlaneDataDisplay::Orientation ori = activeplanes[idx]->getOrientation();
@@ -838,8 +861,7 @@ MarchingCubesDisplay::PlaneIntersectInfo::PlaneIntersectInfo()
     shape_ = new Geometry::ExplicitIndexedShape();
     visshape_->setSurface( shape_ );
     shape_->addGeometry( new Geometry::IndexedGeometry(
-		Geometry::IndexedGeometry::TriangleStrip,
-		Geometry::IndexedGeometry::PerVertex, shape_->coordList(),
+		Geometry::IndexedGeometry::TriangleStrip,shape_->coordList(),
 		shape_->normalCoordList(),shape_->textureCoordList()) );
 }
 

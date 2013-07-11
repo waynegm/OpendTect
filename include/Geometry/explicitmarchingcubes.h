@@ -40,13 +40,6 @@ public:
     bool			update(bool forceall,TaskRunner* = 0);
     bool			needsUpdate() const;
 
-    void			setAxisScales(const SamplingData<float>& xrg,
-					      const SamplingData<float>& yrg,
-					      const SamplingData<float>& zrg);
-    				/*!<If set, the coordinates in each dim will be
-				    scaled with these scales. */
-    const SamplingData<float>&	getAxisScale( int dim ) const;
-
     bool			createsNormals() const { return true; }
 
 protected:
@@ -70,10 +63,6 @@ protected:
     int			getBucketPos(int pos) const;
 
     MarchingCubesSurface*	surface_;
-
-    SamplingData<float>*	scale0_;
-    SamplingData<float>*	scale1_;
-    SamplingData<float>*	scale2_;
 
     Interval<int>*		changedbucketranges_[3];
     int				lastversionupdate_;

@@ -72,6 +72,7 @@ protected:
     const mVisTrans*		transformation_;
 
     osg::Array*			osgnormals_;
+    friend  class		DoTransformation;
     			
 };
 
@@ -92,6 +93,7 @@ public:
     		{ normals_.addNormalValue(idx,n ); }
     bool	isDefined(int idx) const
     		{ return normals_.getNormal(idx).isDefined(); }
+    void	remove(const TypeSet<int>&);
 
 protected:
 		~NormalListAdapter()	{ normals_.unRef(); }

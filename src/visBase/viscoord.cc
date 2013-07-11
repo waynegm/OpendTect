@@ -14,14 +14,63 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "errh.h"
 #include "vistransform.h"
 #include "visnormals.h"
+#include "task.h"
 
 #include <osg/Array>
 
 mCreateFactoryEntry( visBase::Coordinates );
 
-using namespace visBase;
+namespace visBase
+{
 
+class SetOrGetCoordinates: public ParallelTask			
+{
+public:
+    SetOrGetCoordinates(Coordinates* p, const od_int64 size, 
+		       const TypeSet<Coord3>* inpositions = 0, 
+		       TypeSet<Coord3>* outpositions= 0 );
+    od_int64	totalNr() const { return totalnrcoords_; }
+
+protected:
+    bool	doWork(od_int64 start, od_int64 stop, int);
+    od_int64	nrIterations() const { return totalnrcoords_; }
+
+private:
+    Coordinates* coordinates_;
+    TypeSet<Coord3>* outpositions_;
+    const TypeSet<Coord3>* inpositions_;
+    Threads::Atomic<od_int64>	totalnrcoords_;
+
+};
+
+
+SetOrGetCoordinates::SetOrGetCoordinates( Coordinates* p, 
+					const od_int64 size,
+					const TypeSet<Coord3>* inpositions, 
+					TypeSet<Coord3>* outpositions )
+    : coordinates_( p )
+    , totalnrcoords_( size )
+    , inpositions_( inpositions )
+    , outpositions_( outpositions )
+{
+}
+
+
+bool SetOrGetCoordinates::doWork(od_int64 start,od_int64 stop,int)
+{
+    if ( !inpositions_ && !outpositions_ )
+	return false;
     
+    for ( int idx=mCast(int,start); idx<=mCast(int,stop); idx++ )
+    {
+	if ( inpositions_ )
+	    coordinates_->setPosWithoutLock( idx, (*inpositions_)[idx], false );
+	else
+	    (*outpositions_)[idx] = coordinates_->getPos( idx );
+    }
+    return true;
+}
+
 
 Coordinates::Coordinates()
     : transformation_( 0 )
@@ -50,6 +99,9 @@ void Coordinates::copyFrom( const Coordinates& nc )
     unusedcoords_ = nc.unusedcoords_;
 }
 
+#define mArrSize \
+    ( (int) mGetOsgVec3Arr(osgcoords_)->size() ) \
+
 
 void Coordinates::setDisplayTransformation( const mVisTrans* nt )
 {
@@ -57,6 +109,7 @@ void Coordinates::setDisplayTransformation( const mVisTrans* nt )
 
     Threads::MutexLocker lock( mutex_ );
     TypeSet<Coord3> worldpos;
+    worldpos.setSize( mArrSize );
     getPositions(worldpos);
 
     if ( transformation_ )
@@ -76,9 +129,6 @@ const mVisTrans*  Coordinates::getDisplayTransformation() const
     return transformation_;
 }
 
-
-#define mArrSize \
-    ( (int) mGetOsgVec3Arr(osgcoords_)->size() ) \
 
 int Coordinates::size(bool includedeleted) const
 {
@@ -117,16 +167,12 @@ int Coordinates::nextID( int previd ) const
 int Coordinates::addPos( const Coord3& pos )
 {
     Threads::MutexLocker lock( mutex_ );
-    int res;
     const int nrunused = unusedcoords_.size();
     if ( nrunused )
     {
-	res = unusedcoords_.pop();
+	int res = unusedcoords_.pop();
 	setPosWithoutLock( res, pos, false );
-    }
-    else
-    {
-	res = mArrSize;
+	return res;
     }
 
     Coord3 postoset = pos;
@@ -136,7 +182,7 @@ int Coordinates::addPos( const Coord3& pos )
     }
 
     mGetOsgVec3Arr(osgcoords_)->push_back( Conv::to<osg::Vec3>(postoset) );
-    return res;
+    return mGetOsgVec3Arr(osgcoords_)->size()-1;
 }
 
 
@@ -198,6 +244,9 @@ void Coordinates::setPos( int idx, const Coord3& pos )
 void Coordinates::setPosWithoutLock( int idx, const Coord3& pos,
 				     bool scenespace )
 {
+    if ( unusedcoords_.isPresent(idx) )
+	return;
+
     for ( int idy=mArrSize; idy<idx; idy++ )
 	unusedcoords_ += idy;
 
@@ -237,13 +286,16 @@ void Coordinates::removePos( int idx, bool keepidxafter )
 	unusedcoords_ += idx;
     else
     {
-	mGetOsgVec3Arr(osgcoords_)->erase(
-				 mGetOsgVec3Arr(osgcoords_)->begin() + idx );
-	
-	for ( int idy=unusedcoords_.size()-1; idy>=0; idy-- )
+	if ( idx < mGetOsgVec3Arr(osgcoords_)->size()  )
 	{
-	    if ( unusedcoords_[idy]>idx )
-		unusedcoords_[idy]--;
+	    mGetOsgVec3Arr(osgcoords_)->erase(
+		mGetOsgVec3Arr(osgcoords_)->begin() + idx );
+
+	    for ( int idy=unusedcoords_.size()-1; idy>=0; idy-- )
+	    {
+		if ( unusedcoords_[idy]>idx )
+		    unusedcoords_[idy]--;
+	    }
 	}
     }
 }
@@ -293,23 +345,20 @@ void Coordinates::setAllZ( const float* vals, int sz, float zscale )
 }
 
 
-
 void Coordinates::getPositions(TypeSet<Coord3>& res) const
 {
-    for ( int idx=0; idx<mArrSize; idx++ )
-	res += getPos(idx);
+    SetOrGetCoordinates SetOrGetCoordinates( const_cast<Coordinates*>(this), 
+	mArrSize, 0, &res );
+    TaskRunner tr;
+    TaskRunner::execute( &tr,SetOrGetCoordinates );
 }
 
 
 void Coordinates::setPositions( const TypeSet<Coord3>& pos)
 {
-    for ( int idx=0; idx<mArrSize; idx++ )
-    {
-	if ( unusedcoords_.isPresent(idx) )
-	    continue;
-
-	setPosWithoutLock(idx, pos[idx], false );
-    }
+    SetOrGetCoordinates SetOrGetCoordinates( this, pos.size(), &pos, 0 );
+    TaskRunner tr;
+    TaskRunner::execute( &tr,SetOrGetCoordinates );
 }
 
 
@@ -461,3 +510,11 @@ void CoordListAdapter::remove( int idx )
     coords_.removePos( idx, true );
 }
 
+void CoordListAdapter::remove(const TypeSet<int>& idxs)
+{
+    for ( int idx = idxs.size()-1; idx>=0; idx-- )
+	coords_.removePos( idxs[idx], true );
+
+}
+
+};

@@ -1,3 +1,4 @@
+
 #ifndef viscoord_h
 #define viscoord_h
 
@@ -87,7 +88,7 @@ public:
     void		setEmpty();
 
 protected:
-
+    
     void		getPositions(TypeSet<Coord3>&) const;
     void		setPositions(const TypeSet<Coord3>&);
 
@@ -104,6 +105,7 @@ protected:
     const mVisTrans*		transformation_;
     
     osg::Array*			osgcoords_;
+    friend class	 SetOrGetCoordinates;
 };
 
     
@@ -148,6 +150,7 @@ public:
     bool	isDefined(int) const;
     void	addValue(int,const Coord3&);
     int		getSize() const	{ return coords_.size(); }
+    void	remove(const TypeSet<int>&);
 
 protected:
     virtual		~CoordListAdapter();

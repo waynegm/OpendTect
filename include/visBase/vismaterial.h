@@ -120,7 +120,6 @@ protected:
     static const char*	sKeyTransparency();
 
     friend class	OsgColorArrayUpdator;
-    mutable Threads::Mutex	mutex_;
 };
 
 } // namespace visBase

@@ -291,8 +291,6 @@ void Material::updateOsgColor( int idx, bool trigger)
 	{
 	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
 	    
-	    Threads::MutexLocker lock( mutex_ );
-
 	    if ( colarr.size()<=idx )
 		colarr.resize( idx+1 );
 	    

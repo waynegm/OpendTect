@@ -57,6 +57,18 @@ void Transformation::reset()
 }
 
 
+Transformation& Transformation::operator *= (const Transformation& nt)
+{
+    const osg::MatrixTransform* mtrf = nt.getTransformNode();
+    if ( node_ && mtrf )
+    {
+	osg::Matrix mt = node_->getMatrix()*mtrf->getMatrix();
+	node_->setMatrix( mt );
+    }
+    return *this;
+}
+
+
 void Transformation::setA( double a11, double a12, double a13, double a14,
 			   double a21, double a22, double a23, double a24,
 			   double a31, double a32, double a33, double a34,
@@ -140,6 +152,14 @@ void Transformation::setRotation( const Coord3& vec, double angle )
 {
     currot_ = osg::Quat( angle, Conv::to<osg::Vec3d>(vec) );
     updateMatrix();
+}
+
+
+void Transformation::getRotation( Coord3& vec,double& angle) const
+{
+    osg::Vec3d osgvec;
+    currot_.getRotate( angle, osgvec );
+    vec = Conv::to<Coord3>( osgvec );
 }
 
 

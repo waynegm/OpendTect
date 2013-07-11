@@ -87,8 +87,11 @@ public:
 
     Coord3		getTranslation() const;
     Coord3		getScale() const;
+    void		getRotation(Coord3& vec,double& angle) const;
+
 
     void		setAbsoluteReferenceFrame();
+    const osg::MatrixTransform* getTransformNode() const { return node_; };
     
 			mDefTrans( Coord3 );
 			mDefTrans( osg::Vec3d );
@@ -97,6 +100,8 @@ public:
     			mDefConvTrans( Coord3, osg::Vec3f );
     			mDefConvTrans( osg::Vec3d, Coord3 );
     			mDefConvTrans( osg::Vec3f, Coord3 );
+
+    Transformation&     operator*=(const Transformation&);
     
 private:
 

@@ -17,24 +17,20 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "coltabsequence.h"
 #include "coltabmapper.h"
+#include "visshape.h"
 
-namespace Geometry { class IndexedShape; class IndexedGeometry; }
-
-class SoMaterial;
-class SoMaterialBinding;
-class SoShapeHints;
-class SoIndexedShape;
-class SoSwitch;
+namespace Geometry { class IndexedGeometry; }
 class TaskRunner;
 class DataPointSet;
 
 namespace visBase
 {
-
+class Transformation;
 class Coordinates;
 class Normals;
 class TextureCoords;
 class ForegroundLifter;
+class VertexShape;
 
 /*!Visualisation for Geometry::IndexedShape. */
 
@@ -51,7 +47,6 @@ public:
 	    				   TaskRunner* = 0);
     				//!<Does not become mine, should remain
 				//!<in memory
-    void			setRightHandSystem(bool);
 
     bool			touch(bool forall,TaskRunner* =0);
 
@@ -62,10 +57,9 @@ public:
 				    line will be drawn. */
     void			renderOneSide(int side);
     				/*!< 0 = visisble from both sides.
-				     1 = visisble from positive side
-				     -1 = visisble from negative side. */
+				     1 = visible from positive side
+				     -1 = visible from negative side. */
 
-    void			createColTab();
     void			enableColTab(bool);
     bool			isColTabEnabled() const;
     void			setDataMapper(const ColTab::MapperSetup&,
@@ -75,6 +69,7 @@ public:
     const ColTab::Sequence*	getDataSequence() const;
 
     void			getAttribPositions(DataPointSet&,
+					mVisTrans* extratrans,
 	    				TaskRunner*) const;
     void			setAttribData(const DataPointSet&,
 	    				TaskRunner*);
@@ -82,53 +77,43 @@ public:
     void			setMaterial(Material*);
     void			updateMaterialFrom(const Material*);
 
-    void			turnOnForegroundLifter(bool);
-
 protected:
 				~GeomIndexedShape();
     void			reClip();
-    void			reMap(TaskRunner*);
+    void			mapAttributeToColorTableMaterial();
     void			matChangeCB(CallBacker*);
-
-    mExpClass(visBase)			ColTabMaterial
+    void			updateGeometryMaterial();
+    
+    mExpClass(visBase)			ColorHandler
     {
     public:
-					ColTabMaterial();
-					~ColTabMaterial();
-	void				updatePropertiesFrom(const Material*);
+					ColorHandler();
+					~ColorHandler();
 	ColTab::Mapper			mapper_;
 	ColTab::Sequence                sequence_;
-
-	SoMaterialBinding*		materialbinding_;
-	visBase::Material*		coltab_;
-	ArrayValueSeries<float,float>	cache_;
+	visBase::Material*		material_;
+	ArrayValueSeries<float,float>	attributecache_;
     };
 
     static const char*			sKeyCoordIndex() { return "CoordIndex";}
 
-    ColTabMaterial*				ctab_;
-
-    SoShapeHints*				hints_;
-    Coordinates*				coords_;
-    Normals*					normals_;
-    TextureCoords*				texturecoords_;
-
-    ObjectSet<SoIndexedShape>			strips_;
-    ObjectSet<const Geometry::IndexedGeometry>	stripgeoms_;
+    ColorHandler*				colorhandler_;
 
     float					lineradius_;
     bool					lineconstantonscreen_;
     float					linemaxsize_;
-    ObjectSet<SoIndexedShape>			lines_;
-    ObjectSet<const Geometry::IndexedGeometry>	linegeoms_;
-
-    ObjectSet<SoIndexedShape>			fans_;
-    ObjectSet<const Geometry::IndexedGeometry>	fangeoms_;
 
     Geometry::IndexedShape*			shape_;
-    
-    ForegroundLifter*				lifter_;
-    SoSwitch*					lifterswitch_;   
+    VertexShape*				vtexshape_;
+    bool					colortableenabled_ ;
+    int						renderside_;
+       					    /*!< 0 = visisble from both sides.
+					       1 = visible from positive side
+					      -1 = visible from negative side.*/
+    Material*					singlematerial_;
+    Material*					coltabmaterial_;
+    ColTab::Sequence		                sequence_;
+   
 };
 
 };

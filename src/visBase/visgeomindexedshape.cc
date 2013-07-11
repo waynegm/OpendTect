@@ -19,17 +19,14 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "visnormals.h"
 #include "vistexturecoords.h"
-#include "SoIndexedTriangleFanSet.h"
+#include "visdrawstyle.h"
 
-#include <Inventor/nodes/SoIndexedTriangleStripSet.h>
-#include <Inventor/nodes/SoIndexedLineSet.h>
-#include <Inventor/nodes/SoShapeHints.h>
-#include <Inventor/nodes/SoNormalBinding.h>
-#include <Inventor/nodes/SoMaterialBinding.h>
-#include <Inventor/nodes/SoSwitch.h>
-#include <Inventor/SoDB.h>
+#include <osg/Geometry>
+#include <osg/Geode>
+#include <osg/UserDataContainer>
+#include <osg/LightModel>
 
-#include "SoIndexedLineSet3D.h"
+#include "vistransform.h"
 
 #define mNrMaterials		256
 #define mNrMaterialSteps	255
@@ -42,121 +39,102 @@ namespace visBase
 
 GeomIndexedShape::GeomIndexedShape()
     : VisualObjectImpl( true )
-    , coords_( Coordinates::create() )
-    , normals_( Normals::create() )
-    , texturecoords_( TextureCoords::create() )				   
     , shape_( 0 )
     , lineradius_( -1 )
     , lineconstantonscreen_( false )
     , linemaxsize_( -1 )
-    , hints_( new SoShapeHints )			
-    , ctab_( 0 )						
+    , vtexshape_( VertexShape::create() )
+    , colorhandler_( new ColorHandler )
+    , colortableenabled_( false )
+    , singlematerial_( new Material )
+    , coltabmaterial_( new Material )
 {
-    addChild( hints_ );
+    singlematerial_->ref();
+    coltabmaterial_->ref();
 
-    setLockable();
-    coords_->ref();
-    addChild( coords_->getInventorNode() );
+    vtexshape_->ref();
+    addChild( vtexshape_->osgNode() );
 
-    normals_->ref();
-    addChild( normals_->getInventorNode() );
+    vtexshape_->setMaterial( singlematerial_ );
+    singlematerial_->setColorMode( visBase::Material::Off );
+    coltabmaterial_->setColorMode( visBase::Material::Diffuse );
+    vtexshape_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
 
-    texturecoords_->ref();
-    addChild( texturecoords_->getInventorNode() );
+    renderOneSide( 0 );
 
     if ( getMaterial() )
 	getMaterial()->change.notify( mCB(this,GeomIndexedShape,matChangeCB) );
-
-    renderOneSide( 0 );
 }
 
 
 GeomIndexedShape::~GeomIndexedShape()
 {
-    coords_->unRef();
-    normals_->unRef();
-    texturecoords_->unRef();
-    delete ctab_;
+    singlematerial_->unRef();
+    coltabmaterial_->unRef();
+    delete colorhandler_;
+
+    vtexshape_->unRef();
 
     if ( getMaterial() )
 	getMaterial()->change.remove( mCB(this,GeomIndexedShape,matChangeCB) );
+
 }
 
 
-GeomIndexedShape::ColTabMaterial::ColTabMaterial()
-    : coltab_( new visBase::Material )
-    , cache_( 0 )
-    , materialbinding_( new SoMaterialBinding )
+GeomIndexedShape::ColorHandler::ColorHandler()
+    : material_( new visBase::Material )
+    , attributecache_( 0 )
 {
-    materialbinding_->ref();
-    materialbinding_->value = SoMaterialBinding::PER_VERTEX_INDEXED;
-
-    coltab_->ref();
+    material_->ref();
 }
 
 
-GeomIndexedShape::ColTabMaterial::~ColTabMaterial()
+GeomIndexedShape::ColorHandler::~ColorHandler()
 {
-    coltab_->unRef();
-    materialbinding_->unref();
-}
-
-
-void GeomIndexedShape::ColTabMaterial::updatePropertiesFrom( const Material* m )
-{
-    const float diffintensity = m->getDiffIntensity( 0 );
-    const float transparency = m->getTransparency( 0 );
-    const int materialsize = mMAX( coltab_->nrOfMaterial(), (mNrMaterials) );
-    for ( int idx=0; idx<materialsize; idx++ )
-    {
-	coltab_->setDiffIntensity( diffintensity, idx );
-	coltab_->setTransparency( transparency, idx );
-    }
-
-    coltab_->setAmbience( m->getAmbience() );
-    coltab_->setSpecIntensity( m->getSpecIntensity() );
-    coltab_->setEmmIntensity( m->getEmmIntensity() );
-    coltab_->setShininess( m->getShininess() );
+    material_->unRef();
 }
 
 
 void GeomIndexedShape::renderOneSide( int side )
 {
-    hints_->vertexOrdering = SoShapeHints::COUNTERCLOCKWISE;
-    
-    if ( side==0 )
+    renderside_ = side;
+
+    if ( !renderside_ )
     {
-	hints_->shapeType = SoShapeHints::UNKNOWN_SHAPE_TYPE;
-    }
-    else if ( side==1 )
-    {
-	hints_->shapeType = SoShapeHints::SOLID;
+	vtexshape_->setTwoSidedLight( false );
     }
     else
     {
-	hints_->shapeType = SoShapeHints::SOLID;
+	pErrMsg("Not implemented");
     }
 }
 
 
 void GeomIndexedShape::setMaterial( Material* mat )
 {
+    if ( !vtexshape_  || !mat ) return;
+
     if ( getMaterial() )
-	getMaterial()->change.remove( mCB(this,GeomIndexedShape,matChangeCB) );
+	getMaterial()->change.notify( mCB(this,GeomIndexedShape,matChangeCB) );
 
-    VisualObjectImpl::setMaterial( mat );
-    if ( !mat || !ctab_ )
-	return;
-
-    ctab_->updatePropertiesFrom ( mat );
+    colorhandler_->material_->setPropertiesFrom( *mat );
 
     mat->change.notify( mCB(this,GeomIndexedShape,matChangeCB) );
 }
 
+
 void GeomIndexedShape::updateMaterialFrom( const Material* mat )
 {
-    if ( ctab_ )
-	ctab_->updatePropertiesFrom ( mat );
+    if ( !mat ) return;
+
+    singlematerial_->setFrom( *mat);
+
+    if ( isColTabEnabled() && colorhandler_ )
+    {
+	colorhandler_->material_->setPropertiesFrom( *mat );
+	mapAttributeToColorTableMaterial();
+    }
+    enableColTab( colortableenabled_ );
 }
 
 
@@ -166,301 +144,159 @@ void GeomIndexedShape::matChangeCB( CallBacker* )
 }
 
 
-
-void GeomIndexedShape::createColTab()
+void GeomIndexedShape::updateGeometryMaterial() 
 {
-    if ( !ctab_ )
-	ctab_ = new ColTabMaterial;
-
     if ( getMaterial() )
-	ctab_->updatePropertiesFrom ( getMaterial() );
+    {
+	colorhandler_->material_->setPropertiesFrom( *getMaterial() );
+	mapAttributeToColorTableMaterial();
+	vtexshape_->setMaterial( coltabmaterial_ );
+    }
 }
 
 
 void GeomIndexedShape::enableColTab( bool yn )
 {
+    if ( !vtexshape_->getMaterial() ) return;
+    
     if ( yn )
-	createColTab();
+	    vtexshape_->setMaterial( coltabmaterial_ );
+    else 
+	vtexshape_->setMaterial( singlematerial_ );
 
-    if ( yn )
-    {
-	/*
-	ctab_->coltab_->getInventorNode() );
-	insertChild( childIndex(coords_->getInventorNode()),
-		ctab_->materialbinding_ );
-	*/
-    }
-    else if ( ctab_ )
-    {
-	/*
-	removeChild( ctab_->coltab_->getInventorNode() );
-	removeChild( ctab_->materialbinding_ );
-	 */
-    }
+    colortableenabled_  = yn;
 }
 
 
 bool GeomIndexedShape::isColTabEnabled() const
 {
-    return false;
-    /*return ctab_ && childIndex( ctab_->coltab_->getInventorNode() )!=-1; */
+    return colortableenabled_;
 }
 
 
 void GeomIndexedShape::setDataMapper( const ColTab::MapperSetup& setup,
 				      TaskRunner* tr )
 {
-    createColTab();
-    if ( setup!=ctab_->mapper_.setup_ )
+    if ( setup!=colorhandler_->mapper_.setup_ )
     {
-	ctab_->mapper_.setup_ = setup;
+	colorhandler_->mapper_.setup_ = setup;
 	if ( setup.type_!=ColTab::MapperSetup::Fixed )
 	    reClip();
-	reMap( tr );
     }
 }
 
 
 const ColTab::MapperSetup* GeomIndexedShape::getDataMapper() const
-{ return ctab_ ? &ctab_->mapper_.setup_ : 0; }
+{ return colorhandler_ ? &colorhandler_->mapper_.setup_ : 0; }
 
 
 void GeomIndexedShape::setDataSequence( const ColTab::Sequence& seq )
 {
-    createColTab();
-    if ( seq!=ctab_->sequence_ )
+    if ( seq!=colorhandler_->sequence_ )
     {
-	ctab_->sequence_ = seq;
+	colorhandler_->sequence_ = seq;
 	for ( int idx=0; idx<mNrMaterialSteps; idx++ )
 	{
-	    const float val = ((float) idx)/(mNrMaterialSteps-1);
+	    const float val = ( (float) idx )/( mNrMaterialSteps-1 );
 	    const Color col = seq.color( val );
-	    ctab_->coltab_->setColor( col, idx+1 );
+	    colorhandler_->material_->setColor( col, idx+1 );
 	}
 
-	ctab_->coltab_->setColor( seq.undefColor(), mUndefMaterial+1 );
+	colorhandler_->material_->setColor( seq.undefColor(), mUndefMaterial+1 );
     }
+
+   if ( isColTabEnabled() )
+	updateGeometryMaterial();
 }
 
 
 const ColTab::Sequence* GeomIndexedShape::getDataSequence() const
-{ return ctab_ ? &ctab_->sequence_ : 0; }
+{ return colorhandler_ ? &colorhandler_->sequence_ : 0; }
 
 
 void GeomIndexedShape::setDisplayTransformation( const mVisTrans* nt )
 {
-    coords_->setDisplayTransformation( nt );
-    normals_->setDisplayTransformation( nt );
+    if ( vtexshape_->getNormals() )
+    {
+        vtexshape_->getNormals()->setDisplayTransformation( nt );
+	if ( !renderside_ )
+	    vtexshape_->getNormals()->inverse();
+    }
+    vtexshape_->setDisplayTransformation( nt );
+    vtexshape_->dirtyCoordinates();
+    vtexshape_->turnOn( true );
+
 }
 
 
 const mVisTrans* GeomIndexedShape::getDisplayTransformation() const
-{ return coords_->getDisplayTransformation(); }
-
-
-void GeomIndexedShape::setRightHandSystem( bool yn )
-{
-    if ( yn!=righthandsystem_ )
-	normals_->inverse();
-
-    VisualObjectImpl::setRightHandSystem( yn );
-    if ( shape_ ) shape_->setRightHandedNormals( yn );
-
-    //for ( int idx=lines_.size()-1; idx>=0; idx-- )
-    //{
-	//mDynamicCastGet( SoIndexedLineSet3D*, line3d, lines_[idx] );
-	//if ( !line3d )
-	    //continue;
-//
-	//line3d->rightHandSystem = righthandsystem_;
-    //}
-}
+{ return vtexshape_->getDisplayTransformation(); }
 
 
 void GeomIndexedShape::setSurface( Geometry::IndexedShape* ns, TaskRunner* tr )
 {
     shape_ = ns;
-    shape_->setCoordList( new CoordListAdapter(*coords_),
-	    		  new NormalListAdapter(*normals_), 
-			  new TextureCoordListAdapter(*texturecoords_) );
-    shape_->setRightHandedNormals( righthandsystem_ );
     touch( false, tr );
 }
 
 
-#define mHandleType( type, SoObj, list ) \
-if ( geom->type_==Geometry::IndexedGeometry::type ) \
-{ \
-    const int idy = list##geoms_.indexOf( geom ); \
-    if ( idy==-1 || !dynamic_cast<SoObj*>(list##s_[idy]) ) \
-    { \
-	shape = new SoObj; \
-	addChild( shape ); \
-    } \
-    else \
-    { \
-	shape = list##s_[idy]; \
-	list##s_.removeSingle( idy ); \
-	list##geoms_.removeSingle( idy ); \
-    } \
- \
-    new##list##s += shape; \
-    new##list##geoms += geom; \
-}
-
-
-#define mRemoveOld( list ) \
-    while ( list##s_.size() ) \
-    { \
-	SoIndexedShape* shape = list##s_.removeSingle(0); \
- \
-	const int idx = childIndex( shape ); \
-	mDynamicCastGet(SoNormalBinding*, nb, idx>0 ? getChild(idx-1) : 0); \
-	if ( nb ) removeChild( nb ); \
-	removeChild( shape ); \
-    } \
- \
-    list##geoms_.erase(); \
- \
-    list##s_ = new##list##s; \
-    list##geoms_ = new##list##geoms
-
 bool GeomIndexedShape::touch( bool forall, TaskRunner* tr )
 {
-    if ( !tryWriteLock() )
-    {
-	pErrMsg("Could not lock");
+    if( !shape_ )
 	return false;
-    }
 
-    if ( shape_ && shape_->needsUpdate() && !shape_->update( forall, tr ) )
-    {
-	writeUnLock();
+    if ( !shape_->needsUpdate() ) 
+	return true;
+
+    Coordinates* coords = Coordinates::create();
+    Normals* normals = Normals::create();
+    TextureCoords* texturecoords = TextureCoords::create();
+
+    shape_->setCoordList( new CoordListAdapter(*coords),
+	new NormalListAdapter( *normals ), 
+	new TextureCoordListAdapter( *texturecoords ) );
+
+    shape_->getGeometry().erase();
+
+    if( !shape_->update( forall, tr ) || !coords->size() )
 	return false;
-    }
 
-    ObjectSet<SoIndexedShape> newstrips;
-    ObjectSet<const Geometry::IndexedGeometry> newstripgeoms;
+    vtexshape_->removeAllPrimitiveSets();
 
-    ObjectSet<SoIndexedShape> newlines;
-    ObjectSet<const Geometry::IndexedGeometry> newlinegeoms;
+    vtexshape_->setCoordinates( coords );
+    
+    if ( normals->nrNormals() )
+	vtexshape_->setNormals( normals );
+    
+    if ( texturecoords->size() )
+        vtexshape_->setTextureCoords( texturecoords );
 
-    ObjectSet<SoIndexedShape> newfans;
-    ObjectSet<const Geometry::IndexedGeometry> newfangeoms;
-
-    if ( !shape_ )
-    {
-	mRemoveOld( strip );
-	mRemoveOld( fan );
-	mRemoveOld( line );
-
-	writeUnLock();
-	return false;
-    }
-
-    const ObjectSet<Geometry::IndexedGeometry>& geoms=shape_->getGeometry();
+    ObjectSet<Geometry::IndexedGeometry>& geoms=shape_->getGeometry();
 
     for ( int idx=0; idx<geoms.size(); idx++ )
     {
-	const Geometry::IndexedGeometry* geom = geoms[idx];
-	SoIndexedShape* shape = 0;
-	mHandleType( TriangleStrip, SoIndexedTriangleStripSet, strip )
-	else mHandleType( TriangleFan, SoIndexedTriangleFanSet, fan )
-	else if ( lineradius_ >= 0 )
-	{
-	    mHandleType( Lines, SoIndexedLineSet3D, line );
-	    mDynamicCastGet( SoIndexedLineSet3D*, line3d, shape );
-	    if ( line3d )
-	    {
-		line3d->radius = lineradius_;
-		line3d->screenSize = lineconstantonscreen_;
-		line3d->maxRadius = linemaxsize_;
-		//line3d->rightHandSystem = righthandsystem_;
-	    }
-	}
-	else
-	    mHandleType( Lines, SoIndexedLineSet, line )
-
-	if ( !shape )
+	Geometry::IndexedGeometry* idxgeom = geoms[idx];
+	if( !idxgeom || idxgeom->getCoordsPrimitiveSet()->size() == 0 )
 	    continue;
 
-	if ( geom->ischanged_ )
+	vtexshape_->addPrimitiveSet( idxgeom->getCoordsPrimitiveSet() );
+
+	if ( idxgeom->primitivetype_ == Geometry::IndexedGeometry::Lines )
 	{
-	    /* TODO: leads to crash. Probably because geom has been deleted.
-	    shape->coordIndex.setValuesPointer(
-		geom->coordindices_.size(), geom->coordindices_.arr() );
-
-	    shape->normalIndex.setValuesPointer(
-		geom->normalindices_.size(), geom->normalindices_.arr() );
-	    */
-
-	    SbBool oldstatus = shape->coordIndex.enableNotify( false );
-	    shape->coordIndex.setValues( 0,
-		geom->coordindices_.size(), geom->coordindices_.arr() );
-	    shape->coordIndex.setNum( geom->coordindices_.size() );
-	    shape->coordIndex.enableNotify( oldstatus );
-	    shape->coordIndex.touch();
-
-	    if ( shape_->createsNormals() )
-	    {
-    		oldstatus = shape->normalIndex.enableNotify( false );
-    		shape->normalIndex.setValues( 0,
-			geom->normalindices_.size(), 
-			geom->normalindices_.arr() );
-    		shape->normalIndex.setNum( geom->normalindices_.size() );
-    		shape->normalIndex.enableNotify( oldstatus );
-		shape->normalIndex.touch();
-	    }
-	    else
-		shape->normalIndex.setNum( 0 );
-
-	    if ( shape_->createsTextureCoords() )
-	    {
-		oldstatus = shape->textureCoordIndex.enableNotify( false );
-		shape->textureCoordIndex.setValues( 0,
-			geom->texturecoordindices_.size(), 
-			geom->texturecoordindices_.arr() );
-		shape->textureCoordIndex.setNum(
-			geom->texturecoordindices_.size() );    
-		shape->textureCoordIndex.enableNotify( oldstatus );
-		shape->textureCoordIndex.touch();
-	    }
-	    else
-		shape->textureCoordIndex.setNum( 0 );
+	    visBase::DrawStyle* ds = 
+		vtexshape_->addNodeState( new visBase::DrawStyle );
+	    ds->setLineStyle( LineStyle( LineStyle::Solid, 3 ) );
 	}
-
-	const int idy = childIndex( shape );
-	mDynamicCastGet(SoNormalBinding*, nb, idy>0 ? getChild(idy-1) : 0);
-
-	if ( geom->normalindices_.size() )
-	{
-	    if ( !nb )
-	    {
-		nb = new SoNormalBinding;
-		insertChild( idy, nb );
-	    }
-
-	    nb->value = geom->normalbinding_==
-			     Geometry::IndexedGeometry::PerVertex 
-		 ? SoNormalBindingElement::PER_VERTEX_INDEXED
-		 : SoNormalBindingElement::PER_FACE_INDEXED;
-	}
-	else if ( nb )
-	    removeChild( nb );
-
-	geom->ischanged_ = false;
     }
 
-    mRemoveOld( strip );
-    mRemoveOld( fan );
-    mRemoveOld( line );
-
-    writeUnLock();
     return true;
+
 }
 
 
-void GeomIndexedShape::getAttribPositions( DataPointSet& set,TaskRunner*) const
+void GeomIndexedShape::getAttribPositions( DataPointSet& set,
+					   mVisTrans* toinlcrltrans,
+					   TaskRunner*) const
 {
     const DataColDef coordindex( sKeyCoordIndex() );
     if ( set.dataSet().findColDef(coordindex,PosVecDataSet::NameExact)==-1 )
@@ -469,16 +305,20 @@ void GeomIndexedShape::getAttribPositions( DataPointSet& set,TaskRunner*) const
     const int col =
 	set.dataSet().findColDef(coordindex,PosVecDataSet::NameExact);
 
-    int coordid = -1;
-    while ( true )
-    {
-	coordid = coords_->nextID( coordid );
-	if ( coordid==-1 )
-	    break;
+    Coordinates* vtxcoords = vtexshape_->getCoordinates();
+    if ( !vtxcoords || !vtxcoords->size() )
+	return;
 
-	const Coord3 pos = coords_->getPos( coordid );
+    for ( int coordid = 0; coordid<vtxcoords->size(); coordid++ )
+    {
+	Coord3 pos = vtxcoords->getPos( coordid );
+	if ( !pos.isDefined() )
+	    continue;
+
+	mVisTrans::transform( toinlcrltrans, pos );
+
 	DataPointSet::Pos dpsetpos( BinID(mNINT32(pos.x),mNINT32(pos.y)), 
-							    (float) pos.z );
+	    (float) pos.z );
 	DataPointSet::DataRow datarow( dpsetpos, 1 );
 	datarow.data_.setSize( set.nrCols(), mUdf(float) );
 	datarow.data_[col-set.nrFixedCols()] =  coordid;
@@ -487,12 +327,10 @@ void GeomIndexedShape::getAttribPositions( DataPointSet& set,TaskRunner*) const
 
     set.dataChanged();
 }
-    
+
 
 void GeomIndexedShape::setAttribData( const DataPointSet& set,TaskRunner* tr)
 {
-    createColTab();
-
     const DataColDef coordindex( sKeyCoordIndex() );
     const int col =
 	set.dataSet().findColDef(coordindex,PosVecDataSet::NameExact);
@@ -504,7 +342,7 @@ void GeomIndexedShape::setAttribData( const DataPointSet& set,TaskRunner* tr)
     if ( vals.nrVals()<col+1 )
 	return;
 
-    ArrayValueSeries<float,float>& cache = ctab_->cache_;
+    ArrayValueSeries<float,float>& cache = colorhandler_->attributecache_;
     cache.setSize( vals.totalSize() );
     cache.setAll( mUdf(float) );
 
@@ -512,7 +350,7 @@ void GeomIndexedShape::setAttribData( const DataPointSet& set,TaskRunner* tr)
     while ( vals.next( pos ) )
     {
 	const float* ptr = vals.getVals( pos );
-	const int coordidx = mNINT32(ptr[col]);
+	const int coordidx = mNINT32( ptr[col] );
 	const float val = ptr[col+1];
 
 	if ( coordidx>=cache.size() )
@@ -522,7 +360,7 @@ void GeomIndexedShape::setAttribData( const DataPointSet& set,TaskRunner* tr)
 	    if ( !cache.arr() )
 		return;
 
-	    const float udf = mUdf(float);
+	    const float udf = mUdf( float );
 	    for ( int idx=oldsz; idx<=coordidx; idx++ )
 		cache.setValue( idx, udf );
 	}
@@ -530,46 +368,37 @@ void GeomIndexedShape::setAttribData( const DataPointSet& set,TaskRunner* tr)
 	cache.setValue( coordidx, val );
     }
 
-    if ( ctab_->mapper_.setup_.type_!=ColTab::MapperSetup::Fixed )
+    if ( colorhandler_->mapper_.setup_.type_!=ColTab::MapperSetup::Fixed )
 	reClip();
-    reMap( tr );
+
+    updateGeometryMaterial();
 }
 
 
-void GeomIndexedShape::reMap( TaskRunner* tr )
-{ 
-    createColTab();
-    if ( ctab_->cache_.size()<=0 )
+void GeomIndexedShape::mapAttributeToColorTableMaterial()
+{
+    if ( !colorhandler_ || colorhandler_->attributecache_.size()<=0 )
 	return;
 
-    TypeSet<int> material( ctab_->cache_.size(), -1 );
-    if ( !material.arr() )
-	return;
+    TypeSet<Color> colors;
 
-    for ( int idx=0; idx<material.size(); idx++ )
+    for ( int idx=0; idx<vtexshape_->getCoordinates()->size(); idx++ )
     {
-	material[idx] = ColTab::Mapper::snappedPosition( &ctab_->mapper_,
-		ctab_->cache_[idx], mNrMaterialSteps, mUndefMaterial )+1;
+	const int coloridx = ColTab::Mapper::snappedPosition(
+	    &colorhandler_->mapper_,colorhandler_->attributecache_[idx], 
+	    mNrMaterialSteps, mUndefMaterial )+1;
+	colors.add( colorhandler_->material_->getColor(coloridx ) );
     }
 
-    for ( int idx=strips_.size()-1; idx>=0; idx-- )
-    {
-	const int numvals = strips_[idx]->coordIndex.getNum();
-	const int* ciptr = strips_[idx]->coordIndex.getValues( 0 );
-	strips_[idx]->materialIndex.setNum( numvals );
-
-	mPointerOperation( int, strips_[idx]->materialIndex.startEditing(),
-		= *ciptr==-1 ? -1 : material[*ciptr], numvals, ++; ciptr++ );
-
-	strips_[idx]->materialIndex.finishEditing();
-    }
+    coltabmaterial_->setColors( colors, false );
+    coltabmaterial_->setPropertiesFrom( *colorhandler_->material_ );
 }
 
 
 void GeomIndexedShape::reClip()
 {
-    createColTab();
-    ctab_->mapper_.setData( &ctab_->cache_, ctab_->cache_.size() );
+    colorhandler_->mapper_.setData( 
+	&colorhandler_->attributecache_, colorhandler_->attributecache_.size() );
 }
 
 
@@ -586,6 +415,5 @@ void GeomIndexedShape::set3DLineRadius( float radius, bool constantonscreen,
 	touch( true );
     }
 }
-
 
 }; // namespace visBase

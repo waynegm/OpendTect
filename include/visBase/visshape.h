@@ -45,8 +45,7 @@ public: \
 mExpClass(visBase) Shape : public VisualObject
 {
 public:
-    bool			turnOn(bool);
-    bool			isOn() const;
+
    
     mDeclSetGetItem( Shape,	Texture2, texture2_ );
     mDeclSetGetItem( Shape,	Texture3, texture3_ );
@@ -54,16 +53,14 @@ public:
 
     void			setMaterialBinding( int );
     static int			cOverallMaterialBinding()	{ return 0; }
-    static int			cPerFaceMaterialBinding()	{ return 1; }
     static int			cPerVertexMaterialBinding()	{ return 2; }
-    static int			cPerPartMaterialBinding()	{ return 3; }
 
     int				getMaterialBinding() const;
 
     int				usePar(const IOPar&);
     void			fillPar(IOPar&) const;
+    void			setTwoSidedLight(bool);
 
-    void			removeSwitch();
     
 protected:
 				Shape();
@@ -72,8 +69,6 @@ protected:
     Texture2*			texture2_;
     Texture3*			texture3_;
     Material*			material_;
-    
-    osg::Switch*		osgswitch_;
 
     static const char*		sKeyOnOff();
     static const char*		sKeyTexture();
@@ -106,29 +101,9 @@ public:
 			     you will have to setTransformation again.  */
     const mVisTrans*	getDisplayTransformation() const;
     			/*!<\note Direcly relayed to the coordinates */
-
-    void		setNormalPerFaceBinding( bool yn );
-    			/*!< If yn==false, normals are set per vertex */
-    bool		getNormalPerFaceBinding() const;
-    			/*!< If yn==false, normals are set per vertex */
     
-    void		setVertexOrdering(int vo);
-    int			getVertexOrdering() const;
-    static int		cClockWiseVertexOrdering()		{ return 0; }
-    static int		cCounterClockWiseVertexOrdering()	{ return 1; }
-    static int		cUnknownVertexOrdering()		{ return 2; }
+    int			getNormalBindType();
 
-    void		setFaceType(int);
-    int			getFaceType() const;
-    static int		cUnknownFaceType()			{ return 0; }
-    static int		cConvexFaceType()			{ return 1; }
-
-    void		setShapeType(int);
-    int			getShapeType() const;
-    static int		cUnknownShapeType()			{ return 0; }
-    static int		cSolidShapeType()			{ return 1; }
-    
-    
     void		dirtyCoordinates();
 
     void		addPrimitiveSet(Geometry::PrimitiveSet*);
@@ -137,6 +112,8 @@ public:
     int			nrPrimitiveSets() const;
     virtual void	touchPrimitiveSet(int)			{}
     Geometry::PrimitiveSet*	getPrimitiveSet(int);
+    void		setMaterial( Material* mt );
+    void		materialChangeCB( CallBacker*  );
     
 protected:
     			VertexShape( Geometry::PrimitiveSet::PrimitiveType,

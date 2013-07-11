@@ -29,6 +29,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Geometry>
 #include <osg/Geode>
 #include <osg/Material>
+#include <osg/LightModel>
 
 
 mCreateFactoryEntry( visBase::VertexShape );
@@ -46,9 +47,7 @@ Shape::Shape()
     : texture2_( 0 )
     , texture3_( 0 )
     , material_( 0 )
-    , osgswitch_( new osg::Switch )
 {
-    setOsgNode( osgswitch_ );
 }
 
 
@@ -60,34 +59,6 @@ Shape::~Shape()
 }
 
 
-bool Shape::turnOn(bool n)
-{
-    const bool res = isOn();
-    if ( osgswitch_ )
-    {
-	if ( n ) osgswitch_->setAllChildrenOn();
-	else osgswitch_->setAllChildrenOff();
-    }
-    else
-    {
-	pErrMsg( "Turning off object without switch");
-    }
-    
-    return res;
-}
-
-
-bool Shape::isOn() const
-{
-    return !osgswitch_ ||
-	   (osgswitch_->getNumChildren() && osgswitch_->getValue(0) );
-}
-    
-    
-void Shape::removeSwitch()
-{
-    pErrMsg("Don't call." );
-}
 
 #define mDefSetGetItem(ownclass, clssname, variable, osgremove, osgset ) \
 void ownclass::set##clssname( clssname* newitem ) \
@@ -132,6 +103,24 @@ int Shape::getMaterialBinding() const
     pErrMsg("Not implemented");
 
     return cOverallMaterialBinding();
+}
+
+
+void Shape::setTwoSidedLight( bool yn )
+{
+    osg::StateSet* st = osgNode()->getOrCreateStateSet();
+    if ( st )
+    {
+	st->setMode( GL_LIGHTING, !yn );
+	st->setMode( GL_LIGHT0, !yn );
+	st->setMode( GL_LIGHT1, !yn );
+	st->setMode( GL_FRONT_FACE, !yn );
+	st->setMode( GL_RESCALE_NORMAL, !yn );
+	osg::ref_ptr<osg::LightModel> ltModel = new osg::LightModel; 
+	ltModel->setTwoSided( yn ); 
+	st->setAttributeAndModes( ltModel.get(), osg::StateAttribute::OVERRIDE | 
+	    osg::StateAttribute::ON );
+    }
 }
 
 
@@ -181,7 +170,6 @@ VertexShape::VertexShape()
 }
     
     
-    
 VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 			  bool creategeode )
     : mVertexShapeConstructor( creategeode ? new osg::Geode : 0 )
@@ -189,15 +177,29 @@ VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
     setupGeode();
     setPrimitiveType( tp );
 }
+
+void VertexShape::setMaterial( Material* mt )
+{
+    if ( mt && material_==mt ) return;
+    if ( material_ )
+	osggeom_->setColorArray( 0 );
+
+    Shape::setMaterial( mt );
+    materialChangeCB( 0 );
     
+}
+
+
 void VertexShape::setupGeode()
 {
     if ( geode_ )
     {
+	setOsgNode( geode_ );
 	geode_->ref();
 	osggeom_ = new osg::Geometry;
+	osggeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
+	osggeom_->setDataVariance( osg::Object::DYNAMIC );
 	geode_->addDrawable( osggeom_ );
-	osgswitch_->addChild( geode_ );
 	node_ = geode_;
     }
     
@@ -223,6 +225,8 @@ void VertexShape::setPrimitiveType( Geometry::PrimitiveSet::PrimitiveType tp )
 
 VertexShape::~VertexShape()
 {
+   if ( getMaterial() )
+	getMaterial()->change.remove( mCB(this,VertexShape,materialChangeCB) );
     if ( node_ ) node_->unref();
     if ( normals_ ) normals_->unRef();
     if ( coords_ ) coords_->unRef();
@@ -232,26 +236,30 @@ VertexShape::~VertexShape()
 }
     
     
-void VertexShape::removeSwitch()
+void VertexShape::dirtyCoordinates()
 {
-    if ( osgswitch_ )
+    if ( !osggeom_ ) return;
+    osggeom_->dirtyDisplayList();    
+    osggeom_->dirtyBound();
+}
+
+
+void VertexShape::materialChangeCB( CallBacker* )
+{
+    if( !osggeom_  || !material_  || !coords_ ) return;
+
+    osg::Vec4Array* colorarr = mGetOsgVec4Arr( material_->getColorArray() );
+    if( coords_->size() && coords_->size() == colorarr->size() )
     {
-	setOsgNode( geode_ );
-	osgswitch_ = 0;
+	osggeom_->setColorBinding( osg::Geometry::BIND_PER_VERTEX );
+	osggeom_->setColorArray( colorarr );
     }
     else
     {
-	Shape::removeSwitch();
-    }
-}
-    
-    
-void VertexShape::dirtyCoordinates()
-{
-    if ( osggeom_ )
-    {
-	osggeom_->dirtyDisplayList();
-	osggeom_->dirtyBound();
+	osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
+	(*colors)[0] = Conv::to<osg::Vec4>( material_->getColor( 0 ) );
+	osggeom_->setColorBinding( osg::Geometry::BIND_OVERALL );
+	osggeom_->setColorArray( colors );
     }
 }
 
@@ -278,54 +286,9 @@ if ( osggeom_ ) osggeom_->setTexCoordArray( 0,
 mGetOsgVec2Arr(texturecoords_->osgArray())));
 
 
-
-void VertexShape::setNormalPerFaceBinding( bool nv )
-{
-        pErrMsg("Not implemented");
-}
-    
-    
-bool VertexShape::getNormalPerFaceBinding() const
-{
-    pErrMsg("Not implemented");
-    return false;
-}
-
-
 #define mCheckCreateShapeHints() \
     return;
 
-void VertexShape::setVertexOrdering( int nv )
-{
-}
-
-
-int VertexShape::getVertexOrdering() const
-{
-    return cUnknownVertexOrdering();
-}
-
-
-void VertexShape::setFaceType( int ft )
-{
-}
-
-
-int VertexShape::getFaceType() const
-{
-    return cUnknownFaceType();
-}
-
-
-void VertexShape::setShapeType( int st )
-{
-}
-
-
-int VertexShape::getShapeType() const
-{
-    return cUnknownShapeType();
-}
 
 
 IndexedShape::IndexedShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp )
@@ -376,7 +339,7 @@ class OSGPrimitiveSet
 public:
     virtual osg::PrimitiveSet*	getPrimitiveSet()	= 0;
     
-    static GLenum	getGLEnum(Geometry::PrimitiveSet::PrimitiveType tp)
+    static GLenum getGLEnum(Geometry::PrimitiveSet::PrimitiveType tp)
     {
 	switch ( tp )
 	{
@@ -458,7 +421,7 @@ void setPrimitiveType( Geometry::PrimitiveSet::PrimitiveType tp ) \
     element_->setMode( getGLEnum( getPrimitiveType() )); \
 }
 
-    
+
 template <class T>
 class OSGIndexedPrimitiveSet : public Geometry::IndexedPrimitiveSet,
 			       public OSGPrimitiveSet
@@ -470,26 +433,44 @@ public:
 			mImplOsgFuncs
     virtual void	setEmpty()
     			{ element_->erase(element_->begin(), element_->end() ); }
-    virtual void	append( int ) {}
+    virtual void	append( int idx ) { element_->push_back( idx ); }
     virtual int		pop() { return 0; }
-    virtual int		size() const { return 0; }
-    virtual int		get(int) const { return 0; }
     virtual int		set(int,int) { return 0; }
-    void		set(const int* ptr, int num)
+
+    void set(const int* ptr, int num)
     {
 	element_->clear();
 	element_->reserve( num );
 	for ( int idx=0; idx<num; idx++, ptr++ )
 	    element_->push_back( *ptr );
     }
-    void		append(const int* ptr, int num)
+    void append(const int* ptr, int num)
     {
-	element_->reserve( size()+num );
+	element_->reserve( size() +num );
 	for ( int idx=0; idx<num; idx++, ptr++ )
 	    element_->push_back( *ptr );
     }
 
+    virtual int get(int idx) const
+    {
+	if ( idx >= size())
+	    return 0;
+	else
+	    return element_->at( idx );
+    }
     
+    virtual int	size() const
+    {
+	return element_->size();
+    }
+
+    virtual int	indexOf(const int idx)
+    {
+	T::iterator res = std::find( element_->begin(), element_->end(), idx );
+	if ( res==element_->end() ) return -1;
+	return mCast( int,res-element_->begin() );
+    }
+
     osg::ref_ptr<T>	element_;
 };
 
@@ -518,8 +499,13 @@ public:
 	const int first = element_->getFirst();
 	return Interval<int>( first, first+element_->getCount()-1 );
     }
-    
-    osg::ref_ptr<osg::DrawArrays>	element_;
+
+    int			indexOf(const int) { return -1; }
+    void		append( int ){};
+    void		append(const int* ptr, int num){};
+    void		setEmpty(){};
+
+    osg::ref_ptr<osg::DrawArrays> element_;
 };
     
     

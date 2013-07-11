@@ -39,6 +39,13 @@ public:
     Notifier<Material>	change;
 
     void		setFrom(const Material&);
+   
+    void		setPropertiesFrom(const Material&);
+			/*!< set materials by input material's properties */
+    void		setColors(const TypeSet<Color>&,
+				  bool synchronizing = true);
+			/*!< set material's od colors by input colors. */
+
 
     enum ColorMode	{ Ambient, Diffuse, Specular, Emission,
 			  AmbientAndDiffuse, Off };
@@ -79,7 +86,7 @@ public:
     void		fillPar(IOPar&) const;
 
     int			nrOfMaterial() const;
-    
+
     void		clear();
     
     const osg::Array*	getColorArray() const;
@@ -88,8 +95,9 @@ public:
 protected:
 			~Material();
     void		setMinNrOfMaterials(int);
-    void		updateMaterial(int);
+    void		updateOsgColor(int,bool trigger = true);
     void		createOsgColorArray();
+    void		synchronizingOsgColorArray();
 
     TypeSet<Color>	colors_;
     TypeSet<float>	diffuseintensity_;
@@ -110,6 +118,9 @@ protected:
     static const char*	sKeyEmmissiveIntensity();
     static const char*	sKeyShininess();
     static const char*	sKeyTransparency();
+
+    friend class	OsgColorArrayUpdator;
+    mutable Threads::Mutex	mutex_;
 };
 
 } // namespace visBase

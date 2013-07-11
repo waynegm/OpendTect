@@ -19,6 +19,76 @@ static const char* rcsID mUsedVar = "$Id$";
 namespace visBase
 {
 
+
+class OsgColorArrayUpdator: public ParallelTask			
+{
+public:
+    OsgColorArrayUpdator(Material* p, const od_int64 size, 
+		    const TypeSet<float>&, const TypeSet<float>&);
+    od_int64	totalNr() const { return totalnrcolors_; }
+
+protected:
+    bool	doWork(od_int64 start, od_int64 stop, int);
+    bool	doPrepare(int);
+    od_int64	nrIterations() const { return totalnrcolors_; }
+
+private:
+    Material* material_;
+    Threads::Atomic<od_int64>	totalnrcolors_;
+    const TypeSet<float> diffintensity_;
+    const TypeSet<float> transparency_;
+
+};
+
+
+OsgColorArrayUpdator::OsgColorArrayUpdator( Material* p, const od_int64 size,
+				  const TypeSet<float>& diffintensity, 
+				  const TypeSet<float>& transparency)
+    : material_( p )
+    , totalnrcolors_( size )
+    , diffintensity_( diffintensity )
+    , transparency_ ( transparency )
+{
+}
+
+bool OsgColorArrayUpdator::doPrepare(int)
+{
+    if (mGetOsgVec4Arr(material_->osgcolorarray_) )
+	mGetOsgVec4Arr(material_->osgcolorarray_)->resize( 
+				material_->colors_.size() );
+    
+    if( diffintensity_.size() ==1 || 
+    diffintensity_.size() < material_->colors_.size() ) 
+    {
+	while (material_->diffuseintensity_.size()<= material_->colors_.size())
+	{
+	    material_->diffuseintensity_+= 0.8;
+	    material_->transparency_+= 0.0;
+	}
+    }
+
+    return true;
+}
+
+
+bool OsgColorArrayUpdator::doWork(od_int64 start,od_int64 stop,int)
+{
+    for ( int idx = mCast(int,start); idx<=mCast(int,stop); idx++ )
+    {
+	if ( diffintensity_.size() ==1 || 
+	    diffintensity_.size() < material_->colors_.size() )
+	{
+	    material_->setMinNrOfMaterials(idx);
+	    material_->diffuseintensity_[idx] = diffintensity_[0]; 
+	    material_->transparency_[idx] = transparency_[0];
+	}
+	material_->updateOsgColor( idx, false );
+    }
+    return true;
+}
+
+
+
 const char* Material::sKeyColor()		{ return "Color"; }
 const char* Material::sKeyAmbience()		{ return "Ambient Intensity"; }
 const char* Material::sKeyDiffIntensity()	{ return "Diffuse Intensity"; }
@@ -39,7 +109,7 @@ Material::Material()
     material_->ref();
     setColorMode( Off );
     setMinNrOfMaterials(0);
-    updateMaterial(0);
+    updateOsgColor(0);
 }
 
 
@@ -53,7 +123,13 @@ Material::~Material()
 #define mSetProp( prop ) prop = mat.prop
 void Material::setFrom( const Material& mat )
 {
-    mSetProp( colors_ );
+    setColors( mat.colors_, false );
+    setPropertiesFrom( mat );
+}
+
+
+void Material::setPropertiesFrom( const Material& mat )
+{
     mSetProp( diffuseintensity_ );
     mSetProp( ambience_ );
     mSetProp( specularintensity_ );
@@ -61,8 +137,28 @@ void Material::setFrom( const Material& mat )
     mSetProp( shininess_ );
     mSetProp( transparency_ );
 
-    for ( int idx=colors_.size()-1; idx>=0; idx-- )
-	updateMaterial( idx );
+    synchronizingOsgColorArray();
+}
+
+
+void Material::setColors( const TypeSet<Color>& colors, bool synchronizing )
+{
+    colors_.erase();
+    colors_ = colors;
+    if ( synchronizing )
+	synchronizingOsgColorArray();
+}
+
+
+void Material::synchronizingOsgColorArray()
+{
+    OsgColorArrayUpdator updator( 
+	this, colors_.size(), diffuseintensity_, transparency_);
+    TaskRunner tr;
+
+    if( TaskRunner::execute( &tr,updator ) )
+	change.trigger();
+
 }
 
 
@@ -73,7 +169,7 @@ void Material::setColor( const Color& n, int idx )
 	return;
 
     colors_[idx] = n;
-    updateMaterial( idx );
+    updateOsgColor( idx );
 }
 
 
@@ -95,7 +191,7 @@ void Material::removeColor( int idx )
 	 diffuseintensity_.removeSingle( idx );
 
 	 for ( int idy=idx; idy<colors_.size(); idy++ )
-	     updateMaterial( idy );
+	     updateOsgColor( idy );
      }
      else
      {
@@ -108,7 +204,7 @@ void Material::setDiffIntensity( float n, int idx )
 {
     setMinNrOfMaterials(idx);
     diffuseintensity_[idx] = n;
-    updateMaterial( idx );
+    updateOsgColor( idx );
 }
 
 
@@ -124,7 +220,7 @@ void Material::setTransparency( float n, int idx )
 {
     setMinNrOfMaterials(idx);
     transparency_[idx] = n;
-    updateMaterial( idx );
+    updateOsgColor( idx );
 }
 
 
@@ -140,7 +236,7 @@ float Material::getTransparency( int idx ) const
 void Material::set##func( Type n ) \
 { \
     var = n; \
-    updateMaterial( 0 ); \
+    updateOsgColor( 0 ); \
 } \
 Type Material::get##func() const \
 { \
@@ -158,7 +254,7 @@ mSetGetProperty( float, Shininess, shininess_ );
     osg::Vec4( col.r()*fac/255, col.g()*fac/255, col.b()*fac/255, 1.0-transp )
 
 
-void Material::updateMaterial( int idx )
+void Material::updateOsgColor( int idx, bool trigger)
 {
     const osg::Vec4 diffuse =
 	mGetOsgCol( colors_[idx], diffuseintensity_[idx], transparency_[idx] );
@@ -176,14 +272,13 @@ void Material::updateMaterial( int idx )
 	material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
 	material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
 
-	if ( osgcolorarray_ )
-	{
-	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
-	    if ( colarr.size() )
-		colarr[0] = diffuse;
-	    else
-		colarr.push_back( diffuse );
-	}
+	if ( !osgcolorarray_ )
+	    createOsgColorArray();
+	osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
+	if ( colarr.size() )
+	    colarr[0] = diffuse;
+	 else
+	    colarr.push_back( diffuse );
     }
     else
     {
@@ -195,6 +290,8 @@ void Material::updateMaterial( int idx )
 	else
 	{
 	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
+	    
+	    Threads::MutexLocker lock( mutex_ );
 
 	    if ( colarr.size()<=idx )
 		colarr.resize( idx+1 );
@@ -203,7 +300,8 @@ void Material::updateMaterial( int idx )
 	}
     }
 
-    change.trigger();
+    if( trigger )
+	change.trigger();
 }
 
 
@@ -326,7 +424,8 @@ Material::ColorMode Material::getColorMode() const
 
 void	Material::clear()
 {
-    colors_.erase();
+    if ( colors_.size() )
+        colors_.erase();
     diffuseintensity_.erase();
     transparency_.erase();
     if ( osgcolorarray_ )

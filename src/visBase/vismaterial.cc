@@ -12,6 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "visosg.h"
 #include "iopar.h"
+#include "task.h"
 
 #include <osg/Material>
 #include <osg/Array>

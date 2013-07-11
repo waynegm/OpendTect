@@ -18,8 +18,8 @@ ________________________________________________________________________
 #include "positionlist.h"
 #include "viscoord.h"
 
-class SoTextureCoordinate2;
-class SoTextureCoordinate3;
+//class SoTextureCoordinate2;
+//class SoTextureCoordinate3;
 class Coord3;
 class Coord;
 namespace Threads { class Mutex; };
@@ -36,14 +36,14 @@ mExpClass(visBase) TextureCoords : public DataObject
 public:
     static TextureCoords*	create()
 				mCreateDataObj(TextureCoords);
-
     int				size(bool includedelete=false) const;
     void			setCoord( int,  const Coord3& );
     void			setCoord( int,  const Coord& );
     int				addCoord( const Coord3& );
     int				addCoord( const Coord& );
     Coord3			getCoord( int ) const;
-    void			removeCoord( int );
+    bool			removeCoord( int );
+    void			clear();
 
     int				nextID(int previd) const;
 
@@ -55,7 +55,7 @@ protected:
     int				getFreeIdx();
     				/*!< Object should be locked before calling */
 
-    SoTextureCoordinate3*	coords_;
+    //SoTextureCoordinate3*	coords_;
     osg::Array*			osgcoords_;
     TypeSet<int>		unusedcoords_;
     Threads::Mutex&		mutex_;
@@ -75,7 +75,8 @@ public:
 
 protected:
     				~TextureCoords2();
-    SoTextureCoordinate2*	coords_;
+    //SoTextureCoordinate2*	coords_;
+    osg::Array*			osgcoords_;
     virtual SoNode*		gtInvntrNode();
     Threads::Mutex&		mutex_;
 };
@@ -94,11 +95,13 @@ public:
     void		remove(int id);
     int			getSize() const	{ return texturecoords_.size(); }
     void		addValue(int,const Coord3&);
+    void		remove(const TypeSet<int>&);
 
 protected:
     			~TextureCoordListAdapter();
 
     TextureCoords&	texturecoords_;
+    int			nrremovedidx_;
 };
 
 }; //namespace

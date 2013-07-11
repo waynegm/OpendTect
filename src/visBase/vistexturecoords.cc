@@ -15,9 +15,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "position.h"
 #include "thread.h"
 
-#include <Inventor/nodes/SoTextureCoordinate2.h>
-#include <Inventor/nodes/SoTextureCoordinate3.h>
-
 #include <osg/Array>
 
 mCreateFactoryEntry( visBase::TextureCoords );
@@ -27,43 +24,31 @@ namespace visBase
 {
 
 TextureCoords2::TextureCoords2()
-    : coords_( new SoTextureCoordinate2 )
-    , mutex_( *new Threads::Mutex )
+    : mutex_( *new Threads::Mutex )
 { 
-    coords_->ref();
 }
 
 
 TextureCoords2::~TextureCoords2()
 {
-    delete &mutex_;
-    coords_->unref();
 }
+
 
 void TextureCoords2::setCoord( int idx, const Coord& pos )
 {
-    Threads::MutexLocker lock( mutex_ );
-    coords_->point.set1Value( idx, (float)pos.x, (float)pos.y );
+   /* Threads::MutexLocker lock( mutex_ );
+    coords_->point.set1Value( idx, (float)pos.x, (float)pos.y );*/
 }
 
 
 SoNode* TextureCoords2::gtInvntrNode()
-{ return coords_; }
+{ return 0; }
 
 
 TextureCoords::TextureCoords()
-    : coords_( new SoTextureCoordinate3 )
-    , mutex_( *new Threads::Mutex )
+    : mutex_( *new Threads::Mutex )
     , osgcoords_( new osg::Vec2Array )
 {
-    if ( coords_ )
-    {
-	coords_->ref();
-	unusedcoords_ += 0;
-	//!<To compensate for that the first coord is set by default by coin
-	return;
-    }
-    
     mGetOsgVec2Arr(osgcoords_)->ref();
 }
 
@@ -71,30 +56,20 @@ TextureCoords::TextureCoords()
 TextureCoords::~TextureCoords()
 {
     delete &mutex_;
-    
-    if ( coords_ )
-    {
-	coords_->unref();
-	return;
-    }
-    
     mGetOsgVec2Arr(osgcoords_)->unref();
 }
 
 
 int TextureCoords::size(bool includedeleted) const
-{ return coords_->point.getNum()-(includedeleted ? 0 : unusedcoords_.size()); }
+{ return  mGetOsgVec2Arr(osgcoords_)->size(); }
 
 
 void TextureCoords::setCoord( int idx, const Coord3& pos )
 {
-    Threads::MutexLocker lock( mutex_ );
-
-    for ( int idy=coords_->point.getNum(); idy<idx; idy++ )
-	unusedcoords_ += idy;
-
-    coords_->point.set1Value( idx, SbVec3f( (float) pos.x, 
-					     (float) pos.y, (float) pos.z ));
+    Coord crd;
+    crd.x = pos.x;
+    crd.y = pos.y;
+    setCoord( idx, crd );
 }
 
 
@@ -102,101 +77,119 @@ void TextureCoords::setCoord( int idx, const Coord& pos )
 {
     Threads::MutexLocker lock( mutex_ );
 
-    for ( int idy=coords_->point.getNum(); idy<idx; idy++ )
-	unusedcoords_ += idy;
-
-    coords_->point.set1Value( idx, SbVec3f( (float) pos.x, (float) pos.y, 0 ));
+    if ( idx >=mGetOsgVec2Arr(osgcoords_)->size() )
+    {
+	osg::Vec2f txcoord;
+	txcoord[0] = pos.x;
+	txcoord[1] = pos.y;
+	mGetOsgVec2Arr(osgcoords_)->push_back( txcoord );
+    }
+    else
+    {
+	(*mGetOsgVec2Arr(osgcoords_))[idx][0] = pos.x;
+	(*mGetOsgVec2Arr(osgcoords_))[idx][1] = pos.y;
+    }
 }
 
 
 int TextureCoords::addCoord( const Coord3& pos )
 {
-    Threads::MutexLocker lock( mutex_ );
-    const int res = getFreeIdx();
-    coords_->point.set1Value( res, SbVec3f( (float) pos.x, 
-					      (float) pos.y, (float) pos.z ));
+    Coord crd;
+    crd.x = pos.x;
+    crd.y = pos.y;
 
-    return res;
+    return addCoord( crd );
 }
 
 
 int TextureCoords::addCoord( const Coord& pos )
 {
     Threads::MutexLocker lock( mutex_ );
-    const int res = getFreeIdx();
-    coords_->point.set1Value( res, SbVec3f( (float) pos.x, (float) pos.y, 0 ));
+    osg::Vec2f txcoord;
+    txcoord[0] = pos.x;
+    txcoord[1] = pos.y;
+    mGetOsgVec2Arr(osgcoords_)->push_back( txcoord );
 
-    return res;
+    return mGetOsgVec2Arr(osgcoords_)->size() - 1;
 }
 
 
 Coord3 TextureCoords::getCoord( int idx ) const
 {
     Threads::MutexLocker lock( mutex_ );
-    if ( idx<0 || idx>=coords_->point.getNum() ||
-	 unusedcoords_.isPresent(idx) )
-    {
-	return Coord3::udf();
-    }
 
-    SbVec3f res = coords_->point[idx];
-    return Coord3( res[0], res[1], res[2] );
+    Coord3 crd( 0.0, 0.0, 0.0 );
+
+    if ( idx < mGetOsgVec2Arr(osgcoords_)->size() )
+    {
+	osg::Vec2 osgcrd = mGetOsgVec2Arr(osgcoords_)->at( idx );
+	crd.x = osgcrd[0];
+	crd.y = osgcrd[1];
+	crd.z = 0.0f;
+    }
+    return crd;
+}
+
+
+void TextureCoords::clear()
+{
+    Threads::MutexLocker lock( mutex_ );
+    mGetOsgVec2Arr( osgcoords_ )->clear();
 }
 
 
 int TextureCoords::nextID( int previd ) const
 {
-    Threads::MutexLocker lock( mutex_ );
+ /*   Threads::MutexLocker lock( mutex_ );
     const int sz = coords_->point.getNum();
 
     int res = previd+1;
     while ( res<sz )
     {
-	if ( !unusedcoords_.isPresent(res) )
+	if ( unusedcoords_.indexOf(res)==-1 )
 	    return res;
     }
 
-    return -1;
+    return -1;*/
+    return - 1;
 }
 
 
 
-void TextureCoords::removeCoord(int idx)
+bool TextureCoords::removeCoord(int idx)
 {
     Threads::MutexLocker lock( mutex_ );
-    const int nrcoords = coords_->point.getNum();
-    if ( idx>=nrcoords )
-    {
-	pErrMsg("Invalid index");
-	return;
-    }
 
-    if ( idx==nrcoords-1 )
-	coords_->point.deleteValues( idx );
-    else
-	unusedcoords_ += idx;
+    if ( idx >=  mGetOsgVec2Arr(osgcoords_)->size() )
+	return false;
+
+    mGetOsgVec2Arr(osgcoords_)->erase(
+	mGetOsgVec2Arr(osgcoords_)->begin() + idx );
+    return true;
 }
 
 
 SoNode* TextureCoords::gtInvntrNode()
-{ return coords_; }
+{ return 0; }
 
 
 int  TextureCoords::getFreeIdx()
 {
-    if ( unusedcoords_.size() )
+  /*  if ( unusedcoords_.size() )
     {
 	const int res = unusedcoords_[unusedcoords_.size()-1];
 	unusedcoords_.removeSingle(unusedcoords_.size()-1);
 	return res;
     }
 
-    return coords_->point.getNum();
+    return coords_->point.getNum();*/
+    return 0;
 }
 
 
 TextureCoordListAdapter::TextureCoordListAdapter( TextureCoords& c )
     : texturecoords_( c )
+    , nrremovedidx_( 0 )
 { texturecoords_.ref(); }
 
 
@@ -231,6 +224,25 @@ void TextureCoordListAdapter::set( int idx, const Coord3& p )
 
 void TextureCoordListAdapter::remove( int idx )
 { texturecoords_.removeCoord( idx ); }
+
+
+void TextureCoordListAdapter::remove(const TypeSet<int>& idxs)
+{
+    TypeSet<int> removedidxs;
+    for ( int idx = idxs.size()-1; idx--; )
+    {
+	if ( removedidxs.isPresent( idx ) )
+	    continue;
+	const int toberemoveidx = 
+	    idxs[idx] >= nrremovedidx_ ? idxs[idx] - nrremovedidx_ : idxs[idx];
+
+	if ( texturecoords_.removeCoord( toberemoveidx ) )
+	{
+	    removedidxs += idxs[idx];
+	    nrremovedidx_++;
+	}
+    }
+}
 
 
 }; // namespace visBase

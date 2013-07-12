@@ -18,7 +18,6 @@ ________________________________________________________________________
 #include "vissurvobj.h"
 
 class Sphere;
-class SoSeparator;
 namespace Pick { class Set; class Location; class SetMgr; }
 template <class T> class Selector;
 

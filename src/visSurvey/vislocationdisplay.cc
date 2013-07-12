@@ -205,7 +205,7 @@ void LocationDisplay::fullRedraw( CallBacker* )
 	}
 
 	setPosition( idx, loc );
-	markerset_->turnOn( turnon );
+	markerset_->turnMarkerOn( idx, turnon );
 
     }
 
@@ -233,7 +233,7 @@ void LocationDisplay::createLine()
     if ( !polyline_ ) 
     {
 	polyline_ = visBase::PolyLine::create();
-	addChild( polyline_->getInventorNode() );
+	addChild( polyline_->osgNode() );
 	polyline_->setDisplayTransformation( transformation_ );
 	polyline_->setMaterial( 0 );
 	polyline_->ref();

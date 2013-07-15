@@ -324,6 +324,7 @@ bool uiContourTreeItemContourGenerator::doFinish( bool success )
     if ( labels_ ) labels_->unRef();
     labels_ = visBase::Text2::create();
     labels_->ref();
+    labels_->setDisplayTransformation( displaytrans_ );
 
     uicitem_->lines_->getCoordinates()->setPositions(
  		      contourdata_.contourcoords_.arr(), 
@@ -366,7 +367,7 @@ void uiContourTreeItemContourGenerator::addContourLabel(
     if ( label )
     {
 	label->setText( lbl );
-	label->setPosition( pos,true );
+	label->setPosition( pos, true );
 	label->setFontData( FontData(14) );
     }
 }

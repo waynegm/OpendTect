@@ -906,9 +906,11 @@ void uiContourTreeItem::updateZShift()
 {
     if ( !lines_ || mIsUdf(zshift_) ) return;
 
-    const Coord3 trans = applMgr()->visServer()->getTranslation( displayID() );
+    Coord3 trans = applMgr()->visServer()->getTranslation( displayID() );
+
     const float deltaz = (float) (trans.z - zshift_);
-    if ( !deltaz ) return;
+    if ( !deltaz )
+	return;
 
     for ( int idx=0; idx<lines_->getCoordinates()->size(true); idx++ )
     {
@@ -919,6 +921,8 @@ void uiContourTreeItem::updateZShift()
 	    lines_->getCoordinates()->setPos( idx, pos );
 	}
     }
+
+    lines_->dirtyCoordinates();
 
     for ( int idx=0; idx<labels_->nrTexts(); idx++ )
     {

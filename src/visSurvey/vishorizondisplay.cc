@@ -104,6 +104,8 @@ HorizonDisplay::HorizonDisplay()
     linemat->setDiffIntensity( 1 );
     linemat->setAmbience( 1 );
     setIntersectLineMaterial( linemat );
+
+
 }
 
 
@@ -855,10 +857,10 @@ bool HorizonDisplay::hasDepth( int channel ) const
 Coord3 HorizonDisplay::getTranslation() const
 {
     if ( !translation_ ) return Coord3(0,0,0);
+    Coord3 zshift = translation_->getTranslation();
+    mVisTrans::transformBack( transformation_, zshift );
 
-    Coord3 shift = translation_->getTranslation();
-    shift.z *= -1; 
-    return shift;
+    return zshift;
 }
 
 
@@ -869,9 +871,22 @@ void HorizonDisplay::setTranslation( const Coord3& nt )
 	translation_ = visBase::Transformation::create();
 	translation_->ref();
 	addChild( translation_->osgNode() );
+
+	for ( int idx = 0; idx< sections_.size(); idx++ )
+	{
+	    removeChild( sections_[idx]->osgNode() );
+	    translation_->addObject( sections_[idx] );
+	}
     }
 
-    Coord3 shift( nt ); shift.z *= -1;
+    Coord3 origin( 0, 0, 0 );
+    Coord3 aftershift( nt ); aftershift.z *= -1;
+
+    mVisTrans::transform( transformation_, origin );
+    mVisTrans::transform( transformation_, aftershift );
+
+    const Coord3 shift = origin - aftershift;
+
     translation_->setTranslation( shift );
 
     setOnlyAtSectionsDisplay( displayonlyatsections_ );		/* retrigger */
@@ -946,7 +961,6 @@ bool HorizonDisplay::addSection( const EM::SectionID& sid, TaskRunner* tr )
     surf->setResolution( resolution_-1, tr );
 
     surf->setMaterial( 0 );
-
     addChild( surf->osgNode() );
     surf->turnOn( !displayonlyatsections_ );
 

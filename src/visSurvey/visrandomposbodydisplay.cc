@@ -79,7 +79,6 @@ bool RandomPosBodyDisplay::setVisBody( visBase::RandomPos2Body* body )
     displaybody_ = body;
     displaybody_->ref();
     displaybody_->setDisplayTransformation( transform_ );
-    displaybody_->setRightHandSystem( true );
     displaybody_->setSelectable( false );
     addChild( displaybody_->osgNode() );
 
@@ -131,7 +130,6 @@ bool RandomPosBodyDisplay::updateVisFromEM()
 	displaybody_ = visBase::RandomPos2Body::create();
 	displaybody_->ref();
 	displaybody_->setDisplayTransformation( transform_ );
-	displaybody_->setRightHandSystem( true );
 	displaybody_->setMaterial( 0 );
 	displaybody_->setSelectable( false );
 	addChild( displaybody_->osgNode() );
@@ -139,7 +137,7 @@ bool RandomPosBodyDisplay::updateVisFromEM()
 
     if ( !displaybody_->setPoints( embody_->getPositions() ) )
     {
-	removeChild( displaybody_->getInventorNode() );
+	removeChild( displaybody_->osgNode() );
 	displaybody_->unRef();
 	displaybody_ = 0;
 	return false;
@@ -210,13 +208,6 @@ void RandomPosBodyDisplay::setDisplayTransformation(const mVisTrans* nt)
     transform_->ref();
 
     if ( displaybody_ ) displaybody_->setDisplayTransformation( nt );
-}
-
-
-void RandomPosBodyDisplay::setRightHandSystem( bool yn )
-{
-    visBase::VisualObjectImpl::setRightHandSystem( yn );
-    if ( displaybody_ ) displaybody_->setRightHandSystem( yn );
 }
 
 

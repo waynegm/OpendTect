@@ -17,12 +17,11 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "position.h"
 
-class SoShapeHints;
-
 namespace visBase
 {
 class TriangleStripSet;
 class Transformation;
+class VertexShape;
 
 /*!This class displays the triangulated body based on a set of given points. 
    For example
@@ -47,17 +46,18 @@ public:
     const mVisTrans*		getDisplayTransformation() const;
 
     void			renderOneSide(int side);
-    				/*!< 0 = visisble from both sides.
-				     1 = visisble from positive side
-				     -1 = visisble from negative side. */
 
 protected:
     				~RandomPos2Body();
 
     TypeSet<Coord3>		picks_;			
-    TriangleStripSet*		triset_;
+    VertexShape*		vtxshape_;
     const mVisTrans*		transformation_;
-    SoShapeHints*		hints_;
+    int				renderside_;
+    				/*!< 0 = visisble from one side.
+				   1 = visisble from positive side
+				  -1 = visisble from negative side. */
+
 };
 
 

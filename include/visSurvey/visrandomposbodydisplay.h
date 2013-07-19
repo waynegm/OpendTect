@@ -47,7 +47,6 @@ public:
 
     void			setDisplayTransformation(const mVisTrans*);
     const mVisTrans*		getDisplayTransformation() const;
-    void			setRightHandSystem(bool);
 
     bool			setVisBody(visBase::RandomPos2Body*);
     				//!<Creates an EMObject for it.

@@ -91,8 +91,8 @@ LocationDisplay::~LocationDisplay()
 
     if ( polyline_ )
     {
-	removeChild( polyline_->getInventorNode() );
-	polyline_->unRef();
+	removeChild( polyline_->osgNode() );
+	unRefAndZeroPtr( polyline_ );
     }
 
     if ( transformation_ ) transformation_->unRef();
@@ -233,10 +233,10 @@ void LocationDisplay::createLine()
     if ( !polyline_ ) 
     {
 	polyline_ = visBase::PolyLine::create();
+	polyline_->ref();
 	addChild( polyline_->osgNode() );
 	polyline_->setDisplayTransformation( transformation_ );
 	polyline_->setMaterial( 0 );
-	polyline_->ref();
     }
 
     int pixsize = set_->disp_.pixsize_;
@@ -258,6 +258,8 @@ void LocationDisplay::createLine()
     int nrnodes = polyline_->size();
     if ( nrnodes && set_->disp_.connect_==Pick::Set::Disp::Close ) 
 	polyline_->setPoint( nrnodes, polyline_->getPoint(0) );
+
+    polyline_->dirtyCoordinates();
 } 
 
 

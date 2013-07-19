@@ -58,7 +58,7 @@ EdgeLineSetDisplay::~EdgeLineSetDisplay()
     if ( transformation ) transformation->unRef();
     for ( int idx=0; idx<polylines.size(); idx++ )
     {
-	removeChild( polylines[idx]->getInventorNode() );
+	removeChild( polylines[idx]->osgNode() );
 	polylines[idx]->unRef();
 	polylines.removeSingle(idx--);
     }
@@ -163,7 +163,7 @@ void EdgeLineSetDisplay::updateEdgeLineSetChangeCB(CallBacker*)
 	    polylines += polyline;
 	    polyline->ref();
 	    polyline->setDisplayTransformation( transformation );
-	    addChild( polyline->getInventorNode() );
+	    addChild( polyline->osgNode() );
 	    polyline->setMaterialBinding(
 		    visBase::Shape::cPerVertexMaterialBinding() );
 	    polylinesegments += new TypeSet<int>;
@@ -278,7 +278,7 @@ void EdgeLineSetDisplay::updateEdgeLineSetChangeCB(CallBacker*)
 
     for ( int idx=polylines.size()-1; idx>=edgelineset->nrLines(); idx-- )
     {
-	removeChild( polylines[idx]->getInventorNode() );
+	removeChild( polylines[idx]->osgNode() );
 	polylines[idx]->unRef();
 	polylines.removeSingle( idx );
 

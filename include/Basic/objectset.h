@@ -234,6 +234,44 @@ inline void sort( ObjectSet<T>& os )
 }
 
 
+//! See if all objects are equal
+template <class T>
+inline bool equalObjects( const ObjectSet<T>& os1, const ObjectSet<T>& os2 )
+{
+    typedef typename ObjectSet<T>::size_type size_type;
+    const size_type sz = os1.size();
+    if ( os2.size() != sz )
+	return false;
+
+    for ( size_type idx=0; idx<sz; idx++ )
+	if ( os1[idx] != os2[idx] )
+	    return false;
+
+    return true;
+}
+
+
+//! See if all objects pointed to are equal
+template <class T>
+inline bool equalContents( const ObjectSet<T>& os1, const ObjectSet<T>& os2 )
+{
+    typedef typename ObjectSet<T>::size_type size_type;
+    const size_type sz = os1.size();
+    if ( os2.size() != sz )
+	return false;
+
+    for ( size_type idx=0; idx<sz; idx++ )
+    {
+	const T* o1 = os1[idx]; const T* o2 = os2[idx];
+	if ( !o1 && !o2 )
+	    continue;
+	if ( !o1 || !o2 || (!(*o1 == *o2)) )
+	    return false;
+    }
+    return true;
+}
+
+
 // Member function implementations
 template <class T> inline
 ObjectSet<T>::ObjectSet() : allow0_(false)

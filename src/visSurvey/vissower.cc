@@ -386,7 +386,7 @@ bool Sower::acceptMouse( const visBase::EventInfo& eventinfo )
 	bendthreshold = 0.1;
 
     BendPointFinder2D bpfinder( mousecoords_, bendthreshold );
-    bpfinder.execute( true );
+    bpfinder.execute();
 
     bendpoints_.erase();
 

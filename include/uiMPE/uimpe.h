@@ -35,7 +35,6 @@ class ObjectEditor;
 class SectionTracker;
 
 /*!
-\ingroup uiMPE
 \brief Interface for the ui interaction with MPE::ObjectEditor.
 Object is implemented in separate classes inheriting uiEMEditor that
 can be created by:
@@ -148,7 +147,6 @@ protected:
 
 
 /*!
-\ingroup uiMPE
 \brief Holder class for MPE ui-factories.
   Is normally only retrieved by MPE::uiMPE().
 */

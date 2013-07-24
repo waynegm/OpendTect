@@ -372,8 +372,9 @@ QRectF ODViewerTextItem::boundingRect() const
     const float movey = alignment.y() * txtheight;
 
     const QPointF paintpos = mapToScene( QPointF(0,0) );
-    const QRectF scenerect( paintpos.x()+movex, paintpos.y()+movey,
-			    txtwidth, txtheight );
+    const QRectF scenerect( paintpos.x()+movex-5, paintpos.y()+movey-5,
+			    txtwidth+10, txtheight+10 );//Extra space is added
+    //to avoid clipping on some platforms & the number 5 is arbitrarily chosen.
     return mapRectFromScene( scenerect );
 }
 
@@ -510,9 +511,9 @@ void ODGraphicsDynamicImageItem::setImage( bool isdynamic,
 	if ( isMainThreadCurrent() )
 	{
 	    update();
-    }
-    else
-    {
+	}
+	else
+	{
 	    QObject* qobj = scene();
 	    if ( qobj && !QMetaObject::invokeMethod( qobj, "update",
 						 Qt::QueuedConnection ))
@@ -579,26 +580,26 @@ void ODGraphicsDynamicImageItem::paint(QPainter* painter,
 #ifdef __mac__
 	    dynamicpixmap_ = new QPixmap;
 #else
-	if ( !dynamicpixmap_ ) dynamicpixmap_ = new QPixmap;
+	    if ( !dynamicpixmap_ ) dynamicpixmap_ = new QPixmap;
 #endif
 
 #if QT_VERSION>=0x040700
-	dynamicpixmap_->convertFromImage( dynamicimage_ );
+	    dynamicpixmap_->convertFromImage( dynamicimage_ );
 #else
-	*dynamicpixmap_ =
-	    QPixmap::fromImage( dynamicimage_, Qt::OrderedAlphaDither );
+	    *dynamicpixmap_ =
+		QPixmap::fromImage( dynamicimage_, Qt::OrderedAlphaDither );
 #endif
 	}
 	else
 	{
 	    dynamicpixmap_ = 0;
 	}
-       
+	   
 	dynamicpixmapbbox_ = dynamicimagebbox_;
 	updatedynpixmap_ = false;
     }
 
-	dynamiclock_.unlock();
+    dynamiclock_.unlock();
 
     const QTransform worldtrans = painter->worldTransform();
 
@@ -644,7 +645,7 @@ bool ODGraphicsDynamicImageItem::updateResolution( const QPainter* painter )
     if ( !forceredraw_ )
     {
 	if ( wantedwr==wantedwr_ && wantedscreensz==wantedscreensz_)
-	return false;
+	    return false;
     }
     else
     {

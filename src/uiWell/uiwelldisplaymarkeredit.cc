@@ -9,7 +9,6 @@ ________________________________________________________________________
 -*/
 static const char* rcsID mUsedVar = "$Id$";
 
-
 #include "uiwelldisplaymarkeredit.h"
 
 #include "uiwelldisplaycontrol.h"
@@ -83,7 +82,6 @@ void uiAddEditMrkrDlg::putToScreen()
     colorfld_->setColor( marker_.color() );
     stratmrkfld_->setChecked( marker_.levelID() > 0 );
 }
-
 
 
 
@@ -214,8 +212,8 @@ bool uiDispEditMarkerDlg::rejectOK( CallBacker* )
     if ( hasedited_ )
     {
 	BufferString msg = "Some markers have been edited. \n";
-	msg += "Do you want to continue with marker editing ? ";
-	if ( !uiMSG().askContinue( msg ) )
+	msg += "Do you want to save those changes? ";
+	if ( !uiMSG().askGoOn( msg ) )
 	{
 	    for ( int idx=0; idx<markerssets_.size(); idx++ )
 		*markerssets_[idx] = *orgmarkerssets_[idx];
@@ -315,10 +313,13 @@ bool uiDispEditMarkerDlg::removeMrkrFromList()
     for ( int idx=tmplist_.size()-1; idx>=0; idx-- )
     {
 	if ( !strcmp( mrknm, tmplist_[idx]->name() ) )
+	{
 	    delete tmplist_.removeSingle( idx );
 	fillMarkerList(0);
 	return true;
     }
+    }
+
     BufferString msg = "This will remove "; 
 		 msg += mrknm; 
 		 msg += " from all the wells \n ";
@@ -334,7 +335,7 @@ bool uiDispEditMarkerDlg::removeMrkrFromList()
 		delete mrkset.removeSingle( mrkset.indexOf( mrknm ),true );
 	    }
 	}
-	hasedited_ = true; 
+	hasedited_ = true;
 	return true;
     }
     return false;
@@ -343,15 +344,15 @@ bool uiDispEditMarkerDlg::removeMrkrFromList()
 
 void uiDispEditMarkerDlg::listRClickCB( CallBacker* )
 {
-    uiPopupMenu mnu( this, "Action" );
+    uiMenu mnu( this, "Action" );
 
     const bool nomrkr = mrklist_->isEmpty();
 
-    mnu.insertItem( new uiMenuItem("Add &New ..."), 0 );
+    mnu.insertItem( new uiAction("Add &New ..."), 0 );
     if ( !nomrkr )
     {
-	mnu.insertItem( new uiMenuItem("&Edit ..."), 1 );
-	mnu.insertItem( new uiMenuItem("Remove ..."), 2 );
+	mnu.insertItem( new uiAction("&Edit ..."), 1 );
+	mnu.insertItem( new uiAction("Remove ..."), 2 );
     }
     const int mnuid = mnu.exec();
     if ( mnuid < 0 ) 
@@ -437,9 +438,6 @@ Well::Marker* uiDispEditMarkerDlg::getMarkerFromTmpList( const char* mrknm )
 
 
 
-
-
-
 uiWellDispCtrlEditMarkerDlg::uiWellDispCtrlEditMarkerDlg( uiParent* p )
     : uiDispEditMarkerDlg(p)
     , curctrl_(0)
@@ -494,7 +492,6 @@ void uiWellDispCtrlEditMarkerDlg::triggerWDsMarkerChanged()
 	wds_[idx]->markerschanged.trigger();
     }
 }
-
 
 
 void uiWellDispCtrlEditMarkerDlg::handleCtrlChangeCB( CallBacker* cb )
@@ -566,11 +563,10 @@ bool uiWellDispCtrlEditMarkerDlg::acceptOK( CallBacker* )
 bool uiWellDispCtrlEditMarkerDlg::rejectOK( CallBacker* cb )
 {
     needsave_ = false;
-    if ( hasedited_ && uiDispEditMarkerDlg::acceptOK( cb ) )
+    if ( hasedited_ && uiDispEditMarkerDlg::rejectOK( cb ) )
     {
 	triggerWDsMarkerChanged();
     }
-
     return true;
 }
 

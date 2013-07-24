@@ -106,13 +106,13 @@ uiAttribDescSetEd::uiAttribDescSetEd( uiParent* p, DescSetMan* adsm,
 
 #define mInsertItemNoIcon( txt, func ) \
 { \
-    uiMenuItem* itm = new uiMenuItem(txt,mCB(this,uiAttribDescSetEd,func));\
+    uiAction* itm = new uiAction(txt,mCB(this,uiAttribDescSetEd,func));\
     filemnu->insertItem( itm ); \
 }
 
 #define mInsertItem( txt, func, fnm ) \
 { \
-    uiMenuItem* itm = new uiMenuItem(txt,mCB(this,uiAttribDescSetEd,func),fnm);\
+    uiAction* itm = new uiAction(txt,mCB(this,uiAttribDescSetEd,func),fnm);\
     filemnu->insertItem( itm ); \
 }
 
@@ -121,7 +121,7 @@ void uiAttribDescSetEd::createMenuBar()
     uiMenuBar* menu = menuBar();
     if( !menu )		{ pErrMsg("huh?"); return; }
 
-    uiPopupMenu* filemnu = new uiPopupMenu( this, "&File" );
+    uiMenu* filemnu = new uiMenu( this, "&File" );
     mInsertItem( "&New set ...", newSet, "newset" );
     mInsertItem( "&Open set ...", openSet, "openset" );
     mInsertItem( "&Save set ...", savePush, "save" );
@@ -330,7 +330,6 @@ uiAttribDescSetEd::~uiAttribDescSetEd()
 {
     delete &userattrnames_;
     delete &setctio_;
-    delete toolbar_;
     delete adsman_;
 }
 

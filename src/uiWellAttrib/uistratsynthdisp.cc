@@ -166,6 +166,7 @@ uiStratSynthDisp::uiStratSynthDisp( uiParent* p,
     vwr_->setInitialSize( uiSize(800,300) ); //TODO get hor sz from laymod disp
     vwr_->setStretch( 2, 2 );
     vwr_->attach( ensureBelow, datagrp_ );
+    vwr_->dispParsChanged.notify( mCB(this,uiStratSynthDisp,parsChangedCB) );
     FlatView::Appearance& app = vwr_->appearance();
     app.setGeoDefaults( true );
     app.setDarkBG( false );
@@ -247,7 +248,7 @@ void uiStratSynthDisp::updateSyntheticList( bool wva )
 	const SyntheticData* sd = curSS().getSyntheticByIdx( idx );
 	if ( !sd ) continue;
 
-	mDynamicCastGet(const PropertyRefSyntheticData*,prsd,sd);
+	mDynamicCastGet(const StratPropSyntheticData*,prsd,sd);
 	if ( wva && prsd ) continue;
 	datalist->addItem( sd->name() );
     }
@@ -315,7 +316,7 @@ void uiStratSynthDisp::setDispMrkrs( const char* lnm,
 
     const bool domodelchg = dispflattened_ || dispflattened;
     dispflattened_ = dispflattened;
-    if ( domodelchg )
+    if ( domodelchg && !autoupdate_ )
     {
 	doModelChange();
 	control_->zoomMgr().toStart();
@@ -452,7 +453,7 @@ void uiStratSynthDisp::setCurrentWavelet()
 	return;
     }
 
-    mDynamicCastGet(const PropertyRefSyntheticData*,prsd,vdsd);
+    mDynamicCastGet(const StratPropSyntheticData*,prsd,vdsd);
     if ( vdsd && !prsd )
     {
 	vdsd->setWavelet( wvltfld_->getName() );
@@ -528,6 +529,14 @@ bool uiStratSynthDisp::haveUserScaleWavelet()
 }
 
 
+void uiStratSynthDisp::parsChangedCB( CallBacker* )
+{
+    if ( currentvdsynthetic_ && !vwr_->appearance().ddpars_.vd_.ctab_.isEmpty())
+	currentvdsynthetic_->dispPars().coltab_ =
+	    vwr_->appearance().ddpars_.vd_.ctab_;
+}
+
+
 void uiStratSynthDisp::viewChg( CallBacker* )
 {
     viewChanged.trigger();
@@ -594,7 +603,7 @@ const uiWorldRect& uiStratSynthDisp::curView( bool indpth ) const
 		depthwr.setTop( top );
 	    if ( idx==0 || bottom>depthwr.bottom() )
 		depthwr.setBottom( bottom );
-    }
+	}
     }
 
     return depthwr;
@@ -685,18 +694,37 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
     }
 
 
-    vwr_->setPack( wva, dp->id(), false, !hadpack );
+    vwr_->appearance().ddpars_.vd_.ctab_ = sd->dispPars().coltab_;
     
-    mDynamicCastGet(const PropertyRefSyntheticData*,prsd,sd);
     ColTab::MapperSetup& mapper =
 	wva ? vwr_->appearance().ddpars_.wva_.mappersetup_
 	    : vwr_->appearance().ddpars_.vd_.mappersetup_;
-    mapper.cliprate_ = Interval<float>(0.0,0.0);
-    mapper.autosym0_ = true;
-    mapper.symmidval_ = prsd ? mUdf(float) : 0.0f;
+    mDynamicCastGet(const StratPropSyntheticData*,prsd,sd);
+    const bool hasrgsaved = !mIsUdf(sd->dispPars().mapperrange_.start) &&
+			    !mIsUdf(sd->dispPars().mapperrange_.stop);
+    if ( hasrgsaved && !prsd )
+    {
+	mapper.range_ = sd->dispPars().mapperrange_;
+	mapper.autosym0_ = false;
+	mapper.type_ = ColTab::MapperSetup::Fixed;
+    }
+    else
+    {
+	mapper.cliprate_ = Interval<float>(0.0,0.0);
+	mapper.autosym0_ = true;
+	mapper.type_ = ColTab::MapperSetup::Auto;
+	mapper.symmidval_ = prsd ? mUdf(float) : 0.0f;
+    }
 
+    vwr_->setPack( wva, dp->id(), false, !hadpack );
     vwr_->setViewToBoundingBox();
-    vwr_->handleChange( FlatView::Viewer::DisplayPars );
+    if ( !hasrgsaved && !prsd )
+    {
+	mapper.autosym0_ = false;
+	mapper.type_ = ColTab::MapperSetup::Fixed;
+	SyntheticData* dispsd = const_cast< SyntheticData* > ( sd );
+	dispsd->dispPars().mapperrange_ = vwr_->getDataRange( wva );
+    }
     displayFRText();
 
     levelSnapChanged( 0 );
@@ -860,10 +888,10 @@ void uiStratSynthDisp::updateSynthetic( const char* synthnm, bool wva )
 	return;
     curSS().removeSynthetic( syntheticnm );
     SyntheticData* sd = curSS().addSynthetic();
-	if ( !sd )
+    if ( !sd )
 	mErrRet(curSS().errMsg(), return );
-	updateSyntheticList( wva );
-	synthsChanged.trigger();
+    updateSyntheticList( wva );
+    synthsChanged.trigger();
 
     datalist->setCurrentItem( syntheticnm );
     setCurrentSynthetic( wva );
@@ -888,8 +916,8 @@ void uiStratSynthDisp::syntheticChanged( CallBacker* cb )
     cursd->fillGenParams( curgp );
     if ( !(curgp == curSS().genParams()) )
     {
-    updateSynthetic( syntheticnm, true );
-    updateSyntheticList( false );
+	updateSynthetic( syntheticnm, true );
+	updateSyntheticList( false );
     }
     else
     {
@@ -961,7 +989,7 @@ const SeisTrcBuf& uiStratSynthDisp::postStackTraces(
 {
     const SyntheticData* sd = pr
 			?  const_cast<StratSynth&>(curSS()).getSynthetic(*pr)
-			   : currentwvasynthetic_;
+			: currentwvasynthetic_;
 
     static SeisTrcBuf emptytb( true );
     if ( !sd || sd->isPS() ) return emptytb;
@@ -1053,13 +1081,14 @@ void uiStratSynthDisp::fillPar( IOPar& par, const StratSynth* stratsynth ) const
     {
 	const SyntheticData* sd = stratsynth->getSyntheticByIdx( idx );
 	if ( !sd ) continue;
-	mDynamicCastGet(const PropertyRefSyntheticData*,prsd,sd);
+	mDynamicCastGet(const StratPropSyntheticData*,prsd,sd);
 	if ( prsd ) continue;
 	nr_nonproprefsynths++;
 	SynthGenParams genparams;
 	sd->fillGenParams( genparams );
 	IOPar synthpar;
 	genparams.fillPar( synthpar );
+	sd->fillDispPar( synthpar );
 	stratsynthpar.mergeComp( synthpar, IOPar::compKey(sKeySyntheticNr(),
 		    		 nr_nonproprefsynths-1) );
     }
@@ -1120,6 +1149,7 @@ bool uiStratSynthDisp::usePar( const IOPar& par )
 		continue;
 	    }
 
+	    sd->useDispPar( *synthpar );
 	    wvadatalist_->addItem( sd->name() );
 	}
 

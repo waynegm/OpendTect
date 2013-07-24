@@ -11,9 +11,6 @@ ________________________________________________________________________
 
 -*/
 
-
-/*! brief A uiMainWin that holds embedded uiObjects and controls !*/
-
 #include "uitoolsmod.h"
 #include "uimainwin.h"
 #include "uigroup.h"
@@ -32,6 +29,10 @@ class uiToolButton;
 class uiGraphicsObjectScene;
 class uiAxisHandler;
 class uiBorder;
+
+/*!
+\brief A uiMainWin that holds embedded uiObjects and controls.
+*/
 
 mExpClass(uiTools) uiObjectItemViewWin : public uiMainWin
 {
@@ -97,6 +98,8 @@ protected:
     float		hslval_;
     float		vslval_;
     LinScaler		scaler_;
+    uiSize		screensz_;
+    bool		fittoscreen_;
 
     void		init();
     void		makeSliders();
@@ -107,6 +110,7 @@ protected:
     void 		addItem(uiObjectItem* itm,uiObjectItem* infoitm=0);
     void		insertItem(int idx,uiObjectItem*,uiObjectItem* info=0);
 
+    void		reSizeCB(CallBacker*);
     void		fitToScreen(CallBacker*);
     void		reSizeSld(CallBacker*);
     void		rubBandCB(CallBacker*);

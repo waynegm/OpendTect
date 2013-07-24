@@ -129,7 +129,6 @@ public:
 			{ return Geom::Point2D<double>::distTo(b); }
     inline double	sqDistTo( const Geom::Point2D<double>& b ) const
 			{ return Geom::Point2D<double>::sqDistTo(b); }
-
 };
 
 
@@ -353,7 +352,6 @@ protected:
 };
 
 namespace Values {
-    
 
 /*!
 \brief Undefined Coord.
@@ -365,8 +363,8 @@ mClass(Basic) Undef<Coord>
 public:
     static Coord	val()			{ return Coord::udf(); }
     static bool		hasUdf()		{ return true; }
-    static bool		isUdf( const Coord& i )	{ return !i.isDefined(); }
-    static void		setUdf( Coord& i )	{ i = Coord::udf(); }
+    static bool		isUdf( Coord crd )	{ return !crd.isDefined(); }
+    static void		setUdf( Coord& crd )	{ crd = Coord::udf(); }
 };
 
 
@@ -380,12 +378,12 @@ mClass(Basic) Undef<Coord3>
 public:
     static Coord3	val()			{ return Coord3::udf(); }
     static bool		hasUdf()		{ return true; }
-    static bool		isUdf( const Coord3& i)	{ return !i.isDefined(); }
-    static void		setUdf( Coord3& i )	{ i = Coord3::udf(); }
+    static bool		isUdf( Coord3 crd )	{ return !crd.isDefined(); }
+    static void		setUdf( Coord3& crd )	{ crd = Coord3::udf(); }
 };
 
-    
-}
+} // namespace Values
+
 
 inline bool Coord3::operator==( const Coord3& b ) const
 {

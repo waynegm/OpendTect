@@ -19,6 +19,8 @@ ________________________________________________________________________
 
 /*!\brief Open Scene Graph*/
 
+/*!\brief Open Scene Graph*/
+
 namespace osg { class Group; }
 
 namespace visBase

@@ -92,8 +92,8 @@ bool CmdRecorder::start()
 	return false;
 
     uiBaseObject::addCmdRecorder( mCB(this,CmdRecorder,handleEvent) );
-    uiMenuItem::addCmdRecorder( mCB(this,CmdRecorder,handleEvent) );
-    uiPopupMenu::addInterceptor( mCB(this,CmdRecorder,dynamicMenuInterceptor) );
+    uiAction::addCmdRecorder( mCB(this,CmdRecorder,handleEvent) );
+    uiMenu::addInterceptor( mCB(this,CmdRecorder,dynamicMenuInterceptor) );
     Timer::setUserWaitFlag( false );
 
     dynamicpopupmenu_ = 0;
@@ -172,8 +172,8 @@ void CmdRecorder::stop( bool fatal )
     }
 
     uiBaseObject::removeCmdRecorder( mCB(this,CmdRecorder,handleEvent) );
-    uiMenuItem::removeCmdRecorder( mCB(this,CmdRecorder,handleEvent) );
-    uiPopupMenu::removeInterceptor(
+    uiAction::removeCmdRecorder( mCB(this,CmdRecorder,handleEvent) );
+    uiMenu::removeInterceptor(
 	    			mCB(this,CmdRecorder,dynamicMenuInterceptor) ); 
 
     recording_ = false;
@@ -184,9 +184,9 @@ void CmdRecorder::stop( bool fatal )
 
 void CmdRecorder::dynamicMenuInterceptor( CallBacker* cb )
 {
-    mDynamicCast( uiPopupMenu*, dynamicpopupmenu_, cb );
+    mDynamicCast( uiMenu*, dynamicpopupmenu_, cb );
     if ( dynamicpopupmenu_ )
-	dynamicpopupmenu_->doIntercept( false ); 
+	dynamicpopupmenu_->doIntercept( false, 0 ); 
 }
 
 
@@ -405,17 +405,17 @@ bool CmdRecorder::findKeyString( const uiMainWin& srcwin, CmdRecEvent& event )
 }
 
 
-static bool findMenuPath( const uiMenuItemContainer& mnu,
-			  const uiMenuItem& searchitem,
+static bool findMenuPath( const uiActionContainer& mnu,
+			  const uiAction& searchitem,
 			  FileMultiString& menupath, bool& casedep )
 {
     bool itemfound = false;
-    const uiMenuItem* curitem = 0;
+    const uiAction* curitem = 0;
     FileMultiString pathtail;
 
-    for ( int idx=0; idx<mnu.items().size(); idx++ )
+    for ( int idx=0; idx<mnu.actions().size(); idx++ )
     {
-	curitem = mnu.items()[idx];
+	curitem = mnu.actions()[idx];
 	if ( !curitem->isEnabled() )
 	    continue;
 
@@ -426,11 +426,10 @@ static bool findMenuPath( const uiMenuItemContainer& mnu,
 	    break;
 	}
 
-	mDynamicCastGet( const uiPopupItem*, popupitm, curitem );
-	if ( !popupitm )
+	if ( !curitem->getMenu() )
 	    continue;
 
-	if ( findMenuPath(popupitm->menu(), searchitem, pathtail, casedep) )
+	if ( findMenuPath(*curitem->getMenu(), searchitem, pathtail, casedep) )
 	{
 	    itemfound = true;
 	    break;
@@ -446,9 +445,9 @@ static bool findMenuPath( const uiMenuItemContainer& mnu,
     int nrmatches = 0;
     int selnr = 0;
 
-    for ( int idx=0; idx<mnu.items().size(); idx++ )
+    for ( int idx=0; idx<mnu.actions().size(); idx++ )
     {
-	const uiMenuItem* mnuitm = mnu.items()[idx];
+	const uiAction* mnuitm = mnu.actions()[idx];
 	if ( !mnuitm->isEnabled() )
 	    continue;
 
@@ -502,7 +501,7 @@ static bool findMenuPath( const uiMainWin& srcwin, CmdRecEvent& ev )
     for ( int idx=objsfound.size()-1; idx>=0; idx-- )
     {
 	mDynamicCastGet( const uiToolButton*, toolbut, objsfound[idx] );
-	const uiPopupMenu* menu = toolbut ? toolbut->menu() : 0;
+	const uiMenu* menu = toolbut ? toolbut->menu() : 0;
 	if ( menu && findMenuPath(*menu,*ev.mnuitm_,pathfms,ev.casedep_) )
 	{
 	    ev.srcwin_ = &srcwin;
@@ -559,7 +558,7 @@ void CmdRecorder::handleEvent( CallBacker* cb )
 	if ( ev.begin_ || !mMatchCI(keyword,"Close") )
 	{
 	    mDynamicCast( uiObject*, ev.object_, caller );
-	    mDynamicCast( uiMenuItem*, ev.mnuitm_, caller );
+	    mDynamicCast( uiAction*, ev.mnuitm_, caller );
 	    mDynamicCast( const uiMainWin*, ev.srcwin_, caller );
 	}
     }

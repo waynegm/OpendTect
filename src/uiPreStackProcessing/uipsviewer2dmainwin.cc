@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uiflatviewer.h"
 #include "uiflatviewpropdlg.h"
 #include "uiflatviewslicepos.h"
+#include "uiprestackanglemute.h"
 #include "uipsviewer2d.h"
 #include "uipsviewer2dinfo.h"
 #include "uiioobjsel.h"
@@ -32,12 +33,16 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "flatposdata.h"
 #include "ioman.h"
 #include "ioobj.h"
+#include "prestackanglemute.h"
+#include "prestackanglecomputer.h"
 #include "prestackmutedef.h"
 #include "prestackmutedeftransl.h"
 #include "prestackgather.h"
 #include "randcolor.h"
 #include "seisioobjinfo.h"
 #include "survinfo.h"
+#include "windowfunction.h"
+
 
 static int sStartNrViewers = 10;
 
@@ -51,15 +56,20 @@ uiViewer2DMainWin::uiViewer2DMainWin( uiParent* p, const char* title )
     , slicepos_(0)	 
     , seldatacalled_(this)
     , axispainter_(0)
-    , cs_(false)	  
+    , cs_(false)
 {
-    setPrefWidth( 500 );
+    setDeleteOnClose( true );
+    setPrefWidth( 800 );
 }
 
 
 uiViewer2DMainWin::~uiViewer2DMainWin()
 {
     deepErase( mutes_ );
+    deepErase( vwrs_ );
+    deepErase( gd_ );
+    deepErase( gdi_ );
+    delete posdlg_;
 }
 
 
@@ -132,6 +142,9 @@ void uiViewer2DMainWin::removeAllGathers()
     if ( control_ )
 	control_->removeAllViewers();
     vwrs_.erase();
+
+    deepErase( gd_ );
+    deepErase( gdi_ );
 }
 
 
@@ -177,7 +190,7 @@ void uiViewer2DMainWin::displayMutes()
 		muteaux->poly_ +=  FlatView::Point( offset, val );
 	    }
 
-	    muteaux->namepos_ = 0;
+	    muteaux->namepos_ = sz/2;
 	    gd->getUiFlatViewer()->addAuxData( muteaux );
 	}
     }
@@ -205,6 +218,7 @@ void uiViewer2DMainWin::loadMuteCB( CallBacker* cb )
     {
 	clearAuxData();
 	deepErase( mutes_ );
+	mutecolors_.erase();
 	for ( int idx=0; idx<mutesel.selGrp()->nrSel(); idx++ )
 	{
 	    const MultiID& muteid = mutesel.selGrp()->selected( idx );
@@ -219,10 +233,115 @@ void uiViewer2DMainWin::loadMuteCB( CallBacker* cb )
 	    }
 
 	    mutes_ += mutedef;
-	    mutecolors_ += getRandomColor();
+	    mutecolors_ += getRandStdDrawColor();
 	}
 
 	displayMutes();
+    }
+}
+
+
+PreStack::Gather* uiViewer2DMainWin::getAngleGather( 
+					    const PreStack::Gather& gather, 
+					    const PreStack::Gather& angledata,
+					    const Interval<int>& anglerange )
+{
+    const FlatPosData& fp = gather.posData();
+    const StepInterval<double> x1rg( anglerange.start, anglerange.stop, 1 );
+    const StepInterval<double> x2rg = fp.range( false );
+    FlatPosData anglefp;
+    anglefp.setRange( true, x1rg );
+    anglefp.setRange( false, x2rg );
+
+    PreStack::Gather* anglegather = new PreStack::Gather ( anglefp );
+    const int offsetsize = fp.nrPts( true );
+    const int zsize = fp.nrPts( false );
+
+    const Array2D<float>& anglevals = angledata.data();
+    const Array2D<float>& ampvals = gather.data();
+    Array2D<float>& anglegathervals = anglegather->data();
+    anglegathervals.setAll( 0 );
+
+    ManagedObjectSet<PointBasedMathFunction> vals;
+    for ( int zidx=0; zidx<zsize; zidx++ )
+    {
+	vals += new PointBasedMathFunction( 
+				    PointBasedMathFunction::Linear,
+				    PointBasedMathFunction::None );
+
+	float prevangleval = mUdf( float );
+	for ( int ofsidx=0; ofsidx<offsetsize; ofsidx++ )
+	{
+	    const float angleval = anglevals.get( ofsidx, zidx ) * 180/M_PIf;
+	    if ( mIsEqual(angleval,prevangleval,1e-3) )
+		continue;
+
+	    const float ampval = ampvals.get( ofsidx, zidx );
+	    vals[zidx]->add( angleval, ampval );
+	    prevangleval = angleval;
+	}
+
+	const int x1rgsize = x1rg.nrSteps() + 1;
+	for ( int idx=0; idx<x1rgsize; idx++ )
+	{
+	    const float angleval = mCast( float, x1rg.atIndex(idx) );
+	    const float ampval = vals[zidx]->getValue( angleval );
+	    if ( mIsUdf(ampval) )
+		continue;
+
+	    anglegathervals.set( idx, zidx, ampval );
+	}
+    }
+
+    return anglegather;
+}
+
+
+void uiViewer2DMainWin::setAngleGather( int idx )
+{
+    DPM(DataPackMgr::FlatID()).addAndObtain( anglegather_[idx] );
+    gd_[idx]->setVDGather( anglegather_[idx]->id() );
+    setGatherView( gd_[idx], gdi_[idx] );
+    DPM(DataPackMgr::FlatID()).release( anglegather_[idx] );
+}
+
+
+void uiViewer2DMainWin::angleGatherCB( CallBacker* )
+{
+    uiDialog anglegatherdlg( this, uiDialog::Setup("Angle Gather Display",
+	    "Specify Parameters for Angle Gather Display",mTODOHelpID) );
+
+    PreStack::AngleCompParams params;
+    PreStack::uiAngleCompGrp anglegrp( &anglegatherdlg, params, false, false );
+
+    if ( !anglegatherdlg.go() || !anglegrp.acceptOK() )
+	return;
+
+    PreStack::VelocityBasedAngleComputer velangcomp;
+    velangcomp.setMultiID( params.velvolmid_ );
+    velangcomp.setRayTracer( params.raypar_ );
+    velangcomp.setSmoothingPars( params.smoothingpar_ );
+    const int nrgathers = gatherinfos_.size();
+    PreStack::Gather gather; PreStack::Gather* angledata = 0;
+
+    int gatheridx = 0;
+    for ( int idx=0; idx<nrgathers; idx++ )
+    {
+	if ( !gatherinfos_[idx].isselected_ ) continue;
+	const MultiID mid = gatherinfos_[idx].mid_;
+	const BinID bid = gatherinfos_[idx].bid_;
+	if ( gather.readFrom(mid,bid) ) 
+	{
+	    const FlatPosData& fp = gather.posData();
+	    velangcomp.setOutputSampling( fp );
+	    velangcomp.setTraceID( gather.getBinID() );
+	    angledata = velangcomp.computeAngles();
+	    anglegather_ += getAngleGather( gather, *angledata, 
+					    params.anglerange_ );
+	    setAngleGather( gatheridx );
+	}
+	gatheridx += 1;
+	delete angledata;
     }
 }
 
@@ -263,13 +382,19 @@ void uiViewer2DMainWin::setGatherView( uiGatherDisplay* gd,
 	uiToolBar* tb = control_->toolBar();
 	if ( tb )
 	{
-	    if  ( isStored() )
-		tb->addButton( 
-		    new uiToolButton( tb, "contexthelp", "Help",
-			mCB(this,uiStoredViewer2DMainWin,doHelp) ) );
 	    tb->addButton( 
 		new uiToolButton( tb, "mute", "Load Mute",
 		    mCB(this,uiViewer2DMainWin,loadMuteCB) ) );
+
+	    if  ( isStored() )
+	    {
+		tb->addButton( 
+		    new uiToolButton( tb, "anglegather", "Display Angle Gather",
+			mCB(this,uiViewer2DMainWin,angleGatherCB) ) );
+		tb->addButton( 
+		    new uiToolButton( tb, "contexthelp", "Help",
+			mCB(this,uiStoredViewer2DMainWin,doHelp) ) );
+	    }
 	}
     }
 
@@ -494,6 +619,9 @@ void uiStoredViewer2DMainWin::setGather( const GatherInfo& gatherinfo )
     setGatherInfo( gdi, gatherinfo );
     gdi->setOffsetRange( gd->getOffsetRange() );
     setGatherView( gd, gdi );
+
+    gd_ += gd;
+    gdi_ += gdi;
 }
 
 
@@ -619,6 +747,9 @@ void uiSyntheticViewer2DMainWin::setGather( const GatherInfo& ginfo )
     setGatherInfo( gdi, ginfo );
     gdi->setOffsetRange( gd->getOffsetRange() );
     setGatherView( gd, gdi );
+
+    gd_ += gd;
+    gdi_ += gdi;
 }
 
 

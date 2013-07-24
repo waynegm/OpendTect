@@ -57,12 +57,12 @@ uiODSeis2DParentTreeItem::uiODSeis2DParentTreeItem()
 
 bool uiODSeis2DParentTreeItem::showSubMenu()
 {
-    uiPopupMenu mnu( getUiParent(), "Action" );
-    mnu.insertItem( new uiMenuItem("&Add"), 0 );
+    uiMenu mnu( getUiParent(), "Action" );
+    mnu.insertItem( new uiAction("&Add"), 0 );
     if ( SI().has3D() )
-    mnu.insertItem( new uiMenuItem("&Create from 3D ..."), 1 );
+	mnu.insertItem( new uiAction("&Create from 3D ..."), 1 );
     
-    mnu.insertItem( new uiMenuItem("&Generate 3D cube..."), 2 );
+    mnu.insertItem( new uiAction("&Generate 3D cube..."), 2 );
 
     const int mnuid = mnu.exec();
     if ( mnuid == 0 )
@@ -617,8 +617,8 @@ bool uiOD2DLineSetSubItem::init()
 	if ( !lsitm ) return false;
 
 	visSurvey::Seis2DDisplay* s2d = visSurvey::Seis2DDisplay::create();
-	visserv_->addObject( s2d, sceneID(), true );
 	s2d->setLineInfo( lsitm->lineSetID(), name_ );
+	visserv_->addObject( s2d, sceneID(), true );
 	displayid_ = s2d->id();
 
 	s2d->turnOn( true );
@@ -744,32 +744,29 @@ void uiOD2DLineSetSubItem::handleMenuCB( CallBacker* cb )
 	if ( !positiondlg.go() ) return;
 	const CubeSampling newcs = positiondlg.getCubeSampling();
 
+	bool doupdate = false;
 	const Interval<float> newzrg( newcs.zrg.start, newcs.zrg.stop );
 	if ( !newzrg.isEqual(s2d->getZRange(true),mDefEps) )
 	{
-	    s2d->annotateNextUpdateStage( true );
+	    doupdate = true;
 	    s2d->setZRange( newzrg );
 	}
 
 	const Interval<int> ntrcnrrg( newcs.hrg.start.crl, newcs.hrg.stop.crl );
 	if ( ntrcnrrg != s2d->getTraceNrRange() )
 	{
-	    if ( !s2d->getUpdateStageNr() )
-		s2d->annotateNextUpdateStage( true );
-
+	    doupdate = true;
 	    s2d->setTraceNrRange( ntrcnrrg );
 	}
 
-	if ( s2d->getUpdateStageNr() )
+	if ( doupdate )
 	{
-	    s2d->annotateNextUpdateStage( true );
 	    for ( int idx=s2d->nrAttribs()-1; idx>=0; idx-- )
 	    {
 		if ( s2d->getSelSpec(idx)
 		  && s2d->getSelSpec(idx)->id().isValid() )
 		    visserv_->calculateAttrib( displayid_, idx, false );
 	    }
-	    s2d->annotateNextUpdateStage( false );
 	}
     }
 }
@@ -878,15 +875,12 @@ void uiOD2DLineSetSubItem::setZRange( const Interval<float> newzrg )
 		    visserv_->getObject(displayid_))
     if ( !s2d ) return;
 
-    s2d->annotateNextUpdateStage( true );
     s2d->setZRange( newzrg );
-    s2d->annotateNextUpdateStage( true );
     for ( int idx=s2d->nrAttribs()-1; idx>=0; idx-- )
     {
 	if ( s2d->getSelSpec(idx) && s2d->getSelSpec(idx)->id().isValid() )
 	    visserv_->calculateAttrib( displayid_, idx, false );
     }
-    s2d->annotateNextUpdateStage( false );
 }
 
 

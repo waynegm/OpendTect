@@ -40,31 +40,31 @@ public:
 					   bool useed);
     				~StratSynth();
 
-    int				nrSynthetics() const; 
-    SyntheticData*		addSynthetic(); 
-    SyntheticData*		addSynthetic(const SynthGenParams&); 
-    bool			removeSynthetic(const char*);
-    SyntheticData*		replaceSynthetic(int id);
-    SyntheticData*		addDefaultSynthetic(); 
-    SyntheticData* 		getSynthetic(const char* nm);
-    SyntheticData* 		getSynthetic(int id);
-    SyntheticData* 		getSynthetic(const PropertyRef&);
-    SyntheticData* 		getSyntheticByIdx(int idx);
-    const SyntheticData* 	getSyntheticByIdx(int idx) const;
-    void			clearSynthetics();
-    void			generateOtherQuantities();
-    bool			createElasticModels();
+    int			nrSynthetics() const; 
+    SyntheticData*	addSynthetic(); 
+    SyntheticData*	addSynthetic(const SynthGenParams&); 
+    bool		removeSynthetic(const char*);
+    SyntheticData*	replaceSynthetic(int id);
+    SyntheticData*	addDefaultSynthetic(); 
+    SyntheticData* 	getSynthetic(const char* nm);
+    SyntheticData* 	getSynthetic(int id);
+    SyntheticData* 	getSynthetic(const PropertyRef&);
+    SyntheticData* 	getSyntheticByIdx(int idx);
+    const SyntheticData* getSyntheticByIdx(int idx) const;
+    void		clearSynthetics();
+    void		generateOtherQuantities();
+    bool		createElasticModels();
     void		clearElasticModels()
     					{ aimodels_.erase(); }
-    bool			hasElasticModels() const
+    bool		hasElasticModels() const
     					{ return !aimodels_.isEmpty(); }
 
     const ObjectSet<SyntheticData>& synthetics() const
     					{ return synthetics_; }
 
-    void			setWavelet(const Wavelet*);
-    const Wavelet*		wavelet() const { return wvlt_; }
-    SynthGenParams&		genParams()  	{ return genparams_; }
+    void		setWavelet(const Wavelet*);
+    const Wavelet*	wavelet() const { return wvlt_; }
+    SynthGenParams&	genParams()  	{ return genparams_; }
 
     void		setLevel(const StratSynthLevel*);
     const StratSynthLevel* getLevel() const { return level_; }
@@ -77,15 +77,15 @@ public:
     void		getLevelTimes(SeisTrcBuf&,
 				const ObjectSet<const TimeDepthModel>&) const;
 
-    void			flattenTraces(SeisTrcBuf&) const;
-    void			trimTraces(SeisTrcBuf&,float,
-				    const ObjectSet<const TimeDepthModel>&,
-				    float zskip) const;
-    void			decimateTraces(SeisTrcBuf&,int fac) const;
+    void		flattenTraces(SeisTrcBuf&) const;
+    void		trimTraces(SeisTrcBuf&,float,
+			    const ObjectSet<const TimeDepthModel>&,
+			    float zskip) const;
+    void		decimateTraces(SeisTrcBuf&,int fac) const;
 
-    void			setTaskRunner(TaskRunner* tr) { tr_ = tr; }
-    const char* 		errMsg() const;
-    const char* 		infoMsg() const;
+    void		setTaskRunner(TaskRunner* tr) { tr_ = tr; }
+    const char* 	errMsg() const;
+    const char* 	infoMsg() const;
 
 protected:
 
@@ -104,22 +104,22 @@ protected:
     TaskRunner*			tr_;
 
     const Strat::LayerModel&	layMod() const;
-    bool			fillElasticModel(const Strat::LayerModel&,
-					ElasticModel&,int seqidx);
-    bool			adjustElasticModel(const Strat::LayerModel&,
-						   TypeSet<ElasticModel>&);
-    void			generateOtherQuantities( 
-	    				const PostStackSyntheticData& sd,
-	    				const Strat::LayerModel&);
-    SyntheticData* 		generateSD();
-    SyntheticData* 		generateSD( const SynthGenParams&);
-    SyntheticData*		createAngleStack(SyntheticData* sd,
-	    					 const CubeSampling&,
-						 const SynthGenParams&);
-    SyntheticData*		createAVOGradient(SyntheticData* sd,
-	    					 const CubeSampling&,
-						 const SynthGenParams&,
-						const Seis::RaySynthGenerator&);
+    bool		fillElasticModel(const Strat::LayerModel&,
+					 ElasticModel&,int seqidx);
+    bool		adjustElasticModel(const Strat::LayerModel&,
+					   TypeSet<ElasticModel>&);
+    void		generateOtherQuantities( 
+	    			const PostStackSyntheticData& sd,
+	    			const Strat::LayerModel&);
+    SyntheticData* 	generateSD();
+    SyntheticData* 	generateSD( const SynthGenParams&);
+    SyntheticData*	createAngleStack(SyntheticData* sd,
+	    				 const CubeSampling&,
+					 const SynthGenParams&);
+    SyntheticData*	createAVOGradient(SyntheticData* sd,
+	    				 const CubeSampling&,
+					 const SynthGenParams&,
+					 const Seis::RaySynthGenerator&);
 };
 
 #endif

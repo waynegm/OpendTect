@@ -13,14 +13,15 @@ ________________________________________________________________________
 -*/
  
 #include "earthmodelmod.h"
+
 #include "emobject.h"
 #include "ranges.h"
 #include "typeset.h"
 
+class BufferStringSet;
+class CubeSampling;
 class IOObj;
 class MultiID;
-class CubeSampling;
-class BufferStringSet;
 
 namespace EM
 {
@@ -44,7 +45,8 @@ public:
 			~IOObjInfo();
     IOObjInfo&		operator =(const IOObjInfo&);
 
-    enum ObjectType	{ Horizon3D, Horizon2D, FaultStickSet, Fault, Body };
+    enum ObjectType	{ Unknown, Horizon3D, Horizon2D,
+			  FaultStickSet, Fault, Body };
     static void		getIDs(ObjectType,TypeSet<MultiID>&);
 				//!< Does not erase the IDs at start
 
@@ -80,13 +82,10 @@ public:
     bool		getTrcRanges(TypeSet< StepInterval<int> >&) const;
 
     // Body
-
     bool		getBodyRange(CubeSampling&) const;
 
     // FaultStickSet
-
     int 		nrSticks() const;
-
 
     // Helpful stuff
     static ObjectType	objectTypeOfIOObjGroup(const char*);
@@ -98,11 +97,9 @@ protected:
     mutable dgbSurfaceReader* reader_;
 
     void		setType();
-
 };
 
-};
-
+} // namespace EM
 
 #endif
 

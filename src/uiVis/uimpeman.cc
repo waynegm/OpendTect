@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "emobject.h"
 #include "emmanager.h"
 #include "emsurfacetr.h"
+#include "emundo.h"
 #include "executor.h"
 #include "horizon2dseedpicker.h"
 #include "horizon3dseedpicker.h"
@@ -25,7 +26,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "sectiontracker.h"
 #include "selector.h"
 #include "survinfo.h"
-#include "undo.h"
 
 #include "uicolortable.h"
 #include "uimenu.h"
@@ -50,8 +50,8 @@ using namespace MPE;
     toolbar->addButton( pm, tip, mCB(this,uiMPEMan,func), toggle )
 
 #define mAddMnuItm(mnu,txt,fn,fnm,idx) {\
-    uiMenuItem* itm = new uiMenuItem( txt, mCB(this,uiMPEMan,fn) ); \
-    mnu->insertItem( itm, idx ); itm->setPixmap( ioPixmap(fnm) ); }
+    uiAction* itm = new uiAction( txt, mCB(this,uiMPEMan,fn) ); \
+    mnu->insertItem( itm, idx ); itm->setIcon( ioPixmap(fnm) ); }
 
 
 #define mGetDisplays(create) \
@@ -130,7 +130,7 @@ void uiMPEMan::addButtons()
 
     moveplaneidx = mAddButton( "QCplane-inline", movePlaneCB,
 			       "Display QC plane", true );
-    uiPopupMenu* mnu = new uiPopupMenu( toolbar, "Menu" );
+    uiMenu* mnu = new uiMenu( toolbar, "Menu" );
     mAddMnuItm( mnu, "Inline", handleOrientationClick, 
 	    	"QCplane-inline", 0 );
     mAddMnuItm( mnu, "CrossLine", handleOrientationClick, 
@@ -157,7 +157,7 @@ void uiMPEMan::addButtons()
 
     polyselectidx =  mAddButton( "polygonselect", selectionMode,
 	    			 "Polygon Selection mode", true );
-    uiPopupMenu* polymnu = new uiPopupMenu( toolbar, "PolyMenu" );
+    uiMenu* polymnu = new uiMenu( toolbar, "PolyMenu" );
     mAddMnuItm( polymnu,"Polygon", handleToolClick, "polygonselect", 0 );
     mAddMnuItm( polymnu,"Rectangle",handleToolClick,"rectangleselect", 1 );
     toolbar->setButtonMenu( polyselectidx, polymnu );
@@ -922,10 +922,26 @@ void uiMPEMan::undoPush( CallBacker* )
 {
     MouseCursorChanger mcc( MouseCursor::Wait );
 
-    EM::EMM().burstAlertToAll( true );
-    if ( !EM::EMM().undo().unDo( 1, true  ) )
-	uiMSG().error("Could not undo everything.");
-    EM::EMM().burstAlertToAll( false );
+    mDynamicCastGet( EM::EMUndo*, emundo, &EM::EMM().undo() );
+    if ( emundo )
+    {
+	EM::ObjectID curid = emundo->getCurrentEMObjectID( false );
+	EM::EMObject* emobj = EM::EMM().getObject( curid );
+	if ( emobj )
+        {
+            emobj->ref();
+	    emobj->setBurstAlert( true );
+        }
+        
+        if ( !emundo->unDo(1,true) )
+	    uiMSG().error( "Could not undo everything." );
+
+	if ( emobj )
+        {
+	    emobj->setBurstAlert( false );
+            emobj->unRef();
+        }
+    }
 
     updateButtonSensitivity(0);
 }
@@ -935,10 +951,26 @@ void uiMPEMan::redoPush( CallBacker* )
 {
     MouseCursorChanger mcc( MouseCursor::Wait );
 
-    EM::EMM().burstAlertToAll( true );
-    if ( !EM::EMM().undo().reDo( 1, true ) )
-	uiMSG().error("Could not redo everything.");
-    EM::EMM().burstAlertToAll( false );
+    mDynamicCastGet( EM::EMUndo*, emundo, &EM::EMM().undo() );
+    if ( emundo )
+    {
+	EM::ObjectID curid = emundo->getCurrentEMObjectID( true );
+	EM::EMObject* emobj = EM::EMM().getObject( curid );
+        if ( emobj )
+        {
+            emobj->ref();
+	    emobj->setBurstAlert( true );
+        }
+
+	if ( !emundo->reDo(1,true) )
+	    uiMSG().error( "Could not redo everything." );
+
+	if ( emobj )
+        {
+       	    emobj->setBurstAlert( false );
+            emobj->unRef();
+        }
+    }
 
     updateButtonSensitivity(0);
 }
@@ -1141,7 +1173,7 @@ void uiMPEMan::selectionMode( CallBacker* cb )
 	visserv->setSelectionMode( mode );
     }
 
-    toolbar->setPixmap( polyselectidx, sIsPolySelect ?
+    toolbar->setIcon( polyselectidx, sIsPolySelect ?
 			"polygonselect" : "rectangleselect" );
     toolbar->setToolTip( polyselectidx, sIsPolySelect ?
 			"Polygon Selection mode" : "Rectangle Selection mode" );
@@ -1163,10 +1195,10 @@ void uiMPEMan::selectionMode( CallBacker* cb )
 
 void uiMPEMan::handleToolClick( CallBacker* cb )
 {
-    mDynamicCastGet(uiMenuItem*,itm,cb)
+    mDynamicCastGet(uiAction*,itm,cb)
     if ( !itm ) return;
 
-    sIsPolySelect = itm->id()==0;
+    sIsPolySelect = itm->getID()==0;
     selectionMode( cb );
 }
 
@@ -1490,16 +1522,16 @@ static void updateQCButton( uiToolBar* tb, int butidx, int dim )
     else
 	{ pm = "QCplane-z"; tooltip = "Display QC plane Z-dir"; }
 
-    tb->setPixmap( butidx, pm );
+    tb->setIcon( butidx, pm );
     tb->setToolTip( butidx, tooltip );
 }
 
 
 void uiMPEMan::handleOrientationClick( CallBacker* cb )
 {
-    mDynamicCastGet(uiMenuItem*,itm,cb)
+    mDynamicCastGet(uiAction*,itm,cb)
     if ( !itm ) return;
-    const int dim = itm->id();
+    const int dim = itm->getID();
     updateQCButton( toolbar, moveplaneidx, dim );
     changeTrackerOrientation( dim );
     movePlaneCB( cb );

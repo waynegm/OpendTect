@@ -24,8 +24,8 @@ namespace EM { class Horizon3D; }
 namespace visBase
 {
     class HorizonSection;
-    class IndexedShape;
     class TextureChannel2RGBA;
+    class VertexShape;
 }
 
 
@@ -169,7 +169,7 @@ public:
     				/*!<Gives the shifts for all versions of an 
 				    attrib. */
 
-    const ObjectSet<visBase::IndexedShape>& getIntersectionLines() const;
+    const ObjectSet<visBase::VertexShape>& getIntersectionLines() const;
 
     void			displayIntersectionLines(bool);
     bool			displaysIntersectionLines() const;
@@ -207,14 +207,15 @@ protected:
     void			traverseLine(bool oninline,
 				    const CubeSampling& cs,
 				    EM::SectionID sid,
-				    visBase::IndexedShape*,
+				    visBase::VertexShape*,
 				    int& cii,
 				    visBase::DataObjectGroup*) const;
     void			drawHorizonOnRandomTrack(const TypeSet<Coord>&,
 				    const StepInterval<float>&,
 				    const EM::SectionID&,
-				    visBase::IndexedShape*, int&,
+				    visBase::VertexShape*, int&,
 				    visBase::DataObjectGroup*) const;
+
 
 
     bool				allowshading_;
@@ -225,7 +226,7 @@ protected:
     ObjectSet<visBase::HorizonSection> sections_;
     TypeSet<EM::SectionID>		sids_;
 
-    ObjectSet<visBase::IndexedShape>	intersectionlines_;
+    ObjectSet<visBase::VertexShape>	intersectionlines_;
     ObjectSet<visBase::DataObjectGroup>	intersectionpointsets_;
     float				maxintersectionlinethickness_;
     TypeSet<int>			intersectionlineids_;

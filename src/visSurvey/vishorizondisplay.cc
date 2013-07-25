@@ -1362,6 +1362,20 @@ void HorizonDisplay::getMousePosInfo( const visBase::EventInfo& eventinfo,
 }
 
 
+#define mAddLinePrimitiveSet()\
+{\
+    if ( idxps.size()>=2 )\
+    {\
+	Geometry::IndexedPrimitiveSet* primitiveset =  \
+	Geometry::IndexedPrimitiveSet::create( false );\
+	primitiveset->ref();\
+	primitiveset->append( idxps.arr(), idxps.size() );\
+	line->addPrimitiveSet( primitiveset ); \
+	primitiveset->unRef();\
+    }\
+}
+
+
 #define mEndLine \
 { \
     if ( curline.size()==1 ) \
@@ -1379,20 +1393,21 @@ void HorizonDisplay::getMousePosInfo( const visBase::EventInfo& eventinfo,
     } \
     else \
     { \
+	TypeSet<int> idxps;\
 	for ( int idx=0; idx<curline.size(); idx++ ) \
 	{ \
-	    line->setCoordIndex(cii++, \
-			line->getCoordinates()->addPos(curline[idx])); \
+	    idxps.add( cii++ );\
+	    line->getCoordinates()->addPos(curline[idx]);\
 	} \
 	if ( curline.size() ) \
-	    line->setCoordIndex(cii++,-1); \
+	mAddLinePrimitiveSet();\
     } \
     curline.erase(); \
 } 
 
 
 void HorizonDisplay::traverseLine( bool oninline, const CubeSampling& cs,
-	EM::SectionID sid, visBase::IndexedShape* line, int& cii,
+	EM::SectionID sid, visBase::VertexShape* line, int& cii,
 	visBase::DataObjectGroup* points ) const
 {
     mDynamicCastGet( EM::Horizon3D*, hor, emobject_ );
@@ -1427,6 +1442,7 @@ void HorizonDisplay::traverseLine( bool oninline, const CubeSampling& cs,
     const TypeSet<EM::PosID>* seedposids = hor->getPosAttribList
 						( EM::EMObject::sSeedNode() );
     TypeSet<Coord3> curline;
+    TypeSet<int> idxps;
     for ( BinID bid=startbid; bid[fastdim]<=faststop; bid[fastdim]+=faststep )
     {
 	if ( !cs.hrg.includes(bid) )
@@ -1485,13 +1501,14 @@ void HorizonDisplay::traverseLine( bool oninline, const CubeSampling& cs,
     }
 
     mEndLine;
+
 }
 
 
 void HorizonDisplay::drawHorizonOnRandomTrack( const TypeSet<Coord>& trclist,
 	const StepInterval<float>& zrg,
 	const EM::SectionID&  sid,
-	visBase::IndexedShape* line, int& cii,
+	visBase::VertexShape* line, int& cii,
 	visBase::DataObjectGroup* points ) const
 {
     mDynamicCastGet( EM::Horizon3D*, hor, emobject_ );
@@ -1505,6 +1522,7 @@ void HorizonDisplay::drawHorizonOnRandomTrack( const TypeSet<Coord>& trclist,
     int jumpstart = 0;
 
     TypeSet<Coord3> curline;
+    TypeSet<int> idxps;
     while ( true )
     {
 	startidx = stopidx;
@@ -1560,25 +1578,26 @@ void HorizonDisplay::drawHorizonOnRandomTrack( const TypeSet<Coord>& trclist,
 
 		if ( zrg.includes(pos.z,true) )
 		{
-		    line->setCoordIndex( cii++, 
-			    		 line->getCoordinates()->addPos(pos) );
+		    line->getCoordinates()->addPos(pos);
+		    idxps.add( cii++ );
 		    continue;
 		}
 	    }
-	    mEndLine; 
+	    mAddLinePrimitiveSet(); 
 	}
 	
 	jumpstart = 1;
     }
 
-    mEndLine; 
+    mAddLinePrimitiveSet(); 
+
 }
 
 
 static void drawHorizonOnZSlice( const CubeSampling& cs, float zshift,
 			const EM::Horizon3D* hor, const EM::SectionID&  sid, 
 			const ZAxisTransform* zaxistransform, 
-			visBase::IndexedShape* line, int& cii )
+			visBase::VertexShape* line, int& cii )
 {
     const Geometry::BinIDSurface* geom = hor->geometry().sectionGeometry( sid );
     const Array2D<float>* field = geom->getArray();
@@ -1593,6 +1612,7 @@ static void drawHorizonOnZSlice( const CubeSampling& cs, float zshift,
     ObjectSet<ODPolygon<float> > isocontours;
     ictracer.getContours( isocontours, cs.zrg.start-zshift, false );
     
+    TypeSet<int> idxps;
     for ( int cidx=0; cidx<isocontours.size(); cidx++ )
     {
 	const ODPolygon<float>& ic = *isocontours[cidx];
@@ -1603,15 +1623,14 @@ static void drawHorizonOnZSlice( const CubeSampling& cs, float zshift,
 	    vrtxcoord = SI().binID2Coord().transform( vrtxcoord );
 	    const Coord3 pos( vrtxcoord, cs.zrg.start-zshift );
 	    const int posidx = line->getCoordinates()->addPos( pos );
-	    line->setCoordIndex( cii++, posidx ); 
+	    idxps.add( cii++ );
 	}
-	
+
 	if ( ic.isClosed() )
-	{
-	    const int posidx = line->getCoordIndex( cii-ic.size() );
-	    line->setCoordIndex( cii++, posidx );
-	}
-	line->setCoordIndex( cii++, -1 );
+	    idxps.add( idxps[0] );
+
+	mAddLinePrimitiveSet();
+	idxps.erase();
     }
 
     if ( zaxistransform ) delete field;
@@ -1666,7 +1685,7 @@ void HorizonDisplay::updateIntersectionLines(
 		    linestoupdate += objectid;
 		}
 
-		lineshouldexist[idy] = true;
+		lineshouldexist[idy] = false;
 	    }
 	}
     }
@@ -1753,20 +1772,19 @@ void HorizonDisplay::updateIntersectionLines(
 
 	    const bool do3d = lineStyle()->type_==LineStyle::Solid;
 
-	    visBase::IndexedShape* newline = do3d
-		? (visBase::IndexedShape*) visBase::IndexedPolyLine3D::create()
-		: (visBase::IndexedShape*) visBase::IndexedPolyLine::create();
+	    visBase::VertexShape* newline = do3d
+		? (visBase::VertexShape*) visBase::PolyLine3D::create()
+		: (visBase::VertexShape*) visBase::PolyLine::create();
 
 	    newline->ref();
 
 	    if ( do3d )
 	    {
-		const float radius = ((float) lineStyle()->width_) / 2;
-		((visBase::IndexedPolyLine3D* ) newline)->setRadius( radius,
-		    true, maxintersectionlinethickness_ );
+		((visBase::PolyLine3D* ) newline)->setLineStyle( *lineStyle() );
 	    }
 
-	    newline->setRightHandSystem( righthandsystem_ );
+	    newline->setPrimitiveType( Geometry::PrimitiveSet::LineStrips );
+
 	    newline->setDisplayTransformation(transformation_);
 	    if ( intersectionlinematerial_ ) 
 		newline->setMaterial( intersectionlinematerial_ );
@@ -1776,9 +1794,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    visBase::DataObjectGroup* pointgroup =
 				visBase::DataObjectGroup::create();
 	    pointgroup->setSeparate( false );
-	    //if ( intersectionlinematerial_ )
-	    //pointgroup->addObject( intersectionlinematerial_ );
-	    pointgroup->setRightHandSystem( righthandsystem_ );
+
 	    pointgroup->setDisplayTransformation(transformation_);
 
 	    intersectionpointsets_ += pointgroup;
@@ -1806,7 +1822,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    }
 	}
 	    
-	visBase::IndexedShape* line = intersectionlines_[lineidx];
+	visBase::VertexShape* line = intersectionlines_[lineidx];
 	visBase::DataObjectGroup* pointgroup = intersectionpointsets_[lineidx];
 
 	line->getCoordinates()->removeAfter(-1);
@@ -1837,8 +1853,8 @@ void HorizonDisplay::updateIntersectionLines(
 	    }
 	}
 
-	line->removeCoordIndexAfter(cii-1);
     }
+
 }
 
 
@@ -1858,13 +1874,12 @@ void HorizonDisplay::setLineStyle( const LineStyle& lst )
     {
 	for ( int idx=0; idx<intersectionlines_.size(); idx++ )
 	{
-	    visBase::IndexedShape* newline = lst.type_==LineStyle::Solid
-		? (visBase::IndexedShape*) visBase::IndexedPolyLine3D::create()
-		: (visBase::IndexedShape*) visBase::IndexedPolyLine::create();
+	    visBase::VertexShape* newline = lst.type_==LineStyle::Solid
+		? (visBase::VertexShape*) visBase::PolyLine3D::create()
+		: (visBase::VertexShape*) visBase::PolyLine::create();
 	    newline->ref();
 	    newline->setRightHandSystem( righthandsystem_ );
 	    newline->setDisplayTransformation(transformation_);
-	    //newline->copyCoordIndicesFrom( *intersectionlines_[idx] );
 	    newline->getCoordinates()->copyFrom(
 		    *intersectionlines_[idx]->getCoordinates() );
 	    if ( intersectionlinematerial_ ) 
@@ -1877,8 +1892,7 @@ void HorizonDisplay::setLineStyle( const LineStyle& lst )
 
 	    if ( lst.type_==LineStyle::Solid )
 	    {
-		((visBase::IndexedPolyLine3D* ) newline )->
-		    setRadius( radius, true, maxintersectionlinethickness_ );
+		((visBase::PolyLine3D* ) newline )->setLineStyle( lst );
 	    }
 	}
     }
@@ -1886,9 +1900,12 @@ void HorizonDisplay::setLineStyle( const LineStyle& lst )
     {
 	for ( int idx=0; idx<intersectionlines_.size(); idx++ )
 	{
-	    visBase::IndexedPolyLine3D* pl =
-		(visBase::IndexedPolyLine3D*) intersectionlines_[idx];
-	    pl->setRadius( radius, true, maxintersectionlinethickness_ );
+	   LineStyle lnstyle( lst );
+	   lnstyle.width_ /=2;
+	    
+	    visBase::PolyLine3D* pl =
+		(visBase::PolyLine3D*) intersectionlines_[idx];
+	    pl->setLineStyle( *lineStyle() );
 	}
     }
 
@@ -2076,7 +2093,7 @@ int HorizonDisplay::usePar( const IOPar& par )
 }
 
 
-const ObjectSet<visBase::IndexedShape>&
+const ObjectSet<visBase::VertexShape>&
 HorizonDisplay::getIntersectionLines() const
 { return intersectionlines_; }
 

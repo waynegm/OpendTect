@@ -1621,7 +1621,7 @@ static void drawHorizonOnZSlice( const CubeSampling& cs, float zshift,
 	    Coord vrtxcoord( vertex.x, vertex.y );
 	    vrtxcoord = SI().binID2Coord().transform( vrtxcoord );
 	    const Coord3 pos( vrtxcoord, cs.zrg.start-zshift );
-	    const int posidx = line->getCoordinates()->addPos( pos );
+	    line->getCoordinates()->addPos( pos );
 	    idxps.add( cii++ );
 	}
 

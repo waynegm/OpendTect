@@ -74,6 +74,7 @@ public:
     bool		rotAxisShown() const;
     void		toggleCameraType();
     bool		isCameraPerspective() const;
+    void		switchSeekMode();
 
     void		setBackgroundColor(const Color&);
     Color		getBackgroundColor() const;

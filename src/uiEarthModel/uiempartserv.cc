@@ -542,30 +542,29 @@ void uiEMPartServer::selectSurfaces( ObjectSet<EM::EMObject>& objs,
     if ( hor3d )
       	selectedrg_ = sel.rg; 
 
-    PtrMan<Executor> exec = em_.objectLoader(surfaceids,hor3d ? &sel : &orisel);
-    if ( !exec )
-    {
-	bool allmissing = true;
+    TypeSet<MultiID> idstobeloaded;
+    PtrMan<Executor> exec = em_.objectLoader(surfaceids,hor3d ? &sel : &orisel,
+					     &idstobeloaded);
+
 	for ( int idx=0; idx<surfaceids.size(); idx++ )
 	{
-	    if ( em_.getObject(em_.getObjectID(surfaceids[idx])) )
-	    {
-		allmissing = false;
-		break;
-	    }
-        }
-	
-	if ( allmissing )
-	    return;
-    }    
-
-    for ( int idx=0; idx<surfaceids.size(); idx++ )
-    {
 	EM::EMObject* obj = em_.getObject( em_.getObjectID(surfaceids[idx]) );
 	if ( !obj ) continue;
 	obj->ref();
-	obj->setBurstAlert( true );
 	objs += obj;
+	    }
+
+    if ( objs.isEmpty() )
+	    return;
+
+    ObjectSet<EM::EMObject> objstobeloaded;
+    for ( int idx=0; idx<idstobeloaded.size(); idx++ )
+    {
+	EM::EMObject* obj = em_.getObject(em_.getObjectID(idstobeloaded[idx]));
+	if ( !obj ) continue;
+	obj->setBurstAlert( true );
+	obj->ref();
+	objstobeloaded += obj;
     }
 
     if ( exec )
@@ -575,8 +574,10 @@ void uiEMPartServer::selectSurfaces( ObjectSet<EM::EMObject>& objs,
     	    deepUnRef( objs );
     }
 
-    for ( int idx=0; idx<objs.size(); idx++ )
-	objs[idx]->setBurstAlert( false );
+    for ( int idx=0; idx<objstobeloaded.size(); idx++ )
+	objstobeloaded[idx]->setBurstAlert( false );
+	deepUnRef( objstobeloaded );
+
 }
 
 
@@ -632,11 +633,83 @@ int uiEMPartServer::loadAuxData( const EM::ObjectID& id, const char* attrnm,
 }
 
 
+bool uiEMPartServer::storeFaultAuxData( const EM::ObjectID& id, 
+	BufferString& auxdatanm, const Array2D<float>& data )
+{
+    EM::EMObject* object = em_.getObject( id ); 
+    mDynamicCastGet( EM::Fault3D*, flt3d, object );
+    if ( !flt3d )
+	return false;
+    
+    EM::FaultAuxData* auxdata = flt3d->auxData();
+    if ( !auxdata )
+	return false;
+
+    BufferStringSet atrrnms;
+    auxdata->getAuxDataList( atrrnms );
+    uiGetObjectName::Setup setup( "Fault Data", atrrnms );
+    setup.inptxt_ = "Attribute";
+    uiGetObjectName dlg( parent(), setup );
+    if ( dlg.selFld() )
+	dlg.selFld()->setMultiSelect( false );
+    if ( !dlg.go() ) 
+	return false;
+
+    auxdatanm = dlg.text();
+    if ( atrrnms.indexOf(auxdatanm.buf())>=0 )
+    {
+	BufferString msg( "The name '" ); msg.add( auxdatanm);
+	msg.add("' already exists, do you really want to overwrite it?");
+	if ( !uiMSG().askGoOn( msg.buf() ) )
+	    return false;
+    }
+
+    const int sdidx = auxdata->setData( auxdatanm.buf(), &data, OD::UsePtr );
+    if ( !auxdata->storeData(sdidx,false) )
+    {
+	uiMSG().error( auxdata->errMsg() );
+	return false;
+    }
+
+    return true;
+}
+
+
+bool uiEMPartServer::showLoadFaultAuxDataDlg( const EM::ObjectID& id )
+{
+    EM::EMObject* object = em_.getObject( id ); 
+    mDynamicCastGet( EM::Fault3D*, flt3d, object );
+    if ( !flt3d )
+	return false;
+
+    EM::FaultAuxData* auxdata = flt3d->auxData();
+    if ( !auxdata )
+	return false;
+
+    BufferStringSet atrrnms;
+    auxdata->getAuxDataList( atrrnms );
+    uiSelectFromList::Setup setup( "Fault Data", atrrnms );
+    setup.dlgtitle( "Select one attribute to be displayed" );
+    uiSelectFromList dlg( parent(), setup );
+    if ( dlg.selFld() )
+	dlg.selFld()->setMultiSelect( false );
+    if ( !dlg.go() || !dlg.selFld() ) 
+	return false;
+
+    TypeSet<int> selattribs;
+    dlg.selFld()->getSelectedItems( selattribs );
+    auxdata->setSelected( selattribs );
+
+    return true;
+}
+
+
 bool uiEMPartServer::showLoadAuxDataDlg( const EM::ObjectID& id )
 {
     EM::EMObject* object = em_.getObject( id ); 
     mDynamicCastGet( EM::Horizon3D*, hor3d, object );
-    if ( !hor3d ) return false;
+    if ( !hor3d ) 
+	return false;
 
     const MultiID mid = em_.getMultiID( id );
     EM::IOObjInfo eminfo( mid );
@@ -756,13 +829,10 @@ bool uiEMPartServer::storeAuxData( const EM::ObjectID& id,
 {
     EM::EMObject* object = em_.getObject( id ); 
     mDynamicCastGet( EM::Horizon3D*, hor3d, object );
-    mDynamicCastGet( EM::Fault3D*, flt3d, object );
-    if ( !hor3d && !flt3d )
+    if ( !hor3d )
 	return false;
     
     uiTaskRunner exdlg( parent() );
-    if ( hor3d )
-    {
 	int dataidx = -1;
 	bool overwrite = false;
 	if ( storeas )
@@ -786,52 +856,34 @@ bool uiEMPartServer::storeAuxData( const EM::ObjectID& id,
 	}
 
 	return TaskRunner::execute( &exdlg, *saver );
-    }
-    else if ( flt3d )
-    {
-	uiStoreFaultData dlg( parent(), *flt3d );
-	if ( !dlg.go() ) return false;
-
-	PtrMan<Executor> saver = dlg.dataSaver();
-	if ( !saver )
-	{
-	    uiMSG().error( "Cannot save attribute" );
-    	    return false;
-	}
-
-	return TaskRunner::execute( &exdlg, *saver );
-    }
-
-    return true;
 }
 
 
-int uiEMPartServer::setAuxData( const EM::ObjectID& id,
-				DataPointSet& data, 
+int uiEMPartServer::setAuxData( const EM::ObjectID& id, DataPointSet& data, 
 				const char* attribnm, int idx, float shift )
 {
+    if ( !data.size() ) 
+    { uiMSG().error("No data calculated"); return -1; }
+    
     EM::EMObject* object = em_.getObject( id ); 
     mDynamicCastGet( EM::Horizon3D*, hor3d, object );
-    if ( !hor3d ) { uiMSG().error( "Cannot find horizon" ); return -1; }
+    if ( !hor3d ) 
+    { uiMSG().error("No horizon loaded"); return -1; }
 
-    if ( !data.size() ) { uiMSG().error( "No data calculated" ); return -1; }
-
-    const BinIDValueSet& bivs = data.bivSet();
-    const int nrdatavals = bivs.nrVals();
-    if ( idx>=nrdatavals ) return -1;
-
-    BufferString auxnm;
-    if ( attribnm )
-	auxnm = attribnm;
-    else
+    BufferString auxnm = attribnm;
+    if ( auxnm.isEmpty() )
     {
 	auxnm = "AuxData";
 	auxnm += idx;
     }
+ 
+    const BinIDValueSet& bivs = data.bivSet();
+    const int nrdatavals = bivs.nrVals();
+    if ( idx>=nrdatavals ) return -1;
 
     hor3d->auxdata.removeAll();
-    const int auxdatanr = hor3d->auxdata.addAuxData( auxnm );
-    hor3d->auxdata.setAuxDataShift( auxdatanr, shift );
+    const int auxdataidx = hor3d->auxdata.addAuxData( auxnm );
+    hor3d->auxdata.setAuxDataShift( auxdataidx, shift );
 
     BinID bid;
     BinIDValueSet::Pos pos;
@@ -846,23 +898,23 @@ int uiEMPartServer::setAuxData( const EM::ObjectID& id,
 	RowCol rc( bid.inl, bid.crl );
 	EM::SubID subid = rc.toInt64();
 	posid.setSubID( subid );
-	hor3d->auxdata.setAuxDataVal( auxdatanr, posid, vals[idx] );
+	hor3d->auxdata.setAuxDataVal( auxdataidx, posid, vals[idx] );
     }
 
-    return auxdatanr;
+    return auxdataidx;
 }
 
 
-bool uiEMPartServer::getAuxData( const EM::ObjectID& oid, int auxdatanr,
+bool uiEMPartServer::getAuxData( const EM::ObjectID& oid, int auxdataidx,
 				 DataPointSet& data, float& shift ) const
 {
     EM::EMObject* object = em_.getObject( oid ); 
     mDynamicCastGet( EM::Horizon3D*, hor3d, object );
-    const char* nm = hor3d->auxdata.auxDataName( auxdatanr );
+    const char* nm = hor3d->auxdata.auxDataName( auxdataidx );
     if ( !hor3d || !nm )
 	return false;
 
-    shift = hor3d->auxdata.auxDataShift( auxdatanr );
+    shift = hor3d->auxdata.auxDataShift( auxdataidx );
     data.dataSet().add( new DataColDef(sKeySectionID()) );
     data.dataSet().add( new DataColDef(nm) );
 
@@ -883,7 +935,7 @@ bool uiEMPartServer::getAuxData( const EM::ObjectID& oid, int auxdatanr,
 		break;
 
 	    auxvals[0] = (float) hor3d->getPos( pid ).z;
-	    auxvals[2] = hor3d->auxdata.getAuxDataVal( auxdatanr, pid );
+	    auxvals[2] = hor3d->auxdata.getAuxDataVal( auxdataidx, pid );
 	    BinID bid = BinID::fromInt64( pid.subID() );
 	    data.bivSet().add( bid, auxvals );
 	}

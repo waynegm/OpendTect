@@ -7,22 +7,33 @@
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "emioobjinfo.h"
+
+#include "embodytr.h"
+#include "emfaultauxdata.h"
 #include "emsurfaceio.h"
 #include "emsurfacetr.h"
-#include "embodytr.h"
-#include "ioman.h"
-#include "iodir.h"
-#include "iopar.h"
-#include "survinfo.h"
 #include "horizonrelation.h"
-#include "cubesampling.h"
-#include "bufstringset.h"
+#include "iodir.h"
+#include "ioman.h"
+#include "iopar.h"
 
 #define mGoToEMDir() \
     IOM().to( MultiID(IOObjContext::getStdDirData(IOObjContext::Surf)->id) )
 
 namespace EM
 {
+
+DefineEnumNames( IOObjInfo, ObjectType, 0, "Object Type" )
+{ 
+  "Unknown",
+  EMHorizon3DTranslatorGroup::keyword(),
+  EMHorizon2DTranslatorGroup::keyword(),
+  EMFaultStickSetTranslatorGroup::keyword(),
+  EMFault3DTranslatorGroup::keyword(),
+  EMBodyTranslatorGroup::sKeyword(),
+  0 
+};
+
 
 IOObjInfo::IOObjInfo( const IOObj* ioobj )
     : ioobj_(ioobj ? ioobj->clone() : 0)
@@ -132,10 +143,22 @@ bool IOObjInfo::getSectionNames( BufferStringSet& secnames ) const
 
 bool IOObjInfo::getAttribNames( BufferStringSet& attrnames ) const
 {
-    mGetReaderRet
+    if ( type_==Fault )
+    {
+	if ( !ioobj_ ) 
+	    return false;
 
+	FaultAuxData fad( ioobj_->key() );
+	fad.getAuxDataList( attrnames );
+	return true;
+    }
+    else
+    {
+     	mGetReaderRet;
     for ( int idx=0; idx<reader_->nrAuxVals(); idx++ )
 	attrnames.add( reader_->auxDataName(idx) );
+    }
+
     return true;
 }
 
@@ -256,18 +279,9 @@ const char* IOObjInfo::getSurfaceData( SurfaceIOData& sd ) const
 
 IOObjInfo::ObjectType IOObjInfo::objectTypeOfIOObjGroup( const char* grpname )
 {
-    static const char* grpnms[] =
-    {
-	EMHorizon3DTranslatorGroup::keyword(),
-	EMHorizon2DTranslatorGroup::keyword(),
-	EMFaultStickSetTranslatorGroup::keyword(),
-	EMFault3DTranslatorGroup::keyword(),
-	EMBodyTranslatorGroup::sKeyword(),
-	0
-    };
-    static BufferStringSet grpnmsbss( grpnms );
-    const int typ = grpnmsbss.indexOf( grpname );
-    return typ < 0 ? Body : (ObjectType)typ;
+    ObjectType type;
+    parseEnum( grpname, type );
+    return type;
 }
 
 
@@ -337,6 +351,8 @@ bool IOObjInfo::getBodyRange( CubeSampling& cs ) const
 int IOObjInfo::nrSticks() const
 {
     mGetReaderRet
+    if ( !reader_->pars() )
+	return 0;
 
     Interval<float> rowrange;
     reader_->pars()->get( "Row range", rowrange );

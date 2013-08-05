@@ -100,7 +100,7 @@ public:
 
     static ObjectSet<uiToolBar>&	toolBars();
 
-    CNotifier<uiToolBar,int>	buttonClicked;
+    CNotifier<uiToolBar,int>		buttonClicked;
 
 protected:
 	    
@@ -115,17 +115,19 @@ protected:
     uiAction*			toolbarmenuaction_;
 
     mQtclass(QToolBar*)		qtoolbar_;
-    i_ToolBarMessenger*	msgr_;
+    i_ToolBarMessenger*		msgr_;
 
-    ToolBarArea		tbarea_;
+    ToolBarArea			tbarea_;
     ObjectSet<uiObject>		addedobjects_;
 
-    int			getButtonID(mQtclass(QAction*));
+    int				getButtonID(mQtclass(QAction*));
     
 public:
-    void			addButton(uiButton*);
-				//!<Legacy, use addObject instead
+    			//!CmdDriver functionality, not for casual use
+    void		getEntityList(ObjectSet<const CallBacker>&) const;
 
+    void		addButton(uiButton*);
+			//!<Legacy, use addObject instead
 };
 
 #endif

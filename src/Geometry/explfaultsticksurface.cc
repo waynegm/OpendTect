@@ -45,19 +45,13 @@ ExplFaultStickTexturePositionExtracter( ExplFaultStickSurface& efss,
 }
 
     
-od_int64 nrIterations() const
-{
-    return explsurf_.getTextureSize().col;
-}
-
-
+od_int64 nrIterations() const	{ return explsurf_.getTextureSize().col; }
 int minThreadSize() const { return 100; }
-
 
 bool doWork( od_int64 start, od_int64 stop, int )
 {
     const TypeSet<int>& texturecols = explsurf_.texturecolcoords_;
-    for ( int stickpos=mCast(int,start); stickpos<=stop; stickpos++, addToNrDone(1) )
+    for ( int stickpos=mCast(int,start); stickpos<=stop; stickpos++ )
     {
 	int stickidx = -1;
 	int panelidx = -1;
@@ -87,7 +81,7 @@ bool doWork( od_int64 start, od_int64 stop, int )
 
 	for( int knotpos=0; knotpos<explsurf_.getTextureSize().row; knotpos++ )
 	{
-    	    Coord3 pos;
+    	    Coord3 pos = Coord3::udf();
     	    bool found = false;
 
     	    if ( stickidx!=-1 )
@@ -109,6 +103,8 @@ bool doWork( od_int64 start, od_int64 stop, int )
 	    dpset_.addRow( datarow );
 	    dpsetlock_.unLock();
 	}
+
+	addToNrDone( 1 );
     }
     
     return true;
@@ -120,7 +116,6 @@ bool doFinish( bool success )
     dpset_.dataChanged();
     return success;
 }
-
 
 
 bool processPixelOnStick( int stickidx, int knotpos, Coord3& pos )
@@ -296,14 +291,16 @@ bool processPixelOnPanel( int panelidx, int stickpos, int knotpos, Coord3& pos )
 	    const Coord d0 = texture1-texture0;
 	    const Coord d1 = checkpos-texture0;
 	    const Coord d2 = texture1-texture2;
-	    const double fchkpt0 = (d0.x*d2.y-d0.y*d2.x)/(d1.x*d2.y-d1.y*d2.x);
-	    const double factor12=(d1.x*d0.y-d1.y*d0.x)/(d1.x*d2.y-d1.y*d2.x);
+	    const double denm = d1.x*d2.y-d1.y*d2.x;
+	    const bool iszero = mIsZero( denm, 1e-8 );
+	    const double fchkpt0 = iszero ? 0 : (d0.x*d2.y-d0.y*d2.x)/denm;
+	    const double factor12 = iszero ? 0 : (d1.x*d0.y-d1.y*d0.x)/denm;
 
 	    const Coord3 p0 = explsurf_.coordlist_->get( v0 );
 	    const Coord3 p1 = explsurf_.coordlist_->get( v1 );
 	    const Coord3 p2 = explsurf_.coordlist_->get( v2 );
 	    const Coord3 intsectptxy = p1+(p2-p1)*factor12;
-    	    pos =  p0+(intsectptxy- p0)/fchkpt0;
+    	    pos = iszero ? p0 : p0+(intsectptxy- p0)/fchkpt0;
 	    
 	    return true;
 	}
@@ -338,8 +335,7 @@ public:
 
 od_int64 nrIterations() const
 {
-    return updatesticksnotpanels_
-	? explsurf_.sticks_.size()
+    return updatesticksnotpanels_ ? explsurf_.sticks_.size()
 	: explsurf_.paneltriangles_.size()-1;
 }
 
@@ -800,9 +796,10 @@ bool ExplFaultStickSurface::updateTextureSize()
 		const Coord3 pos1 =
 		    surface_->getKnot( RowCol(sticknr,knotnr+colrg.step));
 
-		const BinIDValue bid0( SI().transform( pos0.coord()), (float) pos0.z );
-		const BinIDValue bid1( SI().transform( pos1.coord()), (float) pos1.z );
-
+		const BinIDValue bid0( 
+			SI().transform(pos0.coord()), (float)pos0.z );
+		const BinIDValue bid1( 
+			SI().transform(pos1.coord()), (float)pos1.z );
 		const int inlsamples =
 		    (bid0.binid.inl-bid1.binid.inl)/texturesampling_.binid.inl;
 		const int crlsamples =
@@ -1237,7 +1234,6 @@ bool ExplFaultStickSurface::setProjTexturePositions( DataPointSet& dps )
 	    						  : inlsamples,
 	    		   trialg_==ExplFaultStickSurface::Zslice ? crlsamples 
 			   				  : mNINT32(zsamples) );
-
     const int nrfc = dps.nrFixedCols();
     const int nrcs = dps.nrCols();
     const DataColDef ti( sKeyTextureI() );
@@ -1575,15 +1571,16 @@ void ExplFaultStickSurface::fillPanel( int panelidx )
 	TypeSet<int> conns;
 	for ( int idx=lconn.size()-1; idx>=0; idx-- )
 	{
-	    if ( lconn[idx]!=lidx )
-		continue;
-
+	    if ( lconn[idx]==lidx )
 	    conns += rconn[idx];
 	}
 
+	if ( conns.isEmpty() )
+	    continue;
+
 	sort_array( conns.arr(), conns.size() );
 
-	if ( lidx && conns.size() )
+	if ( lidx )
 	    mAddTriangle(
 	    lknotsps->get(lidx),rknotsps->get(conns[0]),lknotsps->get(lidx-1));
 

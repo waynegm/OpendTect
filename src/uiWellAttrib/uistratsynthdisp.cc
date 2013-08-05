@@ -411,7 +411,7 @@ void uiStratSynthDisp::drawLevel()
 
 	    auxd->markerstyles_ += MarkerStyle2D( MarkerStyle2D::Target,
 						  cMarkerSize, lvl->col_ );
-	    auxd->poly_ += FlatView::Point( imdl+1, tval );
+	    auxd->poly_ += FlatView::Point( (imdl*dispeach_)+1, tval );
 	}
 	if ( auxd->isEmpty() )
 	    delete auxd;
@@ -723,7 +723,7 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
 	mapper.autosym0_ = false;
 	mapper.type_ = ColTab::MapperSetup::Fixed;
 	SyntheticData* dispsd = const_cast< SyntheticData* > ( sd );
-	dispsd->dispPars().mapperrange_ = vwr_->getDataRange( wva );
+	dispsd->dispPars().mapperrange_ = mapper.range_;
     }
     displayFRText();
 
@@ -799,12 +799,6 @@ void uiStratSynthDisp::selPreStackDataCB( CallBacker* cb )
 
 void uiStratSynthDisp::viewPreStackPush( CallBacker* cb )
 {
-    if ( prestackwin_ )
-    {
-	delete prestackwin_; 
-	prestackwin_ = 0;
-    }
-
     if ( !currentwvasynthetic_ || !currentwvasynthetic_->isPS() )
 	return;
     prestackwin_ =
@@ -970,6 +964,8 @@ void uiStratSynthDisp::addEditSynth( CallBacker* )
 
 void uiStratSynthDisp::exportSynth( CallBacker* )
 {
+    if ( layerModel().isEmpty() )
+	mErrRet( "No valid layer model present", return )
     uiStratSynthExport dlg( this, curSS() );
     dlg.go();
 }
@@ -1005,6 +1001,30 @@ const SeisTrcBuf& uiStratSynthDisp::postStackTraces(
     }
     return stbp->trcBuf();
 }
+
+
+const SeisTrcBuf& uiStratSynthDisp::postStackTraces(
+                                const char* nm ) const
+{
+    const SyntheticData* sd = nm
+                        ?  const_cast<StratSynth&>(curSS()).getSynthetic(nm)
+                        : currentwvasynthetic_;
+
+    static SeisTrcBuf emptytb( true );
+    if ( !sd || sd->isPS() ) return emptytb;
+
+    const DataPack& dp = sd->getPack();
+    mDynamicCastGet(const SeisTrcBufDataPack*,stbp,&dp);
+    if ( !stbp ) return emptytb;
+
+    if ( !sd->d2tmodels_.isEmpty() )
+    {
+        SeisTrcBuf& tbuf = const_cast<SeisTrcBuf&>( stbp->trcBuf() );
+        curSS().getLevelTimes( tbuf, sd->d2tmodels_ );
+    }
+    return stbp->trcBuf();
+}
+
 
 
 const PropertyRefSelection& uiStratSynthDisp::modelPropertyRefs() const
@@ -1088,7 +1108,7 @@ void uiStratSynthDisp::fillPar( IOPar& par, const StratSynth* stratsynth ) const
 	sd->fillGenParams( genparams );
 	IOPar synthpar;
 	genparams.fillPar( synthpar );
-	sd->fillDispPar( synthpar );
+		sd->fillDispPar( synthpar );
 	stratsynthpar.mergeComp( synthpar, IOPar::compKey(sKeySyntheticNr(),
 		    		 nr_nonproprefsynths-1) );
     }
@@ -1149,7 +1169,17 @@ bool uiStratSynthDisp::usePar( const IOPar& par )
 		continue;
 	    }
 
-	    sd->useDispPar( *synthpar );
+	    if ( useed_ )
+	    {
+		SyntheticData* nonfrsd = stratsynth_->getSyntheticByIdx( idx );
+		IOPar synthdisppar;
+		if ( nonfrsd )
+		    nonfrsd->fillDispPar( synthdisppar );
+		sd->useDispPar( synthdisppar );
+	    }
+	    else
+		sd->useDispPar( *synthpar );
+
 	    wvadatalist_->addItem( sd->name() );
 	}
 

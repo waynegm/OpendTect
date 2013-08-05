@@ -952,6 +952,12 @@ bool ui3DViewer::setStereoType( StereoType type )
 }
 
 
+void ui3DViewer::switchSeekMode()
+{
+    pErrMsg( "Not impl yet" ); 
+}
+
+
 ui3DViewer::StereoType ui3DViewer::getStereoType() const
 {
     return None;

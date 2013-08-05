@@ -56,10 +56,10 @@ uiToolBar::uiToolBar( uiParent* parnt, const char* nm, ToolBarArea tba,
 
     mDynamicCastGet(uiMainWin*,uimw,parnt)
     if ( uimw )
-				{
+    {
 	if ( newline ) uimw->addToolBarBreak();
 	uimw->addToolBar( this );
-				}
+    }
 
     toolBars() += this;
 }
@@ -279,4 +279,32 @@ void uiToolBar::doClear()
 void uiToolBar::doRemoveAction( mQtclass(QAction)* action )
 {
     qtoolbar_->removeAction( action );
+}
+
+
+void uiToolBar::getEntityList( ObjectSet<const CallBacker>& entities ) const
+{
+    entities.erase();
+
+    for ( int actidx=0; actidx<qtoolbar_->actions().size(); actidx++ )
+    {
+	QAction* qaction = qtoolbar_->actions()[actidx];
+	const int id = getID( qaction );
+	const uiAction* action = const_cast<uiToolBar*>(this)->findAction( id );
+
+	if ( !action )
+	{
+	    const QWidget* qw = qtoolbar_->widgetForAction( qaction );
+	    for ( int objidx=0; objidx<addedobjects_.size(); objidx++ )
+	    {
+		if ( qw==addedobjects_[objidx]->qwidget() )
+		{
+		    entities += addedobjects_[objidx];
+		    break;
+		}
+	    }
+	}
+	else
+	    entities += action;
+    }
 }

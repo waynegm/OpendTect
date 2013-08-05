@@ -685,8 +685,10 @@ void uiODFaultSurfaceDataTreeItem::createMenu( MenuHandler* menu, bool istb )
     const bool islocked = visserv->isLocked( displayID() );
     mDynamicCastGet( visSurvey::FaultDisplay*, fd, 
 	    visserv->getObject(displayID()) );
-    const int nrsurfdata = fd ? fd->emFault()->auxdata.auxDataList().size() : 0;
-	//applMgr()->EMServer()->nrAttributes( emid_ );
+    BufferStringSet nmlist;
+    if ( fd && fd->emFault() && fd->emFault()->auxData() ) 
+	fd->emFault()->auxData()->getAuxDataList( nmlist );
+    const int nrsurfdata = nmlist.size();
     BufferString itmtxt = "Fault Data ("; 
     itmtxt += nrsurfdata; itmtxt += ") ...";
     loadsurfacedatamnuitem_.text = itmtxt;

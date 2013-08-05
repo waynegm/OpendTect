@@ -25,6 +25,7 @@ class uiActionContainer;
 class i_ActionMessenger;
 mFDQtclass(QAction);
 mFDQtclass(QMenu);
+mFDQtclass(QString);
 
 /*!Represents either a menu item, or a toolbar item that can be
    clicked by a user .*/
@@ -38,7 +39,7 @@ public:
                         uiAction(const char*,const CallBack&,const ioPixmap&);
     			uiAction(const char*,const CallBack&,const char* pmfln);
     			uiAction(const char*,const char* pmfln);
-			uiAction(const MenuItem&);
+    			uiAction(const MenuItem&);
 			uiAction(mQtclass(QAction*));
 			~uiAction();
 
@@ -53,6 +54,8 @@ public:
     void		setToolTip(const wchar_t*);
     const char*		toolTip() const;
     			/*!<\note Use before next call.*/
+
+    static void		updateToolTips();
 
     void		setMenu(uiMenu*);
     			//!<Becomes mine
@@ -92,21 +95,24 @@ protected:
     virtual void	trigger(bool checked);
     void		translationReadyCB(CallBacker*);
 
+    void		updateToolTip();
+    mQtclass(QString*)	normaltooltipqstring_;
+
 private:
 
     uiMenu*			menu_;
 
     BufferString		iconfile_;
     const uiActionContainer*	parentcontainer_;
-    i_ActionMessenger*	msgr_;
-    mQtclass(QAction*)	qaction_;
+    i_ActionMessenger*		msgr_;
+    mQtclass(QAction*)		qaction_;
 
-    bool		checked_;
+    bool			checked_;
     int				translateid_;
     
     int				cmdrecrefnr_;
 
-    void		init(const char*);
+    void			init(const char*);
     
 public:
     //! Not for casual use

@@ -47,8 +47,10 @@ public:
 
     enum ObjectType	{ Unknown, Horizon3D, Horizon2D,
 			  FaultStickSet, Fault, Body };
+			DeclareEnumUtils(ObjectType)
+
     static void		getIDs(ObjectType,TypeSet<MultiID>&);
-				//!< Does not erase the IDs at start
+			//!< Does not erase the IDs at start
 
     bool		isOK() const;
     inline const IOObj*	ioObj() const		{ return ioobj_; }

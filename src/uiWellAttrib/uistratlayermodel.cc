@@ -431,9 +431,21 @@ const SeisTrcBuf& uiStratLayerModel::postStackTraces() const
 }
 
 
+const SeisTrcBuf& uiStratLayerModel::postStackTraces( const char* nm ) const
+{
+    return synthdisp_->postStackTraces( nm );
+}
+
+
 const SeisTrcBuf& uiStratLayerModel::modelTraces( const PropertyRef& pr ) const
 {
     return synthdisp_->postStackTraces( &pr );
+}
+
+
+const StratSynth& uiStratLayerModel::currentStratSynth() const
+{
+    return const_cast<const uiStratSynthDisp*>(synthdisp_)->curSS();
 }
 
 
@@ -804,6 +816,12 @@ void uiStratLayerModel::genModels( CallBacker* )
 	{ delete newmodl; return; }
 
     // transaction succeeded, we move to the new model - period.
+    if ( !newmodl->isValid() )
+    {
+	delete newmodl;
+	return uiMSG().error("Layer model is empty" );
+    }
+
     lmp_.setModel( newmodl );
 
     setModelProps();
@@ -909,14 +927,12 @@ void uiStratLayerModel::displayFRResult( bool usefr, bool parschanged, bool fwd 
 
     uiWorldRect prevzoomwr = zoomwr_;
     synthdisp_->setUseEdited( usefr );
-    IOPar synthpar, edsynthpar;
-    synthdisp_->fillPar( synthpar, false );
-    synthdisp_->fillPar( edsynthpar, true );
-    if ( parschanged || synthpar != edsynthpar )
+    if ( parschanged ) 
 	useSyntheticsPars( desc_.getWorkBenchParams() );
     synthdisp_->modelChanged();
-    synthdisp_->setDispMrkrs( modtools_->selLevel(), moddisp_->levelDepths(),
-		    modtools_->selLevelColor(), modtools_->showFlattened() );
+    synthdisp_->setDispMrkrs(
+	    modtools_->selLevel(), moddisp_->levelDepths(),
+	    modtools_->selLevelColor(), modtools_->showFlattened() );
 
     moddisp_->setBrineFilled( fwd );
     moddisp_->setFluidReplOn( usefr );

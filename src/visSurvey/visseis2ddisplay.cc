@@ -577,7 +577,7 @@ void Seis2DDisplay::updatePanelStripPath()
 void Seis2DDisplay::updatePanelStripZRange()
 {
     panelstrip_->setZRange( trcdisplayinfo_.zrg_ );
-    const Interval<float> mapping( 0, trcdisplayinfo_.zrg_.nrSteps() );
+    const Interval<float> mapping( 0.0f, mCast(float,trcdisplayinfo_.zrg_.nrSteps()) );
     panelstrip_->setZRange2TextureMapping( mapping );
 
     if ( getUpdateStageNr() )

@@ -1442,7 +1442,6 @@ void HorizonDisplay::traverseLine( bool oninline, const CubeSampling& cs,
     const TypeSet<EM::PosID>* seedposids = hor->getPosAttribList
 						( EM::EMObject::sSeedNode() );
     TypeSet<Coord3> curline;
-    TypeSet<int> idxps;
     for ( BinID bid=startbid; bid[fastdim]<=faststop; bid[fastdim]+=faststep )
     {
 	if ( !cs.hrg.includes(bid) )

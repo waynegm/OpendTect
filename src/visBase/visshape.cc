@@ -30,6 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Geode>
 #include <osg/Material>
 #include <osg/LightModel>
+#include <osgUtil/SmoothingVisitor>
 
 
 mCreateFactoryEntry( visBase::VertexShape );
@@ -160,7 +161,8 @@ int Shape::usePar( const IOPar& par )
     , geode_( geode ) \
     , node_( 0 ) \
     , osggeom_( 0 ) \
-    , primitivetype_( Geometry::PrimitiveSet::Other )
+    , primitivetype_( Geometry::PrimitiveSet::Other ) \
+    , useosgsmoothnormal_( false )
     
     
 VertexShape::VertexShape()
@@ -180,8 +182,8 @@ VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 
 void VertexShape::setMaterial( Material* mt )
 {
-    if ( mt && material_==mt ) return;
-    if ( material_ )
+    if ( !mt ) return;
+    if ( material_ && osggeom_ )
 	osggeom_->setColorArray( 0 );
 
     Shape::setMaterial( mt );
@@ -195,6 +197,7 @@ void VertexShape::setupGeode()
     if ( geode_ )
     {
 	setOsgNode( geode_ );
+	useOsgAutoNormalComputation( false );
 	geode_->ref();
 	osggeom_ = new osg::Geometry;
 	osggeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
@@ -205,8 +208,27 @@ void VertexShape::setupGeode()
     
     setCoordinates( Coordinates::create() );
 }
-    
-    
+
+
+void VertexShape::setCoordinates( Coordinates* coords )
+{
+    if ( coords_ )
+    {
+	 if ( osggeom_ ) osggeom_->setVertexArray(0);
+	 unRefAndZeroPtr( coords_ );
+    }
+    coords_ = coords;
+
+    if ( coords_ )
+    {
+	coords_->ref();
+	if ( osggeom_ ) 
+	    osggeom_->setVertexArray(mGetOsgVec3Arr( coords_->osgArray()));
+    }
+
+}
+
+
 void VertexShape::setPrimitiveType( Geometry::PrimitiveSet::PrimitiveType tp )
 {
     primitivetype_ = tp;
@@ -239,8 +261,18 @@ VertexShape::~VertexShape()
 void VertexShape::dirtyCoordinates()
 {
     if ( !osggeom_ ) return;
+
     osggeom_->dirtyDisplayList();    
     osggeom_->dirtyBound();
+    if ( useosgsmoothnormal_ )
+	osgUtil::SmoothingVisitor::smooth( *osggeom_ );
+
+}
+
+
+void VertexShape::useOsgAutoNormalComputation( bool yn )
+{
+    useosgsmoothnormal_ = yn;
 }
 
 
@@ -272,13 +304,14 @@ const mVisTrans* VertexShape::getDisplayTransformation() const
 { return  coords_->getDisplayTransformation(); }
 
 
-mDefSetGetItem( VertexShape, Coordinates, coords_,
-if ( osggeom_ ) osggeom_->setVertexArray(0),
-if ( osggeom_ ) osggeom_->setVertexArray(mGetOsgVec3Arr( coords_->osgArray())));
-    
 mDefSetGetItem( VertexShape, Normals, normals_,
 if ( osggeom_ ) osggeom_->setNormalArray( 0 ),
-if ( osggeom_ ) osggeom_->setNormalArray(mGetOsgVec3Arr(normals_->osgArray())));
+if ( osggeom_ ) 
+{ 
+    osggeom_->setNormalArray(mGetOsgVec3Arr(normals_->osgArray()));
+    osggeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
+}
+);
     
 mDefSetGetItem( VertexShape, TextureCoords, texturecoords_,
 if ( osggeom_ ) osggeom_->setTexCoordArray( 0, 0 ),

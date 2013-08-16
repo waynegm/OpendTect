@@ -71,6 +71,8 @@ public:
     void		addPrimitiveSetToScene(osg::PrimitiveSet*);
     void		removePrimitiveSetFromScene(const osg::PrimitiveSet*);
     void		touchPrimitiveSet(int);
+    void		setCoordinates(Coordinates*);
+
     
 protected:
     osgGeo::PolyLineNode*	osgpoly_;

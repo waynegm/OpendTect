@@ -105,12 +105,19 @@ PolyLine3D::PolyLine3D()
 }
 
 
-
 void PolyLine3D::setLineStyle( const LineStyle& lst )
 {
     lst_ = lst_;
     osgpoly_->setRadius( lst.width_ );
 }
+
+
+void PolyLine3D::setCoordinates( Coordinates* coords )
+{
+   if ( coords && coords->osgArray() )
+        osgpoly_->setVertexArray( coords->osgArray() );
+}
+
 
 
 void PolyLine3D::setResolution( int res )

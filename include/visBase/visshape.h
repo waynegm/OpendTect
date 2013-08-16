@@ -85,10 +85,12 @@ public:
     void		setPrimitiveType(Geometry::PrimitiveSet::PrimitiveType);
 			//!<Should be called before adding statesets
 
-    mDeclSetGetItem( VertexShape, Coordinates, coords_ );
     mDeclSetGetItem( VertexShape, Normals, normals_ );
     mDeclSetGetItem( VertexShape, TextureCoords, texturecoords_ );
-    
+
+    virtual  void	  setCoordinates(Coordinates* coords);
+    virtual  Coordinates* getCoordinates() { return coords_; }
+
     void		removeSwitch();
 			/*!<Will turn the object permanently on.
 			 \note Must be done before giving away the
@@ -114,6 +116,7 @@ public:
     Geometry::PrimitiveSet*	getPrimitiveSet(int);
     void		setMaterial( Material* mt );
     void		materialChangeCB( CallBacker*  );
+    void		useOsgAutoNormalComputation(bool);
     
 protected:
     			VertexShape( Geometry::PrimitiveSet::PrimitiveType,
@@ -133,6 +136,8 @@ protected:
     
     osg::Geode*		geode_;
     osg::Geometry*	osggeom_;
+
+    bool		useosgsmoothnormal_;
     
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
     Geometry::PrimitiveSet::PrimitiveType	primitivetype_;

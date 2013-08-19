@@ -82,13 +82,17 @@ bool uiStepDialog::acceptOK( CallBacker* )
 
 
 uiChain::uiChain( uiParent* p, Chain& chn, bool withprocessnow )
-    : uiDialog( p, uiDialog::Setup("Volume Builder: Setup",0,"103.6.0")
-	    .menubar(true) )
+    : uiDialog( p, uiDialog::Setup("Volume Builder: Setup",
+				   mNoDlgTitle,"103.6.0")
+	    .modal(!withprocessnow) )
     , chain_(chn)
 {
+    chain_.ref();
+
     uiToolBar* tb = new uiToolBar( this, "Load/Save toolbar", uiToolBar::Right);
     tb->addButton( "open", "Read stored setup", mCB(this,uiChain,readPush));
-    tb->addButton( "save", "Save setup now", mCB(this,uiChain,savePush) );
+    tb->addButton( "save", "Save setup", mCB(this,uiChain,savePush) );
+    tb->addButton( "saveas", "Save setup as", mCB(this,uiChain,saveAsPush) );
 
     uiGroup* flowgrp = new uiGroup( this, "Flow group" );
 
@@ -159,6 +163,7 @@ uiChain::uiChain( uiParent* p, Chain& chn, bool withprocessnow )
 
 uiChain::~uiChain()
 {
+    chain_.unRef();
 }
 
 
@@ -175,7 +180,7 @@ const MultiID& uiChain::storageID() const
 }
 
 
-bool uiChain::acceptOK(CallBacker*)
+bool uiChain::acceptOK( CallBacker* )
 {
     if ( chain_.nrSteps() && chain_.getStep( 0 ) &&
        chain_.getStep( 0 )->needsInput() )
@@ -185,21 +190,16 @@ bool uiChain::acceptOK(CallBacker*)
 	    return false;
     }
 
-    const IOObj* ioobj = objfld_->ioobj( true );
-    if ( !ioobj )
-    {
-	uiMSG().error("Please enter a name for the setup");
+    if ( !doSave() )
 	return false;
-    }
 
-    chain_.setStorageID( ioobj->key() );
     if ( hasSaveButton() )
     {
 	Settings::common().setYN( sKeySettingKey(), saveButtonChecked() );
 	Settings::common().write();
     }
 
-    return doSave();
+    return true;
 }
 
 
@@ -210,8 +210,11 @@ bool uiChain::doSave()
 	return doSaveAs();
 
     BufferString errmsg;
-    if ( VolProcessingTranslator::store( chain_, ioobj, errmsg ) )
+    if ( VolProcessingTranslator::store(chain_,ioobj,errmsg) )
+    {
+	chain_.setStorageID( ioobj->key() );
 	return true;
+    }
 
      uiMSG().error( errmsg );
      return false;
@@ -221,13 +224,16 @@ bool uiChain::doSave()
 bool uiChain::doSaveAs()
 {
     IOObjContext ctxt = VolProcessingTranslatorGroup::ioContext();
+    ctxt.forread = false;
     uiIOObjSelDlg dlg( this, ctxt, "Volume Builder Setup" );
     if ( !dlg.go() || !dlg.nrSel() )
 	 return false;
 
      BufferString errmsg;
-     if ( VolProcessingTranslator::store( chain_, dlg.ioObj(), errmsg ) )
+    const IOObj* ioobj = dlg.ioObj();
+    if ( VolProcessingTranslator::store(chain_,ioobj,errmsg) )
      {
+	chain_.setStorageID( ioobj->key() );
 	 updObj( *dlg.ioObj() );
 	 return true;
      }
@@ -327,10 +333,12 @@ void uiChain::readPush( CallBacker* )
 }
 
 
-void uiChain::savePush(CallBacker* cb)
-{
-    doSaveAs();
-}
+void uiChain::saveAsPush( CallBacker* )
+{ doSaveAs(); }
+
+
+void uiChain::savePush( CallBacker* )
+{ doSave(); }
 
 
 void uiChain::factoryClickCB(CallBacker*)

@@ -212,6 +212,13 @@ public:
     virtual const LeafUnitRef*	firstLeaf() const
 			{ return refs_.isEmpty() ? 0 : refs_[0]->firstLeaf(); }
 
+    LeafUnitRef*	getLeaf(int);
+    const LeafUnitRef*	getLeaf( int i ) const
+			{ return const_cast<LeavedUnitRef*>(this)->getLeaf(i); }
+    LeafUnitRef*	getLeaf(const Lithology&);
+    const LeafUnitRef*	getLeaf( const Lithology& l ) const
+			{ return const_cast<LeavedUnitRef*>(this)->getLeaf(l); }
+
 protected:
 
     Level::ID		levelid_;

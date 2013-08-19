@@ -358,6 +358,23 @@ const Strat::LeafUnitRef* Strat::NodeOnlyUnitRef::firstLeaf() const
 
 //class LeavedUnitRef
 
+Strat::LeafUnitRef* Strat::LeavedUnitRef::getLeaf( int idx )
+{
+    return static_cast<LeafUnitRef*>( refs_[idx] );
+}
+
+
+Strat::LeafUnitRef* Strat::LeavedUnitRef::getLeaf( const Strat::Lithology& lith)
+{
+    for ( int idx=0; idx<nrLeaves(); idx++ )
+    {
+	LeafUnitRef* ur = getLeaf( idx );
+	if ( ur->lithology() == lith.id() )
+	    return ur;
+    }
+    return 0;
+}
+
 
 void Strat::LeavedUnitRef::setLevelID( Strat::Level::ID lid )
 {

@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uilabel.h"
 #include "uibutton.h"
+#include "uicolortable.h"
 #include "uiflatviewer.h"
 #include "uiflatviewpropdlg.h"
 #include "uiflatviewslicepos.h"
@@ -25,6 +26,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uislider.h"
 #include "uimsg.h"
 #include "uiprogressbar.h"
+#include "uisaveimagedlg.h"
 #include "uistatusbar.h"
 #include "uitoolbar.h"
 #include "uitoolbutton.h"
@@ -44,13 +46,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "windowfunction.h"
 
 
-static int sStartNrViewers = 10;
+static int sStartNrViewers = 8;
 
 namespace PreStackView 
 {
     
 uiViewer2DMainWin::uiViewer2DMainWin( uiParent* p, const char* title )
-    : uiObjectItemViewWin(p,title)
+    : uiObjectItemViewWin(p,uiObjectItemViewWin::Setup(title).startwidth(800))
     , posdlg_(0)
     , control_(0)
     , slicepos_(0)	 
@@ -59,7 +61,6 @@ uiViewer2DMainWin::uiViewer2DMainWin( uiParent* p, const char* title )
     , cs_(false)
 {
     setDeleteOnClose( true );
-    setPrefWidth( 800 );
 }
 
 
@@ -69,6 +70,13 @@ uiViewer2DMainWin::~uiViewer2DMainWin()
     deepErase( gd_ );
     deepErase( gdi_ );
     delete posdlg_;
+}
+
+
+void uiViewer2DMainWin::snapshotCB( CallBacker* )
+{
+    uiSaveWinImageDlg snapshotdlg( this );
+    snapshotdlg.go();
 }
 
 
@@ -411,8 +419,8 @@ void uiViewer2DMainWin::setGatherView( uiGatherDisplay* gd,
     gd->setPosition( gd->getBinID(), cs_.zrg.width()==0 ? 0 : &zrg );
     gd->updateViewRange();
     uiFlatViewer* fv = gd->getUiFlatViewer();
-    gd->displayAnnotation( false );
-    fv->appearance().annot_.x1_.showannot_ = false;
+    gd->displayAnnotation( true );
+    if ( vwrs_.size()>0 ) fv->appearance().annot_.x2_.showannot_ = false;
 
     vwrs_ += fv;
     addGroup( gd, gdi );
@@ -426,6 +434,9 @@ void uiViewer2DMainWin::setGatherView( uiGatherDisplay* gd,
 			    mCB(this,uiViewer2DMainWin,dataDlgPushed));
 	ctrl->infoChanged.notify(
 		mCB(this,uiStoredViewer2DMainWin,displayInfo) );
+	ctrl->toolBar()->addButton(
+		"snapshot", "Get snapshot",
+		mCB(this,uiStoredViewer2DMainWin,snapshotCB) );
 	control_ = ctrl;
 
 	uiToolBar* tb = control_->toolBar();
@@ -833,9 +844,11 @@ void uiSyntheticViewer2DMainWin::setGatherInfo(uiGatherDisplayInfoHeader* info,
 
 uiViewer2DControl::uiViewer2DControl( uiObjectItemView& mw, uiFlatViewer& vwr )
     : uiFlatViewStdControl(vwr,uiFlatViewStdControl::Setup(mw.parent())
-			.withstates(true)
+			.withstates(false)
 			.withthumbnail(false)
-			.withcoltabed(false)
+			.withcoltabed(true)
+			.withsnapshot(false)
+			.withflip(false)
 			.withedit(false))
     , posdlgcalled_(this)
     , datadlgcalled_(this)
@@ -849,7 +862,32 @@ uiViewer2DControl::uiViewer2DControl( uiObjectItemView& mw, uiFlatViewer& vwr )
     mDefBut(posbut,"orientation64",gatherPosCB,"Set positions");
     mDefBut(databut,"gatherdisplaysettings64",gatherDataCB, "Set gather data");
     mDefBut(parsbut,"2ddisppars",parsCB,"Set seismic display properties");
+    ctabsel_ = new uiColorTableSel( tb_, "Select Color Table" );
+    ctabsel_->selectionChanged.notify( mCB(this,uiViewer2DControl,coltabChg) );
+    vwr_.dispParsChanged.notify( mCB(this,uiViewer2DControl,updateColTabCB) );
+    ctabsel_->setCurrent( dispPars().vd_.ctab_ );
+    tb_->addObject( ctabsel_ );
     tb_->addSeparator();
+}
+
+
+void uiViewer2DControl::updateColTabCB( CallBacker* )
+{
+    app_ = vwr_.appearance();
+    ctabsel_->setCurrent( dispPars().vd_.ctab_.buf() );
+}
+
+
+void uiViewer2DControl::coltabChg( CallBacker* )
+{
+    dispPars().vd_.ctab_ = ctabsel_->getCurrent();
+    for( int ivwr=0; ivwr<vwrs_.size(); ivwr++ )
+    {
+	if ( !vwrs_[ivwr] ) continue;
+	uiFlatViewer& vwr = *vwrs_[ivwr];
+	vwr.appearance().ddpars_ = app_.ddpars_;
+	vwr.handleChange( FlatView::Viewer::DisplayPars );
+    }
 }
 
 
@@ -857,7 +895,7 @@ void uiViewer2DControl::applyProperties( CallBacker* )
 {
     if ( !propdlg_ ) return;
 
-    disppars_ = propdlg_->viewer().appearance().ddpars_;
+    app_ = propdlg_->viewer().appearance();
     const int selannot = propdlg_->selectedAnnot();
 
     const FlatDataPack* vddatapack = vwrs_[0]->pack( false );
@@ -866,7 +904,8 @@ void uiViewer2DControl::applyProperties( CallBacker* )
     {
 	if ( !vwrs_[ivwr] ) continue;
 	uiFlatViewer& vwr = *vwrs_[ivwr];
-	vwr.appearance().ddpars_ = disppars_;
+	vwr.appearance() = app_;
+	if ( ivwr>0 ) vwr.appearance().annot_.x2_.showannot_ = false;
 
 	const uiWorldRect cv( vwr.curView() );
 	FlatView::Annotation& annot = vwr.appearance().annot_;
@@ -880,10 +919,10 @@ void uiViewer2DControl::applyProperties( CallBacker* )
 	    const DataPack::ID& id = vwr.availablePacks()[idx];
 	    FixedString datanm( DPM(DataPackMgr::FlatID()).nameOf(id) );
 	    if ( vddatapack && datanm == vddatapack->name() &&
-		 disppars_.vd_.show_ )
+		 app_.ddpars_.vd_.show_ )
 		vwr.usePack( false, id, false );
 	    if ( wvadatapack && datanm == wvadatapack->name() &&
-		 disppars_.wva_.show_ )
+		 app_.ddpars_.wva_.show_ )
 		vwr.usePack( true, id, false );
 	}
 

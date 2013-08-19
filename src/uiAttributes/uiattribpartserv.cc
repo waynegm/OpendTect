@@ -66,6 +66,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uimenu.h"
 #include "uimsg.h"
 #include "uimultcomputils.h"
+#include "uimultoutsel.h"
 #include "uiseisioobjinfo.h"
 #include "uisetpickdirs.h"
 #include "uitaskrunner.h"
@@ -97,6 +98,7 @@ uiAttribPartServer::uiAttribPartServer( uiApplService& a )
 	: uiApplPartServer(a)
 	, dirshwattrdesc_(0)
         , attrsetdlg_(0)
+    , volprocchaindlg_(0)
         , is2devsent_(false)
     	, attrsetclosetim_("Attrset dialog close")
 	, stored2dmnuitem_("&Stored 2D Data")
@@ -164,12 +166,18 @@ void uiAttribPartServer::doVolProc( const MultiID* mid )
 	}
     }
 
-    VolProc::uiChain dlg( parent(), *volprocchain_, true );
+    if ( !volprocchaindlg_ )
+	volprocchaindlg_ = new VolProc::uiChain( parent(), *volprocchain_,true);
+
+    volprocchaindlg_->show();
+
+    /*
     if ( dlg.go() && dlg.saveButtonChecked() )
     {
 	ioobj = IOM().get( volprocchain_->storageID() );
 	createVolProcOutput( ioobj );
     }
+    */
 }
 
 
@@ -589,12 +597,32 @@ EngineMan* uiAttribPartServer::createEngMan( const CubeSampling* cs,
     
     const bool istargetstored = targetspecs_[0].isStored();
     const bool is2d = targetspecs_[0].is2D();
-    const DescSet* ads = DSHolder().getDescSet( is2d, istargetstored );
-    if ( !ads )
+    Attrib::DescSet* curdescset = eDSHolder().getDescSet(is2d,istargetstored);
+    if ( !curdescset )
 	{ pErrMsg("No attr set"); return 0; }
 
+    if ( !istargetstored )
+    {
+	DescID attribid = targetspecs_[0].id();
+	Desc* seldesc = curdescset->getDesc( attribid );
+	if ( seldesc )
+	{
+	    DescID multoiid = seldesc->getMultiOutputInputID();
+	    if ( multoiid != DescID::undef() )
+	    {
+		const DescSetMan* adsman = DSHolder().getDescSetMan( is2d );
+		uiAttrSelData attrdata( *adsman->descSet() );
+		SelInfo attrinf( &attrdata.attrSet(), attrdata.nlamodel_, is2d,
+				 DescID::undef(), false, false );
+		if ( !uiMultOutSel::handleMultiCompChain( attribid, multoiid,
+			    is2d, attrinf, curdescset, parent(), targetspecs_ ))
+		    return 0;
+	    }
+	}
+    }
+
     EngineMan* aem = new EngineMan;
-    aem->setAttribSet( ads );
+    aem->setAttribSet( curdescset );
     aem->setNLAModel( getNLAModel(is2d) );
     aem->setAttribSpecs( targetspecs_ );
     if ( cs )
@@ -1706,19 +1734,28 @@ void uiAttribPartServer::usePar( const IOPar& iopar, bool is2d, bool isstored )
 	else
 	    ads->usePar( iopar, versionnr, &errmsgs );
 
+	BufferString basemsg = "Error during restore of ";
+	basemsg += is2d ? "2D " : "3D "; basemsg += "Attribute Set";
+	
+	if ( errmsgs.size()<4 )
+	{
 	BufferString errmsg;
 	for ( int idx=0; idx<errmsgs.size(); idx++ )
 	{
 	    if ( !idx )
 	    {
-		errmsg = "Error during restore of ";
-		errmsg += is2d ? "2D " : "3D "; errmsg += "Attribute Set:";
+		    errmsg = basemsg;
+		    errmsg += ":";
 	    }
+
 	    errmsg += "\n";
 	    errmsg += errmsgs.get( idx );
 	}
 	if ( !errmsg.isEmpty() )
 	    uiMSG().error( errmsg );
+	}
+	else
+	    uiMSG().errorWithDetails( errmsgs, basemsg );
 
 	set2DEvent( is2d );
 	sendEvent( evNewAttrSet() );

@@ -28,6 +28,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "property.h"
 #include "keystrs.h"
+#include "envvars.h"
 
 #define mGetConvZ(var,conv) \
     if ( SI().depthsInFeet() ) var *= conv
@@ -37,6 +38,8 @@ static const char* rcsID mUsedVar = "$Id$";
     Interval<float> target( src ); \
     if ( SI().depthsInFeet() ) \
 	target.scale( mToFeetFactorF )
+
+static const int cMaxNrLayers4RectDisp = 50000; // Simple displayer
 
 
 uiStratLayerModelDisp::uiStratLayerModelDisp( uiStratLayModEditTools& t,
@@ -131,13 +134,19 @@ bool uiStratLayerModelDisp::doLayerModelIO( bool foradd )
     if ( !foradd && lm.isEmpty() )
 	mErrRet( "Please generate some layer sequences" )
 
-    uiFileDialog dlg( this, foradd, 0, 0, "Select layer model dump file" );
-    if ( !dlg.go() ) return false;
+    static BufferString fixeddumpfnm = GetEnvVar( "OD_FIXED_LAYMOD_DUMPFILE" );
+    BufferString dumpfnm( fixeddumpfnm );
+    if ( dumpfnm.isEmpty() )
+    {
+	uiFileDialog dlg( this, foradd, 0, 0, "Select layer model dump file" );
+	if ( !dlg.go() ) return false;
+	dumpfnm = dlg.fileName();
+    }
 
-    StreamProvider sp( dlg.fileName() );
+    StreamProvider sp( dumpfnm );
     StreamData sd( foradd ? sp.makeIStream() : sp.makeOStream() );
     if ( !sd.usable() )
-	mErrRet( BufferString("Cannot open:\n",dlg.fileName()) )
+	mErrRet( BufferString("Cannot open:\n",dumpfnm) )
 
     if ( !foradd )
     {
@@ -168,11 +177,12 @@ uiStratSimpleLayerModelDisp::uiStratSimpleLayerModelDisp(
     , dispprop_(1)
     , dispeach_(1)
     , zoomwr_(mUdf(double),0,0,0)
-    , fillmdls_(true)
+    , fillmdls_(false)
     , uselithcols_(true)
     , showzoomed_(true)
     , vrg_(0,1)
-    , logblckitms_(*new uiGraphicsItemSet)
+    , logblcklineitms_(*new uiGraphicsItemSet)
+    , logblckrectitms_(*new uiGraphicsItemSet)
     , lvlitms_(*new uiGraphicsItemSet)
     , contitms_(*new uiGraphicsItemSet)
     , selseqitm_(0)
@@ -181,6 +191,7 @@ uiStratSimpleLayerModelDisp::uiStratSimpleLayerModelDisp(
     , allcontents_(false)
 {
     gv_ = new uiGraphicsView( this, "LayerModel display" );
+    gv_->disableScrollZoom();
     gv_->setPrefWidth( 800 ); gv_->setPrefHeight( 300 );
     gv_->getMouseEventHandler().buttonReleased.notify(
 			mCB(this,uiStratSimpleLayerModelDisp,usrClicked) );
@@ -216,13 +227,15 @@ uiStratSimpleLayerModelDisp::~uiStratSimpleLayerModelDisp()
 {
     eraseAll();
     delete &lvlitms_;
-    delete &logblckitms_;
+    delete &logblcklineitms_;
+    delete &logblckrectitms_;
 }
 
 
 void uiStratSimpleLayerModelDisp::eraseAll()
 {
-    logblckitms_.erase();
+    logblcklineitms_.erase();
+    logblckrectitms_.erase();
     lvlitms_.erase();
     lvldpths_.erase();
     delete selseqitm_; selseqitm_ = 0;
@@ -407,16 +420,18 @@ void uiStratSimpleLayerModelDisp::forceRedispAll( bool modeledited )
 
 void uiStratSimpleLayerModelDisp::reDrawCB( CallBacker* )
 {
-    eraseAll(); layerModel().prepareUse();
+    layerModel().prepareUse();
     if ( layerModel().isEmpty() )
     {
-	emptyitm_ = scene().addItem( new uiTextItem( "<---empty--->",
-				     mAlignment(HCenter,VCenter) ) );
+	if ( !emptyitm_ )
+	    emptyitm_ = scene().addItem( new uiTextItem( "<---empty--->",
+					 mAlignment(HCenter,VCenter) ) );
 	emptyitm_->setPenColor( Color::Black() );
 	emptyitm_->setPos( uiPoint( gv_->width()/2, gv_->height() / 2 ) );
 	return;
     }
 
+    delete emptyitm_; emptyitm_ = 0;
     doDraw();
 }
 
@@ -581,6 +596,19 @@ bool uiStratSimpleLayerModelDisp::isDisplayedModel( int iseq ) const
 }
 
 
+int uiStratSimpleLayerModelDisp::totalNrLayersToDisplay() const
+{
+    const int nrseqs = layerModel().size();
+    int ret = 0;
+    for ( int iseq=0; iseq<nrseqs; iseq++ )
+    {
+	if ( isDisplayedModel(iseq) )
+	    ret += layerModel().sequence(iseq).size();
+    }
+    return ret;
+}
+
+
 void uiStratSimpleLayerModelDisp::doDraw()
 {
     dispprop_ = tools_.selPropIdx();
@@ -612,6 +640,10 @@ void uiStratSimpleLayerModelDisp::doDraw()
     yax_->plotAxis(); xax_->plotAxis();
     const float vwdth = vrg_.width();
     float zfac = 1; mGetDispZ( zfac );
+    bool dofill = fillmdls_ || totalNrLayersToDisplay() < cMaxNrLayers4RectDisp;
+    float prevrelx = mUdf(float);
+
+    int lineitmidx=0, rectitmidx=0;
 
     mStartLayLoop( true, int lastdrawnypix = mUdf(int) )
 
@@ -637,36 +669,85 @@ void uiStratSimpleLayerModelDisp::doDraw()
 	if ( ypix0 >= ypix1 )
 	    continue;
 
-	lastdrawnypix = ypix1;
-	const float relx = (val-vrg_.start) / vwdth;
-	const int xpix0 = getXPix( iseq, 0 );
-	const int xpix1 = getXPix( iseq, relx );
-
-	uiRectItem* it = new uiRectItem( xpix0, ypix0,
-					 xpix1-xpix0+1, ypix1-ypix0+1 );
-
 	const Color laycol = lay.dispColor( uselithcols_ );
 	bool mustannotcont = false;
 	if ( !lay.content().isUnspecified() )
 	    mustannotcont = allcontents_
 		|| (selectedcontent_ && lay.content() == *selectedcontent_);
 	const Color pencol = mustannotcont ? lay.content().color_ : laycol;
-	it->setPenColor( pencol );
-	if ( pencol != laycol )
-	    it->setPenStyle( LineStyle(LineStyle::Solid,2,pencol) );
+	const bool needrect = dofill || mustannotcont;
 
-	if ( fillmdls_ )
+	lastdrawnypix = ypix1;
+	const float relx = (val-vrg_.start) / vwdth;
+	if ( mIsUdf(prevrelx) ) prevrelx = relx;
+	const int xpix0 = getXPix( iseq, needrect ? 0 : prevrelx );
+	const int xpix1 = getXPix( iseq, relx );
+	prevrelx = relx;
+
+#	define mHandleItem(it) \
+	    it->setPenColor( pencol ); \
+	    if ( pencol != laycol ) \
+		it->setPenStyle( LineStyle(LineStyle::Solid,2,pencol) ); \
+	    it->setZValue( layzlvl );
+
+	if ( dofill || mustannotcont )
 	{
-	    it->setFillColor( laycol );
-	    if ( mustannotcont )
-		it->setFillPattern( lay.content().pattern_ );
+	    uiRectItem* rectitm = 0;
+	    if ( rectitmidx < logblckrectitms_.size() )
+	    {
+		mDynamicCast(uiRectItem*,rectitm,logblckrectitms_[rectitmidx]);
+		rectitm->show();
+	    }
+	    else
+	    {
+		rectitm = scene().addItem( new uiRectItem() );
+		logblckrectitms_ += rectitm;
+	    }
+
+	    if ( rectitm )
+	    {
+		rectitmidx++;
+		rectitm->setRect( xpix0, ypix0, xpix1-xpix0+1, ypix1-ypix0+1 );
+		mHandleItem( rectitm );
+		rectitm->setFillColor( laycol );
+		if ( mustannotcont )
+		    rectitm->setFillPattern( lay.content().pattern_ );
+	    }
+	}
+	else
+	{
+#	define mAddLineItem(lineitm) \
+	    uiLineItem* lineitm = 0; \
+	    if ( lineitmidx < logblcklineitms_.size() ) \
+	    { \
+		mDynamicCast(uiLineItem*,lineitm,logblcklineitms_[lineitmidx]) \
+		lineitm->show(); \
+	    } \
+	    else \
+	    { \
+		lineitm = scene().addItem( new uiLineItem() ); \
+		lineitm->show(); \
+		logblcklineitms_ += lineitm; \
+	    } \
+	    if ( lineitm ) \
+	    { \
+		lineitmidx++; \
+		mHandleItem( lineitm ); \
+	    }
+
+	    mAddLineItem( lineitm1 );
+	    mAddLineItem( lineitm2 );
+	    if ( lineitm1 ) lineitm1->setLine( xpix0, ypix0, xpix1, ypix0 );
+	    if ( lineitm2 ) lineitm2->setLine( xpix1, ypix0, xpix1, ypix1 );
 	}
 
-	it->setZValue( layzlvl );
-	scene().addItem( it );
-	logblckitms_ += it;
 
     mEndLayLoop()
+
+    for ( int idx=rectitmidx; idx<logblckrectitms_.size(); idx++ )
+	logblckrectitms_[idx]->hide();
+    for ( int idx=lineitmidx; idx<logblcklineitms_.size(); idx++ )
+	logblcklineitms_[idx]->hide();
 
     drawLevels();
     drawSelectedSequence();
@@ -680,6 +761,7 @@ void uiStratSimpleLayerModelDisp::drawLevels()
     if ( layerModel().isEmpty() )
 	return;
 
+    int itmidx = 0;
     lvlcol_ = tools_.selLevelColor();
     for ( int iseq=0; iseq<lvldpths_.size(); iseq++ )
     {
@@ -691,13 +773,30 @@ void uiStratSimpleLayerModelDisp::drawLevels()
 	const int ypix = yax_->getPix( flattened_ ? 0 : zlvl );
 	const int xpix1 = getXPix( iseq, 0 );
 	const int xpix2 = getXPix( iseq, 1 );
-	uiLineItem* it = scene().addItem(
-	    new uiLineItem( uiPoint(xpix1,ypix), uiPoint(xpix2,ypix) ) );
 
+	uiLineItem* it = 0;
+	if ( itmidx < lvlitms_.size() )
+	{
+	    mDynamicCast(uiLineItem*,it,lvlitms_[itmidx])
+	    if ( it ) it->show();
+	}
+	else
+	{
+	    it = scene().addItem( new uiLineItem() );
+	    lvlitms_ += it;
+	}
+
+	if ( !it )
+	    continue;
+ 
+	it->setLine( uiPoint(xpix1,ypix), uiPoint(xpix2,ypix) );
 	it->setPenStyle( LineStyle(LineStyle::Solid,2,lvlcol_) );
 	it->setZValue( 999999 );
-	lvlitms_ += it;
+	itmidx++;
     }
+
+    for ( int idx=itmidx; idx<lvlitms_.size(); idx++ )
+	lvlitms_[idx]->hide();
 }
 
 

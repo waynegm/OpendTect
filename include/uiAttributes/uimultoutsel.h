@@ -16,6 +16,7 @@ ________________________________________________________________________
 #include "uidialog.h"
 #include "uigroup.h"
 #include "attribdescid.h"
+#include "attribsel.h"
 
 class BufferStringSet;
 class uiCheckBox;
@@ -33,6 +34,14 @@ public:
     void		getSelectedOutputs(TypeSet<int>&) const;
     void		getSelectedOutNames(BufferStringSet&) const;
     bool		doDisp() const;
+
+    static void		fillInAvailOutNames(const Attrib::Desc&,
+	    				    BufferStringSet&);
+    static bool		handleMultiCompChain(Attrib::DescID& selid,
+					 const Attrib::DescID& multicompinpid,
+					 bool,const Attrib::SelInfo&,
+					 Attrib::DescSet*,uiParent*,
+					 TypeSet<Attrib::SelSpec>&);
 
 protected:
 

@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "datapointset.h"
 #include "emeditor.h"
 #include "emfault3d.h"
+#include "emfaultauxdata.h"
 #include "emmanager.h"
 #include "executor.h"
 #include "explplaneintersection.h"
@@ -1108,8 +1109,11 @@ void FaultDisplay::setRandomPosDataInternal( int attrib,
 	return;
     }
 
-    RowCol sz = explicitpanels_->getTextureSize();
-    mDeclareAndTryAlloc( PtrMan<Array2D<float> >, texturedata,
+    const RowCol sz = explicitpanels_->getTextureSize();
+    while ( texuredatas_.size()-1 < attrib )
+	texuredatas_ += 0;
+
+    mDeclareAndTryAlloc( Array2D<float>*, texturedata,
 	    		 Array2DImpl<float>(sz.col,sz.row) );
 
     float* texturedataptr = texturedata->getData();
@@ -1133,11 +1137,47 @@ void FaultDisplay::setRandomPosDataInternal( int attrib,
 	texturedata->set( mNINT32(j), mNINT32(i), ptr[column] );
     }
 
+    delete texuredatas_.replace( attrib, texturedata );
     texture_->setData( attrib, 0, texturedata, true );
     validtexture_ = true;
     usestexture_ = true;
     updateSingleColor();
 }
+
+
+void FaultDisplay::showSelectedSurfaceData()
+{
+    int lastattridx = nrAttribs()-1;
+    if ( !emfault_ || lastattridx<0 )
+	return;
+
+    EM::FaultAuxData* auxdata = emfault_->auxData();
+    if ( !auxdata )
+	return;
+
+    const TypeSet<int>& selindies = auxdata->selectedIndices();
+    for ( int idx=0; idx<selindies.size(); idx++ )
+    {
+	const Array2D<float>* data = auxdata->loadIfNotLoaded(selindies[idx]);
+	if ( !data )
+	    continue;
+
+	texture_->setData( lastattridx--, 0, data, true );
+	if ( lastattridx<0 )
+	    break;
+    }
+
+    validtexture_ = true;
+    updateSingleColor();
+}
+
+
+const BufferStringSet* FaultDisplay::selectedSurfaceDataNames() const
+{ return emfault_->auxData() ? &emfault_->auxData()->selectedNames() : 0; }
+
+
+const Array2D<float>* FaultDisplay::getTextureData( int attrib )
+{ return texuredatas_.validIdx(attrib) ? texuredatas_[attrib] : 0; }
 
 
 void FaultDisplay::setResolution( int res, TaskRunner* tr )

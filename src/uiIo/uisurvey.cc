@@ -709,7 +709,7 @@ bool uiSurvey::acceptOK( CallBacker* )
 
     if ( !updateSvyFile() )
     {
-    IOMan::enableSurveyChangeTriggers( false );
+	IOMan::enableSurveyChangeTriggers( false );
 	return false;
     }
 
@@ -718,6 +718,7 @@ bool uiSurvey::acceptOK( CallBacker* )
 	if ( !IOM().message().isEmpty() )
 	    uiMSG().error( IOM().message() );
 	IOMan::enableSurveyChangeTriggers( false );
+        initialsurvey_.setEmpty();
 	return false;
     }
     

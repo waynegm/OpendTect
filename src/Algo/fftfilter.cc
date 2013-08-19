@@ -49,7 +49,7 @@ FFTFilter::~FFTFilter()
 {
     delete fft_;
     if ( timewindow_ )
-    delete timewindow_;
+	delete timewindow_;
     if ( freqwindow_ )
 	delete freqwindow_;
     if ( trendreal_ )
@@ -131,12 +131,12 @@ void FFTFilter::buildFreqTaperWin()
     else
 	taperhp2lp = mCast(int, ( cutfreq2_ + cutfreq3_ ) / ( 2.f * df_ ) );
 
-    ArrayNDWindow* highpasswin = 0;
     if ( dohighpasstaperwin )
     {
 	const int f1idx = mCast( int, cutfreq1_ / df_ );
 	const float var = 1.f - ( cutfreq2_ - cutfreq1_ ) /
 	   		  	( df_ * taperhp2lp - cutfreq1_ );
+	ArrayNDWindow* highpasswin;
 	mSetTaperWin( highpasswin, 2 * ( taperhp2lp - f1idx ), var )
 	for ( int idx=0; idx<taperhp2lp; idx++ )
 	{
@@ -145,14 +145,15 @@ void FFTFilter::buildFreqTaperWin()
 	    freqwindow_->setValue( idx, taperval );
 	    freqwindow_->setValue( fftsz_-idx-1, taperval );
 	}
+	delete highpasswin;
     }
 
-    ArrayNDWindow* lowpasswin = 0;
     if ( dolowpasstaperwin )
     {
 	const int f4idx = mCast( int, cutfreq4_ / df_ );
 	const float var = 1.f - ( cutfreq4_ - cutfreq3_ ) /
 	    		  	( cutfreq4_ - df_ * taperhp2lp );
+	ArrayNDWindow* lowpasswin;
 	mSetTaperWin( lowpasswin, 2 * ( f4idx - taperhp2lp ), var )
 	for ( int idx=taperhp2lp; idx<nyqfreqidx; idx++ )
 	{
@@ -162,6 +163,7 @@ void FFTFilter::buildFreqTaperWin()
 	    freqwindow_->setValue( idx, taperval );
 	    freqwindow_->setValue( fftsz_-idx-1, taperval );
 	}
+	delete lowpasswin;
     }
 }
 
@@ -383,7 +385,7 @@ bool FFTFilter::interpUdf( Array1DImpl<float_complex>& outp )
 	{
 	    const float_complex val( realvals[idx], imagvals[idx] );
 	    outp.set( idx, val );
-    }
+	}
     }
 
     return true;
@@ -435,10 +437,10 @@ bool FFTFilter::deTrend( Array1DImpl<float>& outp, bool isimag )
     Array1DImpl<float> inp( sz );
     Array1DImpl<float>* trend = new Array1DImpl<float>( sz );
     for ( int idx=0; idx<sz; idx++ )
-	{
+    {
 	inp.set( idx, outp[idx] );
 	trend->set( idx, outp[idx] );
-	}
+    }
 
     if ( !removeBias<float,float>(&inp,&outp,false) )
 	return false;

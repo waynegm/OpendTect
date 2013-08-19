@@ -279,7 +279,7 @@ void uiObjectItemViewWin::scrollBarCB( CallBacker* )
 
 void uiObjectItemViewWin::reSizeCB( CallBacker* )
 {
-    if ( !fittoscreen_ || !poppedUp() ) return;
+    if ( !fittoscreen_ ) return;
     const uiSize newscreensz( mainviewer_->width(), mainviewer_->height() );
     if ( newscreensz != screensz_ ) fitToScreen(0);
 }
@@ -362,7 +362,7 @@ void uiObjectItemViewWin::rubBandCB( CallBacker* )
     NotifyStopper nsv( vsldr->sliderReleased );
     hsldr->setValue( newhorfac );
     vsldr->setValue( newverfac );
-    reSizeSld(0);
+    reSizeSld(0); fittoscreen_ = false;
 
     mainviewer_->setViewArea( selrect->left()*xfac, selrect->top()*yfac, 
 			      selrect->width()*xfac, selrect->height()*yfac );
@@ -445,6 +445,8 @@ uiObjectItemViewControl::uiObjectItemViewControl( uiObjectItemView& mw )
     setToolButtons();
 
     mainviewer_.disableScrollZoom();
+    mainviewer_.getKeyboardEventHandler().keyPressed.notify(
+	    mCB(this,uiObjectItemViewControl,keyPressedCB) );
     mainviewer_.setScrollBarPolicy( true, uiGraphicsView::ScrollBarAsNeeded );
     mainviewer_.setScrollBarPolicy( false, uiGraphicsView::ScrollBarAsNeeded );
     mainviewer_.setDragMode( uiGraphicsViewBase::RubberBandDrag );
@@ -455,6 +457,13 @@ uiObjectItemViewControl::uiObjectItemViewControl( uiObjectItemView& mw )
 void uiObjectItemViewControl::setToolButtons()
 {
     mDefBut(manipdrawbut_,"altpick",stateCB,"Switch view mode (Esc)");
+}
+
+
+void uiObjectItemViewControl::keyPressedCB( CallBacker* )
+{
+    if ( mainviewer_.getKeyboardEventHandler().event().key_ == OD::Escape )
+	changeStatus();
 }
 
 

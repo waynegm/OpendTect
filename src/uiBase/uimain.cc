@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uimsg.h"
 #include "uiobjbody.h"
 #include "uiaction.h"
+#include "uitreeview.h"
 
 #include "bufstringset.h"
 #include "debugmasks.h"
@@ -472,6 +473,7 @@ void uiMain::setTopLevel( uiMainWin* obj )
     obj->setExitAppOnClose( true );
 
     mainobj_ = obj;
+    init( mainobj_->body()->qwidget() ); // inits SoQt if uicMain
 }
 
 
@@ -585,6 +587,7 @@ void uiMain::useNameToolTip( bool yn )
     usenametooltip_ = yn;
     uiObject::updateToolTips();
     uiAction::updateToolTips();
+    uiTreeViewItem::updateToolTips();
 }
 
 

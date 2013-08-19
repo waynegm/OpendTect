@@ -60,8 +60,7 @@ void HorizonSectionOsgCallBack::operator()(osg::Node* node,osg::NodeVisitor* nv)
     {
 	if ( hrsection_->getOsgTexture()->needsRetiling() )
 	{
-	    hrsection_->hortexturehandler_->updateTileTextureOrigin(
-		    hrsection_->origin_ );
+	    hrsection_->hortexturehandler_->updateTileTextureOrigin();
 	}
     }
     else if( nv->getVisitorType()==osg::NodeVisitor::CULL_VISITOR )

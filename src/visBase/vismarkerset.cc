@@ -44,6 +44,7 @@ MarkerSet::MarkerSet()
 
 MarkerSet::~MarkerSet()
 {
+    removeChild( markerset_ );
     clearMarkers();
     markerset_->unref();
 }

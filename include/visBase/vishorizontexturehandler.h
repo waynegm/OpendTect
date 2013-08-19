@@ -70,7 +70,7 @@ public:
 					       const DataPointSet* dtpntset);
     void			updateTexture(int channel,int sectionid,
 					      const DataPointSet*);
-    void			updateTileTextureOrigin(const RowCol&);
+    void			updateTileTextureOrigin();
 
 
 protected:

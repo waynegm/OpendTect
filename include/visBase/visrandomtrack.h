@@ -31,7 +31,6 @@ namespace visBase
 {
 class EventCatcher;
 class Material;
-class TriangleStripSet;
 class VisColorTab;
 class TextureChannels;
 

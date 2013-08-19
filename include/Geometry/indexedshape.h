@@ -118,6 +118,7 @@ public:
 
 
     void	  appendCoordIndices(const TypeSet<int>&);
+    void	  setCoordIndices(const TypeSet<int>&);
     PrimitiveSet* getCoordsPrimitiveSet()		{ return primitiveset_; }
 
 

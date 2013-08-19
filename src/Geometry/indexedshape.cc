@@ -126,7 +126,7 @@ IndexedGeometry::~IndexedGeometry()
 }
 
 
-void IndexedGeometry::appendCoordIndices(const TypeSet<int>& indices) 
+void IndexedGeometry::appendCoordIndices( const TypeSet<int>& indices ) 
 {
     if ( primitivesettype_ == RangeSet ) return;
 
@@ -161,6 +161,13 @@ void IndexedGeometry::appendCoordIndicesAsTriangleFan(
     pErrMsg("Not implemented");
 }
 
+
+void IndexedGeometry::setCoordIndices( const TypeSet<int>& indices )
+{
+    if ( !primitiveset_ ) return;
+    primitiveset_->setEmpty();
+    appendCoordIndices( indices );
+}
 
 
 void IndexedGeometry::appendCoordIndicesAsTriangles( const TypeSet<int>& indices )
@@ -213,7 +220,7 @@ void IndexedGeometry::removeAll( bool deep )
     if ( texturecoordlist_ )
 	texturecoordlist_->remove( idxs );
 
-    unRefAndZeroPtr(primitiveset_);
+     unRefAndZeroPtr(primitiveset_);
 }
 
 

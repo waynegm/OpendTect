@@ -57,18 +57,17 @@ MPEDisplay::MPEDisplay()
     boxdragger_->ref();
     boxdragger_->finished.notify( mCB(this,MPEDisplay,boxDraggerFinishCB) );
     boxdragger_->setBoxTransparency( 0.7 );
-//    boxdragger_->turnOn( false );
-    addChild( boxdragger_->getInventorNode() );
+    addChild( boxdragger_->osgNode() );
+    showBoxDragger( false );
+
     updateBoxSpace();
 
     voltrans_->ref();
-    addChild( voltrans_->getInventorNode() );
+    addChild( voltrans_->osgNode() );
     voltrans_->setRotation( Coord3(0,1,0), M_PI_2 );
 
     channels_->ref();  // will be added in getInventorNode
     channels_->setChannels2RGBA( visBase::TextureChannel2VolData::create() );
-    
-    //visBase::DM().getObject( channels_->getInventorNode() );
     
     engine_.activevolumechange.notify( mCB(this,MPEDisplay,updateBoxPosition) );
 
@@ -1099,7 +1098,7 @@ int MPEDisplay::addSlice( int dim, bool show )
     slice->setName( dim==cTimeSlice() ? sKeyTime() : 
 	    (dim==cCrossLine() ? sKeyCrossLine() : sKeyInline()) );
 
-    addChild( slice->getInventorNode() );
+    addChild( slice->osgNode() );
     const CubeSampling cs = getCubeSampling( 0 );
     const Interval<float> defintv(-0.5,0.5);
     slice->setSpaceLimits( defintv, defintv, defintv );
@@ -1169,7 +1168,7 @@ void MPEDisplay::removeChild( int displayid )
     {
 	if ( slices_[idx]->id()==displayid )
 	{
-	    VisualObjectImpl::removeChild( slices_[idx]->getInventorNode() );
+	    VisualObjectImpl::removeChild( slices_[idx]->osgNode() );
 	    slices_[idx]->motion.remove( mCB(this,MPEDisplay,sliceMoving) );
 	    slices_[idx]->unRef();
 	    slices_.removeSingle(idx,false);

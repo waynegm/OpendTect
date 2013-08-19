@@ -502,7 +502,7 @@ bool MarchingCubesDisplay::updateVisFromEM( bool onlyshape, TaskRunner* tr )
 
 	if ( !displaysurface_->setSurface( emsurface_->surface(), tr ) )
 	{
-	    removeChild( displaysurface_->getInventorNode() );
+	    removeChild( displaysurface_->osgNode() );
 	    displaysurface_->unRef();
 	    displaysurface_ = 0;
 	    return false;
@@ -858,9 +858,6 @@ MarchingCubesDisplay::PlaneIntersectInfo::PlaneIntersectInfo()
     computed_ = false;
 
     visshape_ = visBase::GeomIndexedShape::create();
-    //visshape_->turnOnForegroundLifter( true );
-    if ( visshape_->getMaterial() )
-	visshape_->setMaterial( new visBase::Material );
     visshape_->ref();
     visshape_->setSelectable( false );
     visshape_->renderOneSide( 0 );

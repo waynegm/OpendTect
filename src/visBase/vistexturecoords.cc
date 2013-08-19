@@ -228,8 +228,10 @@ void TextureCoordListAdapter::remove( int idx )
 
 void TextureCoordListAdapter::remove(const TypeSet<int>& idxs)
 {
+    if ( !idxs.size() ) return;
+
     TypeSet<int> removedidxs;
-    for ( int idx = idxs.size()-1; idx--; )
+    for ( int idx = idxs.size()-1; idx>=0; idx-- )
     {
 	if ( removedidxs.isPresent( idx ) )
 	    continue;

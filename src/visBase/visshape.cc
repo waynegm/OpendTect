@@ -420,7 +420,7 @@ void VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
 
 void VertexShape::removeAllPrimitiveSets()
 {
-    for ( int idx = 0; idx < primitivesets_.size(); idx++ )
+    for ( int idx = primitivesets_.size()-1; idx >= 0; idx-- )
 	removePrimitiveSet( primitivesets_[idx] );
 }
 

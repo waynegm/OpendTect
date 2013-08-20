@@ -211,7 +211,6 @@ Horizon2DDisplayUpdater( const Geometry::RowColSurface* rcs,
     , lines_( shape )
     , points_( points )
     , lineranges_( lr )
-    , lineci_( 0 )
     , scale_( 1, 1, SI().zScale() )
     , zaxt_( zaxt )
     , linenames_(linenames)
@@ -243,7 +242,8 @@ bool doPrepare( int nrthreads )
 {
     curidx_ = 0;
     nrthreads_ = nrthreads;
-    points_->getCoordinates()->removeAfter( -1 );
+    points_->getCoordinates()->setEmpty();
+    lines_->removeAllPrimitiveSets();
     return true;
 }
 
@@ -323,24 +323,12 @@ void sendPositions( TypeSet<Coord3>& positions )
 		indices += crdidx_++;
 	    }
 
-	    if ( lineci_ < lines_->nrPrimitiveSets() )
-	    {
-		mDynamicCastGet(Geometry::IndexedPrimitiveSet*,
-					   ps,lines_->getPrimitiveSet(lineci_));
-		if ( ps )
-		    ps->set( indices.arr(), indices.size() );
-		
-	    }
-	    else
-	    {
-		Geometry::IndexedPrimitiveSet* lineprimitiveset = 
-				  Geometry::IndexedPrimitiveSet::create( true );
-		lineprimitiveset->ref();
-		lineprimitiveset->set( indices.arr(), indices.size() );
-		lines_->addPrimitiveSet( lineprimitiveset );
-	    }
-	    
-	    lineci_++;
+	    Geometry::IndexedPrimitiveSet* lineprimitiveset = 
+				Geometry::IndexedPrimitiveSet::create( true );
+	    lineprimitiveset->ref();
+	    lineprimitiveset->set( indices.arr(), indices.size() );
+	    lines_->addPrimitiveSet( lineprimitiveset );
+	    lineprimitiveset->unRef();
 	    lock_.unLock();
 	}
     }
@@ -357,7 +345,6 @@ protected:
     const BufferStringSet&		linenames_;
     Threads::Mutex			lock_;
     int					nrthreads_;
-    int					lineci_;
     const Coord3			scale_;
     float				eps_;
     StepInterval<int>			rowrg_;
@@ -419,7 +406,7 @@ void Horizon2DDisplay::updateSection( int idx, const LineRanges* lineranges )
 	}
     }
 
-    const LineRanges* lrgs = redo ? &linergs : lineranges; 
+    const LineRanges* lrgs = redo ? &linergs : lineranges;
     Horizon2DDisplayUpdater updater( rcs, lrgs, pl, ps,
 				     zaxistransform_, linenames );
     updater.execute();

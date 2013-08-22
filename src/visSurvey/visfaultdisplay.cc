@@ -1802,8 +1802,12 @@ void FaultDisplay::setLineRadius( visBase::GeomIndexedShape* shape )
     const float crllen =
 	inlcrlsystem_->crlDistance() * inlcrlsystem_->crlRange().width();
     const float maxlinethickness = 0.02f * mMAX( inllen, crllen );
+
+    LineStyle lnstyle( *lineStyle() ) ;
+    lnstyle.width_ = (int)( linewidth );
+
     if ( shape )
-	shape->set3DLineRadius( linewidth, true, maxlinethickness );
+	shape->setLineStyle( lnstyle );
 
     activestickmarker_->setRadius( mMAX(linewidth+0.5f, 1.0f),
 				   true, maxlinethickness+0.5f );

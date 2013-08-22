@@ -734,15 +734,13 @@ void PolygonBodyDisplay::updateNearestPolygonMarker()
 	plgs->getCubicBezierCurve( nearestpolygon_, knots, zfactor  );
 	for ( int idy=0; idy<knots.size(); idy++ )
 	{
-	    const int ci = 
-		nearestpolygonmarker_->getCoordinates()->addPos(knots[idy]);
+	    nearestpolygonmarker_->getCoordinates()->addPos(knots[idy]);
 	    idxps.add( markeridx++ );
 	}
 
 	if ( markeridx>2 )
 	{
-	    const int ci = 
-		nearestpolygonmarker_->getCoordinates()->addPos(knots[0]);
+	    nearestpolygonmarker_->getCoordinates()->addPos(knots[0]);
 	    idxps.add( markeridx++ );
 	}
 

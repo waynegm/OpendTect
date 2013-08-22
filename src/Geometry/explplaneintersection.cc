@@ -149,6 +149,9 @@ bool doWork( od_int64 start, od_int64 stop, int )
 
 	Geometry::PrimitiveSet* idxps = inputgeom->getCoordsPrimitiveSet();
 
+	if ( !idxps )
+	    continue;
+
 	Threads::Locker inputlock( inputgeom->lock_ );
 
 	if ( inputgeom->primitivetype_==IndexedGeometry::Triangles )
@@ -253,7 +256,8 @@ void intersectTriangle( int lci0, int lci1, int lci2 )
     const Plane3 triangleplane( trianglenormal, c0, false );
 
     Geometry::PrimitiveSet* idxps = output_->getCoordsPrimitiveSet();
-
+    if ( !idxps )
+	return;
 
     for ( int planeidx=explsurf_.nrPlanes()-1; planeidx>=0; planeidx-- )
     {
@@ -630,7 +634,9 @@ bool ExplPlaneIntersection::update( bool forceall, TaskRunner* tr )
     if ( !intersection_ )
     {
 	intersection_ = new IndexedGeometry( IndexedGeometry::Lines,
-					     coordlist_ );
+					     coordlist_, 0, 0, 
+					     IndexedGeometry::IndexSet );
+	
 	mGetIndexedShapeWriteLocker4Geometries();
 	geometries_ += intersection_;
     }

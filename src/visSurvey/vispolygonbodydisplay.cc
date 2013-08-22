@@ -30,7 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visshapehints.h"
 #include "vistransform.h"
 #include "vistristripset.h"
-
+#include "vispolygonoffset.h"
 
 mCreateFactoryEntry( visSurvey::PolygonBodyDisplay );
 
@@ -51,8 +51,7 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     , eventcatcher_( 0 )
     , displaytransform_( 0 )
     , nearestpolygon_( mUdf(int) )
-    , nearestpolygonmarker_( visBase::IndexedPolyLine3D::create() )
-  //  , shapehints_( visBase::ShapeHints::create() )
+    , nearestpolygonmarker_( visBase::PolyLine3D::create() )
     , showmanipulator_( false )
     , displaypolygons_( false )
     , drawstyle_( new visBase::DrawStyle )
@@ -61,23 +60,27 @@ PolygonBodyDisplay::PolygonBodyDisplay()
     nearestpolygonmarker_->ref();
     if ( !nearestpolygonmarker_->getMaterial() )
 	nearestpolygonmarker_->setMaterial( new visBase::Material );
-    //nearestpolygonmarker_->insertNode(
-	    //nearestpolygonmarkerpickstyle_->osgNode() );
     addChild( nearestpolygonmarker_->osgNode() );
-
     getMaterial()->setAmbience( 0.2 );
-    //shapehints_->ref();
-    //addChild( shapehints_->osgNode() );
-    //shapehints_->setVertexOrder( visBase::ShapeHints::CounterClockWise );
 
+    nearestpolygonmarker_->setPrimitiveType( Geometry::PrimitiveSet::LineStrips );
+ 
     drawstyle_->ref();
-    //addChild( drawstyle_->osgNode() );
     drawstyle_->setLineStyle( LineStyle(LineStyle::Solid,2) );
 
     intsurf_->ref();
     intsurf_->turnOn( false );
-    //intsurf_->turnOnForegroundLifter( true );
+
     addChild( intsurf_->osgNode() );
+
+    visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
+    polyoffset->setFactor( -1.0f );
+    polyoffset->setUnits( -1.0f );
+    nearestpolygonmarker_->addNodeState( polyoffset );
+
+    if ( getMaterial() )
+	  mAttachCB( getMaterial()->change, PolygonBodyDisplay::matChangeCB );
+
 }
 
 
@@ -182,15 +185,16 @@ void PolygonBodyDisplay::setLineStyle( const LineStyle& lst )
 void PolygonBodyDisplay::setLineRadius( visBase::GeomIndexedShape* shape )
 {
     const bool islinesolid = lineStyle()->type_ == LineStyle::Solid;
-    const float linewidth = islinesolid ? 0.5f*lineStyle()->width_ : -1.0f;
-    const float inllen = SI().inlDistance() * SI().inlRange(true).width();
-    const float crllen = SI().crlDistance() * SI().crlRange(true).width();
-    const float maxlinethickness = 0.02f * mMAX( inllen, crllen );
-    if ( shape )
-	shape->set3DLineRadius( linewidth, true, maxlinethickness );
+    const float linewidth = islinesolid ? 3.5f*lineStyle()->width_ : -1.0f;
 
-    nearestpolygonmarker_->setRadius( mMAX(linewidth+0.5f, 1.0f),
-				      true, maxlinethickness );
+    LineStyle lnstyle( *lineStyle() ) ;
+    lnstyle.width_ = (int)( linewidth );
+
+    if ( shape )
+	shape->setLineStyle( lnstyle );
+
+    lnstyle.width_ = (int)( linewidth+ 2.5f );
+    nearestpolygonmarker_->setLineStyle( lnstyle );
 }
 
 
@@ -232,10 +236,10 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
     {
 	bodydisplay_ = visBase::GeomIndexedShape::create();
 	bodydisplay_->ref();
+	bodydisplay_->setPrimitiveType( Geometry::PrimitiveSet::TriangleStrip ) ;
 	bodydisplay_->setDisplayTransformation( displaytransform_ );
 	bodydisplay_->setMaterial( 0 );
 	bodydisplay_->setSelectable( false );
-	bodydisplay_->setRightHandSystem( righthandsystem_ );
 	addChild( bodydisplay_->osgNode() );
     }
 
@@ -243,13 +247,16 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
     {
 	intersectiondisplay_ = visBase::GeomIndexedShape::create();
 	intersectiondisplay_->ref();
+	intersectiondisplay_->setPrimitiveType( 
+	    Geometry::PrimitiveSet::LineStrips ) ;
 	intersectiondisplay_->setDisplayTransformation( displaytransform_ );
-	intersectiondisplay_->setMaterial( 0 );
+	bodydisplay_->setMaterial( 0 );
 	intersectiondisplay_->setSelectable( false );
-	intersectiondisplay_->setRightHandSystem( righthandsystem_ );
+	intersectiondisplay_->setIndexedGeometryShapeType(
+	    visBase::GeomIndexedShape::PolyLine3D );
+
 	addChild( intersectiondisplay_->osgNode() );
 	intersectiondisplay_->turnOn( false );
-
 	setLineRadius( intersectiondisplay_ );
     }
 
@@ -257,11 +264,14 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
     {
 	polygondisplay_ = visBase::GeomIndexedShape::create();
 	polygondisplay_->ref();
+	polygondisplay_->setPrimitiveType( Geometry::PrimitiveSet::LineStrips ) ;
 	polygondisplay_->setDisplayTransformation( displaytransform_ );
-	if ( !polygondisplay_->getMaterial() )
-	    polygondisplay_->setMaterial( new visBase::Material );
+	
+	polygondisplay_->setMaterial( getMaterial() );
 	polygondisplay_->setSelectable( false );
-	polygondisplay_->setRightHandSystem( righthandsystem_ );
+	polygondisplay_->setIndexedGeometryShapeType( 
+	    visBase::GeomIndexedShape::PolyLine3D );
+
 	addChild( polygondisplay_->osgNode() );
 
 	setLineRadius( polygondisplay_ );
@@ -286,16 +296,16 @@ bool PolygonBodyDisplay::setEMID( const EM::ObjectID& emid )
     if ( !explicitintersections_ )
 	mTryAlloc( explicitintersections_, Geometry::ExplPlaneIntersection );
 
-    mDynamicCastGet( Geometry::PolygonSurface*, plgs,
+    mDynamicCastGet( Geometry::PolygonSurface*, polygonsurface,
 	    empolygonsurf_->sectionGeometry(empolygonsurf_->sectionID(0)) );
 
-    explicitbody_->setSurface( plgs ); 
+    explicitbody_->setPolygonSurface( polygonsurface ); 
     bodydisplay_->setSurface( explicitbody_ );
 
     explicitintersections_->setShape( *explicitbody_ );
     intersectiondisplay_->setSurface( explicitintersections_ );
 
-    explicitpolygons_->setSurface( plgs ); 
+    explicitpolygons_->setPolygonSurface( polygonsurface ); 
     polygondisplay_->setSurface( explicitpolygons_ );
 
     if ( !viseditor_ )
@@ -381,11 +391,21 @@ void PolygonBodyDisplay::updateSingleColor()
     nearestpolygonmarker_->getMaterial()->setColor( nontexturecol_ );
     if ( polygondisplay_ )
 	polygondisplay_->getMaterial()->setColor( nontexturecol_ );
+
+    visBase::Material* mt = getMaterial();
+    mt->setColor( nontexturecol_ );
+    bodydisplay_->updateMaterialFrom( mt );
 }
 
 
 NotifierAccess* PolygonBodyDisplay::materialChange()
 { return &getMaterial()->change; }
+
+
+void PolygonBodyDisplay::matChangeCB(CallBacker*)
+{
+    bodydisplay_->updateMaterialFrom( getMaterial() ); 
+}
 
 
 Color PolygonBodyDisplay::getColor() const
@@ -486,16 +506,6 @@ void PolygonBodyDisplay::setDisplayTransformation(const mVisTrans* nt)
 }
 
 
-void PolygonBodyDisplay::setRightHandSystem(bool yn)
-{
-    visBase::VisualObjectImpl::setRightHandSystem( yn );
-    if ( bodydisplay_ ) bodydisplay_->setRightHandSystem( yn );
-    if ( polygondisplay_ ) polygondisplay_->setRightHandSystem( yn );
-    if ( intersectiondisplay_ ) intersectiondisplay_->setRightHandSystem( yn );
-    intsurf_->setRightHandSystem( yn );
-}
-
-
 const mVisTrans* PolygonBodyDisplay::getDisplayTransformation() const
 { return displaytransform_; }
 
@@ -554,7 +564,8 @@ void PolygonBodyDisplay::mouseCB( CallBacker* cb )
 	? scene_->getZScale() *scene_->getFixedZStretch()
 	: SI().zScale();
 
-    polygonsurfeditor_->getInteractionInfo( nearestpid0, nearestpid1, insertpid,					    pos, zscale );
+    polygonsurfeditor_->getInteractionInfo( nearestpid0, nearestpid1, insertpid,
+	pos, zscale );
 
     const int nearestpolygon = 
 	nearestpid0.isUdf() ? mUdf(int) : insertpid.getRowCol().row;
@@ -697,7 +708,7 @@ void PolygonBodyDisplay::updateNearestPolygonMarker()
     else
     {
 	mDynamicCastGet( Geometry::PolygonSurface*, plgs,
-		empolygonsurf_->sectionGeometry(empolygonsurf_->sectionID(0)));
+	    empolygonsurf_->sectionGeometry(empolygonsurf_->sectionID(0)));
 
 	const StepInterval<int> rowrg = plgs->rowRange();
 	if ( rowrg.isUdf() || !rowrg.includes(nearestpolygon_,false) )
@@ -713,27 +724,36 @@ void PolygonBodyDisplay::updateNearestPolygonMarker()
 	    return;
 	}
 
-	nearestpolygonmarker_->removeCoordIndexAfter(-1);
-	nearestpolygonmarker_->getCoordinates()->removeAfter(-1);
+	nearestpolygonmarker_->removeAllPrimitiveSets();
+	nearestpolygonmarker_->getCoordinates()->setEmpty();
 
 	int markeridx = 0;
 	TypeSet<Coord3> knots;
+	TypeSet<int> idxps;
 	const float zfactor = scene_ ? scene_->getZScale() : SI().zScale();
 	plgs->getCubicBezierCurve( nearestpolygon_, knots, zfactor  );
 	for ( int idy=0; idy<knots.size(); idy++ )
 	{
 	    const int ci = 
 		nearestpolygonmarker_->getCoordinates()->addPos(knots[idy]);
-	    nearestpolygonmarker_->setCoordIndex( markeridx++, ci );
+	    idxps.add( markeridx++ );
 	}
 
 	if ( markeridx>2 )
 	{
 	    const int ci = 
 		nearestpolygonmarker_->getCoordinates()->addPos(knots[0]);
-	    nearestpolygonmarker_->setCoordIndex( markeridx++, ci );
+	    idxps.add( markeridx++ );
 	}
-	
+
+	Geometry::IndexedPrimitiveSet* primitiveset =  
+	    Geometry::IndexedPrimitiveSet::create( false );
+	primitiveset->ref();
+	idxps.add( idxps[0] );
+	primitiveset->append( idxps.arr(), idxps.size() );
+	nearestpolygonmarker_->addPrimitiveSet( primitiveset ); 
+	primitiveset->unRef();
+
 	nearestpolygonmarker_->turnOn( true );
     }
 }
@@ -754,11 +774,13 @@ void PolygonBodyDisplay::updateManipulator()
 {
     const bool show = showmanipulator_ &&
     		      (arePolygonsDisplayed() || isBodyDisplayed() );
+
     if ( viseditor_ ) 
 	viseditor_->turnOn( show );
 
     if ( nearestpolygonmarker_ ) 
 	nearestpolygonmarker_->turnOn( show );
+
 }
 
 

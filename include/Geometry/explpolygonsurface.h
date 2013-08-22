@@ -34,8 +34,8 @@ public:
     			~ExplPolygonSurface();
 
     void		display(bool polygons,bool body);
-    void		setSurface(const PolygonSurface*);
-    const PolygonSurface* getSurface() const	     { return surface_; }
+    void		setPolygonSurface(const PolygonSurface*);
+    const PolygonSurface* getPolygonSurface() const	{ return surface_; }
 
     void		setZScale(float);
 
@@ -68,6 +68,8 @@ protected:
     void		removeFromGeometries(const IndexedGeometry*);
     void		addToTrianglePrimitiveSet(Geometry::PrimitiveSet*,
 						  int,int,int);
+    void 		calcNormals(int nrtriangles,int idx1, int idx2, int idx3);
+
 
 
     bool		displaypolygons_;

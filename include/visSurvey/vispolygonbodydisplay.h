@@ -26,7 +26,7 @@ namespace visBase
 {
     class DrawStyle;
     class GeomIndexedShape;
-    class IndexedPolyLine3D;
+    class PolyLine3D;
     class ShapeHints;
     class Transformation;
     class TriangleStripSet;
@@ -69,7 +69,6 @@ public:
 
     void			setDisplayTransformation(const mVisTrans*);
     const mVisTrans*		getDisplayTransformation() const;
-    void			setRightHandSystem(bool);
 
     void			setSceneEventCatcher(visBase::EventCatcher*);
 
@@ -122,6 +121,8 @@ protected:
     Coord3			disp2world(const Coord3& displaypos) const;
     void			setLineRadius(visBase::GeomIndexedShape*);
     void			reMakeIntersectionSurface();
+    void			matChangeCB(CallBacker*);
+
 
     visBase::EventCatcher*		eventcatcher_;
     const mVisTrans*			displaytransform_;
@@ -138,7 +139,7 @@ protected:
     ObjectSet<const SurveyObject>	intersectionobjs_;
     TypeSet<int>			planeids_;
 
-    visBase::IndexedPolyLine3D*		nearestpolygonmarker_;
+    visBase::PolyLine3D*		nearestpolygonmarker_;
     int					nearestpolygon_;
 
     EM::PolygonBody*			empolygonsurf_;

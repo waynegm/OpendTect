@@ -19,7 +19,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "visnormals.h"
 #include "vistexturecoords.h"
-#include "visdrawstyle.h"
+#include "vispolyline.h"
 
 #include <osg/Geometry>
 #include <osg/Geode>
@@ -40,14 +40,14 @@ namespace visBase
 GeomIndexedShape::GeomIndexedShape()
     : VisualObjectImpl( true )
     , shape_( 0 )
-    , lineradius_( -1 )
-    , lineconstantonscreen_( false )
-    , linemaxsize_( -1 )
     , vtexshape_( VertexShape::create() )
     , colorhandler_( new ColorHandler )
     , colortableenabled_( false )
     , singlematerial_( new Material )
     , coltabmaterial_( new Material )
+    , primitivesettype_ ( Geometry::PrimitiveSet::Triangles )
+    , geomshapetype_( Triangle )
+    , linestyle_( LineStyle::Solid,2,Color(0,255,0) )
 {
     singlematerial_->ref();
     coltabmaterial_->ref();
@@ -63,7 +63,9 @@ GeomIndexedShape::GeomIndexedShape()
     renderOneSide( 0 );
 
     if ( getMaterial() )
+    {
 	getMaterial()->change.notify( mCB(this,GeomIndexedShape,matChangeCB) );
+    }
 }
 
 
@@ -78,6 +80,16 @@ GeomIndexedShape::~GeomIndexedShape()
     if ( getMaterial() )
 	getMaterial()->change.remove( mCB(this,GeomIndexedShape,matChangeCB) );
 
+}
+
+
+void GeomIndexedShape::setPrimitiveType( 
+			const Geometry::PrimitiveSet::PrimitiveType type )
+{
+   if ( vtexshape_ )
+       vtexshape_->setPrimitiveType( type );
+
+   primitivesettype_ = type;    
 }
 
 
@@ -98,7 +110,6 @@ GeomIndexedShape::ColorHandler::~ColorHandler()
 void GeomIndexedShape::renderOneSide( int side )
 {
     renderside_ = side;
-
     if ( !renderside_ )
     {
 	vtexshape_->setTwoSidedLight( false );
@@ -114,6 +125,7 @@ void GeomIndexedShape::setMaterial( Material* mat )
 {
     if ( !vtexshape_  || !mat ) return;
 
+    VisualObjectImpl::setMaterial( mat );
     if ( getMaterial() )
 	getMaterial()->change.notify( mCB(this,GeomIndexedShape,matChangeCB) );
 
@@ -263,15 +275,27 @@ bool GeomIndexedShape::touch( bool forall, TaskRunner* tr )
 
     vtexshape_->removeAllPrimitiveSets();
 
+    coords->setDisplayTransformation( getDisplayTransformation() );
     vtexshape_->setCoordinates( coords );
-    
+    vtexshape_->useOsgAutoNormalComputation( true );
+
     if ( normals->nrNormals() )
+    {
+	normals->setDisplayTransformation( getDisplayTransformation() );
 	vtexshape_->setNormals( normals );
+	vtexshape_->useOsgAutoNormalComputation( false );
+    }
     
     if ( texturecoords->size() )
-        vtexshape_->setTextureCoords( texturecoords );
+    {
+	texturecoords->setDisplayTransformation( getDisplayTransformation() );
+	vtexshape_->setTextureCoords( texturecoords );
+    }
 
     ObjectSet<Geometry::IndexedGeometry>& geoms=shape_->getGeometry();
+
+    if ( !geoms.size() )
+	return false;
 
     for ( int idx=0; idx<geoms.size(); idx++ )
     {
@@ -281,13 +305,14 @@ bool GeomIndexedShape::touch( bool forall, TaskRunner* tr )
 
 	vtexshape_->addPrimitiveSet( idxgeom->getCoordsPrimitiveSet() );
 
-	if ( idxgeom->primitivetype_ == Geometry::IndexedGeometry::Lines )
+	if ( idxgeom->primitivetype_ == Geometry::IndexedGeometry::Lines &&
+	    geomshapetype_ > Triangle )
 	{
-	    visBase::DrawStyle* ds = 
-		vtexshape_->addNodeState( new visBase::DrawStyle );
-	    ds->setLineStyle( LineStyle( LineStyle::Solid, 3 ) );
+	    vtexshape_->setLineStyle( linestyle_ );
 	}
     }
+
+    vtexshape_->dirtyCoordinates();
 
     return true;
 
@@ -402,18 +427,38 @@ void GeomIndexedShape::reClip()
 }
 
 
-void GeomIndexedShape::set3DLineRadius( float radius, bool constantonscreen,
-					float maxworldsize )
+void GeomIndexedShape::setLineStyle( const LineStyle& lnstyle)
 {
-    if ( lineradius_ != radius ||
-	 lineconstantonscreen_ != constantonscreen ||
-	 linemaxsize_ != maxworldsize )
-    {
-	lineradius_ = radius;
-	lineconstantonscreen_ = constantonscreen;
-	linemaxsize_ = maxworldsize;
-	touch( true );
-    }
+    if ( lnstyle == linestyle_ )
+	return;
+    
+    linestyle_ = lnstyle;
+
+    touch( true );
 }
+
+
+void GeomIndexedShape::setIndexedGeometryShapeType( int geomshapetype )
+{
+    if ( geomshapetype == geomshapetype_ )
+	return;
+
+    removeChild( vtexshape_->osgNode() );
+    unRefAndZeroPtr( vtexshape_ );
+
+    if ( geomshapetype == PolyLine )
+	vtexshape_ = visBase::PolyLine::create();
+    else if ( geomshapetype == PolyLine3D )
+	vtexshape_ = visBase::PolyLine3D::create();
+    else 
+	vtexshape_ = visBase::VertexShape::create();
+
+    vtexshape_->ref();
+    vtexshape_->setMaterial( singlematerial_ );
+    addChild( vtexshape_->osgNode() );
+
+    geomshapetype_ = geomshapetype;
+}
+
 
 }; // namespace visBase

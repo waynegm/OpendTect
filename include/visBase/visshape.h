@@ -15,6 +15,7 @@ ________________________________________________________________________
 #include "visbasemod.h"
 #include "visobject.h"
 #include "indexedshape.h"
+#include "draw.h"
 
 namespace osg { class Geometry; class Geode; class Switch; class PrimitiveSet; }
 
@@ -90,6 +91,7 @@ public:
 
     virtual  void	  setCoordinates(Coordinates* coords);
     virtual  Coordinates* getCoordinates() { return coords_; }
+    virtual  void	  setLineStyle(const LineStyle&) {};
 
     void		removeSwitch();
 			/*!<Will turn the object permanently on.

@@ -18,6 +18,7 @@ ________________________________________________________________________
 #include "coltabsequence.h"
 #include "coltabmapper.h"
 #include "visshape.h"
+#include "draw.h"
 
 namespace Geometry { class IndexedGeometry; }
 class TaskRunner;
@@ -50,15 +51,13 @@ public:
 
     bool			touch(bool forall,TaskRunner* =0);
 
-    void			set3DLineRadius(float radius,
-	    					bool constantonscreen=true,
-						float maxworldsize=-1);
-    				/*!<If radius is less than 0, a normal
-				    line will be drawn. */
     void			renderOneSide(int side);
     				/*!< 0 = visisble from both sides.
 				     1 = visible from positive side
 				     -1 = visible from negative side. */
+
+    void			setLineStyle(const LineStyle&);
+				/*!<for polylin3d, only the radius is used.*/
 
     void			enableColTab(bool);
     bool			isColTabEnabled() const;
@@ -76,6 +75,13 @@ public:
 
     void			setMaterial(Material*);
     void			updateMaterialFrom(const Material*);
+
+    void			setPrimitiveType( 
+				const Geometry::PrimitiveSet::PrimitiveType );
+
+    enum			{ Triangle, PolyLine, PolyLine3D };
+    void			setIndexedGeometryShapeType( int geomshapetype );
+
 
 protected:
 				~GeomIndexedShape();
@@ -99,10 +105,6 @@ protected:
 
     ColorHandler*				colorhandler_;
 
-    float					lineradius_;
-    bool					lineconstantonscreen_;
-    float					linemaxsize_;
-
     Geometry::IndexedShape*			shape_;
     VertexShape*				vtexshape_;
     bool					colortableenabled_ ;
@@ -113,6 +115,11 @@ protected:
     Material*					singlematerial_;
     Material*					coltabmaterial_;
     ColTab::Sequence		                sequence_;
+    Geometry::PrimitiveSet::PrimitiveType	primitivesettype_;
+    int						geomshapetype_;
+
+    LineStyle					linestyle_;
+
    
 };
 

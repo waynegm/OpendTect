@@ -48,7 +48,6 @@ Sower::Sower( const visBase::VisualObjectImpl* editobj )
     , underlyingobjid_(-1)
 {
     sowingline_->ref();
-    addChild( sowingline_->osgNode() );
     sowingline_->setMaterial( new visBase::Material );
     reInitSettings();
 }
@@ -118,9 +117,9 @@ bool Sower::activate( const Color& color, const visBase::EventInfo& eventinfo,
 	mReturnHandled( false );
 
     Scene* scene = STM().currentScene();
-    if ( scene && scene->getPolySelection()->getSelectionType() !=
+ /*   if ( scene && scene->getPolySelection()->getSelectionType() !=
 	    					visBase::PolygonSelection::Off )
-	mReturnHandled( false );
+	mReturnHandled( false );*/
 
     if ( eventinfo.type!=visBase::MouseClick || !eventinfo.pressed )
 	mReturnHandled( false );
@@ -328,6 +327,8 @@ bool Sower::acceptMouse( const visBase::EventInfo& eventinfo )
 
 	linelost_ = false;
 	sowingline_->addPoint( furrowpos );
+	sowingline_->dirtyCoordinates();
+
 
 	if ( !sz )
 	    singleseeded_ = true;
@@ -444,6 +445,8 @@ void Sower::reset()
     mousecoords_.erase();
 
     mode_ = Idle;
+
+    removeChild( sowingline_->osgNode() );
 }
 
 
@@ -485,7 +488,10 @@ bool Sower::acceptTablet( const visBase::EventInfo& eventinfo )
     }
 
     if ( !pid.isUdf() && mode_==Furrowing && singleseeded_ )
+    {
 	sowingline_->turnOn( false );
+	removeChild( sowingline_->osgNode() );
+    }
 
     return acceptMouse( eventinfo );
 }

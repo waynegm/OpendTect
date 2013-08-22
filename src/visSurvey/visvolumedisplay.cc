@@ -345,7 +345,7 @@ int VolumeDisplay::addSlice( int dim )
     slice->setName( dim==cTimeSlice() ? sKeyTime() : 
 	    	   (dim==cCrossLine() ? sKeyCrossLine() : sKeyInline()) );
 
-    addChild( slice->getInventorNode() );
+    addChild( slice->osgNode() );
     const CubeSampling cs = getCubeSampling( 0 );
     const Interval<float> defintv(-0.5,0.5);
     slice->setSpaceLimits( defintv, defintv, defintv );
@@ -365,7 +365,7 @@ void VolumeDisplay::removeChild( int displayid )
 {
     if ( volren_ && displayid==volren_->id() )
     {
-	VisualObjectImpl::removeChild( volren_->getInventorNode() );
+	VisualObjectImpl::removeChild( volren_->osgNode() );
 	volren_->unRef();
 	volren_ = 0;
 	return;
@@ -375,7 +375,7 @@ void VolumeDisplay::removeChild( int displayid )
     {
 	if ( slices_[idx]->id()==displayid )
 	{
-	    VisualObjectImpl::removeChild( slices_[idx]->getInventorNode() );
+	    VisualObjectImpl::removeChild( slices_[idx]->osgNode() );
 	    slices_[idx]->motion.remove( mCB(this,VolumeDisplay,sliceMoving) );
 	    slices_.removeSingle(idx,false)->unRef();
 	    return;
@@ -387,7 +387,7 @@ void VolumeDisplay::removeChild( int displayid )
 	if ( isosurfaces_[idx]->id()==displayid )
 	{
 	    VisualObjectImpl::removeChild(
-		    isosurfaces_[idx]->getInventorNode() );
+		    isosurfaces_[idx]->osgNode() );
 
 	    isosurfaces_.removeSingle(idx,false)->unRef();
 	    isosurfsettings_.removeSingle(idx,false);
@@ -404,7 +404,7 @@ void VolumeDisplay::showVolRen( bool yn )
 	volren_ = visBase::VolrenDisplay::create();
 	volren_->ref();
 	volren_->setMaterial(0);
-	addChild( volren_->getInventorNode() );
+	addChild( volren_->osgNode() );
 	volren_->setName( sKeyVolRen() );
     }
 
@@ -440,9 +440,8 @@ int VolumeDisplay::addIsoSurface( TaskRunner* tr, bool updateisosurface )
     if ( updateisosurface )   
        	updateIsoSurface( isosurfaces_.size()-1, tr );
 
-    //Insert before the volume transform
-    insertChild( childIndex(voltrans_->getInventorNode()),
-	    		    isosurface->getInventorNode() );
+    //add before the volume transform
+    addChild( isosurface->osgNode() );
     materialChange( 0 ); //updates new surface's material
     return isosurface->id();
 }
@@ -1221,13 +1220,13 @@ int VolumeDisplay::usePar( const IOPar& par )
 	if ( !vr ) return -1;
 	if ( volren_ )
 	{
-	    if ( childIndex(volren_->getInventorNode())!=-1 )
-		VisualObjectImpl::removeChild(volren_->getInventorNode());
+	    if ( childIndex(volren_->osgNode())!=-1 )
+		VisualObjectImpl::removeChild(volren_->osgNode());
 	    volren_->unRef();
 	}
 	volren_ = vr;
 	volren_->ref();
-	addChild( volren_->getInventorNode() );
+	addChild( volren_->osgNode() );
     }
 
     while ( slices_.size() )
@@ -1250,7 +1249,7 @@ int VolumeDisplay::usePar( const IOPar& par )
 	os->ref();
 	os->motion.notify( mCB(this,VolumeDisplay,sliceMoving) );
 	slices_ += os;
-	addChild( os->getInventorNode() );
+	addChild( os->osgNode() );
 	// set correct dimensions ...
 	if ( os->name()==sKeyInline() )
 	    os->setDim( cInLine() );

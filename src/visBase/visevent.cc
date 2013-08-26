@@ -10,7 +10,7 @@ ________________________________________________________________________
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "visevent.h"
-#include "visdetail.h"
+//#include "visdetail.h"
 #include "visdataman.h"
 #include "vistransform.h"
 #include "iopar.h"

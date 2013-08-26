@@ -41,7 +41,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "uiobjbody.h"
 #include "viscamera.h"
-#include "viscamerainfo.h"
+//#include "viscamerainfo.h"
 #include "visdatagroup.h"
 #include "visdataman.h"
 #include "visscene.h"

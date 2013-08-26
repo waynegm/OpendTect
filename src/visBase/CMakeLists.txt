@@ -6,17 +6,15 @@
 #_______________________________________________________________________________
 
 SET(OD_MODULE_DEPS SoOD Geometry)
-SET(OD_USECOIN 1)
 
 SET(OD_USEOSG 1)
+SET(OD_USECOIN 1)
 SET(OD_MODULE_SOURCES
 	   initvisbase.cc
-	   visanchor.cc
 	   visannot.cc
 	   visaxes.cc
 	   visboxdragger.cc
 	   viscamera.cc
-	   viscamerainfo.cc
 	   viscolorseq.cc
 	   viscolortab.cc
 	   viscolortabindexer.cc
@@ -26,13 +24,11 @@ SET(OD_MODULE_SOURCES
 	   visdatagroup.cc
 	   visdataman.cc
 	   visdepthtabplanedragger.cc
-	   visdetail.cc
 	   visdragger.cc
 	   visdrawstyle.cc
 	   visevent.cc
 	   visflatviewer.cc
 	   visgridlines.cc
-	   visimage.cc
 	   visgeomindexedshape.cc
 	   vishordatahandler.cc
 	   vishorizonsection.cc
@@ -41,7 +37,6 @@ SET(OD_MODULE_SOURCES
 	   vishorthreadworks.cc
 	   vishortileresolutiondata.cc
 	   vishortilescreatorandupdator.cc
-	   vislevelofdetail.cc
 	   vislight.cc
 	   vislines.cc
 	   vismarker.cc

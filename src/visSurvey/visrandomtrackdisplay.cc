@@ -36,7 +36,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vishorizondisplay.h"
 #include "vismaterial.h"
 #include "vismarkerset.h"
-#include "vismultitexture2.h"
 #include "vispolyline.h"
 #include "visplanedatadisplay.h"
 #include "visrandomtrack.h"

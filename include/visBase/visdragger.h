@@ -44,7 +44,7 @@ public:
     Notifier<DraggerBase>	finished;
     Notifier<DraggerBase>	changed;
     
-    void			setDisplayTransformation( const mVisTrans* );
+    virtual void		setDisplayTransformation( const mVisTrans* );
     const mVisTrans*		getDisplayTransformation() const;
     
 protected:
@@ -85,7 +85,7 @@ public:
     void			setSize(const float);
     float			getSize() const;
 
-    void			setRotation(const Coord3&,float);
+    void			setRotation(const Coord3&, const float);
     void			setDefaultRotation();
 
     void			setOwnShape(DataObject*,bool activeshape);
@@ -96,6 +96,7 @@ public:
     const TypeSet<int>*		rightClickedPath() const;
     const EventInfo*		rightClickedEventInfo() const;
     void			updateDragger( bool active );
+    void			setDisplayTransformation( const mVisTrans* );
 
 protected:
     				~Dragger();
@@ -117,6 +118,10 @@ protected:
     Coord3			markerpos_;
     float			draggersizescale_;
     float			defaultdraggergeomsize_;
+
+    Coord3			rotation_;
+    float			rotangle_;
+
 };
 
 } // namespace visBase

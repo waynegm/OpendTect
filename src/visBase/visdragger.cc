@@ -143,6 +143,7 @@ void DraggerBase::setDisplayTransformation( const mVisTrans* nt )
     {
 	displaytrans_->ref();
     }
+
 }
 
 
@@ -159,6 +160,8 @@ Dragger::Dragger()
     , ismarkershape_( true )
     , draggersizescale_( 100 )
     , defaultdraggergeomsize_( 0.025 )
+    , rotation_( 0, 0, 0 )
+    , rotangle_( 0.0 )
 {
     setDefaultRotation();
     turnOn( true );
@@ -236,6 +239,7 @@ void Dragger::setOwnShape( DataObject* newshape, bool activeshape )
 
 void Dragger::updateDragger( bool ismarkershape )
 {
+
     ismarkershape_ = ismarkershape;
     osgdragger_->removeChildren( 0 , osgdragger_->getNumChildren() );
 
@@ -275,14 +279,10 @@ void Dragger::setSize( const float markersize )
 }
 
 
-void Dragger::setRotation( const Coord3& vec, float rotationangle )
+void Dragger::setRotation( const Coord3& vec, const float rotationangle )
 {
-    if( osgdragger_ )
-    {
-	osg::Quat rotation( rotationangle, 
-	    Conv::to<osg::Vec3>( vec ) );
-	osgdragger_->setMatrix( osg::Matrix( rotation ) );
-    }
+    rotation_ = vec;
+    rotangle_ = rotationangle;
 }
 
 
@@ -298,7 +298,7 @@ void Dragger::setPos( const Coord3& pos )
 
 void Dragger::setScaleAndTranslation( bool move)
 {
-    float scale = ismarkershape_ ? 1.0f : draggersizescale_;
+    const float scale = ismarkershape_ ? 1.0f : draggersizescale_;
     
     osg::Vec3 trans;
     if ( !move )
@@ -307,7 +307,10 @@ void Dragger::setScaleAndTranslation( bool move)
 	trans = osgdragger_->getMatrix().getTrans();
 
     osgdragger_->setMatrix( osg::Matrix::scale(scale, scale, scale ) * 
+	osg::Matrix::rotate( osg::Quat( rotangle_, 
+				Conv::to<osg::Vec3>( rotation_ ) ) )*
 	osg::Matrix::translate( Conv::to<osg::Vec3>( trans ) ) );
+
 }
 
 
@@ -349,7 +352,7 @@ osg::MatrixTransform* Dragger::createTranslateDefaultGeometry()
 
     // Turn of lighting for line and set line width.
     osg::LineWidth* linewidth = new osg::LineWidth();
-    linewidth->setWidth(2.0f);
+    linewidth->setWidth(4.0f);
     linegeode->getOrCreateStateSet()->setAttributeAndModes(
 	linewidth, osg::StateAttribute::ON);
     linegeode->getOrCreateStateSet()->setMode(
@@ -431,6 +434,18 @@ osg::MatrixTransform* Dragger::createTranslateDefaultGeometry()
     }
 
     return xform;
+}
+
+
+void Dragger::setDisplayTransformation( const mVisTrans* nt )
+{
+    if ( displaytrans_ == nt )
+	return;
+    
+    Coord3 crd = getPos();
+    visBase::DraggerBase::setDisplayTransformation( nt );
+    setPos( crd );
+
 }
 
 

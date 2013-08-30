@@ -95,6 +95,12 @@ const LineStyle& PolyLine::lineStyle() const
 }
 
 
+void PolyLine::setDisplayTransformation( const mVisTrans* trans)
+{
+    VertexShape::setDisplayTransformation( trans );
+}
+
+
 PolyLine3D::PolyLine3D()
     : VertexShape( Geometry::PrimitiveSet::Other, false )
 {
@@ -114,10 +120,10 @@ void PolyLine3D::setLineStyle( const LineStyle& lst )
 
 void PolyLine3D::setCoordinates( Coordinates* coords )
 {
-   if ( coords && coords->osgArray() )
+    VertexShape::setCoordinates( coords );
+    if ( coords && coords->osgArray() )
         osgpoly_->setVertexArray( coords->osgArray() );
 }
-
 
 
 void PolyLine3D::setResolution( int res )
@@ -156,6 +162,13 @@ void PolyLine3D::touchPrimitiveSet( int idx )
     osgpoly_->touchPrimitiveSet( idx );
 }
     
+
+void PolyLine3D::setDisplayTransformation( const mVisTrans* trans)
+{
+    VertexShape::setDisplayTransformation( trans );
+    setCoordinates( coords_ );
+}
+
 
 IndexedPolyLine::IndexedPolyLine()
     : IndexedShape( Geometry::PrimitiveSet::LineStrips )

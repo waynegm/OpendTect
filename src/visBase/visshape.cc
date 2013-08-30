@@ -112,11 +112,14 @@ void Shape::setTwoSidedLight( bool yn )
     osg::StateSet* st = osgNode()->getOrCreateStateSet();
     if ( st )
     {
-	st->setMode( GL_LIGHTING, !yn );
-	st->setMode( GL_LIGHT0, !yn );
-	st->setMode( GL_LIGHT1, !yn );
-	st->setMode( GL_FRONT_FACE, !yn );
-	st->setMode( GL_RESCALE_NORMAL, !yn );
+	if ( !yn )
+	{
+	    st->setMode( GL_LIGHTING, !yn );
+	    st->setMode( GL_LIGHT0, !yn );
+	    st->setMode( GL_LIGHT1, !yn );
+	    st->setMode( GL_FRONT_FACE, !yn );
+	    st->setMode( GL_RESCALE_NORMAL, !yn );
+	}
 	osg::ref_ptr<osg::LightModel> ltModel = new osg::LightModel; 
 	ltModel->setTwoSided( yn ); 
 	st->setAttributeAndModes( ltModel.get(), osg::StateAttribute::OVERRIDE | 
@@ -212,6 +215,9 @@ void VertexShape::setupGeode()
 
 void VertexShape::setCoordinates( Coordinates* coords )
 {
+    if ( coords == coords_ )
+	return;
+    
     if ( coords_ )
     {
 	 if ( osggeom_ ) osggeom_->setVertexArray(0);

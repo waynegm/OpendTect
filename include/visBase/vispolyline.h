@@ -49,6 +49,11 @@ public:
     void		removePoint( int );
     void		setLineStyle(const LineStyle&);
     const LineStyle&	lineStyle() const;
+
+    void		setDisplayTransformation( const mVisTrans* );
+    			/*!<\note The transformation is forwarded to the
+			     the coordinates, if you change coordinates, 
+			     you will have to setTransformation again.  */
     
 protected:
     					~PolyLine();
@@ -72,7 +77,10 @@ public:
     void		removePrimitiveSetFromScene(const osg::PrimitiveSet*);
     void		touchPrimitiveSet(int);
     void		setCoordinates(Coordinates*);
-
+    void		setDisplayTransformation( const mVisTrans* );
+    			/*!<\note The transformation is forwarded to the
+			     the coordinates, if you change coordinates, 
+			     you will have to setTransformation again.  */
     
 protected:
     osgGeo::PolyLineNode*	osgpoly_;

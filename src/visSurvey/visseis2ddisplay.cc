@@ -16,7 +16,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "viscoord.h"
 #include "visdataman.h"
 #include "visevent.h"
-#include "vismultitexture2.h"
 #include "vismaterial.h"
 #include "vistext.h"
 #include "vistexturechannels.h"
@@ -46,7 +45,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 //For parsing old pars
 #include "attribsel.h"
-#include "vistexture2.h"
 
 #define mMaxImageSize 300000000	// 32767
 
@@ -1126,6 +1124,8 @@ int Seis2DDisplay::usePar( const IOPar& par )
 
 	DataObject* text = visBase::DM().getObject( textureid );
 	if ( !text ) return 0;
+
+/* OSG-TODO: Is this legacy going to be supported any longer?
 	if ( typeid(*text)!=typeid(visBase::Texture2) ) return -1;
 
 	RefMan<visBase::Texture2> texture =
@@ -1134,7 +1134,8 @@ int Seis2DDisplay::usePar( const IOPar& par )
 	channels_->setColTabMapperSetup( 0,
 		texture->getColorTab().colorMapper().setup_ );
 	channels_->getChannels2RGBA()->setSequence( 0,
-		texture->getColorTab().colorSeq().colors() );
+	    texture->getColorTab().colorSeq().colors() );
+*/
 
 	Attrib::SelSpec as;
 	as.usePar( par );

@@ -24,12 +24,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "vispolyline.h"
 #include "vistexturechannels.h"
-#include "vissplittexture2rectangle.h"
 #include "vistexturechannel2rgba.h"
 #include "envvars.h"
 #include "settings.h"
 
 #define mNrResolutions 3
+
+// OSG-TODO: Replace SplitTexture2Rectangle rectangle_ by TextureRectangle */
 
 mCreateFactoryEntry( visBase::FlatViewer );
 
@@ -41,7 +42,7 @@ FlatViewer::FlatViewer()
     , dataChange( this )
     , channels_( TextureChannels::create() )
     , channel2rgba_( ColTabTextureChannel2RGBA::create() )
-    , rectangle_( SplitTexture2Rectangle::create() )
+//    , rectangle_( SplitTexture2Rectangle::create() )
     , x1gridlines_( visBase::IndexedPolyLine::create() )
     , x2gridlines_( visBase::IndexedPolyLine::create() )
     , resolution_( 0 )							
@@ -84,11 +85,11 @@ FlatViewer::FlatViewer()
     	channels_->addChannel();
     	channel2rgba_->setEnabled( 0, true );	
     }
-
+/*
     rectangle_->ref();
     rectangle_->setMaterial( 0 );
     addChild( rectangle_->osgNode() );
-
+*/
     x1gridlines_->ref();
     x1gridlines_->setMaterial( new visBase::Material );
     x1gridlines_->getMaterial()->setColor( Color(0,0,0,0) );
@@ -104,7 +105,7 @@ FlatViewer::~FlatViewer()
 {
     channels_->unRef();
     channel2rgba_->unRef();
-    rectangle_->unRef();
+//    rectangle_->unRef();
     x2gridlines_->unRef();
     x1gridlines_->unRef();
 }
@@ -171,7 +172,7 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 
 		    appearance().ddpars_.vd_.ctab_ =
 			channel2rgba_->getSequence(0)->name();
-		    rectangle_->setOriginalTextureSize( rowsz, colsz );
+//		    rectangle_->setOriginalTextureSize( rowsz, colsz );
 		    channels_->turnOn( appearance().ddpars_.vd_.show_ );
 
 		    dataChange.trigger();
@@ -206,7 +207,7 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 void FlatViewer::setPosition( const Coord3& c00, const Coord3& c01, 
 			      const Coord3& c10, const Coord3& c11 )
 {
-    rectangle_->setPosition( c00, c01, c10, c11 );
+//    rectangle_->setPosition( c00, c01, c10, c11 );
 
     c00_ = c00;
     c01_ = c01;

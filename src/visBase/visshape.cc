@@ -16,12 +16,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "iopar.h"
 #include "viscoord.h"
 #include "visdataman.h"
-//#include "visdetail.h"
 #include "visevent.h"
 #include "vismaterial.h"
 #include "visnormals.h"
-#include "vistexture2.h"
-#include "vistexture3.h"
 #include "vistexturecoords.h"
 
 #include <osg/PrimitiveSet>
@@ -45,17 +42,13 @@ const char* Shape::sKeyMaterial() 		{ return  "Material";	}
 
     
 Shape::Shape()
-    : texture2_( 0 )
-    , texture3_( 0 )
-    , material_( 0 )
+    : material_( 0 )
 {
 }
 
 
 Shape::~Shape()
 {
-    if ( texture2_ ) texture2_->unRef();
-    if ( texture3_ ) texture3_->unRef();
     if ( material_ ) material_->unRef();
 }
 
@@ -86,8 +79,6 @@ clssname* ownclass::gt##clssname() const \
 }
 
 
-mDefSetGetItem( Shape, Texture2, texture2_, , );
-mDefSetGetItem( Shape, Texture3, texture3_, , );
 mDefSetGetItem( Shape, Material, material_,
     removeNodeState( material_ ),
     addNodeState( material_ ) )

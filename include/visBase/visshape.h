@@ -26,8 +26,6 @@ class NodeState;
 class ForegroundLifter;
 class VisColorTab;
 class Material;
-class Texture2;
-class Texture3;
 class Coordinates;
 class Normals;
 class TextureCoords;
@@ -47,9 +45,6 @@ mExpClass(visBase) Shape : public VisualObject
 {
 public:
 
-   
-    mDeclSetGetItem( Shape,	Texture2, texture2_ );
-    mDeclSetGetItem( Shape,	Texture3, texture3_ );
     mDeclSetGetItem( Shape,	Material, material_ );
 
     void			setMaterialBinding( int );
@@ -67,8 +62,6 @@ protected:
 				Shape();
     virtual			~Shape();
     
-    Texture2*			texture2_;
-    Texture3*			texture3_;
     Material*			material_;
 
     static const char*		sKeyOnOff();

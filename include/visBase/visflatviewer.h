@@ -65,7 +65,9 @@ protected:
     void			updateGridLines(bool x1);
     TextureChannels*		channels_;
     ColTabTextureChannel2RGBA*	channel2rgba_;
+/* OSG-TODO: Replace by TextureRectangle class
     SplitTexture2Rectangle* 	rectangle_;
+*/
 
     visBase::IndexedPolyLine*	x1gridlines_;
     visBase::IndexedPolyLine*	x2gridlines_;

@@ -99,7 +99,7 @@ public:
 			 SoNode with getInventorNode() to take
 			 effect. */
 
-    void		setDisplayTransformation( const mVisTrans* );
+    virtual void	setDisplayTransformation( const mVisTrans* );
     			/*!<\note The transformation is forwarded to the
 			     the coordinates, if you change coordinates, 
 			     you will have to setTransformation again.  */

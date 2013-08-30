@@ -48,6 +48,7 @@ GeomIndexedShape::GeomIndexedShape()
     , primitivesettype_ ( Geometry::PrimitiveSet::Triangles )
     , geomshapetype_( Triangle )
     , linestyle_( LineStyle::Solid,2,Color(0,255,0) )
+    , useosgnormal_( false )
 {
     singlematerial_->ref();
     coltabmaterial_->ref();
@@ -113,6 +114,10 @@ void GeomIndexedShape::renderOneSide( int side )
     if ( !renderside_ )
     {
 	vtexshape_->setTwoSidedLight( false );
+    }
+    if ( renderside_ == 1)
+    {
+	vtexshape_->setTwoSidedLight( true );
     }
     else
     {
@@ -228,7 +233,7 @@ const ColTab::Sequence* GeomIndexedShape::getDataSequence() const
 
 void GeomIndexedShape::setDisplayTransformation( const mVisTrans* nt )
 {
-    if ( vtexshape_->getNormals() )
+    if ( !useosgnormal_ && vtexshape_->getNormals() )
     {
         vtexshape_->getNormals()->setDisplayTransformation( nt );
 	if ( !renderside_ )
@@ -248,11 +253,11 @@ const mVisTrans* GeomIndexedShape::getDisplayTransformation() const
 void GeomIndexedShape::setSurface( Geometry::IndexedShape* ns, TaskRunner* tr )
 {
     shape_ = ns;
-    touch( false, tr );
+    touch( false, true, tr );
 }
 
 
-bool GeomIndexedShape::touch( bool forall, TaskRunner* tr )
+bool GeomIndexedShape::touch( bool forall, bool createnew, TaskRunner* tr )
 {
     if( !shape_ )
 	return false;
@@ -260,32 +265,53 @@ bool GeomIndexedShape::touch( bool forall, TaskRunner* tr )
     if ( !shape_->needsUpdate() ) 
 	return true;
 
-    Coordinates* coords = Coordinates::create();
-    Normals* normals = Normals::create();
-    TextureCoords* texturecoords = TextureCoords::create();
+    Coordinates* coords = 0;
+    Normals* normals = 0;
+    TextureCoords* texturecoords = 0;
 
-    shape_->setCoordList( new CoordListAdapter(*coords),
-	new NormalListAdapter( *normals ), 
-	new TextureCoordListAdapter( *texturecoords ) );
+    if ( createnew )
+    {
+	coords = Coordinates::create();
+	normals = Normals::create();
+	texturecoords = TextureCoords::create();
+	shape_->setCoordList( new CoordListAdapter(*coords),
+	    new NormalListAdapter( *normals ), 
+	    new TextureCoordListAdapter( *texturecoords ),createnew );
+	shape_->getGeometry().erase();
+    }
+    else
+    {
+	CoordListAdapter* coordlist = 
+	    dynamic_cast<CoordListAdapter*> ( shape_->coordList() );
+	coords = coordlist->getCoordinates();
+	NormalListAdapter* normallist =
+	    dynamic_cast<NormalListAdapter*> ( shape_->normalCoordList() );
+	normals = normallist->getNormals();
+	TextureCoordListAdapter* texturelist =
+	    dynamic_cast<TextureCoordListAdapter*> ( shape_->textureCoordList() );
+	texturecoords = texturelist->getTextureCoords();
+    }
 
-    shape_->getGeometry().erase();
-
-    if( !shape_->update( forall, tr ) || !coords->size() )
+    if( !shape_->update( forall, tr ) )
 	return false;
 
     vtexshape_->removeAllPrimitiveSets();
 
     coords->setDisplayTransformation( getDisplayTransformation() );
+
+    if ( !coords->size() ) 
+	return false;
+
     vtexshape_->setCoordinates( coords );
     vtexshape_->useOsgAutoNormalComputation( true );
 
-    if ( normals->nrNormals() )
+    if ( !useosgnormal_ && normals->nrNormals() )
     {
 	normals->setDisplayTransformation( getDisplayTransformation() );
 	vtexshape_->setNormals( normals );
 	vtexshape_->useOsgAutoNormalComputation( false );
     }
-    
+
     if ( texturecoords->size() )
     {
 	texturecoords->setDisplayTransformation( getDisplayTransformation() );
@@ -434,11 +460,14 @@ void GeomIndexedShape::setLineStyle( const LineStyle& lnstyle)
     
     linestyle_ = lnstyle;
 
-    touch( true );
+    if ( vtexshape_ )
+        vtexshape_->setLineStyle( linestyle_ );
+    else
+	touch( true );
 }
 
 
-void GeomIndexedShape::setIndexedGeometryShapeType( int geomshapetype )
+void GeomIndexedShape::setIndexedGeometryShapeType( GeomShapeType geomshapetype )
 {
     if ( geomshapetype == geomshapetype_ )
 	return;
@@ -460,5 +489,9 @@ void GeomIndexedShape::setIndexedGeometryShapeType( int geomshapetype )
     geomshapetype_ = geomshapetype;
 }
 
+void GeomIndexedShape::useOsgNormal( bool yn )
+{
+     useosgnormal_ = yn;
+}
 
 }; // namespace visBase

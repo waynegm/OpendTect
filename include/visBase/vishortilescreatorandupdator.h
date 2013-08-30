@@ -37,11 +37,11 @@ class HorTilesCreatorAndUpdator
 public: 
     HorTilesCreatorAndUpdator( HorizonSection*);
 
-    void    updatePoints(const TypeSet<GeomPosID>* gpids,TaskRunner* tr);
-    void    createAllTiles( TaskRunner* tr );
-    void    updateTilesAutoResolution( const osg::CullStack* cs );
+    void    updateTiles(const TypeSet<GeomPosID>*,TaskRunner*);
+    void    createAllTiles(TaskRunner* tr);
+    void    updateTilesAutoResolution(const osg::CullStack* cs);
     void    updateTilesPrimitiveSets();
-    void    setFixedResolution( char res, TaskRunner* tr );
+    void    setFixedResolution(char res, TaskRunner* tr);
 
 
 protected:

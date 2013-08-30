@@ -35,6 +35,7 @@ namespace osg
     class Array;
     class StateSet;
     class DrawElementsUShort;
+    class PolygonOffset;
 }
 
 namespace osgUtil { class CullVisitor; }
@@ -55,7 +56,8 @@ public:
     ~TileResolutionData();
 
     void		setAllVertices(const TypeSet<Coord3>&);
-    void		setSingleVertex(int row, int col, const Coord3& pos);
+    void		setSingleVertex(int row, int col, 
+					const Coord3& pos, bool& dohide);
     void		setDisplayTransformation( const mVisTrans* t ); 
     void		setTexture(const unsigned int unit, osg::Array* arr,
 				    osg::StateSet* stateset);
@@ -71,6 +73,7 @@ public:
 protected:
 
     friend class HorizonSectionTile;
+    friend class HorizonSectionTileGlue;
 
     const HorizonSectionTile*	sectile_;
     osg::Switch*    		osgswitch_;
@@ -92,6 +95,7 @@ protected:
     osg::DrawElementsUShort*	wireframesosgps_;
 
     osg::BoundingBox		bbox_;
+    osg::PolygonOffset*		polyoffset_;
     Threads::Mutex 		tesselatemutex_;
 
     bool			updateprimitiveset_;
@@ -110,6 +114,7 @@ private:
     void			initVertices();
     void			setPrimitiveSet(unsigned int, 
 						osg::DrawElementsUShort*);
+
     void			tesselateCell(int cellidx);
     void			computeNormal(int nmidx, osg::Vec3&);
     double			calcGradient(int row, int col,					
@@ -120,6 +125,7 @@ private:
     void			buildLineGeometry(int idx);
     void			buildTraingleGeometry(int idx);
     void			buildPointGeometry(int idx);
+    void			setInvalidNormal(int row,int col);
 
 };
 

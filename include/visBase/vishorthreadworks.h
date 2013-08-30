@@ -69,6 +69,7 @@ public:
     int	nextStep();
     HorizonSectionTile*		tile_;
     char			res_;
+    bool			doglue_;
 };
 
 
@@ -98,6 +99,15 @@ protected:
     ZAxisTransform*			zaxistransform_;
 };
 
+
+class TileGlueTesselator : public SequentialTask
+{
+public:
+    TileGlueTesselator( HorizonSectionTile* tile );
+
+    int	nextStep();
+    HorizonSectionTile*		tile_;
+};
 
 
 }

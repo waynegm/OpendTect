@@ -51,6 +51,7 @@ TileResolutionData::TileResolutionData( const HorizonSectionTile* sectile,
     , txcoords_( new osg::Vec2Array )
     , linecolor_( new osg::Vec4Array )
     , geodes_( new osg::DefaultUserDataContainer )
+    , polyoffset_( new osg::PolygonOffset )
     , trianglesosgps_( 0 )
     , linesosgps_( 0 )
     , pointsosgps_( 0 )
@@ -60,6 +61,7 @@ TileResolutionData::TileResolutionData( const HorizonSectionTile* sectile,
 
 {
     geodes_->ref();
+    vertices_->ref();
     const HorizonSection& section = sectile_->hrsection_;
     const int spacing = section.spacing_[resolution_];
     if ( spacing>=0 )
@@ -78,6 +80,7 @@ TileResolutionData::~TileResolutionData()
 {
     unRefOsgPrimitiveSets();
     geodes_->unref();
+    vertices_->unRef();
 }
 
 
@@ -104,8 +107,12 @@ void TileResolutionData::setDisplayGeometryType( int dispgeometrytype )
 {
     osgswitch_->setAllChildrenOff();
     osgswitch_->setValue( Triangle, true );
+    polyoffset_->setFactor( -1.0f );
     if ( dispgeometrytype != Triangle ) 
+    {
+	polyoffset_->setFactor( 1.0f );
 	osgswitch_->setValue( dispgeometrytype, true );
+    }
 }
 
 
@@ -185,14 +192,19 @@ osg::BoundingBox& TileResolutionData::updateBBox()
 
 #define mIsOsgDef( pos ) (pos[2]<9.9e29)
 
-void TileResolutionData::setSingleVertex( int row, int col, const Coord3& pos )// not tested yet due to polygonselection 
+void TileResolutionData::setSingleVertex( int row, int col, 
+    const Coord3& pos, bool& dohide )
 {
+    if ( row<0 || row>nrverticesperside_-1 ||
+	 col<0 || col>nrverticesperside_-1  )
+	return;
+
     const HorizonSection& section = sectile_->hrsection_;
     const int spacing = section.spacing_[resolution_];
 
     const int coordidx = row*nrverticesperside_ + col;
 
-    osg::Vec3Array* arr = dynamic_cast<osg::Vec3Array*>(vertices_->osgArray());
+    osg::Vec3Array* arr = mGetOsgVec3Arr( vertices_->osgArray() );
 
     const bool olddefined = mIsOsgDef((*arr)[coordidx]);
     const bool newdefined = pos.isDefined();
@@ -201,7 +213,9 @@ void TileResolutionData::setSingleVertex( int row, int col, const Coord3& pos )/
 	return;
 
     if ( !newdefined )
-	(*arr)[coordidx][2] =  mUdf(float);
+    {
+	(*arr)[coordidx][2] =  1e30;
+    }
     else
     {
 	Coord3 crd;
@@ -212,16 +226,20 @@ void TileResolutionData::setSingleVertex( int row, int col, const Coord3& pos )/
 
     char newstatus = cShouldRetesselate;
     if ( olddefined && !newdefined )
+    {
 	newstatus = cMustRetesselate;
+	dohide = true;
+    }
 
     if ( newdefined && !olddefined )
 	nrdefinedvertices_ ++;
     else if ( !newdefined && olddefined )
 	nrdefinedvertices_--;
 
-    if ( newstatus>needsretesselation_ &&
-	!(row%spacing) && !(col%spacing) )
+    if ( newstatus>needsretesselation_ ) 
 	needsretesselation_ = newstatus;
+
+    setInvalidNormal( row, col );
 }
 
 
@@ -273,14 +291,8 @@ void TileResolutionData::setPrimitiveSet( unsigned int geometrytype,
 
     if ( geomps->size() )
     {
-	if ( geom->getPrimitiveSetIndex( geomps )==geom->getNumPrimitiveSets() )
-	    geom->addPrimitiveSet( geomps );
-    }
-    else
-    {
-	const int idx = geom->getPrimitiveSetIndex( geomps );
-	if ( idx!=geom->getNumPrimitiveSets() )
-	    geom->removePrimitiveSet(idx,1);
+	geom->removePrimitiveSet( 0, geom->getNumPrimitiveSets() );
+	geom->addPrimitiveSet( geomps );
     }
 }
 
@@ -560,11 +572,10 @@ void TileResolutionData::buildOsgGeometres()
     refOsgPrimitiveSets();
     
     osg::ref_ptr<osg::StateSet> switchstateset = new osg::StateSet;
-    osg::ref_ptr<osg::PolygonOffset> polyoffset = new osg::PolygonOffset;
-    polyoffset->setFactor( 1.0f );
-    polyoffset->setUnits( 1.0f );
+    polyoffset_->setFactor( -1.0f );
+    polyoffset_->setUnits( 1.0f );
     switchstateset->setAttributeAndModes( 
-	polyoffset,osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON );
+	polyoffset_,osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON );
     osgswitch_->setStateSet( switchstateset );
 
 }
@@ -658,3 +669,61 @@ void TileResolutionData::buildPointGeometry( int idx )
     geom->getStateSet()->setAttributeAndModes( point );
 }
 
+
+void TileResolutionData::setInvalidNormal( int row, int col )
+{
+    if ( row<0 || row>nrverticesperside_-1 ||
+	col<0 || col>nrverticesperside_-1  )
+	return;
+
+    if ( allnormalsinvalid_ )
+	return;
+
+    const HorizonSection& hrsection = sectile_->hrsection_;
+    const int spacing = hrsection.spacing_[resolution_];
+
+    int rowstart = row-spacing;
+    if ( rowstart>( nrverticesperside_ - 1 ) ) 
+	return;
+    if ( rowstart<0 )
+	rowstart = 0;
+
+    int rowstop = row+spacing;
+    if ( rowstop<0 ) 
+	return;
+    if ( rowstop>( nrverticesperside_ - 1 ) )
+	rowstop = nrverticesperside_ - 1;
+
+    for ( int rowidx=rowstart; rowidx<=rowstop; rowidx++ )
+    {
+	if ( ( rowidx%spacing ) && ( rowidx!=nrverticesperside_-1 ) ) 
+	    continue;
+
+	const int nmrow = rowidx==nrverticesperside_-1 
+	    ? nrverticesperside_-1 
+	    : rowidx/spacing;
+
+	int colstart = col-spacing;
+	if ( colstart>nrverticesperside_ -1 ) continue;
+	if ( colstart<0 ) colstart = 0;
+
+	int colstop = col+spacing;
+	if ( colstop<0 ) continue;
+	if ( colstop>nrverticesperside_-1 ) 
+	    colstop = nrverticesperside_-1;
+
+	int colstartni = hrsection.normalstartidx_[resolution_] + 
+	    nmrow * hrsection.normalsidesize_[resolution_];
+	for ( int colidx=colstart; colidx<=colstop; colidx++ )
+	{
+	    if ( (colidx%spacing) && 
+		(colidx!=nrverticesperside_-1) )
+		continue;
+	    const int nmcol = colidx==nrverticesperside_-1 
+		? hrsection.normalsidesize_[resolution_]-1
+		: colidx/spacing;
+	    invalidnormals_.addIfNew( colstartni + nmcol );
+	}
+    }
+
+}

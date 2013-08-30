@@ -392,7 +392,7 @@ void HorizonSection::surfaceChange( const TypeSet<GeomPosID>* gpids,
 
 	hortilescreatorandupdator_->createAllTiles( tr );
     else
-	hortilescreatorandupdator_->updatePoints( gpids, tr );
+	hortilescreatorandupdator_->updateTiles( gpids, tr );
 }
 
 
@@ -532,6 +532,31 @@ void HorizonSection::updatePrimitiveSets()
     hortilescreatorandupdator_->updateTilesPrimitiveSets();
 }
 
+
+void HorizonSection::updateTiles()
+{
+    if ( !updatedtiles_.size() ) 
+	return;
+
+    for ( int idx = 0; idx<updatedtiles_.size(); idx++ )
+    {
+	HorizonSectionTile* tileptrs = updatedtiles_[idx];
+	tileptrs->addTileTesselator( updatedtileresolutions_[idx] );
+	tileptrs->setDisplayGeometryType( Triangle );
+    }
+
+    for ( int idx = 0; idx<updatedtiles_.size(); idx++ )
+    {
+	HorizonSectionTile* tileptrs = updatedtiles_[idx];
+	tileptrs->glueneedsretesselation_ = true;
+	tileptrs->addTileGlueTesselator();
+    }
+
+    forceupdate_ = true;
+    updatedtiles_.erase();
+    updatedtileresolutions_.setEmpty();
+
+}
 
 }; // namespace visBase
 

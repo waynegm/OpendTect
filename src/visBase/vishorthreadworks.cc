@@ -83,7 +83,6 @@ bool HorizonTileRenderPreparer::doWork( od_int64 start, od_int64 stop, int )
     if ( !shouldContinue() )
 	return false;
 
-
     for ( int idx=start; idx<=stop && shouldContinue(); idx++ )
     {
 	const int realidx = permutation_[idx];
@@ -108,6 +107,19 @@ int TileTesselator::nextStep()
     tile_->tesselateResolution( res_, false );
     return SequentialTask::Finished();
 }
+
+
+TileGlueTesselator::TileGlueTesselator( HorizonSectionTile* tile )
+    : tile_( tile )
+{}
+
+
+int TileGlueTesselator::nextStep()
+{
+    tile_->ensureGlueTesselated();
+    return SequentialTask::Finished();
+}
+
 
 
 HorizonSectionTilePosSetup::HorizonSectionTilePosSetup( 
@@ -170,5 +182,4 @@ bool HorizonSectionTilePosSetup::doWork( od_int64 start, od_int64 stop,
 
     return true;
 }
-
 

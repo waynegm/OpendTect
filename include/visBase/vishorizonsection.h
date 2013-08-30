@@ -113,6 +113,7 @@ public:
     void			updatePrimitiveSets();
     void			turnOsgOn( bool );
     void			setDisplayGeometryType( int type );
+    void			updateTiles();
 
 protected:
     				~HorizonSection();
@@ -123,6 +124,7 @@ protected:
     friend class		HorizonSectionDataHandler;
     friend class                HorizonTextureHandler;
     friend class		HorTilesCreatorAndUpdator;
+    friend class		HorizonSectionTileGlue;
 
     void			surfaceChangeCB(CallBacker*);
     void			surfaceChange(const TypeSet<GeomPosID>*,
@@ -170,6 +172,9 @@ protected:
 
     osg::Group*		    	osghorizon_;
     bool			forceupdate_;
+
+    ObjectSet<HorizonSectionTile> updatedtiles_;
+    TypeSet<int>		  updatedtileresolutions_;
 
 };
 

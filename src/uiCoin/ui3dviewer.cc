@@ -44,6 +44,7 @@ static const char* rcsID mUsedVar = "$Id$";
 //#include "viscamerainfo.h"
 #include "visdatagroup.h"
 #include "visdataman.h"
+#include "vispolygonselection.h"
 #include "visscene.h"
 #include "vissurvscene.h"
 #include "vistransform.h"
@@ -114,6 +115,7 @@ ui3DViewerBody::ui3DViewerBody( ui3DViewer& h, uiParent* parnt )
     , viewport_( new osg::Viewport )
     , compositeviewer_( 0 )
     , axes_( 0 )
+    , polygonselection_( 0 )
 {
     sceneroot_->ref();
     viewport_->ref();
@@ -192,6 +194,12 @@ void ui3DViewerBody::setupHUD()
 	if ( camera_ )
 	    axes_->setMasterCamera( camera_ );
     }
+
+    if ( !polygonselection_ )
+    {
+	polygonselection_ = visBase::PolygonSelection::create();
+	hudscene_->addObject( polygonselection_ );
+    }
 }
 
 
@@ -200,6 +208,8 @@ void ui3DViewerBody::setupView()
     camera_ = visBase::Camera::create();
     if ( axes_ )
 	axes_->setMasterCamera( camera_ );
+    if ( polygonselection_ )
+	polygonselection_->setMasterCamera( camera_ );
     mDynamicCastGet(osg::Camera*, osgcamera, camera_->osgNode() );
     osgcamera->setGraphicsContext( getGraphicsContext() );
     osgcamera->setClearColor( osg::Vec4(0.0f, 0.0f, 0.5f, 1.0f) );
@@ -320,6 +330,7 @@ void ui3DViewerBody::thumbWheelRotationCB(CallBacker* cb )
     }
 }
 
+
 void ui3DViewerBody::toggleViewMode(CallBacker* cb )
 {
     setViewMode( !isViewMode(), true );
@@ -329,6 +340,12 @@ void ui3DViewerBody::toggleViewMode(CallBacker* cb )
 void ui3DViewerBody::showRotAxis( bool yn )
 {
     axes_->turnOn( yn );
+}
+
+
+visBase::PolygonSelection* ui3DViewerBody::getPolygonSelector() const
+{
+    return polygonselection_;
 }
 
 
@@ -1069,6 +1086,13 @@ bool ui3DViewer::rotAxisShown() const
     pErrMsg("Not impl");
     return false;
 }
+
+
+visBase::PolygonSelection* ui3DViewer::getPolygonSelector() const
+{
+    return osgbody_->getPolygonSelector();
+}
+
 
 void ui3DViewer::toggleCameraType()
 {

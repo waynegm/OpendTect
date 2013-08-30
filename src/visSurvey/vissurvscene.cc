@@ -123,11 +123,6 @@ void Scene::setup()
     addInlCrlZObject( annot_ );
     updateAnnotationText();
 
-    //polyselector_ = visBase::PolygonSelection::create();
-    //addUTMObject( polyselector_ );
-    //polyselector_->getMaterial()->setColor( Color(255,0,0) );
-    //mTryAlloc( coordselector_, visBase::PolygonCoord3Selector(*polyselector_) );
-
     scenecoltab_ = visBase::SceneColTab::create();
     addUTMObject( scenecoltab_ );
     scenecoltab_->turnOn( false );
@@ -941,7 +936,7 @@ void Scene::removeAll()
 	visBase::DataObjectGroup::removeObject( idx );
 
     tempzstretchtrans_ = 0; inlcrlrotation_ = 0; annot_ = 0;
-    polyselector_= 0;
+    unRefPtr( polyselector_ );
     delete coordselector_; coordselector_ = 0;
     curzstretch_ = -1;
 }
@@ -1052,6 +1047,18 @@ int Scene::getImageFromPar( const IOPar& par, const char* key,
 
 visBase::TopBotImage* Scene::getTopBotImage( bool istop )
 { return istop ? topimg_ : botimg_; }
+
+
+void Scene::setPolygonSelector( visBase::PolygonSelection* ps )
+{
+    if ( ps )
+    {
+	polyselector_ = ps;
+	polyselector_->ref();
+	polyselector_->setDisplayTransformation( utm2disptransform_ );
+	mTryAlloc(coordselector_,visBase::PolygonCoord3Selector(*polyselector_));
+    }
+}
 
 
 void Scene::savePropertySettings()

@@ -19,14 +19,17 @@ ________________________________________________________________________
 #include "draw.h"
 #include "thread.h"
 
-class SoPolygonSelect;
-class SoSeparator;
+
+namespace osgGeo{ class PolygonSelection; }
+
 template <class T> class ODPolygon;
 
 namespace visBase
 {
 class Material;
+class SelectionCallBack;
 class DrawStyle;
+class Camera;
 
 /*!
 Paints a polygon or a rectangle just in front of near-clipping plane driven
@@ -71,14 +74,12 @@ public:
     bool			rayPickThrough(const Coord3& worldpos,
 					       TypeSet<int>& pickedobjids,
 					       int depthidx=0) const;
-
-/*    void			getSelectionRays(TypeSet<Line3D>&) const;*/
+    void			setMasterCamera(Camera*);
 
 protected:
 
-    static void				polygonChangeCB(void*,SoPolygonSelect*);
-    static void				paintStopCB(void*,SoPolygonSelect*);
-
+    void			polygonChangeCB(CallBacker*);
+ 
 					~PolygonSelection();
 
     const mVisTrans*			transformation_;
@@ -87,7 +88,10 @@ protected:
     mutable ODPolygon<double>*		polygon_;
     mutable Threads::ReadWriteLock	polygonlock_;
 
-    SoPolygonSelect*			selector_;
+   
+    osgGeo::PolygonSelection*		selector_;
+    Camera*				mastercamera_;
+    SelectionCallBack*			selectorcb_;
 };
 
 

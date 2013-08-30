@@ -23,7 +23,7 @@ class uiSoViewerBody;
 class ui3DViewerBody;
 class BufferStringSet;
 
-namespace visBase { class Scene; };
+namespace visBase { class Scene; class PolygonSelection; };
 
 mExpClass(uiCoin) ui3DViewer : public uiObject
 {
@@ -96,6 +96,7 @@ public:
 
     float               getHeadOnLightIntensity() const;
     void                setHeadOnLightIntensity(float);
+    visBase::PolygonSelection* getPolygonSelector() const;
 
 private:
     static const char* sKeySceneID()    { return "Scene ID"; }

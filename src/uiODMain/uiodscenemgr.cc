@@ -50,6 +50,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "timer.h"
 #include "visdata.h"
+#include "vissurvscene.h"
 #include "welltransl.h"
 
 // For factories
@@ -177,7 +178,9 @@ int uiODSceneMgr::addScene( bool maximized, ZAxisTransform* zt,
 {
     Scene& scn = mkNewScene();
     const int sceneid = visServ().addScene();
-
+    mDynamicCastGet(visSurvey::Scene*,visscene,visServ().getObject(sceneid));
+    if ( visscene && scn.sovwr_->getPolygonSelector() )
+	visscene->setPolygonSelector( scn.sovwr_->getPolygonSelector() );
     scn.sovwr_->setSceneID( sceneid );
     BufferString title( scenestr );
     title += vwridx_;

@@ -116,6 +116,7 @@ public:
     void			savePropertySettings();
 
     visBase::PolygonSelection*	getPolySelection() { return polyselector_; }
+    void			setPolygonSelector(visBase::PolygonSelection*);
     const Selector<Coord3>*	getSelector() const;	/*! May be NULL */
     visBase::SceneColTab*	getSceneColTab()     { return scenecoltab_; }
 

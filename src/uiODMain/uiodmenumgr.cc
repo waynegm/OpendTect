@@ -941,7 +941,8 @@ void uiODMenuMgr::selectionMode( CallBacker* cb )
     {
 	uiVisPartServer::SelectionMode mode = sIsPolySelect ?
 			 uiVisPartServer::Polygon : uiVisPartServer::Rectangle;
-	visserv->turnSelectionModeOn( cointb_->isOn(polyselectid_) );
+	visserv->turnSelectionModeOn(
+	    !inviewmode_  && cointb_->isOn(polyselectid_) );
 	visserv->setSelectionMode( mode );
     }
 
@@ -1254,6 +1255,8 @@ void uiODMenuMgr::toggViewMode( CallBacker* cb )
 	sceneMgr().viewMode( cb );
     else
 	sceneMgr().actMode( cb );
+    
+    selectionMode( 0 ); 
 }
 
 

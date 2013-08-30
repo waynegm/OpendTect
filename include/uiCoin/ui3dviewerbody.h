@@ -22,6 +22,7 @@ namespace visBase
 {
     class Axes;
     class Camera;
+    class PolygonSelection;
     class Scene;
     class Transformation;
     class ThumbWheel;
@@ -97,7 +98,7 @@ public:
     void			setAnimationEnabled(bool) { pErrMsg("Impl!"); }
     bool			isAnimationEnabled() { return true; }
     void			showRotAxis(bool);
-
+    visBase::PolygonSelection*	getPolygonSelector() const;
 protected:
     
     void				setupHUD();
@@ -135,6 +136,7 @@ protected:
     
     uiEventFilter					eventfilter_;
     RefMan<visBase::Axes>				axes_;
+    RefMan<visBase::PolygonSelection>			polygonselection_;
 };
 
 #endif

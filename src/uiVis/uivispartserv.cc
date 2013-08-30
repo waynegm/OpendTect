@@ -222,8 +222,6 @@ int uiVisPartServer::addScene( visSurvey::Scene* newscene )
     newscene->mouseposchange.notify( mCB(this,uiVisPartServer,mouseMoveCB) );
     newscene->ref();
     scenes_ += newscene;
-    //newscene->getPolySelection()->setSelectionType(
-	//    (visBase::PolygonSelection::SelectionType) seltype_ );
     pickretriever_->addScene( newscene );
     nrsceneschange_.trigger();
     return newscene->id();
@@ -1068,9 +1066,9 @@ void uiVisPartServer::setSelectionMode( uiVisPartServer::SelectionMode mode )
 
     for ( int sceneidx=0; sceneidx<scenes_.size(); sceneidx++ )
     {
-	//visSurvey::Scene* scene = scenes_[sceneidx];
-	//scene->getPolySelection()->setSelectionType(
-	//	    (visBase::PolygonSelection::SelectionType) seltype_ );
+	visSurvey::Scene* scene = scenes_[sceneidx];
+	scene->getPolySelection()->setSelectionType(
+		    (visBase::PolygonSelection::SelectionType) seltype_ );
     }
 
     selectionmode_ = mode;

@@ -19,7 +19,6 @@ ________________________________________________________________________
 
 namespace visBase
 {
-    class MultiTexture2;
     class TextureChannels;
     class TextureChannel2RGBA;
 };
@@ -103,7 +102,7 @@ public:
     
     static const char*		sKeyTC2RGBA();
 protected:
-
+// OSG-TODO: Remove usechannels parameter
     				MultiTextureSurveyObject(
 					bool usechannels );
 				~MultiTextureSurveyObject();
@@ -122,7 +121,6 @@ protected:
     virtual bool		hasCache(int) const			= 0;
     virtual bool		init();
 
-    visBase::MultiTexture2*	texture_;
     visBase::TextureChannels*	channels_;
 
     int				resolution_;

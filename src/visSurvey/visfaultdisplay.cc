@@ -46,6 +46,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visseis2ddisplay.h"
 #include "vistransform.h"
 
+/* OSG-TODO: Port MultiTexture2 texture_ to TextureChannels channels_ */
+
+
 mCreateFactoryEntry( visSurvey::FaultDisplay );
 
 namespace visSurvey
@@ -63,7 +66,7 @@ const char* FaultDisplay::sKeyUseTexture()	{ return "Use texture"; }
 const char* FaultDisplay::sKeyLineStyle()	{ return "Linestyle"; }
 
 FaultDisplay::FaultDisplay()
-    : MultiTextureSurveyObject( false )
+    : MultiTextureSurveyObject( false )	// OSG-TODO: must become true
     , emfault_( 0 )
     , activestickmarker_( visBase::IndexedPolyLine3D::create() )
     , validtexture_( false )
@@ -287,7 +290,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 
 	mTryAlloc( explicitpanels_,Geometry::ExplFaultStickSurface(0,zscale));
 	explicitpanels_->display( false, true );
-	explicitpanels_->setMaximumTextureSize( texture_->getMaxTextureSize() );
+//	explicitpanels_->setMaximumTextureSize( texture_->getMaxTextureSize() );
 	explicitpanels_->setTexturePowerOfTwo( true );
 	explicitpanels_->setTextureSampling(
 		BinIDValue( BinID(inlcrlsystem_->inlRange().step,
@@ -296,7 +299,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 
 	mTryAlloc( explicitsticks_,Geometry::ExplFaultStickSurface(0,zscale) );
 	explicitsticks_->display( true, false );
-	explicitsticks_->setMaximumTextureSize( texture_->getMaxTextureSize() );
+//	explicitsticks_->setMaximumTextureSize( texture_->getMaxTextureSize() );
 	explicitsticks_->setTexturePowerOfTwo( true );
 	explicitsticks_->setTextureSampling(
 		BinIDValue( BinID(inlcrlsystem_->inlRange().step,
@@ -393,7 +396,7 @@ void FaultDisplay::updateSingleColor()
     if ( stickdisplay_ )
 	stickdisplay_->getMaterial()->setColor( nontexturecol_ );
 
-    texture_->turnOn( !usesinglecolor );
+//    texture_->turnOn( !usesinglecolor );
     colorchange.trigger();
 }
 
@@ -428,9 +431,9 @@ void FaultDisplay::setDepthAsAttrib( int attrib )
     const Attrib::SelSpec as( "", Attrib::SelSpec::cNoAttrib(), false, "" );
     setSelSpec( attrib, as );
 
-    texture_->getColorTab( attrib ).setAutoScale( true );
-    texture_->getColorTab( attrib ).setClipRate( Interval<float>(0,0) );
-    texture_->getColorTab( attrib ).setSymMidval( mUdf(float) );
+//    texture_->getColorTab( attrib ).setAutoScale( true );
+//    texture_->getColorTab( attrib ).setClipRate( Interval<float>(0,0) );
+//    texture_->getColorTab( attrib ).setSymMidval( mUdf(float) );
 
     TypeSet<DataPointSet::DataRow> pts; 
     BufferStringSet nms; 
@@ -1137,7 +1140,7 @@ void FaultDisplay::setRandomPosDataInternal( int attrib,
     }
 
     delete texuredatas_.replace( attrib, texturedata );
-    texture_->setData( attrib, 0, texturedata, true );
+//    texture_->setData( attrib, 0, texturedata, true );
     validtexture_ = true;
     usestexture_ = true;
     updateSingleColor();
@@ -1161,7 +1164,7 @@ void FaultDisplay::showSelectedSurfaceData()
 	if ( !data )
 	    continue;
 
-	texture_->setData( lastattridx--, 0, data, true );
+//	texture_->setData( lastattridx--, 0, data, true );
 	if ( lastattridx<0 )
 	    break;
     }
@@ -1181,14 +1184,14 @@ const Array2D<float>* FaultDisplay::getTextureData( int attrib )
 
 void FaultDisplay::setResolution( int res, TaskRunner* tr )
 {
-    if ( texture_->canUseShading() )
-	return;
+//    if ( texture_->canUseShading() )
+//	return;
 
     if ( res==resolution_ )
 	return;
 
     resolution_ = res;
-    texture_->clearAll();
+//    texture_->clearAll();
 }
 
 

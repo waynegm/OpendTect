@@ -43,7 +43,6 @@ SET(OD_MODULE_SOURCES
 	   vismarchingcubessurface.cc
 	   vismaterial.cc
 	   vismultitexture.cc
-	   vismultitexture2.cc
 	   visnormals.cc
 	   visnodestate.cc
 	   visobject.cc
@@ -55,15 +54,11 @@ SET(OD_MODULE_SOURCES
 	   vispolyline.cc
 	   visrandomtrack.cc
 	   visrandomtrackdragger.cc
-	   visrectangle.cc
 	   visrgbatexturechannel2rgba.cc
-	   visrotationdragger.cc
 	   visscene.cc
 	   visscenecoltab.cc
 	   visselman.cc
 	   visshape.cc
-	   visshapehints.cc
-	   visshapescale.cc
 	   vissplittexturerandomline.cc
 	   vissplittexture2rectangle.cc
 	   vistext.cc

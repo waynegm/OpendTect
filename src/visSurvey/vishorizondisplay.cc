@@ -25,6 +25,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "mpeengine.h"
 #include "posvecdataset.h"
+#include "callback.h"
 
 #include "viscolortab.h"
 #include "viscoord.h"
@@ -75,7 +76,7 @@ HorizonDisplay::HorizonDisplay()
     , allowshading_( true )					
     , intersectionlinematerial_( 0 )	
     , displayintersectionlines_( true )
-    , enabletextureinterp_( true )    
+    , enabletextureinterp_( true )   
 {
     setLockable();
     maxintersectionlinethickness_ = 0.02f *
@@ -104,8 +105,7 @@ HorizonDisplay::HorizonDisplay()
     linemat->setDiffIntensity( 1 );
     linemat->setAmbience( 1 );
     setIntersectLineMaterial( linemat );
-
-
+    mAttachCB( *getMovementNotifier(), HorizonDisplay::emMovementCB );
 }
 
 
@@ -142,6 +142,14 @@ HorizonDisplay::~HorizonDisplay()
 	dpman.release( datapackids_[idx] );
 
     deepErase( shifts_ );
+
+}
+
+
+void HorizonDisplay::emMovementCB( CallBacker* )
+{
+    for ( int idx=0; idx<sections_.size(); idx++ )
+	sections_[idx]->updateTiles();
 }
 
 
@@ -301,7 +309,6 @@ void HorizonDisplay::removeEMStuff()
 	if ( zaxistransform_ )
 	    zaxistransform_->removeVolumeOfInterest( intersectionlinevoi_[0] );
 	intersectionlinevoi_.removeSingle(0);
-
     }
 
     mDynamicCastGet( EM::Horizon3D*, emhorizon, emobject_ );
@@ -366,7 +373,6 @@ void HorizonDisplay::updateFromMPE()
 {
     if ( geometryRowRange().nrSteps()<=1 || geometryColRange().nrSteps()<=1 )
 	setResolution( 0, 0 ); //Automatic resolution
-
     EMObjectDisplay::updateFromMPE();
 }
 
@@ -1046,6 +1052,7 @@ void HorizonDisplay::emChangeCB( CallBacker* cb )
 	nontexturecol_ = emobject_->preferredColor();
 
     updateSingleColor();
+
 }
 
 
@@ -1654,7 +1661,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    mDynamicCastGet( const PlaneDataDisplay*, plane, objs[idx] );
 	    if ( plane )
 		objectid = plane->id();
-	    
+
 	    mDynamicCastGet( const MPEDisplay*, mped, objs[idx] );
 	    if ( mped && mped->isDraggerShown() )
 		objectid = mped->id();
@@ -1662,7 +1669,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    mDynamicCastGet( const RandomTrackDisplay*, rtdisplay, objs[idx] );
 	    if ( rtdisplay )
 		objectid = rtdisplay->id();
-	    
+
 	    mDynamicCastGet( const Seis2DDisplay*, seis2ddisplay, objs[idx] );
 	    if ( seis2ddisplay )
 		objectid = seis2ddisplay->id();
@@ -1679,7 +1686,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    else
 	    {
 		if ( ( whichobj==objectid || whichobj==id() ) && 
-		     linestoupdate.indexOf(whichobj)==-1 )
+		    linestoupdate.indexOf(whichobj)==-1 )
 		{
 		    linestoupdate += objectid;
 		}
@@ -1705,7 +1712,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    if ( zaxistransform_ )
 	    {
 		zaxistransform_->removeVolumeOfInterest(
-			intersectionlinevoi_[idx] );
+		    intersectionlinevoi_[idx] );
 	    }
 
 	    intersectionlinevoi_.removeSingle(idx);
@@ -1717,18 +1724,18 @@ void HorizonDisplay::updateIntersectionLines(
     {
 	CubeSampling cs(false);
 	mDynamicCastGet( PlaneDataDisplay*, plane,
-			 visBase::DM().getObject(linestoupdate[idx]) );
+	    visBase::DM().getObject(linestoupdate[idx]) );
 	if ( plane )
 	    cs = plane->getCubeSampling(true,true,-1);
 
 	mDynamicCastGet( const MPEDisplay*, mped,
-			 visBase::DM().getObject(linestoupdate[idx]) );
+	    visBase::DM().getObject(linestoupdate[idx]) );
 	if ( mped )
 	    mped->getPlanePosition(cs);
 
 	TypeSet<Coord> trclist;
 	mDynamicCastGet( const RandomTrackDisplay*, rtdisplay,
-			 visBase::DM().getObject(linestoupdate[idx]) );
+	    visBase::DM().getObject(linestoupdate[idx]) );
 	if ( rtdisplay )
 	{
 	    cs.zrg.setFrom( rtdisplay->getDataTraceRange() );
@@ -1743,7 +1750,7 @@ void HorizonDisplay::updateIntersectionLines(
 	}
 
 	mDynamicCastGet( const Seis2DDisplay*, seis2ddisplay,
-			 visBase::DM().getObject(linestoupdate[idx]) );
+	    visBase::DM().getObject(linestoupdate[idx]) );
 	if ( seis2ddisplay )
 	{
 	    cs.zrg.setFrom( seis2ddisplay->getZRange(false) );
@@ -1761,7 +1768,7 @@ void HorizonDisplay::updateIntersectionLines(
 		trclist += crd; trclist += crd;
 	    }
 	}
-	
+
 	int lineidx = intersectionlineids_.indexOf(linestoupdate[idx]);
 	if ( lineidx==-1 )
 	{
@@ -1791,7 +1798,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    addChild( newline->osgNode() );
 
 	    visBase::DataObjectGroup* pointgroup =
-				visBase::DataObjectGroup::create();
+		visBase::DataObjectGroup::create();
 	    pointgroup->setSeparate( false );
 
 	    pointgroup->setDisplayTransformation(transformation_);
@@ -1811,16 +1818,16 @@ void HorizonDisplay::updateIntersectionLines(
 	    else
 	    {
 		zaxistransform_->setVolumeOfInterest(
-			intersectionlinevoi_[lineidx],cs,true);
+		    intersectionlinevoi_[lineidx],cs,true);
 	    }
 
 	    if ( intersectionlinevoi_[lineidx]>=0 )
 	    {
 		zaxistransform_->loadDataIfMissing(
-			intersectionlinevoi_[lineidx] );
+		    intersectionlinevoi_[lineidx] );
 	    }
 	}
-	    
+
 	visBase::VertexShape* line = intersectionlines_[lineidx];
 	visBase::DataObjectGroup* pointgroup = intersectionpointsets_[lineidx];
 
@@ -1835,7 +1842,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    if ( rtdisplay || seis2ddisplay )
 	    {
 		drawHorizonOnRandomTrack( trclist, cs.zrg, sid, 
-					  line, cii, pointgroup );
+		    line, cii, pointgroup );
 	    }
 	    else if ( cs.hrg.start.inl==cs.hrg.stop.inl )
 	    {
@@ -1848,7 +1855,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    else
 	    {
 		drawHorizonOnZSlice( cs, (float) getTranslation().z, horizon, 
-					    sid, zaxistransform_, line, cii );
+		    sid, zaxistransform_, line, cii );
 	    }
 	}
 

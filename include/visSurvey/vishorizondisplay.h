@@ -180,6 +180,7 @@ public:
     void			doOtherObjectsMoved(
 	    				const ObjectSet<const SurveyObject>&,
 					int whichobj );
+
 protected:
     				~HorizonDisplay();
     void			removeEMStuff();
@@ -216,6 +217,7 @@ protected:
 				    visBase::VertexShape*, int&,
 				    visBase::DataObjectGroup*) const;
 
+    void			emMovementCB(CallBacker*);
 
 
     bool				allowshading_;

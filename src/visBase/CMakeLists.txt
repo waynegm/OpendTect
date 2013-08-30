@@ -44,6 +44,7 @@ SET(OD_MODULE_SOURCES
 	   vismarchingcubessurface.cc
 	   vismaterial.cc
 	   vismultitexture.cc
+	   vismultitexture2.cc
 	   visnormals.cc
 	   visnodestate.cc
 	   visobject.cc

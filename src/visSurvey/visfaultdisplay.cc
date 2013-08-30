@@ -38,13 +38,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vishorizonsection.h"
 #include "vismaterial.h"
 #include "vismarkerset.h"
-#include "vismultitexture2.h"
 #include "vismpeeditor.h"
 #include "visplanedatadisplay.h"
 #include "vispolyline.h"
 #include "vispolygonselection.h"
 #include "visseis2ddisplay.h"
 #include "vistransform.h"
+#include "vispolygonoffset.h"
 
 /* OSG-TODO: Port MultiTexture2 texture_ to TextureChannels channels_ */
 
@@ -66,7 +66,7 @@ const char* FaultDisplay::sKeyUseTexture()	{ return "Use texture"; }
 const char* FaultDisplay::sKeyLineStyle()	{ return "Linestyle"; }
 
 FaultDisplay::FaultDisplay()
-    : MultiTextureSurveyObject( false )	// OSG-TODO: must become true
+    : MultiTextureSurveyObject( true )
     , emfault_( 0 )
     , activestickmarker_( visBase::IndexedPolyLine3D::create() )
     , validtexture_( false )
@@ -100,7 +100,7 @@ FaultDisplay::FaultDisplay()
 
     addChild( activestickmarker_->osgNode() );
 
-    getMaterial()->setAmbience( 0.2 );
+    getMaterial()->setAmbience( 0.8 );
 
     for ( int idx=0; idx<3; idx++ )
     {
@@ -115,6 +115,9 @@ FaultDisplay::FaultDisplay()
     drawstyle_->ref();
     addNodeState( drawstyle_ );
     drawstyle_->setLineStyle( LineStyle(LineStyle::Solid,2) );
+
+    if ( getMaterial() )
+	mAttachCB( getMaterial()->change, FaultDisplay::matChangeCB );
 }
 
 
@@ -247,6 +250,10 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
     if ( !emfault_->name().isEmpty() )
 	setName( emfault_->name() );
 
+    visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
+    polyoffset->setFactor( -5.0f );
+    polyoffset->setUnits( -1.0f );
+
     if ( !paneldisplay_ )
     {
 	paneldisplay_ = visBase::GeomIndexedShape::create();
@@ -254,7 +261,11 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	paneldisplay_->setDisplayTransformation( displaytransform_ );
 	paneldisplay_->setMaterial( 0 );
 	paneldisplay_->setSelectable( false );
-	paneldisplay_->setRightHandSystem( righthandsystem_ );
+	paneldisplay_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
+	paneldisplay_->useOsgNormal( true );
+	paneldisplay_->renderOneSide( 1 );
+	paneldisplay_->addNodeState( polyoffset );
+
 	addChild( paneldisplay_->osgNode() );
     }
 
@@ -265,7 +276,9 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	intersectiondisplay_->setDisplayTransformation( displaytransform_ );
 	intersectiondisplay_->setMaterial( 0 );
 	intersectiondisplay_->setSelectable( false );
-	intersectiondisplay_->setRightHandSystem( righthandsystem_ );
+	intersectiondisplay_->setPrimitiveType( Geometry::PrimitiveSet::Lines );
+	intersectiondisplay_->setIndexedGeometryShapeType(
+	    visBase::GeomIndexedShape::PolyLine3D );
 	addChild( intersectiondisplay_->osgNode() );
 	intersectiondisplay_->turnOn( false );
     }
@@ -278,7 +291,9 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	if ( !stickdisplay_->getMaterial() )
 	    stickdisplay_->setMaterial( new visBase::Material );
 	stickdisplay_->setSelectable( false );
-	stickdisplay_->setRightHandSystem( righthandsystem_ );
+	stickdisplay_->setPrimitiveType( Geometry::PrimitiveSet::LineStrips );
+	stickdisplay_->setIndexedGeometryShapeType(
+	    visBase::GeomIndexedShape::PolyLine3D );
 	addChild( stickdisplay_->osgNode() );
     }
 
@@ -290,7 +305,6 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 
 	mTryAlloc( explicitpanels_,Geometry::ExplFaultStickSurface(0,zscale));
 	explicitpanels_->display( false, true );
-//	explicitpanels_->setMaximumTextureSize( texture_->getMaxTextureSize() );
 	explicitpanels_->setTexturePowerOfTwo( true );
 	explicitpanels_->setTextureSampling(
 		BinIDValue( BinID(inlcrlsystem_->inlRange().step,
@@ -299,7 +313,6 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 
 	mTryAlloc( explicitsticks_,Geometry::ExplFaultStickSurface(0,zscale) );
 	explicitsticks_->display( true, false );
-//	explicitsticks_->setMaximumTextureSize( texture_->getMaxTextureSize() );
 	explicitsticks_->setTexturePowerOfTwo( true );
 	explicitsticks_->setTextureSampling(
 		BinIDValue( BinID(inlcrlsystem_->inlRange().step,
@@ -396,7 +409,6 @@ void FaultDisplay::updateSingleColor()
     if ( stickdisplay_ )
 	stickdisplay_->getMaterial()->setColor( nontexturecol_ );
 
-//    texture_->turnOn( !usesinglecolor );
     colorchange.trigger();
 }
 
@@ -430,11 +442,6 @@ void FaultDisplay::setDepthAsAttrib( int attrib )
 {
     const Attrib::SelSpec as( "", Attrib::SelSpec::cNoAttrib(), false, "" );
     setSelSpec( attrib, as );
-
-//    texture_->getColorTab( attrib ).setAutoScale( true );
-//    texture_->getColorTab( attrib ).setClipRate( Interval<float>(0,0) );
-//    texture_->getColorTab( attrib ).setSymMidval( mUdf(float) );
-
     TypeSet<DataPointSet::DataRow> pts; 
     BufferStringSet nms; 
     DataPointSet positions( pts, nms, false, true ); 
@@ -470,7 +477,7 @@ void FaultDisplay::updatePanelDisplay()
 			       !areIntersectionsDisplayed() &&
 			       !areHorizonIntersectionsDisplayed();
 	if ( dodisplay )
-	    paneldisplay_->touch( false );
+	    paneldisplay_->touch( false,false );
 
 	paneldisplay_->turnOn( dodisplay );
     }
@@ -492,7 +499,7 @@ void FaultDisplay::updateStickDisplay()
 	}
 
 	if ( dodisplay )
-	    stickdisplay_->touch( false );
+	    stickdisplay_->touch( false, false );
 
 	stickdisplay_->turnOn( dodisplay );
     }
@@ -670,17 +677,6 @@ void FaultDisplay::setDisplayTransformation( const mVisTrans* nt )
     if ( displaytransform_ ) displaytransform_->unRef();
     displaytransform_ = nt;
     if ( displaytransform_ ) displaytransform_->ref();
-}
-
-
-void FaultDisplay::setRightHandSystem(bool yn)
-{
-    visBase::VisualObjectImpl::setRightHandSystem( yn );
-    if ( paneldisplay_ ) paneldisplay_->setRightHandSystem( yn );
-    if ( stickdisplay_ ) stickdisplay_->setRightHandSystem( yn );
-    if ( intersectiondisplay_ ) intersectiondisplay_->setRightHandSystem( yn );
-    for ( int idx=0; idx<horintersections_.size(); idx++ )
-	horintersections_[idx]->setRightHandSystem( yn );
 }
 
 
@@ -1140,7 +1136,6 @@ void FaultDisplay::setRandomPosDataInternal( int attrib,
     }
 
     delete texuredatas_.replace( attrib, texturedata );
-//    texture_->setData( attrib, 0, texturedata, true );
     validtexture_ = true;
     usestexture_ = true;
     updateSingleColor();
@@ -1163,8 +1158,6 @@ void FaultDisplay::showSelectedSurfaceData()
 	const Array2D<float>* data = auxdata->loadIfNotLoaded(selindies[idx]);
 	if ( !data )
 	    continue;
-
-//	texture_->setData( lastattridx--, 0, data, true );
 	if ( lastattridx<0 )
 	    break;
     }
@@ -1184,14 +1177,10 @@ const Array2D<float>* FaultDisplay::getTextureData( int attrib )
 
 void FaultDisplay::setResolution( int res, TaskRunner* tr )
 {
-//    if ( texture_->canUseShading() )
-//	return;
-
     if ( res==resolution_ )
 	return;
 
     resolution_ = res;
-//    texture_->clearAll();
 }
 
 
@@ -1603,6 +1592,8 @@ void FaultDisplay::updateKnotMarkers()
 	knotmarkersets_[groupidx]->getCoordinates()->addPos( sip->pos_ );
     }
 
+    knotmarkersets_[groupidx]->turnOn( true );
+
     if ( !showmanipulator_ || !stickselectmode_ )
 	return;
 
@@ -1626,6 +1617,7 @@ void FaultDisplay::updateKnotMarkers()
 	knotmarkersets_[groupidx]->getCoordinates()->addPos(
 	    emfault_->getPos(pid) );
     }
+    knotmarkersets_[groupidx]->turnOn( true );
 }
 
 
@@ -1806,13 +1798,13 @@ void FaultDisplay::setLineRadius( visBase::GeomIndexedShape* shape )
     const float maxlinethickness = 0.02f * mMAX( inllen, crllen );
 
     LineStyle lnstyle( *lineStyle() ) ;
-    lnstyle.width_ = (int)( linewidth );
+    lnstyle.width_ = (int)( 2*linewidth );
 
     if ( shape )
 	shape->setLineStyle( lnstyle );
 
-    activestickmarker_->setRadius( mMAX(linewidth+0.5f, 1.0f),
-				   true, maxlinethickness+0.5f );
+    activestickmarker_->setRadius( mMAX(linewidth+2.5f, 1.0f),
+				   true, maxlinethickness+2.5f );
 }
 
 
@@ -1854,6 +1846,12 @@ bool FaultDisplay::setDataPackID( int attrib, DataPack::ID dpid,
 DataPack::ID FaultDisplay::getDataPackID( int attrib ) const
 {
     return datapackids_[attrib];
+}
+
+void FaultDisplay::matChangeCB(CallBacker*)
+{
+    if ( paneldisplay_ )
+        paneldisplay_->updateMaterialFrom( getMaterial() ); 
 }
 
 }; // namespace visSurvey

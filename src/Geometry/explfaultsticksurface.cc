@@ -541,7 +541,7 @@ bool ExplFaultStickSurface::reTriangulateSurface()
     TypeSet<int> grid;
     tt.getCoordIndices( grid );
     IndexedGeometry* triangle = new IndexedGeometry(
-	    IndexedGeometry::TriangleStrip, 0, 0, texturecoordlist_ );
+	    IndexedGeometry::Triangles, 0, 0, texturecoordlist_ );
     if ( !paneltriangles_.size() )
 	paneltriangles_ += triangle;
     else
@@ -556,7 +556,7 @@ bool ExplFaultStickSurface::reTriangulateSurface()
 	crdindices.add(grid[idx++]);
 	crdindices.add(grid[idx++]);
 	crdindices.add(grid[idx++]);
-	triangle->appendCoordIndices( crdindices );
+	triangle->appendCoordIndices( crdindices, false );
     }
 
     needsupdate_ = false;
@@ -1323,7 +1323,7 @@ void ExplFaultStickSurface::emptyStick( int stickidx )
     if ( !sticks_.validIdx(stickidx) )
 	return;
 
-    sticks_[stickidx]->removeAll( true );
+    sticks_[stickidx]->removeAll( false );
 
     needsupdate_ = true;
 }
@@ -1336,7 +1336,7 @@ void ExplFaultStickSurface::fillStick( int stickidx )
 
     emptyStick( stickidx );
 
-    Geometry::PrimitiveSet* knotsps = sticks_[stickidx]->getCoordsPrimitiveSet();
+    TypeSet<int> knotsps;
 
     const int sticknr = surface_->rowRange().atIndex( stickidx );
     const StepInterval<int> colrg = surface_->colRange( sticknr );
@@ -1344,10 +1344,11 @@ void ExplFaultStickSurface::fillStick( int stickidx )
     for ( int knotnr=colrg.start; knotnr<=colrg.stop; knotnr+=colrg.step )
     {
 	const Coord3 pos = surface_->getKnot( RowCol(sticknr,knotnr) );
-	knotsps->append( coordlist_->add( pos ) );
-	normallist_->add( Coord3(0,0,0) );
+	int idx = coordlist_->add( pos );
+	knotsps += idx;
     }
 
+    sticks_[stickidx]->appendCoordIndices( knotsps );
     sticks_[stickidx]->ischanged_ = true;
 }
 
@@ -1387,10 +1388,10 @@ void ExplFaultStickSurface::insertStick( int stickidx )
 void ExplFaultStickSurface::emptyPanel( int panelidx )
 {
     if ( paneltriangles_.validIdx(panelidx) && paneltriangles_[panelidx] )
-	paneltriangles_[panelidx]->removeAll( true );
+	paneltriangles_[panelidx]->removeAll( false );
 
     if ( panellines_.validIdx(panelidx) && panellines_[panelidx] )  
-	panellines_[panelidx]->removeAll( true );
+	panellines_[panelidx]->removeAll( false );
 
     needsupdate_ = true;
 }
@@ -1405,56 +1406,30 @@ void ExplFaultStickSurface::emptyPanel( int panelidx )
     mSqDistArr( il, ir ) = mUdf(float); \
 }
 
-#define mAddTriangle( a, b, c )						\
-{									\
-    TypeSet<int> coordindices;						\
-    coordindices += (a);						\
-    coordindices += (b);						\
-    coordindices += (c);						\
-    triangles->appendCoordIndices( coordindices );			\
-    Coord3 vec1 = coordlist_->get( a );					\
-    const Coord3 vec2 = coordlist_->get( b )-vec1;			\
-    vec1 = coordlist_->get( c ) - vec1;					\
-    const Coord3 normal = vec1.cross( vec2 );				\
-    normallist_->set( a, normallist_->get(a)+normal );			\
-    normallist_->set( b, normallist_->get(b)+normal );			\
-    normallist_->set( c, normallist_->get(c)+normal );			\
-}
-
-void ExplFaultStickSurface::setRightHandedNormals( bool yn )
-{
-  /*  if ( yn==righthandednormals_ )
-	return;*/
-
-    if ( !normallist_ )
-	return;
-
-    //Undo the inverse that is done by display layer.
-    int id = -1;
-    while ( true )
-    {
-	id = normallist_->nextID( id );
-	if ( id==-1 )
-	    break;
-
-	normallist_->set( id, -normallist_->get( id ) );
-    }
+void ExplFaultStickSurface::addTriangle( 
+    IndexedGeometry* triangles, int a, int b, int c )						
+{									
+    TypeSet<int> coordindices;						
+    coordindices += (a);						
+    coordindices += (b);						
+    coordindices += (c);						
+    triangles->appendCoordIndices( coordindices,false );			
 }
 
 
 void ExplFaultStickSurface::fillPanel( int panelidx )
 {
-    if ( !coordlist_ || !normallist_ || !paneltriangles_.validIdx(panelidx) )
+    if ( !coordlist_ || !paneltriangles_.validIdx(panelidx) )
 	return;
 
     IndexedGeometry* triangles = paneltriangles_[panelidx];
     IndexedGeometry* lines = panellines_[panelidx];
 
     if ( triangles && !triangles->isEmpty() )
-	triangles->removeAll( true );
+	triangles->removeAll( false );
 
     if ( lines && !lines->isEmpty() )
-	lines->removeAll( true );
+	lines->removeAll( false );
     
     Geometry::PrimitiveSet* lknotsps=sticks_[panelidx]->getCoordsPrimitiveSet();
 
@@ -1484,7 +1459,7 @@ void ExplFaultStickSurface::fillPanel( int panelidx )
 
     if ( !triangles )
     {
-	triangles = new IndexedGeometry( IndexedGeometry::TriangleStrip,
+	triangles = new IndexedGeometry( IndexedGeometry::Triangles,
 					 0, 0, texturecoordlist_ );
 	paneltriangles_.replace( panelidx, triangles );
 	if ( displaypanels_ ) addToGeometries( triangles );
@@ -1495,13 +1470,13 @@ void ExplFaultStickSurface::fillPanel( int panelidx )
 	if ( lsize==1 )
 	{
     	    for ( int idx=1; idx<rsize; idx++ )
-    		mAddTriangle(
-		lknotsps->get(0),rknotsps->get(idx),rknotsps->get(idx-1));
+		addTriangle( 
+		triangles,lknotsps->get(0),rknotsps->get(idx),rknotsps->get(idx-1) );
 	}
 	else 
 	{
     	    for ( int idx=1; idx<lsize; idx++ )
-    		mAddTriangle(
+    		addTriangle( triangles, 
 		lknotsps->get(idx),lknotsps->get(idx-1),rknotsps->get(0) );
 	}
 	return;
@@ -1581,13 +1556,12 @@ void ExplFaultStickSurface::fillPanel( int panelidx )
 	sort_array( conns.arr(), conns.size() );
 
 	if ( lidx )
-	    mAddTriangle(
-	    lknotsps->get(lidx),rknotsps->get(conns[0]),lknotsps->get(lidx-1));
+	    addTriangle( triangles,
+	    lknotsps->get(lidx),rknotsps->get(conns[0]),lknotsps->get(lidx-1) );
 
 	for ( int idx=1; idx<conns.size(); idx++ )
-	    mAddTriangle(lknotsps->get(lidx),
-	    rknotsps->get(conns[idx]),rknotsps->get(conns[idx-1]));
-
+	    addTriangle(triangles, lknotsps->get(lidx),
+	    rknotsps->get(conns[idx]),rknotsps->get(conns[idx-1]) );
     }
 }
 

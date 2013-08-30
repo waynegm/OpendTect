@@ -85,7 +85,6 @@ public:
 
     void			setDisplayTransformation(const mVisTrans*);
     const mVisTrans*		getDisplayTransformation() const;
-    void			setRightHandSystem(bool);
 
     void			setSceneEventCatcher(visBase::EventCatcher*);
 
@@ -153,6 +152,7 @@ public:
     void			showSelectedSurfaceData();
     const BufferStringSet*	selectedSurfaceDataNames() const;
     const Array2D<float>*	getTextureData(int attrib);
+    void			matChangeCB(CallBacker*);
 
 protected:
 

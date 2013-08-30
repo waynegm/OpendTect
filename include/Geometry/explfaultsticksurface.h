@@ -67,7 +67,6 @@ public:
     const RowCol&	getTextureSize() const;
     void		needUpdateTexture(bool yn);
     bool		needsUpdateTexture() const;
-    void		setRightHandedNormals(bool yn);
 
     bool		update(bool forceall,TaskRunner*);
 
@@ -116,6 +115,9 @@ protected:
     void		updateStickShifting();
     bool		reTriangulateSurface();
     bool		 setProjTexturePositions(DataPointSet& dpset);
+
+    void		addTriangle(IndexedGeometry*, int a, int b, int c );						\
+
 
     bool		displaysticks_;
     bool		displaypanels_;

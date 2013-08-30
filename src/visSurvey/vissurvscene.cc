@@ -927,6 +927,9 @@ void Scene::fillPar( IOPar& par, TypeSet<int>& saveids ) const
      */
 }
 
+#define mRemoveSelector \
+unRefAndZeroPtr( polyselector_ ); \
+deleteAndZeroPtr( coordselector_ )
 
 void Scene::removeAll()
 {
@@ -936,8 +939,9 @@ void Scene::removeAll()
 	visBase::DataObjectGroup::removeObject( idx );
 
     tempzstretchtrans_ = 0; inlcrlrotation_ = 0; annot_ = 0;
-    unRefPtr( polyselector_ );
-    delete coordselector_; coordselector_ = 0;
+
+    mRemoveSelector;
+    
     curzstretch_ = -1;
 }
 
@@ -1051,11 +1055,12 @@ visBase::TopBotImage* Scene::getTopBotImage( bool istop )
 
 void Scene::setPolygonSelector( visBase::PolygonSelection* ps )
 {
+    mRemoveSelector;
+    
     if ( ps )
     {
 	polyselector_ = ps;
 	polyselector_->ref();
-	polyselector_->setDisplayTransformation( utm2disptransform_ );
 	mTryAlloc(coordselector_,visBase::PolygonCoord3Selector(*polyselector_));
     }
 }

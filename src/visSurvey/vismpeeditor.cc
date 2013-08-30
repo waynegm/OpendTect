@@ -273,7 +273,7 @@ void MPEEditor::addDragger( const EM::PosID& pid )
 	{
 	    const float zaxisangle = (float) atan2( desnormal.y, desnormal.x ); 
 	    Quaternion rotation( defnormal, zaxisangle );
-	    rotation *= Quaternion( Coord3(0,1,0), -Math::ACos(dotproduct) );
+	    rotation *= Quaternion( Coord3(0,0,1), -Math::ACos(dotproduct) );
 	    rotation.getRotation( rotationaxis, angle );
 	}
 
@@ -308,6 +308,7 @@ void MPEEditor::addDragger( const EM::PosID& pid )
     dragger->setOwnShape( marker,false );
 
     dragger->setPos( emeditor_->getPosition(pid) );
+
     addChild( dragger->osgNode() );
 
     draggers_ += dragger;
@@ -411,6 +412,7 @@ void MPEEditor::dragStart( CallBacker* cb )
 {
     const int idx = draggers_.indexOf((visBase::Dragger*) cb );
     setActiveDragger( posids_[idx] );
+    
     if ( emeditor_ ) emeditor_->startEdit(activedragger_);
     isdragging_ = true;
 }

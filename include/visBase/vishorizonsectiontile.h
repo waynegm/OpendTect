@@ -43,6 +43,7 @@ namespace visBase
     class HorizonSectionTilePosSetup;
     class HorizonSection;  
     class TileResolutionData;
+    class HorizonSectionTileGlue;
 
 //A tile with 65x65 nodes.
 class HorizonSectionTile : CallBacker
@@ -53,7 +54,7 @@ public:
     char		    getActualResolution() const;
     void		    updateAutoResolution(const osg::CullStack*);
     /*<Update only when the resolution is -1. */
-    void		    setPos(int row,int col,const Coord3&);
+    void		    setPos(int row,int col, const Coord3&,int res);
     void		    setPositions(const TypeSet<Coord3>&);
     //Call by the end of each render
     //Makes object ready for render
@@ -66,6 +67,8 @@ public:
     void		    setTexture( const Coord& origin, 
 					const Coord& opposite );
     //!<Sets origin and opposite in global texture
+    void		    addTileTesselator( int res );
+    void		    addTileGlueTesselator();
 
 protected:
 
@@ -97,16 +100,17 @@ protected:
     friend class		HorizonSection;  
     friend class		TileResolutionData;
     friend class		HorTilesCreatorAndUpdator;
+    friend class		HorizonSectionTileGlue;
 
     void			updateBBox();
     void			buildOsgGeometries();
     void			setActualResolution(char);
     char			getAutoResolution(const osg::CullStack*);
-    void			setInvalidNormals(int row,int col);
-    void			tesselateNeigborGlue(HorizonSectionTile*, 
-						      bool rightneigbor);
 
     HorizonSectionTile*		neighbors_[9];
+
+    HorizonSectionTileGlue*	righttileglue_;
+    HorizonSectionTileGlue*	bottomtileglue_;
 
     osg::BoundingBox		bbox_;
     const RowCol		origin_;
@@ -128,16 +132,9 @@ protected:
     int				txunit_;
 
     ObjectSet<TileResolutionData>tileresolutiondata_;
-
-    osg::Array*			gluevtxcoords_;
-    osg::Array*		    	gluenormals_;
-    osg::Array*			gluetxcoords_;
-    osg::Geode*			gluegeode_;
-    osg::Geometry*		gluegeom_;
-    osg::DrawElementsUShort*	glueps_;
-
     osg::Switch*		osgswitchnode_;
     Threads::Mutex		datalock_;
+
 };
 
 }

@@ -33,6 +33,7 @@ SET(OD_MODULE_SOURCES
 	   vishordatahandler.cc
 	   vishorizonsection.cc
 	   vishorizonsectiontile.cc
+	   vishorizonsectiontileglue.cc
 	   vishorizontexturehandler.cc
 	   vishorthreadworks.cc
 	   vishortileresolutiondata.cc

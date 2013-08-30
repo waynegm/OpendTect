@@ -10,11 +10,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vishorizonsection.h"
 #include "vishortileresolutiondata.h"
 #include "vishorizonsectiondef.h"
+#include "vishorizonsectiontileglue.h"
 
 
 #include "threadwork.h"
 #include "viscoord.h"
 #include "vishorthreadworks.h"
+#include "binidsurface.h"
 
 #include <osgGeo/LayeredTexture>
 
@@ -25,7 +27,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/LightModel>
 #include <osg/LineWidth>
 #include <osg/Point>
-#include <osg/PolygonOffset>
 #include <osgUtil/CullVisitor>
 #include <osg/UserDataContainer>
 
@@ -43,25 +44,22 @@ HorizonSectionTile::HorizonSectionTile( const visBase::HorizonSection& section,
     , origin_( origin )
     , hrsection_( section )
     , dispgeometrytype_( Triangle )
+    , righttileglue_( new HorizonSectionTileGlue )
+    , bottomtileglue_( new HorizonSectionTileGlue )
     , stateset_( new osg::StateSet )
-    , gluevtxcoords_( new osg::Vec3Array )
-    , gluetxcoords_( new osg::Vec2Array )
-    , gluegeode_( new osg::Geode )
-    , gluegeom_( new osg::Geometry )
-    , gluenormals_ ( new osg::Vec3Array )
     , tesselationqueueid_( Threads::WorkManager::twm().addQueue(
     Threads::WorkManager::MultiThread, "Tessalation" ) )
 {
+    refOsgPtr( stateset_ );
     refOsgPtr( osgswitchnode_ );
     tileresolutiondata_.allowNull();
     buildOsgGeometries();
     bbox_.init();
 }
 
-
 void HorizonSectionTile::buildOsgGeometries()
 {
-    for ( int i = LEFTUPTILE; i < RIGHTBOTTOMTILE; i++ )
+    for ( int i = LEFTUPTILE; i <= RIGHTBOTTOMTILE; i++ )
 	neighbors_[i] = 0;
 
     for ( char res=0; res<hrsection_.nrhorsectnrres_; res++ )
@@ -70,13 +68,9 @@ void HorizonSectionTile::buildOsgGeometries()
 	osgswitchnode_->addChild( tileresolutiondata_[res]->osgswitch_ );
     }
 
-    osgswitchnode_->addChild( gluegeode_ );
-    gluegeode_->addDrawable( gluegeom_ );
-    gluegeom_->setVertexArray( gluevtxcoords_ );
-    gluegeom_->setNormalArray( gluenormals_ );
-    gluegeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
-    gluegeom_->setDataVariance( osg::Object::DYNAMIC );
-    osgswitchnode_->setAllChildrenOff();
+    osgswitchnode_->addChild( righttileglue_->getGeode() );
+    osgswitchnode_->addChild( bottomtileglue_->getGeode() );
+
 }
 
 
@@ -85,6 +79,9 @@ HorizonSectionTile::~HorizonSectionTile()
     osgswitchnode_->removeChildren( 0, osgswitchnode_->getNumChildren() );
     unRefOsgPtr( osgswitchnode_ );
     unRefOsgPtr( stateset_ );
+
+    if ( righttileglue_ ) delete righttileglue_;
+    if ( bottomtileglue_ ) delete bottomtileglue_;
 
     Threads::WorkManager::twm().removeQueue( tesselationqueueid_, false );
     deepErase( tileresolutiondata_ );
@@ -102,9 +99,7 @@ void HorizonSectionTile::updateNormals( char res )
     datalock_.unLock();
 
     emptyInvalidNormalsList( res );
-
     tileresolutiondata_[res]->allnormalsinvalid_ = false; 
-    tileresolutiondata_[res]->normals_->dirty();
 
 }
 
@@ -146,12 +141,11 @@ void HorizonSectionTile::setResolution( char res )
 char HorizonSectionTile::getActualResolution() const
 {
     const int numchildren = osgswitchnode_->getNumChildren();
-    for ( int i=0; i<numchildren; i++ )
+    for ( int i=0; i<numchildren-2; i++ ) // the last two children are glues
     {
 	if ( osgswitchnode_->getValue( i ) )
 	    return  tileresolutiondata_[i]->resolution_;
     }
-
     return cNoneResolution;
 }
 
@@ -183,10 +177,7 @@ void HorizonSectionTile::updateAutoResolution( const osg::CullStack* cs )
 	    if ( !hrsection_.tesselationlock_ && ( wantedres!=newres || 
 		tileresolutiondata_[newres]->needsretesselation_ ) )
 	    {
-		TileTesselator* tt = new TileTesselator( this, wantedres );
-		Threads::WorkManager::twm().addWork(
-		    Threads::Work( *tt, true ),
-		    0, tesselationqueueid_, true );
+		addTileTesselator( wantedres );
 	    }
 	}
     }
@@ -196,6 +187,26 @@ void HorizonSectionTile::updateAutoResolution( const osg::CullStack* cs )
 
 
 #define mIsOsgDef( pos ) (pos[2]<9.9e29)
+
+
+void HorizonSectionTile::addTileTesselator( int res )
+{
+    TileTesselator* tt = new TileTesselator( this, res );
+    Threads::WorkManager::twm().addWork(
+	Threads::Work( *tt, true ),
+	0, tesselationqueueid_, true );
+}
+
+
+void HorizonSectionTile::addTileGlueTesselator()
+{
+    if ( !glueneedsretesselation_ ) return;
+
+    TileGlueTesselator* tt = new TileGlueTesselator( this );
+    Threads::WorkManager::twm().addWork(
+	Threads::Work( *tt, true ),
+	0, tesselationqueueid_, true );
+}
 
 
 void HorizonSectionTile::updateBBox()
@@ -224,7 +235,6 @@ void HorizonSectionTile::setLineColor( Color& color)
 }
 
 
-
 void HorizonSectionTile::ensureGlueTesselated()
 {
     bool needgluetesselation =
@@ -245,110 +255,19 @@ void HorizonSectionTile::ensureGlueTesselated()
     for ( int nb=RIGHTTILE; nb<RIGHTBOTTOMTILE; nb += 2 )
     {
 	bool isright = nb == RIGHTTILE ? true : false;
-	tesselateNeigborGlue( neighbors_[nb],isright );
-    }
-}
 
-
-#define mAddGlue( glueidx, gluepsidx ) \
-    mGetOsgVec3Arr( gluevtxcoords_ )->push_back( ( *arr )[glueidx] ) ; \
-    mGetOsgVec2Arr( gluetxcoords_ )->push_back( ( *tcoords )[glueidx] );\
-    mGetOsgVec3Arr( gluenormals_ )->push_back( ( *normals )[glueidx] );\
-    glueps_->push_back( gluepsidx );\
-
-
-#define mClearGlue\
-    mGetOsgVec3Arr( gluevtxcoords_ )->clear();\
-    mGetOsgVec3Arr( gluenormals_ )->clear();\
-    mGetOsgVec2Arr( gluetxcoords_ )->clear();\
-    glueps_->clear();\
-
-
-void HorizonSectionTile::tesselateNeigborGlue( HorizonSectionTile* neighbor,
-					       bool rightneighbor )
-{
-    if ( !neighbor ) return;
-
-    const static int cTriangleEndIdx = 3;
-    const static int cTriangleBeginIdx = 1;
-
-    const char thisres = getActualResolution();
-    const char neighborres = neighbor->getActualResolution();
-    if( thisres==neighborres ) return;
-
-    HorizonSectionTile* gluetile = thisres < neighborres ? this : neighbor ;
-    const char highestres = thisres < neighborres ? thisres : neighborres;
-
-    if( highestres == cNoneResolution ) return;
-
-    osg::StateSet* stateset = gluetile->stateset_;
-
-    const HorizonSection& hrsection = gluetile->hrsection_;
-    const int spacing = hrsection.spacing_[highestres];
-    const int nrblocks = spacing == 1 ? (int)hrsection.nrcoordspertileside_
-	/spacing : (int)hrsection.nrcoordspertileside_/spacing +1 ;
-    const Coordinates* coords = 
-	gluetile->tileresolutiondata_[highestres]->vertices_;
-
-    const osg::Vec3Array* arr = dynamic_cast<osg::Vec3Array*>
-	( gluetile->tileresolutiondata_[highestres]->vertices_->osgArray() );
-    const osg::Vec3Array* normals = mGetOsgVec3Arr(
-	gluetile->tileresolutiondata_[highestres]->normals_ );
-    const osg::Vec2Array* tcoords = mGetOsgVec2Arr(
-	gluetile->tileresolutiondata_[highestres]->txcoords_ );
-
-
-    int coordidx = 0;
-    int gluepsidx = 0;
-    int triangleidx = 0;
-    int precoordidx = 0;
-    int pregluepsidx = 0;
-
-    glueps_ = new osg::DrawElementsUShort( osg::PrimitiveSet::TRIANGLES, 0 );
-    mClearGlue;
-
-    for ( int idx=0; idx<nrblocks; idx++ )
-    {
-	if ( rightneighbor && gluetile==this )
+	HorizonSectionTileGlue* tileglue = 
+	    isright ? righttileglue_ : bottomtileglue_;
+	if ( tileglue )
 	{
-	    coordidx = ( idx+1 )*nrblocks;
-	}
-	else if ( rightneighbor && gluetile==neighbor )
-	{
-	    coordidx = idx == 0 ? 0 : idx*nrblocks + 1;
-	}
-	else if ( !rightneighbor && gluetile==this )
-	{
-	    const int baseidx = (nrblocks - 1)*nrblocks;
-	    coordidx = baseidx + idx ;
-	}
-	else if ( !rightneighbor && gluetile==neighbor )
-	{
-	    coordidx = idx;
+	    datalock_.lock();
+	    tileglue->buildGlue( this, neighbors_[nb], isright );
+	    datalock_.unLock();
 	}
 
-	if( coords->isDefined( coordidx ) )
-	{
-	    if( triangleidx==cTriangleEndIdx )
-	    {
-		mAddGlue( precoordidx, pregluepsidx ) ;
-		triangleidx = cTriangleBeginIdx;
-	    }
-	    mAddGlue( coordidx, gluepsidx );
-	    precoordidx = coordidx;
-	    pregluepsidx = gluepsidx;
-	    gluepsidx++;
-	    triangleidx ++;
-	}
     }
 
-    if ( gluegeode_ && gluegeom_ )
-    {
-	gluegeom_->removePrimitiveSet( 0,gluegeom_->getNumPrimitiveSets() );
-	gluegeom_->addPrimitiveSet( glueps_ ) ;
-	gluegeom_->setTexCoordArray( gluetile->txunit_, gluetxcoords_ );
-	gluegeode_->setStateSet( stateset );
-    }
+    glueneedsretesselation_ = false;
 
 }
 
@@ -393,6 +312,17 @@ void HorizonSectionTile::setActualResolution( char resolution )
 	osgswitchnode_->setValue( resolution, true );
 	tileresolutiondata_[resolution]->setDisplayGeometryType( 
 	    ( GeometryType ) dispgeometrytype_ );
+	if ( dispgeometrytype_ == Triangle )
+	{
+	    osgswitchnode_->setValue(osgswitchnode_->getNumChildren()-1, true);
+	    osgswitchnode_->setValue(osgswitchnode_->getNumChildren()-2, true);
+	}
+	else
+	{
+	    osgswitchnode_->setValue(osgswitchnode_->getNumChildren()-1, false);
+	    osgswitchnode_->setValue(osgswitchnode_->getNumChildren()-2, false);
+	}
+
 	resolutionhaschanged_ = true;
     }
 }
@@ -452,8 +382,9 @@ void HorizonSectionTile::updatePrimitiveSets()
     const char res = getActualResolution();
     if ( !tileresolutiondata_.validIdx( res ) )
 	return;
+    datalock_.lock();
     tileresolutiondata_[res]->updatePrimitiveSets();
-
+    datalock_.unLock();
 }
 
 
@@ -464,25 +395,32 @@ void HorizonSectionTile::setNeighbor( int nbidx, HorizonSectionTile* nb )
 }
 
 
-void HorizonSectionTile::setPos( int row, int col, const Coord3& pos )
-    // not implemented yet due to polygonselection
+void HorizonSectionTile::setPos( int row, int col, const Coord3& pos, int res )
 {
-    for ( char res = 0; res < hrsection_.nrhorsectnrres_; )
-	tileresolutiondata_[res]->setSingleVertex( row, col, pos );
+    bool dohide( false );
+    const int spacing = hrsection_.spacing_[res];
+
+    if ( row%spacing || col%spacing ) return;
+
+    const int tilerow = row/spacing;
+    const int tilecol = col/spacing;
+
+    datalock_.lock();
+    tileresolutiondata_[res]->setSingleVertex( tilerow, tilecol, pos,dohide );
+    datalock_.unLock();
+
+    if ( dohide )
+	setActualResolution( -1 );
+
     glueneedsretesselation_ = true;
-}
-
-
-void HorizonSectionTile::setInvalidNormals( int row, int col )
-    // not implemented yet due to polygonselection 
-{ 
-
+   
 }
 
 
 void HorizonSectionTile::setTexture( const Coord& origincrd, 
     const Coord& oppositecrd )
 {
+    
     osg::Vec2f origin = Conv::to<osg::Vec2f>( origincrd );  
     osg::Vec2f opposite = Conv::to<osg::Vec2f>( oppositecrd ); 
 

@@ -152,6 +152,8 @@ public:
     int		getSize() const	{ return coords_.size(); }
     void	remove(const TypeSet<int>&);
 
+    Coordinates*    getCoordinates() { return &coords_; }
+
 protected:
     virtual		~CoordListAdapter();
     Coordinates&	coords_;

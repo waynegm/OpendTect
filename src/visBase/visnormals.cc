@@ -64,9 +64,9 @@ bool DoTransformation::doWork(od_int64 start,od_int64 stop,int)
     for ( int idx = mCast(int,start); idx<=mCast(int,stop); idx++ )
     {
 	osg::Vec3f normal;
-	visBase::Transformation::transformBackDir( oldtrans_, 
+	visBase::Transformation::transformBackNormal( oldtrans_, 
 	    (*osgnormals)[idx], normal );
-	visBase::Transformation::transformDir( newtrans_, normal );
+	visBase::Transformation::transformNormal( newtrans_, normal );
 	normal.normalize();
 	    (*osgnormals)[idx] =  normal;
     }
@@ -96,8 +96,9 @@ Normals::~Normals()
 void Normals::setNormal( int idx, const Vector3& n )
 {
     osg::Vec3f osgnormal;
-    visBase::Transformation::transformDir( transformation_, n, osgnormal );
-
+    visBase::Transformation::transformNormal( transformation_, n, osgnormal );
+    if ( transformation_ )
+	osgnormal.normalize();
     Threads::MutexLocker lock( mutex_ );
     osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
     for ( int idy=osgnormals->size(); idy<=idx; idy++ )
@@ -151,7 +152,7 @@ int Normals::addNormal( const Vector3& n )
 {
 
     osg::Vec3f osgnormal;
-    visBase::Transformation::transformDir( transformation_, n, osgnormal );
+    visBase::Transformation::transformNormal( transformation_, n, osgnormal );
 
     Threads::MutexLocker lock( mutex_ );
 
@@ -165,7 +166,7 @@ int Normals::addNormal( const Vector3& n )
 void Normals::addNormalValue( int idx, const Vector3& n )
 {
     osg::Vec3f osgnormal;
-    visBase::Transformation::transformDir( transformation_, n, osgnormal );
+    visBase::Transformation::transformNormal( transformation_, n, osgnormal );
 
     Threads::MutexLocker lock( mutex_ );
     osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
@@ -180,9 +181,7 @@ void Normals::addNormalValue( int idx, const Vector3& n )
 	    (*osgnormals)[idx] = osgnormal;
 	else
 	    (*osgnormals)[idx] += osgnormal;
-
     }
-
 }
 
 
@@ -236,22 +235,13 @@ Coord3 Normals::getNormal( int idx ) const
 
     osg::Vec3Array* osgnormals = mGetOsgVec3Arr( osgnormals_ );
     const osg::Vec3f norm = ( *osgnormals )[idx];
-    Coord3 res( norm[0], norm[1], norm[2] );
-    transformNormal( transformation_, res, false );
+    if ( mIsUdf( Conv::to<Coord3> (norm) ) )
+	return Coord3::udf();
+
+    Coord3 res;
+    Transformation::transformBackNormal( transformation_, norm, res );
 
     return res;
-}
-
-
-void Normals::transformNormal( const Transformation* t, Coord3& n,
-			       bool todisplay ) const
-{
-    if ( !t || !n.isDefined() ) return;
-
-    if ( todisplay )
-	t->transformBackDir( n );
-    else
-	t->transformDir( n );
 }
 
 

@@ -213,7 +213,11 @@ mDeclTransType( transform, tp, getMatrix, ) \
 mDeclTransType( transformBack, tp, getInverseMatrix, ) \
 mDeclTransType( transformDir, tp, getMatrix, -node_->getMatrix().getTrans() ) \
 mDeclTransType( transformBackDir, tp, getInverseMatrix, \
-		-node_->getInverseMatrix().getTrans() )
+		-node_->getInverseMatrix().getTrans() ) \
+mDeclTransType( transformNormal, tp, getInverseMatrix, \
+		-node_->getInverseMatrix().getTrans() ) \
+mDeclTransType( transformBackNormal, tp, getMatrix, \
+		-node_->getMatrix().getTrans() )
 
 #define mToOsgVec( inp ) inp
 #define mFromOsgVec( inp ) inp
@@ -249,7 +253,11 @@ mDeclConvTransType( transformBack, frtp, totp, getInverseMatrix, ) \
 mDeclConvTransType( transformDir, frtp, totp, getMatrix, \
 		    -node_->getMatrix().getTrans() ) \
 mDeclConvTransType( transformBackDir, frtp, totp, getInverseMatrix, \
-		    -node_->getInverseMatrix().getTrans() )
+		    -node_->getInverseMatrix().getTrans() ) \
+mDeclConvTransType( transformNormal, frtp, totp, getInverseMatrix, \
+		    -node_->getInverseMatrix().getTrans() ) \
+mDeclConvTransType( transformBackNormal, frtp, totp, getMatrix, \
+		    -node_->getMatrix().getTrans() )
 
 #define mToOsgVec( inp ) inp
 #define mFromOsgVec( inp ) Conv::to<Coord3>( inp )

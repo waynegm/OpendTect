@@ -96,6 +96,7 @@ public:
     int			getSize() const	{ return texturecoords_.size(); }
     void		addValue(int,const Coord3&);
     void		remove(const TypeSet<int>&);
+    TextureCoords*	getTextureCoords() { return &texturecoords_; }
 
 protected:
     			~TextureCoordListAdapter();

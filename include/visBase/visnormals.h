@@ -60,9 +60,6 @@ public:
     const osg::Array*	osgArray() const { return osgnormals_; }
     
 protected:
-    void		transformNormal(const Transformation*,Coord3&,
-	    				bool todisplay) const;
-
     			~Normals();
     			/*!< Object should be locked when calling */
 
@@ -94,6 +91,8 @@ public:
     bool	isDefined(int idx) const
     		{ return normals_.getNormal(idx).isDefined(); }
     void	remove(const TypeSet<int>&);
+
+    Normals*	getNormals() { return &normals_; }
 
 protected:
 		~NormalListAdapter()	{ normals_.unRef(); }

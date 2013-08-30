@@ -32,7 +32,9 @@ namespace visBase
 mDefTransType( transform, tp ); \
 mDefTransType( transformBack, tp ); \
 mDefTransType( transformDir, tp ); \
-mDefTransType( transformBackDir, tp );
+mDefTransType( transformBackDir, tp ); \
+mDefTransType( transformNormal, tp ); \
+mDefTransType( transformBackNormal, tp );
 
     
 #define mDefConvTransType( func, frtp, totp ) \
@@ -43,7 +45,9 @@ static void func( const Transformation* tr, const frtp& f, totp& t);
 mDefConvTransType( transform, frtp, totp ); \
 mDefConvTransType( transformBack, frtp, totp ); \
 mDefConvTransType( transformDir, frtp, totp ); \
-mDefConvTransType( transformBackDir, frtp, totp );
+mDefConvTransType( transformBackDir, frtp, totp ); \
+mDefConvTransType( transformNormal, frtp, totp ); \
+mDefConvTransType( transformBackNormal, frtp, totp );
 
 
 /*! \brief

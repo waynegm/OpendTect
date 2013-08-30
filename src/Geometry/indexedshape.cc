@@ -126,7 +126,8 @@ IndexedGeometry::~IndexedGeometry()
 }
 
 
-void IndexedGeometry::appendCoordIndices( const TypeSet<int>& indices ) 
+void IndexedGeometry::appendCoordIndices( const TypeSet<int>& indices,
+					   bool reverse ) 
 {
     if ( primitivesettype_ == RangeSet ) return;
 
@@ -135,7 +136,7 @@ void IndexedGeometry::appendCoordIndices( const TypeSet<int>& indices )
     switch ( primitivetype_ )
     {
     case Triangles:
-	appendCoordIndicesAsTriangles( indices );
+	appendCoordIndicesAsTriangles( indices,reverse );
 	break;
     case TriangleStrip:
 	appendCoordIndicesAsTriangleStrips( indices );
@@ -170,7 +171,8 @@ void IndexedGeometry::setCoordIndices( const TypeSet<int>& indices )
 }
 
 
-void IndexedGeometry::appendCoordIndicesAsTriangles( const TypeSet<int>& indices )
+void IndexedGeometry::appendCoordIndicesAsTriangles( 
+	const TypeSet<int>& indices, bool reverse )
 {
     if ( primitivesettype_ == RangeSet ) return;
 
@@ -179,9 +181,13 @@ void IndexedGeometry::appendCoordIndicesAsTriangles( const TypeSet<int>& indices
 	const int pssize = primitiveset_->size();
 	const int nrtriangles = pssize/3;
 
-	const bool reverse = bool( nrtriangles%2 ) ? false : true;
-	const int startidx = reverse ? idx+2 : idx;
-	const int endidx = reverse ? idx : idx+2;
+	bool doreverse = false;
+	if ( reverse )
+	{ 
+	    doreverse = bool( nrtriangles%2 ) ? true : false;
+	}
+	const int startidx = doreverse ? idx+2 : idx;
+	const int endidx = doreverse ? idx : idx+2;
 	primitiveset_->append( indices[startidx] );
 	primitiveset_->append( indices[idx+1] );
 	primitiveset_->append( indices[endidx] );
@@ -219,8 +225,11 @@ void IndexedGeometry::removeAll( bool deep )
 	normallist_->remove( idxs );
     if ( texturecoordlist_ )
 	texturecoordlist_->remove( idxs );
-
-     unRefAndZeroPtr(primitiveset_);
+    
+    if ( deep )
+     unRefAndZeroPtr( primitiveset_ );
+    else
+	primitiveset_->setEmpty();
 }
 
 
@@ -243,32 +252,35 @@ IndexedShape::~IndexedShape()
 
 
 void IndexedShape::setCoordList( Coord3List* cl, Coord3List* nl,
-       				 Coord3List* tcl )
+       				 Coord3List* tcl, bool createnew )
 {
-    removeAll( true );
+    if ( createnew )
+    {
+        removeAll( true );
+	if ( coordlist_ ) coordlist_->unRef();
+	coordlist_ = cl;
+	if ( coordlist_ ) coordlist_->ref();
 
-    if ( coordlist_ ) coordlist_->unRef();
-    coordlist_ = cl;
-    if ( coordlist_ ) coordlist_->ref();
+	if ( normallist_ ) normallist_->unRef();
+	normallist_ = nl;
+	if ( normallist_ ) normallist_->ref();
 
-    if ( normallist_ ) normallist_->unRef();
-    normallist_ = nl;
-    if ( normallist_ ) normallist_->ref();
-
-    if ( texturecoordlist_ ) texturecoordlist_->unRef();
-    texturecoordlist_ = tcl;
-    if ( texturecoordlist_ ) texturecoordlist_->ref();
-}
-
-
-const Coord3List* IndexedShape::coordList() const 	
-{ 
-    return coordlist_;
-}
-
-Coord3List* IndexedShape::coordList()	 	
-{
-    return coordlist_; 
+	if ( texturecoordlist_ ) texturecoordlist_->unRef();
+	texturecoordlist_ = tcl;
+	if ( texturecoordlist_ ) texturecoordlist_->ref();
+    }
+    else
+    {
+	if( cl ) cl->unRef();
+	    cl = coordlist_; 
+	if ( cl ) cl->ref();
+	if( nl )  nl->unRef();
+	    nl = normallist_;
+	if ( nl ) nl->ref();
+	if( tcl ) tcl->unRef();
+	    tcl = texturecoordlist_;
+	if( tcl ) tcl->ref();
+    }
 }
 
 

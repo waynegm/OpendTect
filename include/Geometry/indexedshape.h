@@ -117,7 +117,7 @@ public:
     void	hide(bool yn)				{ ishidden_ = yn; }
 
 
-    void	  appendCoordIndices(const TypeSet<int>&);
+    void	  appendCoordIndices(const TypeSet<int>&,bool reverse = true);
     void	  setCoordIndices(const TypeSet<int>&);
     PrimitiveSet* getCoordsPrimitiveSet()		{ return primitiveset_; }
 
@@ -130,7 +130,7 @@ public:
 
 
 protected:
-    void	appendCoordIndicesAsTriangles(const TypeSet<int>&);
+    void	appendCoordIndicesAsTriangles(const TypeSet<int>&,bool);
     void	appendCoordIndicesAsTriangleStrips(const TypeSet<int>&);
     void	appendCoordIndicesAsTriangleFan(const TypeSet<int>&);
 
@@ -152,7 +152,8 @@ public:
     virtual 		~IndexedShape();
 
     virtual void	setCoordList(Coord3List* cl,Coord3List* nl=0,
-	    			     Coord3List* texturecoords=0);
+	    			     Coord3List* texturecoords=0,
+				     bool createnew = true);
     virtual bool	needsUpdate() const			{ return true; }
     virtual bool	update(bool forceall,TaskRunner* =0)	{ return true; }
 
@@ -168,16 +169,16 @@ public:
 
     const ObjectSet<IndexedGeometry>&	getGeometry() const;
     ObjectSet<IndexedGeometry>&	getGeometry();
-    const Coord3List*		coordList() const ;
-    Coord3List*			coordList();
-    //const Coord3List*		coordList() const 	{ return coordlist_; }
-    //Coord3List*			coordList()	 	{ return coordlist_; }
+    //const Coord3List*		coordList() const ;
+    //Coord3List*			coordList();
+    const Coord3List*		coordList() const 	{ return coordlist_; }
+    Coord3List*			coordList()	 	{ return coordlist_; }
 
     const Coord3List*		normalCoordList() const { return normallist_; }
     Coord3List*			normalCoordList()	{ return normallist_; }
 
-    const Coord3List*		textureCoordList() const{ return coordlist_; }
-    Coord3List*			textureCoordList()	{ return coordlist_; }
+    const Coord3List*		textureCoordList() const{ return texturecoordlist_; }
+    Coord3List*			textureCoordList()	{ return texturecoordlist_; }
 
     int				getVersion() const	{ return version_; }
 

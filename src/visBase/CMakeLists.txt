@@ -39,7 +39,6 @@ SET(OD_MODULE_SOURCES
 	   vishortilescreatorandupdator.cc
 	   vislight.cc
 	   vislines.cc
-	   vismarker.cc
 	   vismarkerset.cc
 	   vismarchingcubessurface.cc
 	   vismaterial.cc

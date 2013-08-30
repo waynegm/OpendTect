@@ -27,7 +27,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visnormals.h"
 #include "visplanedatadisplay.h"
 #include "vispolyline.h"
-#include "visshapehints.h"
 #include "vistransform.h"
 #include "vistristripset.h"
 #include "vispolygonoffset.h"
@@ -119,7 +118,6 @@ PolygonBodyDisplay::~PolygonBodyDisplay()
     delete explicitpolygons_;
     delete explicitintersections_;
 
-//    shapehints_->unRef();
     nearestpolygonmarker_->unRef();
 
     //removeChild( drawstyle_->osgNode() );

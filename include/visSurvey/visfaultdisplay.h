@@ -26,7 +26,6 @@ namespace visBase
 {
     class GeomIndexedShape;
     class Transformation;
-    class ShapeHints;
     class IndexedPolyLine3D;
     class DrawStyle;
 };

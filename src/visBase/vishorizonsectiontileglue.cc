@@ -106,7 +106,6 @@ void HorizonSectionTileGlue::buildGlue( HorizonSectionTile* thistile,
 
     int coordidx = 0;
     int gluepsidx = 0;
-    int triangleidx = 0;
 
     TypeSet<int> triangleidxs;
     TypeSet<Coord3> trianglecoords;

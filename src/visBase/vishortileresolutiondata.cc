@@ -200,7 +200,6 @@ void TileResolutionData::setSingleVertex( int row, int col,
 	return;
 
     const HorizonSection& section = sectile_->hrsection_;
-    const int spacing = section.spacing_[resolution_];
 
     const int coordidx = row*nrverticesperside_ + col;
 

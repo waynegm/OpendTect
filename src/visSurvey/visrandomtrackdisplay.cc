@@ -40,15 +40,17 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visplanedatadisplay.h"
 #include "visrandomtrack.h"
 #include "visrandomtrackdragger.h"
-#include "vissplittexturerandomline.h"
 #include "vistexturechannels.h"
 #include "vistexturechannel2rgba.h"
 #include "vistexturecoords.h"
+#include "vistexturepanelstrip.h"
 #include "vistransform.h"
 #include "zaxistransform.h"
 
-
 #include <math.h>
+
+/* OSG-TODO: replace dragger_ with not yet available OSG RandomTrackDragger */
+
 
 mCreateFactoryEntry( visSurvey::RandomTrackDisplay );
 
@@ -63,9 +65,9 @@ const char* RandomTrackDisplay::sKeyLockGeometry()  { return "Lock geometry"; }
 
 RandomTrackDisplay::RandomTrackDisplay()
     : MultiTextureSurveyObject(true)
-    , triangles_(visBase::SplitTextureRandomLine::create())
-    , dragger_(visBase::RandomTrackDragger::create())
-    , polyline_(visBase::PolyLine::create())
+    , panelstrip_( visBase::TexturePanelStrip::create() )
+//    , dragger_( visBase::RandomTrackDragger::create())
+    , polyline_( visBase::PolyLine::create())
     , polylinemode_(false)
     , knotmoving_(this)
     , moving_(this)
@@ -99,20 +101,22 @@ RandomTrackDisplay::RandomTrackDisplay()
     material_->setColor( Color::White() );
     material_->setAmbience( 0.8 );
     material_->setDiffIntensity( 0.2 );
-    
+  
 
-    dragger_->ref();
-    addChild( dragger_->osgNode() );
+//    dragger_->ref();
+//    addChild( dragger_->osgNode() );
 
-    dragger_->motion.notify( mCB(this,visSurvey::RandomTrackDisplay,knotMoved));
+//    dragger_->motion.notify( mCB(this,visSurvey::RandomTrackDisplay,knotMoved));
 
-    triangles_->ref();
-    addChild( triangles_->osgNode() );
-    
+    panelstrip_->ref();
+    addChild( panelstrip_->osgNode() );
+    panelstrip_->setTextureChannels( channels_ );
+    panelstrip_->swapTextureAxes();
+
     polyline_->ref();
     addChild( polyline_->osgNode() );
     polyline_->setMaterial( new visBase::Material );
-   
+
     markerset_->ref();
     addChild( markerset_->osgNode() );
     markerset_->setMarkersSingleColor( polyline_->getMaterial()->getColor() );
@@ -136,22 +140,22 @@ RandomTrackDisplay::RandomTrackDisplay()
     setDepthInterval( Interval<float>( survinterval.start,
 				       survinterval.stop ));
 
-    dragger_->setLimits(
-	    Coord3( inlrange.start, crlrange.start, survinterval.start ),
-	    Coord3( inlrange.stop, crlrange.stop, survinterval.stop ),
-	    Coord3( inlrange.step, crlrange.step, survinterval.step ) );
+//    dragger_->setLimits(
+//	    Coord3( inlrange.start, crlrange.start, survinterval.start ),
+//	    Coord3( inlrange.stop, crlrange.stop, survinterval.stop ),
+//	    Coord3( inlrange.step, crlrange.step, survinterval.step ) );
 
-    const int baselen = mNINT32((inlrange.width()+crlrange.width())/2);
+//    const int baselen = mNINT32((inlrange.width()+crlrange.width())/2);
     
-    dragger_->setSize( Coord3(baselen/50,baselen/50,survinterval.width()/50) );
+//    dragger_->setSize( Coord3(baselen/50,baselen/50,survinterval.width()/50) );
 }
 
 
 RandomTrackDisplay::~RandomTrackDisplay()
 {
     setSceneEventCatcher( 0 );
-    triangles_->unRef();
-    dragger_->unRef();
+    panelstrip_->unRef();
+//    dragger_->unRef();
     removeChild( polyline_->osgNode() );
     polyline_->unRef();
 
@@ -167,6 +171,33 @@ RandomTrackDisplay::~RandomTrackDisplay()
 }
 
 
+void RandomTrackDisplay::setDisplayTransformation( const mVisTrans* t )
+{
+    panelstrip_->setDisplayTransformation( t );
+    // dragger_->setDisplayTransformation( t );
+}
+
+
+const mVisTrans* RandomTrackDisplay::getDisplayTransformation() const
+{
+    return panelstrip_->getDisplayTransformation();
+}
+
+
+/* OSG-TODO: Thorough testing of the (highly inscrutable) datatransform_
+   dependency. Other than for Seis2DDisplay, the setting of the Coin-based
+   SplitTexture was depending on it. Which is a strange difference! (JCG) */
+
+float RandomTrackDisplay::appliedZRangeStep() const
+{
+    float step = datatransform_ ? datatransform_->getGoodZStep() : SI().zStep();
+    if ( scene_ )
+	step = scene_->getCubeSampling().zrg.step;
+
+    return step;
+}
+
+
 CubeSampling RandomTrackDisplay::getCubeSampling( int attrib ) const
 {
     CubeSampling cs( false );
@@ -176,9 +207,7 @@ CubeSampling RandomTrackDisplay::getCubeSampling( int attrib ) const
 	cs.hrg.include( knots[idx] );
 
     cs.zrg.setFrom( getDepthInterval() );
-    if ( datatransform_ )
-	cs.zrg.step = scene_ ? scene_->getCubeSampling().zrg.step
-	    		     : datatransform_->getGoodZStep();
+    cs.zrg.step = appliedZRangeStep();
 
     return cs;
 }
@@ -190,16 +219,16 @@ void RandomTrackDisplay::setDepthInterval( const Interval<float>& intv )
     if ( datatransform_ )
 	return;
 
-    triangles_->setDepthRange( intv );
-    dragger_->setDepthRange( intv );
+    setPanelStripZRange( intv );
+//    dragger_->setDepthRange( intv );
 
     moving_.trigger();
 }
 
 
-const Interval<float>& RandomTrackDisplay::getDepthInterval() const
+Interval<float> RandomTrackDisplay::getDepthInterval() const
 {
-    return triangles_->getDepthRange();
+    return panelstrip_->getZRange();
 }
 
 
@@ -234,10 +263,8 @@ void RandomTrackDisplay::addKnot( const BinID& bid )
     if ( checkPosition(sbid) )
     {
 	knots_ += sbid;
-	if ( !datatransform_ )
-    	    triangles_->setDepthRange( getDataTraceRange() );
-	triangles_->setLineKnots( knots_ );	
-	dragger_->setKnot( knots_.size()-1, Coord(sbid.inl,sbid.crl) );
+	updatePanelStripPath();
+//	dragger_->setKnot( knots_.size()-1, Coord(sbid.inl,sbid.crl) );
 	moving_.trigger();
     }
 }
@@ -249,10 +276,8 @@ void RandomTrackDisplay::insertKnot( int knotidx, const BinID& bid )
     if ( checkPosition(sbid) )
     {
 	knots_.insert( knotidx, sbid );
-	if ( !datatransform_ )
-	    triangles_->setDepthRange( getDataTraceRange() );
-	triangles_->setLineKnots( knots_ );	
-	dragger_->insertKnot( knotidx, Coord(sbid.inl,sbid.crl) );
+	updatePanelStripPath();
+//	dragger_->insertKnot( knotidx, Coord(sbid.inl,sbid.crl) );
 	for ( int idx=0; idx<nrAttribs(); idx++ )
 	    if ( cache_[idx] ) setData( idx, *cache_[idx] );
 
@@ -269,8 +294,9 @@ BinID RandomTrackDisplay::getKnotPos( int knotidx ) const
 
 BinID RandomTrackDisplay::getManipKnotPos( int knotidx ) const
 {
-    const Coord crd = dragger_->getKnot( knotidx );
-    return BinID( mNINT32(crd.x), mNINT32(crd.y) );
+    return getKnotPos( knotidx ); // temporary dummy
+//    const Coord crd = dragger_->getKnot( knotidx );
+//    return BinID( mNINT32(crd.x), mNINT32(crd.y) );
 }
 
 
@@ -292,12 +318,8 @@ void RandomTrackDisplay::setKnotPos( int knotidx, const BinID& bid, bool check )
     if ( !check || checkPosition(sbid) )
     {
 	knots_[knotidx] = sbid;
-
-	if ( !datatransform_ )
-	    triangles_->setDepthRange( getDataTraceRange() );
-
-	triangles_->setLineKnots( knots_ );	
-	dragger_->setKnot( knotidx, Coord(sbid.inl,sbid.crl) );
+	updatePanelStripPath();
+//	dragger_->setKnot( knotidx, Coord(sbid.inl,sbid.crl) );
 	moving_.trigger();
     }
 }
@@ -348,7 +370,7 @@ bool RandomTrackDisplay::setKnotPositions( const TypeSet<BinID>& newbids )
 	while ( nrKnots()>0 )
 	{
 	    knots_.removeSingle( 0 );
-	    dragger_->removeKnot( 0 );
+//	    dragger_->removeKnot( 0 );
 	}
 
 	for ( int idx=0; idx<uniquebids.size(); idx++ )
@@ -357,14 +379,11 @@ bool RandomTrackDisplay::setKnotPositions( const TypeSet<BinID>& newbids )
 	    if ( checkPosition(sbid) )
 	    {
 		knots_ += sbid;
-		dragger_->setKnot( knots_.size()-1, Coord(sbid.inl,sbid.crl) );
+//		dragger_->setKnot( knots_.size()-1, Coord(sbid.inl,sbid.crl) );
 	    }
 	}
 
-	if ( !datatransform_ )
-    	    triangles_->setDepthRange( getDataTraceRange() );
-
-	triangles_->setLineKnots( knots_ );	
+	updatePanelStripPath();
 	moving_.trigger();
 	return true;
     }
@@ -392,18 +411,18 @@ void RandomTrackDisplay::removeKnot( int knotidx )
     }
 
     knots_.removeSingle(knotidx);
-    triangles_->setLineKnots( knots_ );	
-    dragger_->removeKnot( knotidx );
+    updatePanelStripPath();
+//    dragger_->removeKnot( knotidx );
 }
 
 
 void RandomTrackDisplay::removeAllKnots()
 {
-    for ( int idx=0; idx<knots_.size(); idx++ )
-    	dragger_->removeKnot( idx );
+//    for ( int idx=0; idx<knots_.size(); idx++ )
+//    	dragger_->removeKnot( idx );
     
     knots_.erase();	
-    triangles_->setLineKnots( knots_ );
+    updatePanelStripPath();
 }
 
 
@@ -415,7 +434,8 @@ void RandomTrackDisplay::getDataTraceBids( TypeSet<BinID>& bids,
        					   TypeSet<int>* segments ) const
 {
     const_cast<RandomTrackDisplay*>(this)->trcspath_.erase(); 
-    TypeSet<BinID> knots; getAllKnotPos( knots );
+    TypeSet<BinID> knots;
+    getAllKnotPos( knots );
     Geometry::RandomLine::getPathBids( knots, bids, true, segments );
     for ( int idx=0; idx<bids.size(); idx++ )
 	const_cast<RandomTrackDisplay*>(this)->trcspath_.addIfNew( bids[idx] );
@@ -543,8 +563,8 @@ void RandomTrackDisplay::updateRanges(bool resetinlcrl, bool resetz )
     if ( resetz )
     {
     	const Interval<float>& depthrg = datatransform_->getZInterval(false);
-    	triangles_->setDepthRange( depthrg );
-    	dragger_->setDepthRange( depthrg );
+	setPanelStripZRange( depthrg );
+//    	dragger_->setDepthRange( depthrg );
     
 	moving_.trigger();
     }
@@ -556,17 +576,16 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
     const int nrtrcs = trcbuf.size();
     if ( !nrtrcs )
     {
+
 	channels_->setUnMappedData( attrib, 0, 0, OD::CopyPtr, 0 );
 	channels_->turnOn( false );
 	return;
     }
 
-    const Interval<float> zrg = datatransform_ ? triangles_->getDepthRange()
-					       : getDataTraceRange();
-    const float step = datatransform_ ? ( scene_ ? 
-	    scene_->getCubeSampling().zrg.step:datatransform_->getGoodZStep() )
-	: trcbuf.get(0)->info().sampling.step;
-    const int nrsamp = mNINT32( zrg.width() / step ) + 1;
+    StepInterval<float> zrg( datatransform_ ? panelstrip_->getZRange()
+					    : getDataTraceRange() );
+    zrg.step = appliedZRangeStep();
+    const int nrsamp = zrg.nrSteps()+1;
 
     TypeSet<BinID> path;
     getDataTraceBids( path );
@@ -587,7 +606,6 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
 	for ( int pi=0; pi<pathsz; pi++ )
 	    cs.hrg.include( path[pi] );
 	cs.zrg = zrg;
-	cs.zrg.step = step;
 		
 	if ( voiidx_<0 )
 	    voiidx_ = datatransform_->addVolumeOfInterest( cs, true );
@@ -610,6 +628,7 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
 		continue;
 
 	    const SeisTrc* trc = trcbuf.get( trcidx );
+
 	    if ( !trc || sidx>trc->nrComponents() )
 		continue;
 
@@ -619,7 +638,7 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
 	    {
 		for ( int ids=0; ids<nrsamp; ids++ )
 		{
-		    const float ctime = zrg.start + ids*step;
+		    const float ctime = zrg.start + ids*zrg.step;
 		    if ( !trc->dataPresent(ctime) )
 			continue;
 
@@ -628,7 +647,7 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
 	    }
 	    else 
 	    {
-		SamplingData<float> sd(zrg.start, step );
+		SamplingData<float> sd(zrg.start, zrg.step );
 		mAllocVarLenArr(float,res,nrsamp);
 		datatransform_->transformBack( bid, sd, nrsamp, res );
 		for ( int ids=0; ids<nrsamp; ids++ )
@@ -639,6 +658,7 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
 	    }
 	}
 
+	// TODO: Remove multi-resolution code
 	const int sz0 = array->info().getSize(0) * (resolution_+1);
 	const int sz1 = array->info().getSize(1) * (resolution_+1);
 	channels_->setSize( 1, sz0, sz1 );
@@ -654,13 +674,69 @@ void RandomTrackDisplay::setData( int attrib, const SeisTrcBuf& trcbuf )
 	    resampler.execute();
 	    channels_->setUnMappedData(attrib,sidx,arr,OD::TakeOverPtr,0);
 	}
-
-	if ( !datatransform_ )
-	    triangles_->setDepthRange( zrg );
-	triangles_->setTexturePathAndPixels( path, resolution_+1, sz1 );
     }
     
     channels_->turnOn( true );
+}
+
+
+void RandomTrackDisplay::updatePanelStripPath()
+{
+    if ( knots_.size()<2 )
+	return;
+
+    TypeSet<BinID> trcbids;
+    getDataTraceBids( trcbids );
+
+    TypeSet<Coord> pathcrds;
+    TypeSet<float> mapping;
+    pathcrds.setCapacity( knots_.size() );
+    mapping.setCapacity( knots_.size() );
+    
+    int knotidx = 0;
+    for ( int trcidx=0; trcidx<trcbids.size(); trcidx++ )
+    {
+	if ( trcbids[trcidx] == knots_[knotidx] )
+	{
+	    pathcrds += Coord( knots_[knotidx].inl, knots_[knotidx].crl );
+	    mapping += trcidx;
+	    knotidx++;
+	}
+    }
+
+    if ( mapping.size()!=knots_.size() ||
+	 mapping[mapping.size()-1]!=trcbids.size()-1 )
+    {
+	pErrMsg( "Unexpected state while texture mapping" );
+    }
+
+    panelstrip_->setPath( pathcrds );
+    panelstrip_->setPath2TextureMapping( mapping );
+
+    if ( getUpdateStageNr() )
+    {
+	// TODO: panelstrip_->setPathTextureShift( );
+    }
+}
+
+
+void RandomTrackDisplay::setPanelStripZRange( const Interval<float>& rg )
+{
+    const StepInterval<float> zrg( rg.start, rg.stop, appliedZRangeStep() );
+    panelstrip_->setZRange( zrg );
+    const Interval<float> mapping( 0, zrg.nrSteps() );
+    panelstrip_->setZRange2TextureMapping( mapping );
+
+    if ( getUpdateStageNr() )
+    {
+	// TODO: panelstrip_->setZTextureShift(  ); 
+    }
+}
+
+
+void RandomTrackDisplay::annotateNextUpdateStage( bool yn )
+{
+    // TODO: Analog to Seis2DDisplay::annotateNextUpdateStage(yn)
 }
 
 
@@ -724,19 +800,23 @@ bool RandomTrackDisplay::isManipulated() const
  
 void RandomTrackDisplay::acceptManipulation()
 {
+/*
     if ( !datatransform_ )
     	setDepthInterval( dragger_->getDepthRange() );
     else
     {
 	triangles_->setDepthRange( dragger_->getDepthRange() );
+	setPanelStripZRange( dragger_->getDepthRange() );
 	moving_.trigger();
     }
 
     for ( int idx=0; idx<nrKnots(); idx++ )
     {
+	const Coord crd;
 	const Coord crd = dragger_->getKnot(idx);
 	setKnotPos( idx, BinID( mNINT32(crd.x), mNINT32(crd.y) ));
     }
+*/
 
     ismanip_ = false;
 }
@@ -744,6 +824,7 @@ void RandomTrackDisplay::acceptManipulation()
 
 void RandomTrackDisplay::resetManipulation()
 {
+/*
     if ( !datatransform_ )
     	dragger_->setDepthRange( getDepthInterval() );
 
@@ -752,9 +833,9 @@ void RandomTrackDisplay::resetManipulation()
 	const BinID bid = getKnotPos(idx);
 	dragger_->setKnot(idx, Coord(bid.inl,bid.crl));
     }
-
+*/
     ismanip_ = false;
-    dragger_->turnOn( false );
+//    dragger_->turnOn( false );
 }
 
 
@@ -763,8 +844,8 @@ void RandomTrackDisplay::showManipulator( bool yn )
     if ( polylinemode_ ) return;
 
     if ( lockgeometry_ ) yn = false;
-    if ( !yn ) dragger_->showFeedback( false );
-    dragger_->turnOn( yn );
+//    if ( !yn ) dragger_->showFeedback( false );
+//    dragger_->turnOn( yn );
 }
    
 
@@ -823,8 +904,10 @@ bool RandomTrackDisplay::checkPosition( const BinID& binid ) const
 	return false;
 
     for ( int idx=0; idx<nrKnots(); idx++ )
+    {
 	if ( getKnotPos(idx) == binid )
 	    return false;
+    }
 
     return true;
 }
@@ -879,9 +962,9 @@ Coord3 RandomTrackDisplay::getNormal( const Coord3& pos ) const
 	    return Coord3::udf();
     }
 
-    const visBase::Coordinates* coords = triangles_->getCoordinates();
-    const Coord pos0 = coords->getPos( segments[idx]*2 );
-    const Coord pos1 = coords->getPos( segments[idx]*2+2 );
+    const TypeSet<Coord>& coords = panelstrip_->getPath();
+    const Coord pos0 = coords[segments[idx]];
+    const Coord pos1 = coords[segments[idx]+1];
     const BinID bid0( mNINT32(pos0.x), mNINT32(pos0.y));
     const BinID bid1( mNINT32(pos1.x), mNINT32(pos1.y));
 
@@ -899,6 +982,9 @@ Coord3 RandomTrackDisplay::getNormal( const Coord3& pos ) const
 
 float RandomTrackDisplay::calcDist( const Coord3& pos ) const
 {
+    // TODO: Compared to calcDist(.) of 2d lines, this implementation can't
+    // be right. I wonder whether this is actually used somewhere? (JCG)
+
     const mVisTrans* utm2display = scene_->getUTM2DisplayTransform();
     Coord3 xytpos;
     utm2display->transformBack( pos, xytpos );
@@ -1153,8 +1239,8 @@ void RandomTrackDisplay::setPolyLineMode( bool mode )
     polylinemode_ = mode;
     polyline_->turnOn( polylinemode_ );
     markerset_->turnOn( polylinemode_ );
-    triangles_->turnOn( !polylinemode_ );
-    dragger_->turnOn( false );
+    panelstrip_->turnOn( !polylinemode_ );
+//    dragger_->turnOn( false );
 }
 
 

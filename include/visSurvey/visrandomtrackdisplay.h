@@ -23,12 +23,11 @@ class BinID;
 
 namespace visBase 
 { 
-    class SplitTextureRandomLine; 
-    class MultiTexture2; 
     class EventCatcher;
     class PolyLine;
     class RandomTrackDragger; 
     class MarkerSet;
+    class TexturePanelStrip;
 };
 
 namespace Attrib { class SelSpec; }
@@ -59,7 +58,7 @@ public:
 
     bool			isInlCrl() const { return true; }
 
-    int				nrResolutions() const 	{ return 3; }
+    int				nrResolutions() const 	{ return 1; }
     void			setResolution(int,TaskRunner*);
 
     void			showManipulator(bool yn);
@@ -118,7 +117,7 @@ public:
 
     CubeSampling		getCubeSampling(int attrib) const;
     void			setDepthInterval(const Interval<float>&);
-    const Interval<float>&	getDepthInterval() const;
+    Interval<float>		getDepthInterval() const;
 
     void			getMousePosInfo(const visBase::EventInfo& ei,
 	    					IOPar& iop ) const
@@ -156,6 +155,11 @@ public:
 
     bool			setZAxisTransform(ZAxisTransform*,TaskRunner*);
     const ZAxisTransform*	getZAxisTransform() const;
+
+    void			setDisplayTransformation(const mVisTrans*);
+    const mVisTrans*		getDisplayTransformation() const;
+
+    virtual void		annotateNextUpdateStage(bool yn);
 				
 protected:
 				~RandomTrackDisplay();
@@ -189,8 +193,14 @@ protected:
     void			dataTransformCB(CallBacker*);
     void			updateRanges(bool,bool);
 
-    visBase::SplitTextureRandomLine* triangles_;
+    void			updatePanelStripPath();
+    void			setPanelStripZRange(const Interval<float>&);
+    float			appliedZRangeStep() const;
+
+    visBase::TexturePanelStrip*	panelstrip_;
+/* OSG-TODO: Replace
     visBase::RandomTrackDragger* dragger_;
+*/
     visBase::PolyLine*		polyline_;
     visBase::MarkerSet*		markerset_;
     visBase::EventCatcher*	eventcatcher_;
@@ -214,7 +224,6 @@ protected:
     static const char*		sKeyKnotPrefix();
     static const char*		sKeyDepthInterval();
     static const char*		sKeyLockGeometry();
-
 };
 
 };

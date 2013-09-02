@@ -699,7 +699,7 @@ void RandomTrackDisplay::updatePanelStripPath()
 	if ( trcbids[trcidx] == knots_[knotidx] )
 	{
 	    pathcrds += Coord( knots_[knotidx].inl, knots_[knotidx].crl );
-	    mapping += trcidx;
+	    mapping += (float) trcidx;
 	    knotidx++;
 	}
     }
@@ -724,7 +724,7 @@ void RandomTrackDisplay::setPanelStripZRange( const Interval<float>& rg )
 {
     const StepInterval<float> zrg( rg.start, rg.stop, appliedZRangeStep() );
     panelstrip_->setZRange( zrg );
-    const Interval<float> mapping( 0, zrg.nrSteps() );
+    const Interval<float> mapping( 0, (float) zrg.nrSteps() );
     panelstrip_->setZRange2TextureMapping( mapping );
 
     if ( getUpdateStageNr() )

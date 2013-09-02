@@ -42,8 +42,6 @@ SET(OD_MODULE_SOURCES
 	   vismarkerset.cc
 	   vismarchingcubessurface.cc
 	   vismaterial.cc
-#	   vismultitexture.cc
-#	   vismultitexture2.cc
 	   visnormals.cc
 	   visnodestate.cc
 	   visobject.cc
@@ -53,19 +51,13 @@ SET(OD_MODULE_SOURCES
 	   vispolygonoffset.cc
 	   vispolygonselection.cc
 	   vispolyline.cc
-#	   visrandomtrack.cc
 	   visrandomtrackdragger.cc
 	   visrgbatexturechannel2rgba.cc
 	   visscene.cc
 	   visscenecoltab.cc
 	   visselman.cc
 	   visshape.cc
-#	   vissplittexturerandomline.cc
-#	   vissplittexture2rectangle.cc
 	   vistext.cc
-#	   vistexture.cc
-#	   vistexture2.cc
-#	   vistexture3.cc
 	   vistexturecoords.cc
 	   vistexturechannels.cc
 	   vistexturechannel2rgba.cc
@@ -76,10 +68,8 @@ SET(OD_MODULE_SOURCES
 	   vistopbotimage.cc
 	   vistransform.cc
 	   vistristripset.cc
-#	   visvolobliqueslice.cc
 	   visvolorthoslice.cc
 	   visvolrenscalarfield.cc
-#	   visvolren.cc
 	   viswell.cc
 )
 

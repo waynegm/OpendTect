@@ -47,6 +47,7 @@ uiFlatViewer::uiFlatViewer( uiParent* p )
     , viewChanged(this)
     , dataChanged(this)
     , dispParsChanged(this)
+    , wr_(0,0,1,1)
 {
     updatequeueid_ =
 	Threads::WorkManager::twm().addQueue( Threads::WorkManager::Manual,
@@ -63,9 +64,9 @@ uiFlatViewer::uiFlatViewer( uiParent* p )
 
     reportedchanges_ += All;
     bitmapdisp_->getDisplay()->setZValue( mBitMapZ );
-    bitmapdisp_->setExtraFactor( extfac_ );
     worldgroup_->add( bitmapdisp_->getDisplay() );
     axesdrawer_.setZvalue( mAxisZStart );
+    axesdrawer_.setWorldCoords( wr_ );
     mAttachCB( axesdrawer_.layoutChanged(), uiFlatViewer::reSizeCB );
 }
 
@@ -89,7 +90,6 @@ uiFlatViewer::~uiFlatViewer()
 void uiFlatViewer::reSizeCB( CallBacker* cb )
 {
     axesdrawer_.setViewRect( getViewRect() );
-    bitmapdisp_->setViewRect( getViewRect() );
     updateTransforms();
 }
 
@@ -129,6 +129,13 @@ void uiFlatViewer::updateAuxDataCB( CallBacker* )
 void uiFlatViewer::updateAnnotCB( CallBacker* )
 {
     axesdrawer_.update();
+    
+    if ( !wr_.checkCorners( !appearance().annot_.x1_.reversed_,
+			    appearance().annot_.x2_.reversed_ ) )
+    {
+    	setView( wr_ ); //Will update the flipping
+    }
+    
     reSizeCB(0); // Needed as annotation changes may make view-area
     		 // larger or smaller.
 }
@@ -138,19 +145,13 @@ void uiFlatViewer::updateTransforms()
 {
     const uiRect viewrect = getViewRect();
 
-    uiWorldRect wr = wr_;
-    if ( wr.left() > wr.right() ) 
-	wr.swapHor();
-    if ( wr.bottom() < wr.top() ) 
-	wr.swapVer();
-
     if ( mIsZero(wr_.width(),mDefEps) || mIsZero(wr_.height(),mDefEps) )
         return;
 
-    const double xscale = viewrect.width()/wr.width();
-    const double yscale = viewrect.height()/wr.height();
-    const double xpos = viewrect.left()-xscale*wr.left();
-    const double ypos = viewrect.top()-yscale*wr.top();
+    const double xscale = viewrect.width()/(wr_.right()-wr_.left());
+    const double yscale = viewrect.height()/(wr_.bottom()-wr_.top());
+    const double xpos = viewrect.left()-xscale*wr_.left();
+    const double ypos = viewrect.top()-yscale*wr_.top();
 
     worldgroup_->setPos( uiWorldPoint( xpos, ypos ) );
     worldgroup_->setScale( (float) xscale, (float) yscale );
@@ -232,10 +233,9 @@ void uiFlatViewer::setView( const uiWorldRect& wr )
 	return;
 
     wr_ = wr;
- 	   if ( (wr_.left() > wr.right()) != appearance().annot_.x1_.reversed_ )
-	wr_.swapHor();
-    if ( (wr_.bottom() > wr.top()) != appearance().annot_.x2_.reversed_ )
-	wr_.swapVer();
+    
+    wr_.sortCorners( !appearance().annot_.x1_.reversed_,
+		     appearance().annot_.x2_.reversed_ );
 
     axesdrawer_.setWorldCoords( wr_ );
     updateTransforms();

@@ -100,7 +100,7 @@ public:
 
     void		setBrineFilled( bool yn ) { isbrinefilled_ = yn; }
     void		setAutoUpdate( bool yn ) { autoupdate_ = yn; }
-	void		setUseEdited( bool yn )	  { useed_ = yn; }
+    void		setUseEdited( bool yn )	  { useed_ = yn; }
 
 protected:
 
@@ -114,7 +114,7 @@ protected:
     bool		dispflattened_;
     bool		isbrinefilled_;
     bool		autoupdate_;
-	bool		useed_;
+    bool		useed_;
 
     const ObjectSet<const TimeDepthModel>* d2tmodels_;
     SyntheticData* 	currentwvasynthetic_;
@@ -144,6 +144,7 @@ protected:
     void		fillPar(IOPar&,const StratSynth*) const;
     void		doModelChange();
     const SeisTrcBuf&	curTrcBuf() const;
+    void		reSampleTraces(SeisTrcBuf&) const;
     void		updateFields();
     void		updateSynthetic(const char* nm,bool wva);
     void		updateSyntheticList(bool wva);
@@ -155,6 +156,7 @@ protected:
     void		displayPreStackSynthetic(const SyntheticData*);
     void		displayPostStackSynthetic(const SyntheticData*,
 	    					  bool wva=true);
+    void		setPreStackMapper();
 
     void		addEditSynth(CallBacker*);
     void		exportSynth(CallBacker*);

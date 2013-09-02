@@ -178,7 +178,7 @@ void uiFlatViewControl::setNewView( Geom::Point2D<double>& centre,
 				    Geom::Size2D<double>& sz )
 {
     uiWorldRect br = getBoundingBox();
-    br.checkCorners();
+    br.sortCorners();
     const uiWorldRect wr = getNewWorldRect( centre,sz, vwrs_[0]->curView(),br );
 
     for ( int idx=0; idx<vwrs_.size(); idx++ )
@@ -224,19 +224,13 @@ uiWorldRect uiFlatViewControl::getZoomOrPanRect( Geom::Point2D<double> centre,
 
 void uiFlatViewControl::flip( bool hor )
 {
-    const uiWorldRect cv( vwrs_[0]->curView() );
-    const uiWorldRect newview(	hor ? cv.right()  : cv.left(),
-				hor ? cv.top()    : cv.bottom(),
-				hor ? cv.left()   : cv.right(),
-				hor ? cv.bottom() : cv.top() );
-
     for ( int idx=0; idx<vwrs_.size(); idx++ )
     {
 	FlatView::Annotation::AxisData& ad
 			    = hor ? vwrs_[idx]->appearance().annot_.x1_
 				  : vwrs_[idx]->appearance().annot_.x2_;
 	ad.reversed_ = !ad.reversed_;
-	vwrs_[idx]->setView( newview );
+	vwrs_[idx]->handleChange( FlatView::Viewer::Annot );
     }
 }
 
@@ -295,7 +289,7 @@ void uiFlatViewControl::applyProperties( CallBacker* cb )
 
     const int selannot = propdlg_->selectedAnnot();
     vwr->setAnnotChoice( selannot );
-    vwr->handleChange( FlatView::Viewer::All );
+    vwr->handleChange( FlatView::Viewer::Annot );
 }
 
 

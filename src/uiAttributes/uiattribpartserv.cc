@@ -95,22 +95,22 @@ static const int cMaxNrClasses = 100;
 
 
 uiAttribPartServer::uiAttribPartServer( uiApplService& a )
-	: uiApplPartServer(a)
-	, dirshwattrdesc_(0)
-        , attrsetdlg_(0)
+    : uiApplPartServer(a)
+    , dirshwattrdesc_(0)
+    , attrsetdlg_(0)
     , volprocchaindlg_(0)
-        , is2devsent_(false)
-    	, attrsetclosetim_("Attrset dialog close")
-	, stored2dmnuitem_("&Stored 2D Data")
-	, stored3dmnuitem_("Stored &Cubes")
-	, steering2dmnuitem_("Stee&ring 2D Data")
-	, steering3dmnuitem_("Steer&ing Cubes")
-	, multcomp3d_("3D")
-	, multcomp2d_("2D")
-	, volprocchain_( 0 )
-	, dpsdispmgr_( 0 )
-        , evalmapperbackup_( 0 )
-        , attrsneedupdt_(true)
+    , is2devsent_(false)
+    , attrsetclosetim_("Attrset dialog close")
+    , stored2dmnuitem_("&Stored 2D Data")
+    , stored3dmnuitem_("Stored &Cubes")
+    , steering2dmnuitem_("Stee&ring 2D Data")
+    , steering3dmnuitem_("Steer&ing Cubes")
+    , multcomp3d_("3D")
+    , multcomp2d_("2D")
+    , volprocchain_( 0 )
+    , dpsdispmgr_( 0 )
+    , evalmapperbackup_( 0 )
+    , attrsneedupdt_(true)
 {
     attrsetclosetim_.tick.notify( 
 			mCB(this,uiAttribPartServer,attrsetDlgCloseTimTick) );
@@ -132,6 +132,8 @@ uiAttribPartServer::~uiAttribPartServer()
 {
     delete attrsetdlg_;
     if ( volprocchain_ ) volprocchain_->unRef();
+    delete volprocchaindlg_;
+
     deepErase( linesets2dstoredmnuitem_ );
     deepErase( linesets2dsteeringmnuitem_ );
     deepErase( attrxplotset_ );
@@ -167,17 +169,27 @@ void uiAttribPartServer::doVolProc( const MultiID* mid )
     }
 
     if ( !volprocchaindlg_ )
-	volprocchaindlg_ = new VolProc::uiChain( parent(), *volprocchain_,true);
-
-    volprocchaindlg_->show();
-
-    /*
-    if ( dlg.go() && dlg.saveButtonChecked() )
     {
-	ioobj = IOM().get( volprocchain_->storageID() );
-	createVolProcOutput( ioobj );
+	volprocchaindlg_ = new VolProc::uiChain( parent(), *volprocchain_,true);
+	volprocchaindlg_->windowClosed.notify( 
+		mCB(this,uiAttribPartServer,volprocchainDlgClosed) );
     }
-    */
+    else
+	volprocchaindlg_->setChain( *volprocchain_ );
+
+    volprocchaindlg_->raise();
+    volprocchaindlg_->show();
+}
+
+
+void uiAttribPartServer::volprocchainDlgClosed( CallBacker* )
+{
+    if ( !volprocchaindlg_ || !volprocchaindlg_->saveButtonChecked() ||
+	 !volprocchain_ || volprocchaindlg_->uiResult()==0 )
+	return;
+
+    PtrMan<IOObj> ioobj = IOM().get( volprocchain_->storageID() );
+    createVolProcOutput( ioobj );
 }
 
 
@@ -1739,20 +1751,20 @@ void uiAttribPartServer::usePar( const IOPar& iopar, bool is2d, bool isstored )
 	
 	if ( errmsgs.size()<4 )
 	{
-	BufferString errmsg;
-	for ( int idx=0; idx<errmsgs.size(); idx++ )
-	{
-	    if ( !idx )
+	    BufferString errmsg;
+	    for ( int idx=0; idx<errmsgs.size(); idx++ )
 	    {
+		if ( !idx )
+		{
 		    errmsg = basemsg;
 		    errmsg += ":";
-	    }
+		}
 
-	    errmsg += "\n";
-	    errmsg += errmsgs.get( idx );
-	}
-	if ( !errmsg.isEmpty() )
-	    uiMSG().error( errmsg );
+		errmsg += "\n";
+		errmsg += errmsgs.get( idx );
+	    }
+	    if ( !errmsg.isEmpty() )
+		uiMSG().error( errmsg );
 	}
 	else
 	    uiMSG().errorWithDetails( errmsgs, basemsg );

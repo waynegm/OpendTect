@@ -278,10 +278,6 @@ SyntheticData* StratSynth::addDefaultSynthetic()
     genparams_.synthtype_ = SynthGenParams::ZeroOffset;
     genparams_.createName( genparams_.name_ );
     SyntheticData* sd = addSynthetic();
-
-    mDynamicCastGet(PostStackSyntheticData*,psd,sd);
-    if ( psd )  generateOtherQuantities( *psd, layMod() );
-
     return sd;
 }
 
@@ -778,7 +774,7 @@ StratPropSyntheticDataCreator( ObjectSet<SyntheticData>& synths,
 		    const PostStackSyntheticData& sd,
 		    const Strat::LayerModel& lm,
        		    int& lastsynthid )
-    : ParallelTask( "Creating Property Refs" )
+    : ParallelTask( "Creating Synthetics for Properties" )
     , synthetics_(synths)
     , sd_(sd)
     , lm_(lm)
@@ -1016,6 +1012,8 @@ bool StratSynth::adjustElasticModel( const Strat::LayerModel& lm,
     {
 	const Strat::LayerSequence& seq = lm.sequence( midx );
 	ElasticModel& aimodel = aimodels[midx];
+	if ( aimodel.isEmpty() ) continue;
+
 	Array1DImpl<float> densvals( aimodel.size() );
 	Array1DImpl<float> velvals( aimodel.size() );
 	Array1DImpl<float> svelvals( aimodel.size() );
@@ -1355,13 +1353,28 @@ PreStackSyntheticData::PreStackSyntheticData( const SynthGenParams& sgp,
     DataPackMgr::ID pmid = DataPackMgr::CubeID();
     DPM( pmid ).add( &dp );
     datapackid_ = DataPack::FullID( pmid, dp.id());
+    ObjectSet<PreStack::Gather>& gathers = dp.getGathers();
+    for ( int idx=0; idx<gathers.size(); idx++ )
+    {
+	DPM(DataPackMgr::FlatID()).obtain( gathers[idx]->id() );
+	gathers[idx]->setName( name() );
+    }
 }
 
 
 PreStackSyntheticData::~PreStackSyntheticData()
 {
+    mDynamicCastGet(PreStack::GatherSetDataPack&,gsetdp,datapack_)
+    ObjectSet<PreStack::Gather>& gathers = gsetdp.getGathers();
+    for ( int idx=0; idx<gathers.size(); idx++ )
+	DPM(DataPackMgr::FlatID()).release( gathers[idx] );
     if ( angledp_ )
+    {
+	ObjectSet<PreStack::Gather>& anglegathers = angledp_->getGathers();
+	for ( int idx=0; idx<anglegathers.size(); idx++ )
+	    DPM(DataPackMgr::FlatID()).release( anglegathers[idx] );
 	DPM( DataPackMgr::CubeID() ).release( angledp_->id() );
+    }
 }
 
 
@@ -1417,7 +1430,11 @@ void PreStackSyntheticData::createAngleData( const ObjectSet<RayTracer1D>& rts,
 	TypeSet<float> azimuths;
 	gather->getAzimuths( azimuths );
 	anglegather->setAzimuths( azimuths );
+	BufferString angledpnm( name(), "(Angle Data)" );
+	anglegather->setName( angledpnm );
+	anglegather->setBinID( gather->getBinID() );
 	anglegathers += anglegather;
+	DPM(DataPackMgr::FlatID()).addAndObtain( anglegather );
     }
 
     angledp_ = new PreStack::GatherSetDataPack( name(), anglegathers );

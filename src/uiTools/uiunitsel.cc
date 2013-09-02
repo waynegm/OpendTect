@@ -45,7 +45,16 @@ uiUnitSel::uiUnitSel( uiParent* p, PropertyRef::StdType typ, const char* txt,
 void uiUnitSel::setUnit( const UnitOfMeasure* un )
 {
     if ( !un )
+    {
+	if ( !withempty_ )
 	un = UoMR().getInternalFor( proptype_ );
+	else
+	{
+	    inpfld_->setCurrentItem( 0 );
+	    return;
+	}
+    }
+
     if ( un )
 	setUnit( un->name() );
 }

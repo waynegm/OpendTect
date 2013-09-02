@@ -304,7 +304,7 @@ void uiStratSynthDisp::setSelectedTrace( int st )
     selectedtraceaux_->linestyle_ = 
 	LineStyle( LineStyle::Dot, 2, Color::DgbColor() );
 
-    vwr_->handleChange( FlatView::Viewer::Annot, true );
+    vwr_->handleChange( FlatView::Viewer::Auxdata, true );
 }
 
 
@@ -317,7 +317,7 @@ void uiStratSynthDisp::setDispMrkrs( const char* lnm,
 
     const bool domodelchg = dispflattened_ || dispflattened;
     dispflattened_ = dispflattened;
-    if ( domodelchg && !autoupdate_ )
+    if ( domodelchg )
     {
 	doModelChange();
 	control_->zoomMgr().toStart();
@@ -681,11 +681,6 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
     curSS().trimTraces( *disptbuf, centralTrcShift(), sd->d2tmodels_,
 	    		    dispskipz_ );
 
-    SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( disptbuf, Seis::Line, 
-				    SeisTrcInfo::TrcNr, "Forward Modeling" );
-    DPM( DataPackMgr::FlatID() ).add( dp );
-    dp->setName( sd->name() );
-
     d2tmodels_ = &sd->d2tmodels_;
     for ( int idx=0; idx<d2tmodels_->size(); idx++ )
     {
@@ -694,9 +689,13 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
 	    { maxaimodelsz = (*d2tmodels_)[idx]->size(); longestaimdl_ = idx; }
     }
 
-
-    vwr_->appearance().ddpars_.vd_.ctab_ = sd->dispPars().coltab_;
-    
+    reSampleTraces( *disptbuf );
+    SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( disptbuf, Seis::Line, 
+				    SeisTrcInfo::TrcNr, "Forward Modeling" );
+    DPM( DataPackMgr::FlatID() ).add( dp );
+    dp->setName( sd->name() );
+    if ( !wva )
+	vwr_->appearance().ddpars_.vd_.ctab_ = sd->dispPars().coltab_;
     ColTab::MapperSetup& mapper =
 	wva ? vwr_->appearance().ddpars_.wva_.mappersetup_
 	    : vwr_->appearance().ddpars_.vd_.mappersetup_;
@@ -732,6 +731,24 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
 }
 
 
+void uiStratSynthDisp::reSampleTraces( SeisTrcBuf& tbuf ) const
+{
+    Interval<float> depthrg = layerModel().sequence(longestaimdl_).zRange();
+    for ( int idx=0; idx<tbuf.size(); idx++ )
+    {
+	const TimeDepthModel& d2t = *(*d2tmodels_)[idx];
+	SeisTrc& trc = *tbuf.get( idx );
+
+	const float lastzval = trc.info().sampling.atIndex( trc.size()-1 );
+	const float reqlastzval = d2t.getTime( depthrg.stop );
+	if ( lastzval > reqlastzval )
+	    continue;
+	const int newsz = trc.info().sampling.nearestIndex( reqlastzval );
+	trc.reSize( newsz, true );
+    }
+}
+
+
 void uiStratSynthDisp::displayPreStackSynthetic( const SyntheticData* sd )
 {
     if ( !prestackwin_ ) return;
@@ -748,14 +765,8 @@ void uiStratSynthDisp::displayPreStackSynthetic( const SyntheticData* sd )
     const ObjectSet<PreStack::Gather>& anglegathers = angledp.getGathers();
     for ( int idx=0; idx<gathers.size(); idx++ )
     {
-	PreStack::Gather* gather = new PreStack::Gather( *gathers[idx] );
-	gather->setName( sd->name() );
-	BufferString anggnm( sd->name(), "(Angle Data)" );
-	PreStack::Gather* anglegather= new PreStack::Gather(*anglegathers[idx]);
-	anglegather->setName( anggnm );
-	gather->setZRange( gathers[idx]->zRange() );
-	DPM(DataPackMgr::FlatID()).add( gather );
-	DPM(DataPackMgr::FlatID()).add( anglegather );
+	const PreStack::Gather* gather = gathers[idx];
+	const PreStack::Gather* anglegather= anglegathers[idx];
 
 	PreStackView::GatherInfo gatherinfo;
 	gatherinfo.isstored_ = false;
@@ -768,6 +779,12 @@ void uiStratSynthDisp::displayPreStackSynthetic( const SyntheticData* sd )
     }
 
     prestackwin_->setGathers( gatherinfos );
+    setPreStackMapper();
+}
+
+
+void uiStratSynthDisp::setPreStackMapper()
+{
     for ( int idx=0; idx<prestackwin_->nrViewers(); idx++ )
     {
 	uiFlatViewer& vwr = prestackwin_->viewer( idx );
@@ -776,6 +793,8 @@ void uiStratSynthDisp::displayPreStackSynthetic( const SyntheticData* sd )
 	vdmapper.cliprate_ = Interval<float>(0.0,0.0);
 	vdmapper.autosym0_ = false;
 	vdmapper.symmidval_ = mUdf(float);
+	vdmapper.type_ = ColTab::MapperSetup::Fixed;
+	vdmapper.range_ = Interval<float>(0,60);
 	vwr.appearance().ddpars_.vd_.ctab_ = "Rainbow";
 	ColTab::MapperSetup& wvamapper =
 	    vwr.appearance().ddpars_.wva_.mappersetup_;
@@ -791,11 +810,56 @@ void uiStratSynthDisp::selPreStackDataCB( CallBacker* cb )
 {
     BufferStringSet allgnms, selgnms;
     for ( int idx=0; idx<curSS().nrSynthetics(); idx++ )
-	allgnms.addIfNew( curSS().getSyntheticByIdx(idx)->name() );
+    {
+	const SyntheticData* sd = curSS().getSyntheticByIdx( idx );
+	mDynamicCastGet(const PreStackSyntheticData*,presd,sd);
+	if ( !presd ) continue;
+	allgnms.addIfNew( sd->name() );
+    }
+
+    TypeSet<PreStackView::GatherInfo> ginfos = prestackwin_->gatherInfos();
+
     prestackwin_->getGatherNames( selgnms );
+    for ( int idx=0; idx<selgnms.size(); idx++ )
+    {
+	const int gidx = allgnms.indexOf( selgnms[idx]->buf() );
+	if ( gidx<0 )
+	    continue;
+	allgnms.removeSingle( gidx );
+    }
+
     PreStackView::uiViewer2DSelDataDlg seldlg( prestackwin_, allgnms, selgnms );
     if ( seldlg.go() )
-	prestackwin_->setGatherNames( selgnms );
+    {
+	prestackwin_->removeGathers();
+	TypeSet<PreStackView::GatherInfo> newginfos;
+	for ( int synthidx=0; synthidx<selgnms.size(); synthidx++ )
+	{
+	    const SyntheticData* sd =
+		curSS().getSynthetic( selgnms[synthidx]->buf() );
+	    if ( !sd ) continue;
+	    mDynamicCastGet(const PreStackSyntheticData*,presd,sd);
+	    mDynamicCastGet(const PreStack::GatherSetDataPack*,gsetdp,
+		    	    &sd->getPack())
+	    if ( !gsetdp || !presd ) continue;
+	    const PreStack::GatherSetDataPack& angledp = presd->angleData();
+	    for ( int idx=0; idx<ginfos.size(); idx++ )
+	    {
+		PreStackView::GatherInfo ginfo = ginfos[idx];
+		ginfo.gathernm_ = sd->name();
+		const PreStack::Gather* gather = gsetdp->getGather( ginfo.bid_);
+		const PreStack::Gather* anglegather =
+		    angledp.getGather( ginfo.bid_);
+		ginfo.vddpid_ = anglegather->id();
+		ginfo.wvadpid_ = gather->id();
+		newginfos.addIfNew( ginfo );
+	    }
+	}
+
+	prestackwin_->setGathers( newginfos, false );
+	setPreStackMapper();
+    }
+
 }
 
 
@@ -854,7 +918,6 @@ void uiStratSynthDisp::doModelChange()
 {
     MouseCursorChanger mcs( MouseCursor::Busy );
 
-    d2tmodels_ = 0;
     if ( !autoupdate_ ) return;
     
     if ( curSS().errMsg() )
@@ -908,6 +971,7 @@ void uiStratSynthDisp::syntheticChanged( CallBacker* cb )
     const BufferString curvdsynthnm( currentvdsynthetic_->name().buf() );
     const BufferString curwvasynthnm( currentwvasynthetic_->name().buf() );
     SyntheticData* cursd = curSS().getSynthetic( syntheticnm );
+    if ( !cursd ) return;
     SynthGenParams curgp;
     cursd->fillGenParams( curgp );
     if ( !(curgp == curSS().genParams()) )
@@ -1144,13 +1208,13 @@ bool uiStratSynthDisp::usePar( const IOPar& par )
     PtrMan<IOPar> stratsynthpar = par.subselect( sKeySynthetics() );
     if ( !curSS().hasElasticModels() )
 	return false;
+    curSS().clearSynthetics();
     if ( !stratsynthpar )
 	curSS().addDefaultSynthetic();
     else
     {
 	int nrsynths;
 	stratsynthpar->get( sKeyNrSynthetics(), nrsynths );
-	curSS().clearSynthetics();
 	currentvdsynthetic_ = 0;
 	currentwvasynthetic_ = 0;
 	wvadatalist_->setEmpty();

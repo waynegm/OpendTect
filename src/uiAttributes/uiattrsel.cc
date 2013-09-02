@@ -744,14 +744,14 @@ const char* uiAttrSel::userNameFromKey( const char* txt ) const
 		    usrnm_ = ioobj->name();
 		    usrnm_ += "|";
 		    usrnm_ += descattrnm;
-    }
+		}
 	    }
 	}
     }
     else
 	usrnm_ = lk;
 
-    if ( strcmp(ad->userRef(), usrnm_.buf() ) )
+    if ( ad && strcmp(ad->userRef(), usrnm_.buf() ) )
 	const_cast<Desc*>( ad )->setUserRef( usrnm_.buf() );
 
     return usrnm_.buf();

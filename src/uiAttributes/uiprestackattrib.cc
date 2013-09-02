@@ -192,12 +192,12 @@ bool uiPreStackAttrib::setAngleParameters( const Attrib::Desc& desc )
 	if ( windowfunction == CosTaperWindow::sName() )
 	{
 	    float windowparam = mUdf(float);
-	mIfGetFloat( PreStack::AngleComputer::sKeyWinParam(), winpar,
-		     windowparam=winpar )
+	    mIfGetFloat( PreStack::AngleComputer::sKeyWinParam(), winpar,
+		    	 windowparam=winpar )
 	    if ( !mIsUdf(windowparam) && windowparam >=0 && windowparam <= 1 )
 		smpar.set( PreStack::AngleComputer::sKeyWinParam(),
 			   windowparam );
-    }
+	}
     }
     else if ( smoothtype == PreStack::AngleComputer::FFTFilter )
     {
@@ -275,11 +275,11 @@ bool uiPreStackAttrib::getAngleParameters( Desc& desc )
 	mSetString( PreStack::AngleComputer::sKeyWinFunc(), winfunc )
 	if ( winfunc == CosTaperWindow::sName() )
 	{
-	float winparam; 
-	smpar.get( PreStack::AngleComputer::sKeyWinParam(), winparam );
+	    float winparam; 
+	    smpar.get( PreStack::AngleComputer::sKeyWinParam(), winparam );
 	    if ( winparam>=0 && winparam <= 1 )
-	mSetFloat( PreStack::AngleComputer::sKeyWinParam(), winparam )
-    }
+		mSetFloat( PreStack::AngleComputer::sKeyWinParam(), winparam )
+	}
     }
     else if ( smoothtype == PreStack::AngleComputer::FFTFilter )
     {
@@ -353,6 +353,12 @@ void uiPreStackAttrib::calcTypSel( CallBacker* )
 
 void uiPreStackAttrib::angleTypSel( CallBacker* )
 {
+    if ( is2D() )
+    {
+	useanglefld_->setChecked( false );
+	useanglefld_->display( false );
+    }
+
     const bool useangle = useanglefld_->isChecked();
     anglecompgrp_->display( useangle );
     offsrgfld_->display( !useangle );

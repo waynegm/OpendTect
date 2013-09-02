@@ -36,7 +36,9 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #ifdef __win__
 #include "sys/utime.h"
+#include "Windows.h"
 #else
+#include "sys/stat.h"
 #include "utime.h"
 #endif
 
@@ -104,6 +106,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #define mCentralHeaderSize 46
 #define mEndOfDirHeaderSize 22
 
+#define mLDOSFileAttr 0
+#define mLUNIXFileAttr 2
 #define mVerNeedToExtract 45
 #define mDeflate 8
 #define mNoCompression 0
@@ -118,6 +122,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #define mLFnmLength 26
 #define mLExtraFldLength 28
 #define mLVerMadeBy 4
+#define mLOSMadeBy 5
 #define mLCRCCentral 16
 #define mLCompSizeCentral 20
 #define mLUnCompSizeCentral 24
@@ -139,7 +144,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #define mLSizeCentralDir 12
 #define mLOffsetCentralDir 16
 #define mLZipFileComntLength 20
+#define mSizeOneBytes 1
 #define mSizeTwoBytes 2
+#define mSizeThreeBytes 3
 #define mSizeFourBytes 4
 #define mSizeEightBytes 8
 #define mMaxChunkSize 10485760	    //10MB
@@ -158,7 +165,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #define mLZIP64CentralDirOffset 48
 #define mLZIP64CentralDirTotalEntry 32
 #define mZIP64Tag 1
-
+#define mIsError 0
+#define mIsFile 1
+#define mIsDirectory 2
+#define mIsLink 3
 #define mZDefaultMemoryLevel 9
 #define mMaxWindowBitForRawDeflate -15
 
@@ -177,6 +187,13 @@ static const char* rcsID mUsedVar = "$Id$";
     errormsg_ += mid; \
     errormsg_ += post; \
     return false;
+
+
+union FileAttr
+{
+    od_uint32 integer_;
+    char      bytes_[4];
+};
 
 
 ZipHandler::~ZipHandler()
@@ -248,18 +265,23 @@ bool ZipHandler::compressNextFile()
 
     int ret;
     ret = openStrmToRead( allfilenames_.get(curfileidx_) );
-    if ( ret == 0 )
+    switch( ret )
     {
-	osd_.close();
+    case mIsError: 
+        osd_.close();
 	return false;
-    }
-	
-    if ( ret == 2 )
-	ret = setLocalFileHeaderForDir();
-    else if ( ret == 1 )
-    {
-	ret = doZCompress();
+    case mIsFile:
+        ret = doZCompress();
 	isd_.close();
+        break;
+    case mIsDirectory:
+        ret = setLocalFileHeaderForDir();
+        break;
+    case mIsLink:
+        ret = setLocalFileHeaderForLink();
+        break;
+    default:
+        break;
     }
 
     if ( !ret )
@@ -276,14 +298,21 @@ bool ZipHandler::compressNextFile()
 int ZipHandler::openStrmToRead( const char* src )
 {
     srcfile_ = src;
+#ifndef __win__
+    if ( File::isLink(src) )
+    {
+        return mIsLink;
+    }
+#endif
+
     if ( File::isDirectory(src) )
-	return 2;
+	return mIsDirectory;
 
     if( !File::exists(src) )
     { 
 	errormsg_ = src;
 	errormsg_ += " does not exist.";
-	return 0;
+	return mIsError;
     }
 
     isd_ = StreamProvider( src ).makeIStream( true );
@@ -291,10 +320,10 @@ int ZipHandler::openStrmToRead( const char* src )
     { 
 	errormsg_ = "Unable to read from ";
 	errormsg_ += src;
-	return 0;
+	return mIsError;
     }
 
-    return 1;
+    return mIsFile;
 }
 
 
@@ -481,6 +510,7 @@ bool ZipHandler::setLocalFileHeader()
     if ( uncompfilesize_ > m32BitSizeLimit )
 	setZIP64Header();
 
+    osd_.ostrm->flush();
     return true;
 }
 
@@ -519,6 +549,58 @@ bool ZipHandler::setLocalFileHeaderForDir()
     if ( !*osd_.ostrm )
     { mWriteErr( destfile_ ) }
 
+    osd_.ostrm->flush();
+    return true;
+}
+
+
+bool ZipHandler::setLocalFileHeaderForLink()
+{
+    FilePath fnm( srcfile_ );
+    int p = fnm.nrLevels();
+    BufferString srcfnm = "";
+    for ( int idx=(curnrlevels_-1); idx<=(p-2); idx++ )
+    {
+	srcfnm.add( fnm.dir( idx ) );
+	srcfnm += "/";
+    }
+
+    srcfnm.add( fnm.fileName() );
+    srcfnmsize_ = ( od_uint16 ) srcfnm.size();
+    unsigned char headerbuff[1024];
+    mLocalFileHeaderSig ( headerbuff );
+    headerbuff[mLVerNeedToExtract] = mVerNeedToExtract;
+    for ( int idx=5; idx<10; idx++ )
+	headerbuff[idx] = '\0';
+
+    BufferString linkvalue = File::linkValue( srcfile_ );
+    od_uint32 linksize = linkvalue.size();
+    od_uint32 crc = 0;
+    crc = crc32(crc, mCast(Bytef*,linkvalue.buf()), linksize);
+    char* buf = 0;
+    const od_uint16 nullvalue = 0;
+    const od_uint16 dostime = timeInDosFormat( srcfile_ );
+    mInsertToCharBuff( headerbuff, dostime, mLLastModFTime, mSizeTwoBytes );
+    const od_uint16 dosdate= dateInDosFormat( srcfile_ );
+    mInsertToCharBuff( headerbuff, dosdate, mLLastModFDate, mSizeTwoBytes );
+    mInsertToCharBuff( headerbuff, crc, mLCRC32, mSizeFourBytes );
+    mInsertToCharBuff( headerbuff, linksize, mLCompSize, mSizeFourBytes );
+    mInsertToCharBuff( headerbuff, linksize, mLUnCompSize, mSizeFourBytes );
+    mInsertToCharBuff( headerbuff, srcfnmsize_, mLFnmLength, mSizeTwoBytes );
+    mInsertToCharBuff( headerbuff, nullvalue, mLExtraFldLength, mSizeTwoBytes );
+    osd_.ostrm->write( mCast(const char*,headerbuff), mHeaderSize );
+    if ( !*osd_.ostrm )
+    { mWriteErr( destfile_ ) }
+
+    osd_.ostrm->write( srcfnm.buf(), srcfnmsize_ );
+    if ( !*osd_.ostrm )
+    { mWriteErr( destfile_ ) }
+
+    osd_.ostrm->write( linkvalue.buf(), linksize );
+    if ( !*osd_.ostrm )
+    { mWriteErr( destfile_ ) }
+
+    osd_.ostrm->flush();
     return true;
 }
 
@@ -586,9 +668,16 @@ bool ZipHandler::setCentralDirHeader()
     char* buf;
     const od_uint32 nullvalue = 0;
     const od_uint32 zipversion = 63;	    //Zip version used is 6.3
+    od_uint16 os;
+#ifdef __win__
+    os = 0;                                 // 0 for windows
+#else
+    os = 3;                                 // 3 for UNIX
+#endif
 
     mCntrlDirHeaderSig( headerbuff );
-    mInsertToCharBuff( headerbuff, zipversion, mLVerMadeBy, mSizeTwoBytes );
+    mInsertToCharBuff( headerbuff, zipversion, mLVerMadeBy, mSizeOneBytes );
+    mInsertToCharBuff( headerbuff, os, mLOSMadeBy, mSizeOneBytes );
     mInsertToCharBuff( headerbuff, nullvalue, mLFileComntLength, 
 		       mSizeTwoBytes );
     mInsertToCharBuff( headerbuff, nullvalue, mLDiskNoStart, mSizeTwoBytes );
@@ -613,6 +702,10 @@ bool ZipHandler::setCentralDirHeader()
 	xtrafldlength = *(od_uint16*)( localheader + mLExtraFldLength );
 	readdest.istrm->read( mCast(char*,localheader+mHeaderSize),srcfnmsize_);
 	localheader[mHeaderSize + srcfnmsize_] = 0;
+        od_uint32 extattr = 0;
+        if (  index >= initialfilecount_ )
+            extattr = setExtFileAttr( index );
+
 	if ( offsetoflocalheader_ > m32BitSizeLimit || uncompfilesize_ > 
 			    m32BitSizeLimit || compfilesize_ > m32BitSizeLimit )
 	{
@@ -658,6 +751,7 @@ bool ZipHandler::setCentralDirHeader()
 			   mSizeFourBytes );
 	mInsertToCharBuff( headerbuff, xtrafldlength, mLExtraFldLengthCentral, 
 			   mSizeTwoBytes );
+	mInsertToCharBuff( headerbuff, extattr, mLExtFileAttr, mSizeFourBytes );
 	StrmOper::seek( *readdest.istrm, StrmOper::tell(*readdest.istrm) +
 					 compfilesize_ );
 	osd_.ostrm->write( mCast(char*,headerbuff), 
@@ -767,7 +861,36 @@ bool ZipHandler::setEndOfCentralDirHeader( od_int64 ptrlctn,
     if ( !*osd_.ostrm )
     { mWriteErr( destfile_ ) }
 
+    osd_.ostrm->flush();
     return true;
+}
+
+
+od_uint32 ZipHandler::setExtFileAttr( const od_uint32 index )
+{
+    char headerbuff[4];
+    char* buf;
+    union FileAttr fileattr;
+#ifdef __win__
+    fileattr.integer_ = GetFileAttributes ( allfilenames_.get(
+                                                     index-initialfilecount_) );
+    fileattr.bytes_[mLDOSFileAttr+1] = '\0';
+    fileattr.bytes_[mLUNIXFileAttr] = '\0';
+    fileattr.bytes_[mLUNIXFileAttr+1] = '\0';
+    return fileattr.integer_;
+#else
+    struct stat filestat;
+    int ret = lstat( allfilenames_.get(index-initialfilecount_), &filestat );
+    if ( ret<0 )
+        return 0;
+
+    mInsertToCharBuff( headerbuff, filestat.st_mode, 0, mSizeTwoBytes );
+    fileattr.bytes_[mLDOSFileAttr] = '\0';
+    fileattr.bytes_[mLDOSFileAttr+1] = '\0';
+    fileattr.bytes_[mLUNIXFileAttr] = headerbuff[0];
+    fileattr.bytes_[mLUNIXFileAttr+1] = headerbuff[1];
+    return fileattr.integer_;
+#endif
 }
 
 
@@ -1152,11 +1275,15 @@ bool ZipHandler::extractNextFile()
 {
 
     const int ret = readLocalFileHeader();
+    allfilenames_.add( destfile_ );
     if ( ret == 2 )
     {
 	curfileidx_++;
 	if ( curfileidx_ == cumulativefilecounts_.last() )
+        {
+            readAndSetFileAttr();
 	    isd_.close();
+        }
 
 	return true;
     }
@@ -1230,7 +1357,10 @@ bool ZipHandler::extractNextFile()
     setTimeDateModified( destfile_.buf(), lastmodtime_, lastmoddate_ );
     curfileidx_++;
     if ( curfileidx_ == cumulativefilecounts_.last() )
+    {
+        readAndSetFileAttr();
 	isd_.close();
+    }
 
     return true;
 }
@@ -1332,7 +1462,6 @@ bool ZipHandler::openStreamToWrite()
 	    pathonly += str[idx];
 	    pathonly += fp.dirSep( fp.Local ); 
 	}
-
     }
 
     if ( !File::exists( pathonly.buf() ) )
@@ -1428,6 +1557,63 @@ bool ZipHandler::doZUnCompress()
     pErrMsg( "ZLib not available" );
     return false;
 #endif
+}
+
+
+#define mCheckForSymLink \
+    getBitValue(fileattr.bytes_[1],7) && getBitValue(fileattr.bytes_[1],5)
+
+
+bool ZipHandler::readAndSetFileAttr()
+{
+    if ( offsetofcentraldir_ == 0 )
+    {
+	if ( !readEndOfCentralDirHeader() )
+	    return false;
+    }
+    
+    StrmOper::seek( *isd_.istrm, offsetofcentraldir_ );
+    od_int64 ptrlocation = StrmOper::tell( *isd_.istrm );
+    unsigned char headerbuff[1024];
+    union FileAttr fileattr;
+    for ( int index=0; index<allfilenames_.size(); index++ )
+    {
+	isd_.istrm->read( mCast(char*,headerbuff), mCentralHeaderSize );
+	headerbuff[mCentralHeaderSize] = '\0';
+#ifdef __win__
+        fileattr.bytes_[0] = headerbuff[mLExtFileAttr];
+        fileattr.bytes_[1] = '\0';
+        fileattr.bytes_[2] = '\0';
+        fileattr.bytes_[3] = '\0';
+        SetFileAttributes( allfilenames_.get(index), fileattr.integer_ );
+#else
+        fileattr.bytes_[0] = headerbuff[mLExtFileAttr+mLUNIXFileAttr];
+        fileattr.bytes_[1] = headerbuff[mLExtFileAttr+mLUNIXFileAttr+1];
+        fileattr.bytes_[2] = '\0';
+        fileattr.bytes_[3] = '\0';
+        if ( mCheckForSymLink )
+        {
+            StreamData readdest = StreamProvider(allfilenames_.get(index).buf())
+                                                           .makeIStream( true );
+            char linkbuff[1024];
+            readdest.istrm->read( linkbuff, 1023 );
+            linkbuff[readdest.istrm->gcount()] = '\0';
+            readdest.close();
+            File::remove( allfilenames_.get(index) );
+            File::createLink( linkbuff, allfilenames_.get(index) );
+        }
+        else
+            chmod( allfilenames_.get(index), fileattr.integer_ );
+#endif
+        ptrlocation = ptrlocation
+			+ *mCast( od_uint16*,headerbuff+mLFnmLengthCentral )
+			+ *mCast( od_uint16*,headerbuff+mLExtraFldLengthCentral)
+			+ *mCast( od_uint16*,headerbuff+mLFileComntLength )
+			+ mCentralHeaderSize;
+	StrmOper::seek( *isd_.istrm, ptrlocation );
+    }
+
+    return true;
 }
 
 

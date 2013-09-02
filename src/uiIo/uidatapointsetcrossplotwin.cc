@@ -235,13 +235,7 @@ void uiDataPointSetCrossPlotWin::handleAxisChg( uiDataPointSet::TColID xcol,
     plotter().setCols( uiPointSet().dColID(xcol),
 	    uiPointSet().dColID(ycol), uiPointSet().dColID(y2col) );
     setButtonStatus();
-    
-    if ( propdlg_ && propdlg_->poppedUp() )
-    {
-	delete propdlg_;
-	propdlg_ = 0;
-	editProps( 0 );
-    }
+    if ( propdlg_ ) { delete propdlg_; propdlg_ = 0; }
 }
 
 
@@ -582,6 +576,7 @@ void uiDataPointSetCrossPlotWin::grpChg( CallBacker* )
     if ( !grpfld_ ) return;
 
     plotter_.curgrp_ = grpfld_->currentItem();
+    plotter_.calcStats();
     plotter_.drawContent();
 }
 

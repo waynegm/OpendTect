@@ -35,9 +35,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ptrman.h"
 #include "settings.h"
 #include "survinfo.h"
-#include "SoAxes.h"
 #include "visaxes.h"
-#include "ViewportRegion.h"
 
 #include "uiobjbody.h"
 #include "viscamera.h"
@@ -59,7 +57,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <QTabletEvent>
 #include <QPainter>
-#include "SoPolygonSelect.h"
 
  
 #define col2f(rgb) float(col.rgb())/255

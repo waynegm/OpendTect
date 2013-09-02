@@ -35,7 +35,6 @@ namespace visBase
     class Material;
     class BoxDragger;
     class VolumeRenderScalarField;
-    class VolrenDisplay;
     class OrthogonalSlice;
 }
 
@@ -194,7 +193,9 @@ protected:
     visBase::Transformation*			voltrans_;
     visBase::BoxDragger*			boxdragger_;
     visBase::VolumeRenderScalarField*		scalarfield_;
+/* OSG_TODO: Replace VolrenDisplay with OSG equivalent
     visBase::VolrenDisplay*			volren_;
+*/
     ObjectSet<visBase::OrthogonalSlice>		slices_;
     ObjectSet<visBase::MarchingCubesSurface>	isosurfaces_;
     struct IsosurfaceSetting

@@ -19,8 +19,6 @@ ________________________________________________________________________
 
 class Color;
 
-class SoRandomTrackLineDragger;
-
 
 namespace visBase
 {
@@ -68,12 +66,13 @@ protected:
     				~RandomTrackDragger();
     void			triggerRightClick(const EventInfo* eventinfo);
 
-    static void			motionCB(void*,SoRandomTrackLineDragger*);
-    
+/* OSG-TODO: Replace with OSG based dragger manipulator
+    static void		motionCB(void*,SoRandomTrackLineDragger*);
+    SoRandomTrackLineDragger*	dragger_;
+*/    
     Notifier<RandomTrackDragger> rightclicknotifier_;
     const EventInfo*		rightclickeventinfo_;
 
-    SoRandomTrackLineDragger*	dragger_;
     const mVisTrans*		displaytrans_;
 
     static const char*		sKeyDraggerScale() { return "subDraggerScale"; }

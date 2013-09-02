@@ -12,8 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "iopar.h"
 #include "visdepthtabplanedragger.h"
 
-
-#include "VolumeViz/nodes/SoOrthoSlice.h"
+/* OSG-TODO: Port SoOrthoSlice slice_ to OSG if this class is prolongated */
 
 mCreateFactoryEntry( visBase::OrthogonalSlice );
 
@@ -22,7 +21,7 @@ namespace visBase
 
 OrthogonalSlice::OrthogonalSlice()
     : VisualObjectImpl( false )
-    , slice_(new SoOrthoSlice)
+//    , slice_(new SoOrthoSlice)
     , dragger_(DepthTabPlaneDragger::create())
     , motion(this)
     , xdatasz_(0), ydatasz_(0), zdatasz_(0)
@@ -33,9 +32,9 @@ OrthogonalSlice::OrthogonalSlice()
     dragger_->motion.notify( mCB(this,OrthogonalSlice,draggerMovementCB) );
     addChild( dragger_->getInventorNode() );
     
-    slice_->alphaUse = SoOrthoSlice::ALPHA_AS_IS;
+//    slice_->alphaUse = SoOrthoSlice::ALPHA_AS_IS;
     
-    addChild( slice_ );
+//    addChild( slice_ );
 }
 
 
@@ -79,19 +78,21 @@ visBase::DepthTabPlaneDragger* OrthogonalSlice::getDragger() const
 
 int OrthogonalSlice::getDim() const
 {
-    return slice_->axis.getValue();
+    return 0;
+//    return slice_->axis.getValue();
 }
 
 
 void OrthogonalSlice::setDim( int dim )
 {
+/*
     if ( !dim )
 	slice_->axis = SoOrthoSlice::X;
     else if ( dim==1 )
 	slice_->axis = SoOrthoSlice::Y;
     else
 	slice_->axis = SoOrthoSlice::Z;
-
+*/
     dragger_->setDim( dim );
     draggerMovementCB(0);
 }
@@ -109,10 +110,15 @@ float OrthogonalSlice::getPosition() const
 
 
 void OrthogonalSlice::setSliceNr( int nr )
-{ slice_->sliceNumber = nr; }
+{
+// slice_->sliceNumber = nr;
+}
 
 int  OrthogonalSlice::getSliceNr() const
-{ return slice_->sliceNumber.getValue(); }
+{
+    return 0;
+//    return slice_->sliceNumber.getValue();
+}
 
 
 NotifierAccess& OrthogonalSlice::dragStart()

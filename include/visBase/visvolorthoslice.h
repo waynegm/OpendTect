@@ -16,8 +16,6 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "position.h"
 
-class SoOrthoSlice;
-
 
 namespace visBase
 {
@@ -62,7 +60,9 @@ protected:
     void			draggerMovementCB(CallBacker*);
     
     visBase::DepthTabPlaneDragger* dragger_;
+/* OSG-TODO: Replace with  OSG equivalent if class is prolongated
     SoOrthoSlice*		slice_;
+*/
     int				xdatasz_, ydatasz_, zdatasz_;
 
     static const char*		dimstr();

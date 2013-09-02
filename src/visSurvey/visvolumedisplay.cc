@@ -22,7 +22,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistransmgr.h"
 #include "visvolorthoslice.h"
 #include "visvolrenscalarfield.h"
-#include "visvolren.h"
 
 #include "array3dfloodfill.h"
 #include "arrayndimpl.h"
@@ -43,6 +42,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "zaxistransformer.h"
 
 #include <fstream>
+
+/* OSG-TODO: Port VolrenDisplay volren_ and set of OrthogonalSlice slices_
+   to OSG in case of prolongation. */
+
 
 #define mVisMCSurf visBase::MarchingCubesSurface
 mCreateFactoryEntry( visSurvey::VolumeDisplay );
@@ -90,7 +93,7 @@ VolumeDisplay::VolumeDisplay()
     , boxdragger_(visBase::BoxDragger::create())
     , isinited_(0)
     , scalarfield_(0)
-    , volren_(0)
+//    , volren_(0)
     , as_(*new Attrib::SelSpec)
     , cache_(0)
     , cacheid_(DataPack::cNoID())
@@ -300,7 +303,7 @@ void VolumeDisplay::getChildren( TypeSet<int>&res ) const
 	res += slices_[idx]->id();
     for ( int idx=0; idx<isosurfaces_.size(); idx++ )
 	res += isosurfaces_[idx]->id();
-    if ( volren_ ) res += volren_->id();
+//    if ( volren_ ) res += volren_->id();
 }
 
 
@@ -363,6 +366,7 @@ int VolumeDisplay::addSlice( int dim )
 
 void VolumeDisplay::removeChild( int displayid )
 {
+/*
     if ( volren_ && displayid==volren_->id() )
     {
 	VisualObjectImpl::removeChild( volren_->osgNode() );
@@ -370,6 +374,7 @@ void VolumeDisplay::removeChild( int displayid )
 	volren_ = 0;
 	return;
     }
+*/
 
     for ( int idx=0; idx<slices_.size(); idx++ )
     {
@@ -399,6 +404,7 @@ void VolumeDisplay::removeChild( int displayid )
 
 void VolumeDisplay::showVolRen( bool yn )
 {
+/*
     if ( yn && !volren_ )
     {
 	volren_ = visBase::VolrenDisplay::create();
@@ -409,11 +415,15 @@ void VolumeDisplay::showVolRen( bool yn )
     }
 
     if ( volren_ ) volren_->turnOn( yn );
+*/
 }
 
 
 bool VolumeDisplay::isVolRenShown() const
-{ return volren_ && volren_->isOn(); }
+{
+    return false;
+//    return volren_ && volren_->isOn();
+}
 
 
 float VolumeDisplay::defaultIsoValue() const
@@ -448,7 +458,10 @@ int VolumeDisplay::addIsoSurface( TaskRunner* tr, bool updateisosurface )
 
 
 int VolumeDisplay::volRenID() const
-{ return volren_ ? volren_->id() : -1; }
+{
+    return -1;
+//    return volren_ ? volren_->id() : -1;
+}
 
     
 void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
@@ -1216,9 +1229,10 @@ int VolumeDisplay::usePar( const IOPar& par )
     {
 	RefMan<visBase::DataObject> dataobj = visBase::DM().getObject( volid );
 	if ( !dataobj ) return 0;
+/*
 	mDynamicCastGet(visBase::VolrenDisplay*,vr,dataobj.ptr());
 	if ( !vr ) return -1;
-	if ( volren_ )
+/*
 	{
 	    if ( childIndex(volren_->osgNode())!=-1 )
 		VisualObjectImpl::removeChild(volren_->osgNode());
@@ -1227,6 +1241,7 @@ int VolumeDisplay::usePar( const IOPar& par )
 	volren_ = vr;
 	volren_->ref();
 	addChild( volren_->osgNode() );
+*/
     }
 
     while ( slices_.size() )

@@ -115,7 +115,19 @@ DataPack::ID ExternalAttribCalculator::createAttrib( const CubeSampling& cs,
     }
 
     ChainExecutor executor( *chain_ );
-    if ( !executor.setCalculationScope(cs) ) 
+    RefMan<const Survey::Geometry> geometry = Survey::GM().getGeometry( cs.hrg.geomid_ );
+    if ( !geometry )
+    {
+	errmsg_ = "Could not load geometry";
+	return DataPack::cNoID();
+    }
+    
+    const StepInterval<float> geometryzrg = geometry->zRange();
+   
+    StepInterval<int> zrg( geometryzrg.nearestIndex( cs.zrg.start ),
+			   geometryzrg.nearestIndex( cs.zrg.stop ),
+			   mNINT32(cs.zrg.step/geometryzrg.step) );
+    if ( !executor.setCalculationScope( cs.hrg, zrg ) )
     {
 	errmsg_ = "Cannot calculate at this location";
 	return DataPack::cNoID();

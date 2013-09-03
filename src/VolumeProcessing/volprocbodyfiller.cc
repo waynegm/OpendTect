@@ -213,22 +213,11 @@ bool BodyFiller::needsInput() const
 { return true; }
 
 
-void BodyFiller::setOutput( Attrib::DataCubes* ni )
-{
-    if ( output_ ) 
-	output_->unRef();
-
-    output_ = ni;
-    if ( output_ ) output_->ref();
-}
-
-
 void BodyFiller::fillPar( IOPar& par ) const
 {
     Step::fillPar( par );
     par.set( sKeyMultiID(), mid_ );
     par.set( sKeyInsideOutsideValue(), insideval_, outsideval_ );
-    par.setYN( sKeyEnabled(), enabled_ );
 }
 
 
@@ -245,9 +234,6 @@ bool BodyFiller::usePar( const IOPar& par )
     float inv, outv;
     if ( par.get(sKeyInsideOutsideValue(), inv, outv ) )
 	setInsideOutsideValue( inv, outv);
-
-    if ( !par.getYN(sKeyEnabled(), enabled_) )
-	return false;
 
     return true;
 }

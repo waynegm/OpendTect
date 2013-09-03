@@ -68,10 +68,9 @@ bool BatchProgram::go( std::ostream& strm )
 
     const float zstep = chain->getZStep();
     HorSampling inputhrg = cs.hrg;
-    StepInterval<int> outputzrg( mNINT32(cs.zrg.start/zstep),
+    const StepInterval<int> outputzrg( mNINT32(cs.zrg.start/zstep),
 				 mNINT32(cs.zrg.stop/zstep),
-				 mNINT32(cs.zrg.step/zstep) );
-    if ( outputzrg.step<1 ) outputzrg.step = 1;
+				 mMIN(mNINT32(cs.zrg.step/zstep),1) );
     StepInterval<int> inputzrg = outputzrg;
 
     od_uint64 nrbytes = 0;
@@ -111,7 +110,7 @@ bool BatchProgram::go( std::ostream& strm )
 
     strm << "Allocating " << getBytesString( nrbytes ) << " memory\n";
     
-    if ( !pce->setCalculationScope(cs) )
+    if ( !pce->setCalculationScope(cs.hrg,outputzrg) )
     {
 	strm << "Could not set calculation scope!";
 	return false;

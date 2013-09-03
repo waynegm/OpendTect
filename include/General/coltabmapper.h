@@ -236,15 +236,15 @@ bool MapperTask<T>::doWork( od_int64 start, od_int64 stop, int )
 	T res;
 	const bool isudf = mIsUdf(input);
 	if ( isudf )
-	    res = mUndefColIdx;
+	    res = (T) mUndefColIdx;
 	else
-	    res = ColTab::Mapper::snappedPosition( &mapper_,input,
+	    res = (T) ColTab::Mapper::snappedPosition( &mapper_,input,
 						    nrsteps_, mUndefColIdx );
 
 	*valresult = res;
 	if ( udfresult )
 	{
-	    *udfresult = isudf ? 0 : mUndefColIdx;
+	    *udfresult = (T) (isudf ? 0 : mUndefColIdx);
 	    udfresult += mappedudfspacing_;
 	}
 

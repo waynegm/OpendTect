@@ -6,7 +6,6 @@
 #_______________________________________________________________________________
 
 SET(OD_MODULE_DEPS uiODMain)
-SET(OD_USECOIN 1)
 SET(OD_IS_PLUGIN yes)
 SET(OD_MODULE_SOURCES
 	grav.cc

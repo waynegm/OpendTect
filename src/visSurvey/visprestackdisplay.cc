@@ -34,6 +34,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "visplanedatadisplay.h"
 #include "visseis2ddisplay.h"
+
 #include <math.h>
 
 mCreateFactoryEntry( visSurvey::PreStackDisplay );
@@ -48,7 +49,6 @@ namespace visSurvey
 
 PreStackDisplay::PreStackDisplay()
     : VisualObjectImpl( true )
-    //, draggerrect_( visBase::FaceSet::create() )
     , planedragger_( visBase::DepthTabPlaneDragger::create() )	
     , flatviewer_( visBase::FlatViewer::create() )
     , draggermoving( this )
@@ -80,60 +80,39 @@ PreStackDisplay::PreStackDisplay()
     flatviewer_->getMaterial()->setAmbience( 0.8 );
     flatviewer_->appearance().ddpars_.vd_.mappersetup_.symmidval_ = 0;
     flatviewer_->dataChange.notify( mCB(this,PreStackDisplay,dataChangedCB) );
-    addChild( flatviewer_->getInventorNode() );
+    addChild( flatviewer_->osgNode() );
       
     planedragger_->ref();
     planedragger_->removeScaleTabs();
     planedragger_->motion.notify( mCB(this,PreStackDisplay,draggerMotion) );
     planedragger_->finished.notify( mCB(this,PreStackDisplay,finishedCB) );
-    addChild( planedragger_->getInventorNode() );
-    /*
-    draggerrect_->ref();
-    draggerrect_->removeSwitch();
-    draggerrect_->setVertexOrdering( 
-	    visBase::VertexShape::cCounterClockWiseVertexOrdering() );
-    draggerrect_->setShapeType( 
-	    visBase::VertexShape::cUnknownShapeType() );
-    draggerrect_->getCoordinates()->addPos( Coord3( -1,-1,0 ) );
-    draggerrect_->getCoordinates()->addPos( Coord3( 1,-1,0 ) );
-    draggerrect_->getCoordinates()->addPos( Coord3( 1,1,0 ) );
-    draggerrect_->getCoordinates()->addPos( Coord3( -1,1,0 ) );
-    draggerrect_->setCoordIndex( 0, 0 );
-    draggerrect_->setCoordIndex( 1, 1 );
-    draggerrect_->setCoordIndex( 2, 2 );
-    draggerrect_->setCoordIndex( 3, 3 );
-    draggerrect_->setCoordIndex( 4, -1 );
-
+    addChild( planedragger_->osgNode() );
+  
     draggermaterial_ = new visBase::Material;
     draggermaterial_->ref();
-    draggerrect_->setMaterial( draggermaterial_ );
     draggermaterial_->setTransparency( 0.5 ); 
 
-    planedragger_->setOwnShape( draggerrect_->getInventorNode() );
-    
-    */
 }
 
 
 PreStackDisplay::~PreStackDisplay()
 {
-    //draggerrect_->unRef();
     draggermaterial_->unRef();
 
     flatviewer_->dataChange.remove( mCB(this,PreStackDisplay,dataChangedCB) );
     flatviewer_->unRef();
     
+    if ( planedragger_ )
+    { 
+	planedragger_->motion.remove(
+	    mCB(this,PreStackDisplay,draggerMotion) );
+	planedragger_->finished.remove(
+	    mCB(this,PreStackDisplay,finishedCB) );
+	planedragger_->unRef();
+    }
+
     if ( section_ )
     {
-	if ( planedragger_ )
-	{ 
-	    planedragger_->motion.remove(
-		mCB(this,PreStackDisplay,draggerMotion) );
-	    planedragger_->finished.remove(
-		mCB(this,PreStackDisplay,finishedCB) );
-	    planedragger_->unRef();
-	}
-
     	section_->getMovementNotifier()->remove( 
 		mCB(this,PreStackDisplay,sectionMovedCB) );
     	section_->unRef();
@@ -536,6 +515,7 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
     const Coord3 c10( stoppos, zrg_.start ); 
 
     flatviewer_->setPosition( c00, c01, c10, c11 );
+
     if ( section_ )
     {
 	bool isinline = 
@@ -564,6 +544,7 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
 	    ylim.widen( mBigNumber );
 
 	planedragger_->setSpaceLimits( xlim, ylim, SI().zRange( true ) );    
+	
     }
     
     draggermaterial_->setTransparency( 1 );

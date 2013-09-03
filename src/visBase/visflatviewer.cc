@@ -24,6 +24,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vismaterial.h"
 #include "vispolyline.h"
 #include "vistexturechannels.h"
+#include "vistexturerect.h"
 #include "vistexturechannel2rgba.h"
 #include "envvars.h"
 #include "settings.h"
@@ -42,10 +43,10 @@ FlatViewer::FlatViewer()
     , dataChange( this )
     , channels_( TextureChannels::create() )
     , channel2rgba_( ColTabTextureChannel2RGBA::create() )
-//    , rectangle_( SplitTexture2Rectangle::create() )
+    , rectangle_( visBase::TextureRectangle::create() )
     , x1gridlines_( visBase::IndexedPolyLine::create() )
     , x2gridlines_( visBase::IndexedPolyLine::create() )
-    , resolution_( 0 )							
+    , resolution_( 0 )	
 {
     int resolutionfromsettings;
 
@@ -77,7 +78,6 @@ FlatViewer::FlatViewer()
     channel2rgba_->allowShading( true );
 
     channels_->ref();
-    addChild( channels_->osgNode() );
     channels_->setChannels2RGBA( channel2rgba_ );
 
     if ( channels_->nrChannels()<1 )
@@ -86,8 +86,8 @@ FlatViewer::FlatViewer()
     	channel2rgba_->setEnabled( 0, true );	
     }
 /*
-    rectangle_->ref();
     rectangle_->setMaterial( 0 );
+    rectangle_->setTextureChannels( channels_ );
     addChild( rectangle_->osgNode() );
 */
     x1gridlines_->ref();
@@ -105,7 +105,7 @@ FlatViewer::~FlatViewer()
 {
     channels_->unRef();
     channel2rgba_->unRef();
-//    rectangle_->unRef();
+    rectangle_->unRef();
     x2gridlines_->unRef();
     x1gridlines_->unRef();
 }
@@ -172,7 +172,6 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 
 		    appearance().ddpars_.vd_.ctab_ =
 			channel2rgba_->getSequence(0)->name();
-//		    rectangle_->setOriginalTextureSize( rowsz, colsz );
 		    channels_->turnOn( appearance().ddpars_.vd_.show_ );
 
 		    dataChange.trigger();
@@ -207,7 +206,9 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 void FlatViewer::setPosition( const Coord3& c00, const Coord3& c01, 
 			      const Coord3& c10, const Coord3& c11 )
 {
-//    rectangle_->setPosition( c00, c01, c10, c11 );
+    rectangle_->setCenter( ( c00 + c01 + c10 + c11 )/4 );
+    rectangle_->setWidth ( c11 - c00 );
+    rectangle_->swapTextureAxes();
 
     c00_ = c00;
     c01_ = c01;
@@ -365,5 +366,11 @@ BufferString FlatViewer::getResolutionName( int res ) const
 }
 
 
+void FlatViewer::setDisplayTransformation( const mVisTrans* trans )
+{
+   if ( rectangle_ )
+    rectangle_->setDisplayTransformation( trans );
+
+}
 
 }; // Namespace

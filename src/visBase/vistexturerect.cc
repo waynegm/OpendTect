@@ -25,6 +25,7 @@ using namespace visBase;
 TextureRectangle::TextureRectangle()
     : VisualObjectImpl( false )
     , textureplane_( new osgGeo::TexturePlaneNode )
+    , displaytrans_( 0 )
 {
     textureplane_->ref();
     addChild( textureplane_ );
@@ -118,9 +119,14 @@ bool TextureRectangle::areTextureAxesSwapped() const
 
 void TextureRectangle::setDisplayTransformation( const mVisTrans* tr )
 {
+    if ( tr== displaytrans_ )
+	return;
+
     const Coord3 center = getCenter();
     const Coord3 width = getWidth();
+
     displaytrans_ = tr;
+
     setCenter( center );
     setWidth( width );
 }

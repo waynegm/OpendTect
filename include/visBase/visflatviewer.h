@@ -22,7 +22,7 @@ namespace visBase
 class IndexedPolyLine;    
 class TextureChannels;
 class ColTabTextureChannel2RGBA;
-class SplitTexture2Rectangle;
+class TextureRectangle;
 
 /*!Implementation of FlatViewer::Viewer in 3D. */
 
@@ -58,6 +58,7 @@ public:
     void			addAuxData(FlatView::AuxData* a) {}
     FlatView::AuxData*		removeAuxData(FlatView::AuxData* a) { return a; }
     FlatView::AuxData*		removeAuxData(int idx) { return 0; }
+    void			setDisplayTransformation(const mVisTrans*);
 
 protected:
     				~FlatViewer();
@@ -65,10 +66,7 @@ protected:
     void			updateGridLines(bool x1);
     TextureChannels*		channels_;
     ColTabTextureChannel2RGBA*	channel2rgba_;
-/* OSG-TODO: Replace by TextureRectangle class
-    SplitTexture2Rectangle* 	rectangle_;
-*/
-
+    RefMan<visBase::TextureRectangle>	rectangle_;
     visBase::IndexedPolyLine*	x1gridlines_;
     visBase::IndexedPolyLine*	x2gridlines_;
 

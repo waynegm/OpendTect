@@ -123,7 +123,7 @@ bool Sower::activate( const Color& color, const visBase::EventInfo& eventinfo,
     if ( mode_ != Idle )
 	mReturnHandled( false );
 
-    Scene* scene = STM().currentScene();
+    //Scene* scene = STM().currentScene();
  /*   if ( scene && scene->getPolySelection()->getSelectionType() !=
 	    					visBase::PolygonSelection::Off )
 	mReturnHandled( false );*/

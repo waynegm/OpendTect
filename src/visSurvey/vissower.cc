@@ -49,6 +49,7 @@ Sower::Sower( const visBase::VisualObjectImpl* editobj )
 {
     sowingline_->ref();
     sowingline_->setMaterial( new visBase::Material );
+    addChild( sowingline_->osgNode() );
     reInitSettings();
 }
 
@@ -94,7 +95,13 @@ void Sower::intersow( bool yn )
 
 void Sower::setDisplayTransformation( const mVisTrans* transformation )
 {
+    if ( transformation_ )
+	transformation_->unRef();
+
     transformation_ = transformation;
+    if ( transformation_ )
+	transformation_->ref();
+    
     sowingline_->setDisplayTransformation( transformation );
 }
 
@@ -116,8 +123,8 @@ bool Sower::activate( const Color& color, const visBase::EventInfo& eventinfo,
     if ( mode_ != Idle )
 	mReturnHandled( false );
 
-  /*  Scene* scene = STM().currentScene();
-     if ( scene && scene->getPolySelection()->getSelectionType() !=
+    Scene* scene = STM().currentScene();
+ /*   if ( scene && scene->getPolySelection()->getSelectionType() !=
 	    					visBase::PolygonSelection::Off )
 	mReturnHandled( false );*/
 
@@ -152,7 +159,6 @@ bool Sower::activate( const Color& color, const visBase::EventInfo& eventinfo,
 	mode_ = Idle;
 	mReturnHandled( false );
     }
-
     sowingline_->getMaterial()->setColor( color );
     sowingline_->turnOn( true );
 
@@ -327,13 +333,14 @@ bool Sower::acceptMouse( const visBase::EventInfo& eventinfo )
 
 	linelost_ = false;
 	sowingline_->addPoint( furrowpos );
-	sowingline_->dirtyCoordinates();
-
 
 	if ( !sz )
 	    singleseeded_ = true;
 	else if ( eventinfo.mousepos.distTo(eventlist_[0]->mousepos) > 5 )
+	{
 	    singleseeded_ = false;
+	    sowingline_->dirtyCoordinates();
+	}
 
 	eventlist_ += new visBase::EventInfo( eventinfo );
 	mousecoords_ += eventinfo.mousepos;
@@ -445,8 +452,6 @@ void Sower::reset()
     mousecoords_.erase();
 
     mode_ = Idle;
-
-    removeChild( sowingline_->osgNode() );
 }
 
 
@@ -490,7 +495,6 @@ bool Sower::acceptTablet( const visBase::EventInfo& eventinfo )
     if ( !pid.isUdf() && mode_==Furrowing && singleseeded_ )
     {
 	sowingline_->turnOn( false );
-	removeChild( sowingline_->osgNode() );
     }
 
     return acceptMouse( eventinfo );

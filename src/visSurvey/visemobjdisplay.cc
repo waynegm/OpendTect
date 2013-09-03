@@ -69,7 +69,7 @@ EMObjectDisplay::EMObjectDisplay()
     drawstyle_->ref();
     addNodeState( drawstyle_ );
     
-    LineStyle defls; defls.width_ = 2;
+    LineStyle defls; defls.width_ = 4;
     drawstyle_->setLineStyle( defls );
 
     getMaterial()->setAmbience( 0.8 );
@@ -81,6 +81,7 @@ EMObjectDisplay::~EMObjectDisplay()
     if ( channel2rgba_ ) channel2rgba_->unRef();
     channel2rgba_ = 0;
 
+    removeNodeState( drawstyle_ );
     drawstyle_->unRef();
     drawstyle_ = 0;
 
@@ -94,6 +95,12 @@ EMObjectDisplay::~EMObjectDisplay()
 	pErrMsg("You have not called removeEMStuff from"
 		"inheriting object's constructor." );
 	removeEMStuff(); //Lets hope for the best.
+    }
+
+    for ( int idx= 0; idx < posattribmarkers_.size(); idx++ )
+    {
+	removeChild( posattribmarkers_[idx]->osgNode() );
+	posattribmarkers_.removeSingle(idx)->unRef();
     }
 
 }
@@ -209,6 +216,7 @@ void EMObjectDisplay::removeEMStuff()
 
     if ( editor_ )
     {
+	removeChild( editor_->osgNode() );
 	editor_->unRef();
 	editor_ = 0;
     }
@@ -635,6 +643,8 @@ void EMObjectDisplay::updatePosAttrib( int attrib )
 	emobject_->getPosAttrMarkerStyle(attrib).color_ );
     markerset->setMarkerStyle( emobject_->getPosAttrMarkerStyle(attrib) );
     markerset->setDisplayTransformation(transformation_);
+    markerset->setScreenSize( (float) 3* lineStyle()->width_ );
+    markerset->setMaximumScale( (float) 10*lineStyle()->width_ );
 
     const TypeSet<EM::PosID>* pids = emobject_->getPosAttribList(attrib);
 

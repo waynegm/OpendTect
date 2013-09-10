@@ -47,13 +47,6 @@ public:
     bool			canInputAndOutputBeSame() const { return true; }
     bool			needsFullVolume() const		{ return false;}
 	
-    void			setOutput(Attrib::DataCubes*);
-    void			setOutput( Attrib::DataCubes* ad,
-					    const StepInterval<int>&,
-					    const StepInterval<int>&,
-					    const StepInterval<int>& )
-				{ return setOutput(ad); }
-
     float			getInsideValue()  { return insideval_; }
     float			getOutsideValue() { return outsideval_; } 
     void			setInsideOutsideValue(const float inside, 

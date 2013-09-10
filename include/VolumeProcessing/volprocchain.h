@@ -33,9 +33,99 @@ template <class T> class ValueSeries;
 namespace VolProc
 {
 
-class Step;
+class Chain;
 class StepExecutor;
 class StepTask;
+    
+/*!
+ \brief An algorithm/calculation/transformation that takes one scalar volume as
+ input, processes it, and puts the output in another volume.
+ */
+
+mExpClass(VolumeProcessing) Step
+{
+public:
+				typedef int ID;
+				typedef int SlotID;
+    
+				mDefineFactoryInClass( Step, factory );
+    virtual			~Step();
+    
+    static ID			cUndefID()		{ return mUdf(int); }
+    static SlotID		cUndefSlotID()		{ return mUdf(int); }
+    ID				getID() const		{ return id_; }
+    
+    Chain&			getChain()		{ return *chain_; }
+    void			setChain(Chain&);
+    
+    virtual const char*		userName() const;
+    virtual void		setUserName(const char* nm);
+    
+    virtual bool		needsInput() const		= 0;
+    virtual int			getNrInputs() const		{ return 1; }
+    virtual SlotID		getInputSlotID(int idx) const;
+    virtual int			getNrOutputs() const		{ return 1; }
+    virtual SlotID		getOutputSlotID(int idx) const;
+    bool			validInputSlotID(SlotID) const;
+    bool			validOutputSlotID(SlotID) const;
+
+
+    virtual HorSampling		getInputHRg(const HorSampling&) const;
+				/*!<When computing HorSampling, how
+				 big input is needed? */
+    virtual StepInterval<int>	getInputZRg(const StepInterval<int>&) const;
+				/*!<When computing HorSampling, how
+				 big input is needed?*/
+    
+    virtual void		setInput(SlotID,const Attrib::DataCubes*);
+    virtual void		setOutput(Attrib::DataCubes*,
+				      const HorSampling&,
+				      const StepInterval<int>&);
+    
+    int				getOutputIdx(SlotID) const;
+    void			enableOutput(SlotID);
+    
+    virtual bool		canInputAndOutputBeSame() const { return false;}
+    virtual bool		needsFullVolume() const { return true; }
+    const Attrib::DataCubes*	getOutput() const	{ return output_; }
+    Attrib::DataCubes*		getOutput()		{ return output_; }
+    
+    virtual const VelocityDesc*	getVelDesc() const	{ return 0; }
+    
+    virtual bool		areSamplesIndependent() const { return true; }
+				/*!<returns whether samples in the output
+				 are independent from each other.*/
+    
+    virtual Task*		createTask();
+    
+    virtual void		fillPar(IOPar&) const;
+    virtual bool		usePar(const IOPar&);
+    
+    virtual void		releaseData();
+    
+    virtual const char*		errMsg() const { return 0; }
+    
+protected:
+				Step();
+    
+    friend		class BinIDWiseTask;
+    virtual bool	prefersBinIDWise() const		{ return false;}
+    virtual bool	computeBinID(const BinID&,int threadid)	{ return false;}
+    virtual bool	prepareComp(int nrthreads)		{ return true;}
+    
+    Chain*			chain_;
+    
+    Attrib::DataCubes*		output_;
+    const Attrib::DataCubes*	input_;
+    BufferString		username_;
+    ID				id_;
+    
+    HorSampling			hrg_;
+    StepInterval<int>		zrg_;
+    TypeSet<SlotID>		outputslotids_;
+};
+
+
 
 /*!
 \brief A chain of Steps that can be applied to a volume of scalars.
@@ -45,7 +135,48 @@ mExpClass(VolumeProcessing) Chain
 { mRefCountImpl(Chain);
 public:
     				Chain();
+    class Connection
+    {
+    public:
+				Connection( Step::ID outpstep=Step::cUndefID(),
+				    Step::SlotID outpslot=Step::cUndefSlotID(),
+				    Step::ID inpstep=Step::cUndefID(),
+				    Step::SlotID inpslot=Step::cUndefSlotID());
+	
+	bool			isUdf() const;
+	bool			operator==(const Connection&) const;
+	bool			operator!=(const Connection&) const;
+	
+	void			fillPar(IOPar&,const char* key) const;
+	bool			usePar(const IOPar&,const char* key);
 
+	Step::ID		outputstepid_;
+	Step::SlotID		outputslotid_;
+	Step::ID		inputstepid_;
+	Step::SlotID		inputslotid_;
+	
+    };
+    
+    class Web
+    {
+    public:
+	bool			addConnection(const Connection&);
+	void			removeConnection(const Connection&);
+	void			getConnections(Step::ID,bool input,
+					       TypeSet<Connection>&) const;
+				/*!Gets all connection that has step as either
+				   input or output. */
+	
+	TypeSet<Connection>&		getConnections()	{ return connections_; }
+	const TypeSet<Connection>&	getConnections() const { return connections_; }
+    private:
+	TypeSet<Connection>	connections_;
+    };
+    
+    bool			addConnection(const Connection&);
+    void			removeConnection(const Connection&);
+    const Web&			getConnections() const	{ return connections_; }
+    
     void			setZStep( float z, bool zist )
 				{ zstep_=z; zist_ = zist; }
     float			getZStep() const	{ return zstep_; }
@@ -53,117 +184,56 @@ public:
 
     int				nrSteps() const; 
     Step*			getStep(int);
+    Step*			getStepFromID(Step::ID);
+    const Step*			getStepFromID(Step::ID) const;
     int				indexOf(const Step*) const;
     void			addStep(Step*);
     void			insertStep(int,Step*);
     void			swapSteps(int,int);
     void			removeStep(int);
+    const ObjectSet<Step>&	getSteps() const	{ return steps_; }
+    
+    bool			setOutputSlot(Step::ID,Step::SlotID) const;
 
     const VelocityDesc*		getVelDesc() const;
 
     void			fillPar(IOPar&) const;
     bool			usePar(const IOPar&);
 
+    bool			setOutputSlot(Step::ID,Step::SlotID);
     void			setStorageID(const MultiID& mid);
     const MultiID&		storageID() const { return storageid_; }
 
     bool			areSamplesIndependent() const;
     bool			needsFullVolume() const;
-
     const char*			errMsg() const;
 
-protected:
+    Step::ID			getNewStepID() { return freeid_++; }
+    
+private:
+    friend			class ChainExecutor;
+    
+    bool			validConnection(const Connection&) const;
 
-    static const char*		sKeyNrSteps()	{ return "Nr Steps"; }
-    static const char*		sKeyStepType()	{ return "Type"; }
+    static const char*		sKeyNrSteps()	    { return "Nr Steps"; }
+    static const char*		sKeyStepType()	    { return "Type"; }
+    static const char*		sKeyNrConnections() { return "Nr Connections"; }
+    static const char*		sKeyConnection(int idx,BufferString&);
+    
+    Step::ID			outputstepid_;
+    Step::SlotID		outputslotid_;
+    
     MultiID			storageid_;
     ObjectSet<Step>		steps_;
+    Web				connections_;
 
     float			zstep_;
     bool			zist_;
 
     BufferString		errmsg_;
+    Threads::Atomic<int>	freeid_;
 };
 
-
-/*!
-\brief An algorithm/calculation/transformation that takes one scalar volume as
-input, processes it, and puts the output in another volume.
-*/
-
-mExpClass(VolumeProcessing) Step
-{
-public:
-				mDefineFactoryInClass( Step, factory );
-    virtual			~Step();
-
-    Chain&			getChain() { return *chain_; }
-    void			setChain(Chain& c) { chain_ = &c; }
-
-    virtual const char*		userName() const;
-    virtual void		setUserName(const char* nm);
-
-    void			enable(bool yn);
-    bool			enabled() const;
-
-    virtual bool		needsInput() const		= 0;
-    				/*!<When computing HorSampling, do I need
-				    the input? */
-    virtual HorSampling		getInputHRg(const HorSampling&) const;
-    				/*!<When computing HorSampling, how
-				    big input is needed? */
-    virtual StepInterval<int>	getInputZRg(const StepInterval<int>&) const;
-    				/*!<When computing HorSampling, how
-				    big input is needed?*/
-
-    virtual bool		setInput(const Attrib::DataCubes*);
-    				/*!<returns true if it wants to keep the data.*/
-    virtual void		setOutput(Attrib::DataCubes*,
-	    			    const StepInterval<int>& inlrg,
-				    const StepInterval<int>& crlrg,
-				    const StepInterval<int>& zrg);
-
-    virtual bool		canInputAndOutputBeSame() const { return false;}
-    virtual bool		needsFullVolume() const { return true; }
-    const Attrib::DataCubes*	getOutput() const	{ return output_; }
-    Attrib::DataCubes*		getOutput()		{ return output_; }
-
-    virtual const VelocityDesc*	getVelDesc() const	{ return 0; }
-
-    virtual bool		areSamplesIndependent() const { return true; }
-				/*!<returns whether samples in the output
-				    are independent from each other.*/
-
-    virtual Task*		createTask();
-
-    virtual void		fillPar(IOPar&) const;
-    virtual bool		usePar(const IOPar&);
-
-    virtual void		releaseData();
-
-    virtual const char*		errMsg() const { return 0; }
-
-protected:
-				Step();
-
-    friend		class BinIDWiseTask;
-    virtual bool	prefersBinIDWise() const		{ return false;}
-    virtual bool	computeBinID(const BinID&,int threadid)	{ return false;}
-    virtual bool	prepareComp(int nrthreads)		{ return true;}
-
-    static const char*		sKeyEnabled() { return "Enabled"; }
-    bool			enabled_;
-
-    Chain*			chain_;
-
-    Attrib::DataCubes*		output_;
-    const Attrib::DataCubes*	input_;
-    BufferString		username_;
-
-
-    HorSampling			hrg_;
-    StepInterval<int>		zrg_;
-};
 
 
 /*!
@@ -178,34 +248,67 @@ public:
 
     const char*			errMsg() const;
 
-    bool			setCalculationScope(const CubeSampling&);
+    bool			setCalculationScope(const HorSampling&,
+						    const StepInterval<int>&);
+    
     const Attrib::DataCubes*	getOutput() const;
     int				nextStep();
 
-protected:
+private:
+    class Epoch 
+    {
+    public:
+				Epoch(const ChainExecutor& c)
+				    : taskgroup_( *new TaskGroup )
+				    , chainexec_( c )
+				{ taskgroup_.setParallel(true); }
+	
+				~Epoch()		{ delete &taskgroup_; }
+	
+	void			addStep(Step* s)	{ steps_ += s; }
+	
+	bool			doPrepare();
+	Task&			getTask()		{ return taskgroup_; }
+	
+	bool			needsStepOutput(Step::ID) const;
+	
+    private:
+	
+	BufferString		errmsg_;
+	const ChainExecutor&	chainexec_;
+	TaskGroup&		taskgroup_;
+	ObjectSet<Step>		steps_;
+    };
+    
+    bool			scheduleWork();
+    int				computeLatestEpoch(Step::ID) const;
+    void			computeComputationScope(Step::ID stepid,
+				    HorSampling& stepoutputhrg,
+				    StepInterval<int>& stepoutputzrg ) const;
 
-    bool			prepareNewStep();
     void			controlWork(Task::Control);
     od_int64			nrDone() const;
     od_int64			totalNr() const;
     const char*			message() const;
-
+    
+    void			releaseMemory();
+    
     Task*			curtask_;
-    mutable Threads::Lock	curtasklock_;
-    ObjectSet<Step>		steps_;
-    int				currentstep_;
 
     bool			isok_;
     bool			firstisprep_;
     Chain&			chain_;
 
-    HorSampling			hrg_;
-    StepInterval<int>		zrg_;
+    HorSampling			outputhrg_;
+    StepInterval<int>		outputzrg_;
 
-    BufferString		errmsg_;
-
-    RefMan<Attrib::DataCubes>   curinput_;
-    RefMan<Attrib::DataCubes>   curoutput_;
+    mutable BufferString	errmsg_;
+    ObjectSet<Step>		scheduledsteps_;
+    ObjectSet<Epoch>		epochs_;
+    Chain::Web			connections_;
+    int				totalnrepochs_;
+    
+    const Attrib::DataCubes*	outputvolume_;
 };
 
 

@@ -417,8 +417,8 @@ od_int64 ChainExecutor::nrDone() const
 
     if ( curtask_ )
     {
-	const int nrdone = curtask_->nrDone();
-	const int totalnr = curtask_->totalNr();
+	const od_int64 nrdone = curtask_->nrDone();
+	const od_int64 totalnr = curtask_->totalNr();
 	if ( nrdone>=0 && totalnr>0 )
 	{
 	    const float curtaskpercentatge = percentperepoch * nrdone / totalnr;

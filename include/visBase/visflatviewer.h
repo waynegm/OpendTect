@@ -39,18 +39,13 @@ public:
 	                                  const Coord3& c10,const Coord3& c11);    
     void			turnOnGridLines(bool offsetlines,bool zlines);
     void			allowShading(bool yn);  
-    void			replaceChannels(visBase::TextureChannels*);
+    void			replaceChannels(TextureChannels*);
     				/*!<Replaces internal texture. The new texture 
 				  will not be added to the scene. */
     Interval<float>		getDataRange(bool iswva) const;  
     const SamplingData<float>	getDefaultGridSampling(bool x1) const;
 
-    int				nrResolutions() const;
-    void			setResolution(int res);
-    int				getResolution() const	{ return resolution_; } 
-    BufferString		getResolutionName(int) const;
-
-    FlatView::AuxData*		createAuxData(const char* nm) const { return 0; }
+    FlatView::AuxData*		createAuxData(const char* nm) const { return 0;}
 
     int				nrAuxData() const { return 0; }
     FlatView::AuxData*		getAuxData(int idx) { return 0; }
@@ -66,11 +61,10 @@ protected:
     void			updateGridLines(bool x1);
     TextureChannels*		channels_;
     ColTabTextureChannel2RGBA*	channel2rgba_;
-    RefMan<visBase::TextureRectangle>	rectangle_;
-    visBase::IndexedPolyLine*	x1gridlines_;
-    visBase::IndexedPolyLine*	x2gridlines_;
+    RefMan<TextureRectangle>	rectangle_;
+    IndexedPolyLine*		x1gridlines_;
+    IndexedPolyLine*		x2gridlines_;
 
-    int				resolution_;
     Coord3			c00_, c01_, c10_, c11_;
 };
 

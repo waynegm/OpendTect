@@ -29,9 +29,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "envvars.h"
 #include "settings.h"
 
-#define mNrResolutions 3
-
-// OSG-TODO: Replace SplitTexture2Rectangle rectangle_ by TextureRectangle */
 
 mCreateFactoryEntry( visBase::FlatViewer );
 
@@ -43,37 +40,10 @@ FlatViewer::FlatViewer()
     , dataChange( this )
     , channels_( TextureChannels::create() )
     , channel2rgba_( ColTabTextureChannel2RGBA::create() )
-    , rectangle_( visBase::TextureRectangle::create() )
-    , x1gridlines_( visBase::IndexedPolyLine::create() )
-    , x2gridlines_( visBase::IndexedPolyLine::create() )
-    , resolution_( 0 )	
+    , rectangle_( TextureRectangle::create() )
+    , x1gridlines_( IndexedPolyLine::create() )
+    , x2gridlines_( IndexedPolyLine::create() )
 {
-    int resolutionfromsettings;
-
-    // try getting default resolution from settings
-    bool success = Settings::common().get(
-	    "dTect.Default texture resolution factor", resolutionfromsettings );
-
-    if ( success )
-    {
-	if ( resolutionfromsettings >= 0 && resolutionfromsettings <= 2 )
-	    resolution_ = resolutionfromsettings;
-	else if ( resolutionfromsettings == -1 )
-	    success = false;
-    }
-
-    if ( !success )
-    {
-	// get default resolution from environment variable
-	const char* envvar = GetEnvVar(
-		"OD_DEFAULT_TEXTURE_RESOLUTION_FACTOR" );
-	if ( envvar && isdigit(*envvar) )
-	    resolution_ = toInt( envvar );
-    }
-
-    if ( resolution_ >= nrResolutions() )
-	resolution_ = nrResolutions()-1;
-
     channel2rgba_->ref();
     channel2rgba_->allowShading( true );
 
@@ -85,13 +55,13 @@ FlatViewer::FlatViewer()
     	channels_->addChannel();
     	channel2rgba_->setEnabled( 0, true );	
     }
-/*
+
     rectangle_->setMaterial( 0 );
     rectangle_->setTextureChannels( channels_ );
     addChild( rectangle_->osgNode() );
-*/
+
     x1gridlines_->ref();
-    x1gridlines_->setMaterial( new visBase::Material );
+    x1gridlines_->setMaterial( new Material );
     x1gridlines_->getMaterial()->setColor( Color(0,0,0,0) );
     addChild( x1gridlines_->osgNode() );
 
@@ -105,7 +75,6 @@ FlatViewer::~FlatViewer()
 {
     channels_->unRef();
     channel2rgba_->unRef();
-    rectangle_->unRef();
     x2gridlines_->unRef();
     x1gridlines_->unRef();
 }
@@ -139,11 +108,8 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 		    int rowsz = dparr.info().getSize(0);
 		    int colsz = dparr.info().getSize(1);
 		    
-		    if ( !arr || resolution_!=0 )
+		    if ( !arr )
 		    {
-			rowsz *= (resolution_+1);
-			colsz *= (resolution_+1);
-			
 			const od_int64 totalsz = rowsz*colsz;
 			mDeclareAndTryAlloc( float*, tmparr, float[totalsz] );
 			
@@ -153,16 +119,7 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 			    return;
 			}
 			
-			if ( resolution_==0 )
-			    dparr.getAll( tmparr );
-			else
-			{
-			    Array2DReSampler<float,float> resampler( dparr,
-				    tmparr, rowsz, colsz, true );
-			    resampler.setInterpolate( true );
-			    resampler.execute();
-			}
-			
+			dparr.getAll( tmparr );
 			arr = tmparr;
 			cp = OD::TakeOverPtr;
 		    }
@@ -206,8 +163,12 @@ void FlatViewer::handleChange( FlatView::Viewer::DataChangeType dt, bool dofill)
 void FlatViewer::setPosition( const Coord3& c00, const Coord3& c01, 
 			      const Coord3& c10, const Coord3& c11 )
 {
-    rectangle_->setCenter( ( c00 + c01 + c10 + c11 )/4 );
-    rectangle_->setWidth ( c11 - c00 );
+    const Coord3 center = 0.5 * (c01+c10);
+    if ( (c00+c11-2*center).abs() > 1e-4*(c11-c00).abs() )
+	pErrMsg( "Non-rectangular flatviewing not yet implemented" );
+
+    rectangle_->setCenter( center );
+    rectangle_->setRotationAndWidth( c10-c00, c01-c00 );
     rectangle_->swapTextureAxes();
 
     c00_ = c00;
@@ -249,7 +210,7 @@ void FlatViewer::updateGridLines( bool x1 )
     }
 
     const FlatPosData* posdata = pack(false) ? &pack(false)->posData() : 0;
-    visBase::IndexedPolyLine* gridlines = x1 ? x1gridlines_ : x2gridlines_;
+    IndexedPolyLine* gridlines = x1 ? x1gridlines_ : x2gridlines_;
 
     if ( !posdata || (x1 && !appearance().annot_.x1_.showgridlines_ ) ||
 	 (!x1 && !appearance().annot_.x2_.showgridlines_ ) )
@@ -267,7 +228,7 @@ void FlatViewer::updateGridLines( bool x1 )
 	sd = getDefaultGridSampling( x1 );
 
     int coordidx = 0, ciidx = 0;
-    visBase::Coordinates* coords = gridlines->getCoordinates();
+    Coordinates* coords = gridlines->getCoordinates();
     float pos = sd.start;
     while ( range.includes( pos, false ) )
     {
@@ -338,31 +299,6 @@ Interval<float> FlatViewer::getDataRange( bool wva ) const
 				   res );
 
     return res;
-}
-
-
-int FlatViewer::nrResolutions() const
-{
-    return mNrResolutions; 
-}
-
-
-void FlatViewer::setResolution( int res )
-{
-    if ( res==resolution_ )
-	return;
-    
-    resolution_ = res;
-    handleChange( Viewer::BitmapData );
-}
-
-    
-BufferString FlatViewer::getResolutionName( int res ) const
-{
-    if ( res == 0 ) return "Standard";
-    else if ( res == 1 ) return "Higher";
-    else if ( res == 2 ) return "Highest";
-    else return "?";
 }
 
 

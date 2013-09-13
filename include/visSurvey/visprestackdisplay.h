@@ -126,9 +126,7 @@ protected:
     BinID			bid_;
     BinID			draggerpos_;
     visBase::DepthTabPlaneDragger* 	planedragger_;
-    visBase::FaceSet*		draggerrect_;
     visBase::FlatViewer*	flatviewer_;
-    visBase::Material*		draggermaterial_;
     PreStack::ProcessManager*	preprocmgr_;
     
     MultiID			mid_;

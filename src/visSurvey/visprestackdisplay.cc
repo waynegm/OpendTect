@@ -74,6 +74,7 @@ PreStackDisplay::PreStackDisplay()
     setMaterial( 0 );
     
     flatviewer_->ref();
+    flatviewer_->setPickable( false );
     flatviewer_->setSelectable( false );
     flatviewer_->appearance().setGeoDefaults( true );
     flatviewer_->getMaterial()->setDiffIntensity( 0.2 );
@@ -87,18 +88,11 @@ PreStackDisplay::PreStackDisplay()
     planedragger_->motion.notify( mCB(this,PreStackDisplay,draggerMotion) );
     planedragger_->finished.notify( mCB(this,PreStackDisplay,finishedCB) );
     addChild( planedragger_->osgNode() );
-  
-    draggermaterial_ = new visBase::Material;
-    draggermaterial_->ref();
-    draggermaterial_->setTransparency( 0.5 ); 
-
 }
 
 
 PreStackDisplay::~PreStackDisplay()
 {
-    draggermaterial_->unRef();
-
     flatviewer_->dataChange.remove( mCB(this,PreStackDisplay,dataChangedCB) );
     flatviewer_->unRef();
     
@@ -523,31 +517,31 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
 	planedragger_->setDim( isinline ? 1 : 0 );
 
 	const float xwidth = 
-	    isinline ? (float) fabs(stoppos.x-startpos.x) : SI().inlDistance();
+	    isinline ? (float) fabs(stoppos.x-startpos.x) : 1.0f;
 	const float ywidth = 
-	    isinline ?  SI().crlDistance() : (float) fabs(stoppos.y-startpos.y);
+	    isinline ? 1.0f : (float) fabs(stoppos.y-startpos.y);
     
     	planedragger_->setSize( Coord3(xwidth,ywidth,zrg_.width(true)) );
 	
-    	const Coord3 center( (startpos+stoppos)/2, (zrg_.start+zrg_.stop)/2 );
-    	planedragger_->setCenter( center );
+    	planedragger_->setCenter( (c01+c10)/2 );
 
-        Interval<float> xlim( mCast( float, SI().inlRange( true ).start ),
-			      mCast( float, SI().inlRange( true ).stop ) );
-        Interval<float> ylim( mCast( float, SI().crlRange( true ).start ),
-			      mCast( float, SI().crlRange( true ).stop ) );
-#define mBigNumber 1e15
-	
+        Interval<float> xlim( mCast(float, SI().inlRange(true).start),
+			      mCast(float, SI().inlRange(true).stop) );
+        Interval<float> ylim( mCast(float, SI().crlRange(true).start),
+			      mCast(float, SI().crlRange(true).stop) );
 	if ( isinline )
-	    xlim.widen( mBigNumber );
+	{
+	    xlim.set( startpos.x, stoppos.x );
+	    xlim.sort();
+	}
 	else
-	    ylim.widen( mBigNumber );
+	{
+	    ylim.set( startpos.y, stoppos.y );
+	    ylim.sort();
+	}
 
-	planedragger_->setSpaceLimits( xlim, ylim, SI().zRange( true ) );    
-	
+	planedragger_->setSpaceLimits( xlim, ylim, SI().zRange(true) );    
     }
-    
-    draggermaterial_->setTransparency( 1 );
 }
 
 
@@ -707,9 +701,11 @@ bool PreStackDisplay::setSeis2DDisplay( Seis2DDisplay* s2d, int trcnr )
 
     if ( planedragger_ )
     { 
+	removeChild( planedragger_->osgNode() );
      	planedragger_->motion.remove( mCB(this,PreStackDisplay,draggerMotion) );
     	planedragger_->finished.remove( mCB(this,PreStackDisplay,finishedCB) );
     	planedragger_->unRef();
+	planedragger_ = 0;
     }
 
     if ( seis2d_ ) 
@@ -821,7 +817,8 @@ void PreStackDisplay::draggerMotion( CallBacker* )
 	      newinl!=bid_.inl )
 	showplane = true;
     
-    draggermaterial_->setTransparency( showplane ? 0.5f : 1 );
+    planedragger_->showPlane( showplane );
+    planedragger_->showDraggerBorder( !showplane );
     
     draggerpos_ = BinID(newinl, newcrl);
     draggermoving.trigger();
@@ -849,6 +846,9 @@ void PreStackDisplay::finishedCB( CallBacker* )
 	return;
 
     setPosition(newpos);
+
+    planedragger_->showPlane( false );
+    planedragger_->showDraggerBorder( true );
 }
 
 

@@ -18,7 +18,6 @@ ________________________________________________________________________
 #include "visobject.h"
 #include "vistransform.h"
 
-class CubeSampling;
 
 /*!\brief A collection of geoscientific extensions to OpenSceneGraph.*/
 
@@ -63,14 +62,24 @@ public:
 
     void			setCenter(const Coord3& center);
     void			setWidth(const Coord3& width);
-    				//!<One dim must be 0
+    				//!<One dim must be set zero
     Coord3			getWidth() const;
     Coord3			getCenter() const;
+
+    void			setRotation(const Coord3& spanvec0,
+					    const Coord3& spanvec1);
+    				//!<Aligns rectangle to both spanning vectors
+    void			setRotationAndWidth(const Coord3& spanvec0,
+	    					    const Coord3& spanvec1);
+    				/*!<Aligns rectangle to both spanning vectors,
+				  and calls setWidth(.) using their lengths. */
+    const Coord3&		getSpanningVector(int idx) const;
 
     void			swapTextureAxes(bool yn=true);
     bool			areTextureAxesSwapped() const;
 
     void			setDisplayTransformation(const mVisTrans*);
+    const mVisTrans*		getDisplayTransformation() const;
 
 protected:
     				~TextureRectangle();
@@ -79,6 +88,9 @@ protected:
 
     osgGeo::TexturePlaneNode*	textureplane_;
     RefMan<TextureChannels>	channels_;
+
+    Coord3			spanvec0_;
+    Coord3			spanvec1_;
 };
 
 };

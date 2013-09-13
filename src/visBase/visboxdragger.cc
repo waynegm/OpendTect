@@ -229,6 +229,9 @@ BoxDragger::BoxDragger()
 
 #if OSG_MIN_VERSION_REQUIRED(3,1,3)
     osgboxdragger_->setIntersectionMask( cIntersectionTraversalMask() );
+    osgboxdragger_->setActivationMouseButtonMask(
+				osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON |
+				osgGA::GUIEventAdapter::MIDDLE_MOUSE_BUTTON );
 #endif
 
     osgboxdragger_->getOrCreateStateSet()->setRenderingHint(

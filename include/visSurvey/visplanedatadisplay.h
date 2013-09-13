@@ -199,7 +199,6 @@ protected:
     visBase::EventCatcher*		eventcatcher_;
     MouseCursor				mousecursor_;
     RefMan<visBase::DepthTabPlaneDragger> dragger_;
-    visBase::Material*			draggermaterial_;
     
     visBase::GridLines*			gridlines_;
     Orientation				orientation_;

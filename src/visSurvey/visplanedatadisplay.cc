@@ -152,9 +152,6 @@ PlaneDataDisplay::PlaneDataDisplay()
     dragger_->rightClicked()->notify(
 	    		mCB(this,PlaneDataDisplay,draggerRightClick) );
 
-    draggermaterial_ = new visBase::Material;
-    draggermaterial_->ref();
-
     dragger_->setDim( (int) 0 );
 
     if ( (int) orientation_ )
@@ -203,7 +200,6 @@ PlaneDataDisplay::~PlaneDataDisplay()
 
     dragger_->unRef();
     gridlines_->unRef();
-    draggermaterial_->unRef();
 
     setBaseMap( 0 );
 }
@@ -428,10 +424,6 @@ void PlaneDataDisplay::draggerMotion( CallBacker* )
 	showplane = true;
     else if ( orientation_==Zslice && dragcs.zrg.start!=oldcs.zrg.start )
 	showplane = true;
-   
-
-    draggermaterial_->setTransparency( showplane ? 0.5f : 0 );
-
  
     dragger_->showPlane( showplane );
     dragger_->showDraggerBorder( !showplane );
@@ -505,7 +497,6 @@ void PlaneDataDisplay::resetManipulation()
 {
     CubeSampling cs = getCubeSampling( false, true );
     setDraggerPos( cs );
-    draggermaterial_->setTransparency( 0 );
 
     dragger_->showPlane( false );
     dragger_->showDraggerBorder( true );
@@ -516,7 +507,6 @@ void PlaneDataDisplay::acceptManipulation()
 {
     CubeSampling cs = getCubeSampling( true, true );
     setCubeSampling( cs );
-    draggermaterial_->setTransparency( 0 );
 
     dragger_->showPlane( false );
     dragger_->showDraggerBorder( true );

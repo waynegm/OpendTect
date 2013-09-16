@@ -162,7 +162,8 @@ void uiParent::addChild( uiBaseObject& child )
 {
     mDynamicCastGet(uiBaseObject*,thisuiobj,this);
     if ( thisuiobj && child == thisuiobj ) return;
-    if ( !body() )		{ pErrMsg("uiParent has no body!"); return; } 
+    if ( !body() )
+    	{ pErrMsg("uiParent has no body!"); return; } 
 
     uiParentBody* b = dynamic_cast<uiParentBody*>( body() );
     if ( !b )			
@@ -340,11 +341,9 @@ void uiObject::setName( const char* nm )
 
 const char* uiObject::toolTip() const
 {
-    static StaticStringManager stm;
-    BufferString& str = stm.getString();
-    str = qnormaltooltipstr_->toLatin1().data();
-
-    return str.buf();
+    mDeclStaticString( ret );
+    ret = qnormaltooltipstr_->toLatin1().data();
+    return ret.buf();
 }
 
 

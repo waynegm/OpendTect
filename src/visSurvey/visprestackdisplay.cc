@@ -187,10 +187,13 @@ DataPack::ID PreStackDisplay::preProcess()
 	    if ( !preprocmgr_->wantsInput(relbid) )
 		continue;
 	 
-	    const BinID inputbid = bid_ + 
-		relbid*BinID(SI().inlStep(),SI().crlStep());
+	    const BinID inputbid =
+		is3DSeis() ? bid_ + relbid*BinID(SI().inlStep(),SI().crlStep())
+			   : BinID(0,trcnr_) + relbid;
 	    PreStack::Gather* gather = new PreStack::Gather;
-	    if ( !gather->readFrom(*ioobj_,*reader_,inputbid) )
+	    if ( (is3DSeis() && !gather->readFrom(*ioobj_,*reader_,inputbid)) ||
+		 (!is3DSeis() && !gather->readFrom(ioobj_->key(),inputbid.crl,
+						   seis2d_->getLineName(),0)) )
 	    {
 		delete gather;
 		continue;
@@ -274,8 +277,6 @@ bool PreStackDisplay::updateData()
     const bool haddata = flatviewer_->pack( false );
     PreStack::Gather* gather = new PreStack::Gather;
 
-    if ( is3DSeis() )
-    {
 	DataPack::ID displayid = DataPack::cNoID();
 	if ( preprocmgr_ && preprocmgr_->nrProcessors() )
 	{
@@ -284,7 +285,9 @@ bool PreStackDisplay::updateData()
 	}
 	else
 	{
-	    if ( !gather->readFrom( *ioobj_, *reader_, bid_ ) )
+	if ( (is3DSeis() && !gather->readFrom(*ioobj_,*reader_,bid_)) ||
+	     (!is3DSeis() && !gather->readFrom(*ioobj_,*reader_,
+					       BinID(0,trcnr_))) )
 		delete gather;
 	    else
 	    {
@@ -304,26 +307,6 @@ bool PreStackDisplay::updateData()
 	}
 	else
 	    flatviewer_->setPack( false, displayid, false, !haddata );
-    }
-    else
-    {
-	if ( !gather->readFrom( *ioobj_, *reader_, BinID(0,trcnr_) ) )
-	{
-	    delete gather;
-	    if ( haddata )
-		flatviewer_->setPack( false, DataPack::cNoID(), false );
-	    else
-	    {
-		dataChangedCB( 0 );
-		return false;
-	    }
-	}
-	else
-	{
-	    DPM(DataPackMgr::FlatID()).add( gather );
-	    flatviewer_->setPack( false, gather->id(), false, !haddata );
-	}
-    }
 
     turnOn( true );
     return true;  

@@ -241,7 +241,8 @@ bool ZipHandler::getFileList( const char* src,
     for( int idx=0; idx<dlist.size(); idx++ )
     {
 	filenames.add( dlist.fullPath(idx) );
-	getFileList( dlist.fullPath(idx), filenames);
+	if ( !File::isLink(dlist.fullPath(idx)) )
+	    getFileList( dlist.fullPath(idx), filenames);
     }
 
     for( int idx=0; idx<flist.size(); idx++)
@@ -556,6 +557,7 @@ bool ZipHandler::setLocalFileHeaderForDir()
 
 bool ZipHandler::setLocalFileHeaderForLink()
 {
+#ifdef HAS_ZLIB
     FilePath fnm( srcfile_ );
     int p = fnm.nrLevels();
     BufferString srcfnm = "";
@@ -602,6 +604,10 @@ bool ZipHandler::setLocalFileHeaderForLink()
 
     osd_.ostrm->flush();
     return true;
+#else
+    pErrMsg( "ZLib not available" );
+    return false;
+#endif
 }
 
 

@@ -39,6 +39,7 @@ set ( OD_MODULE_SOURCES array2dbitmap.cc
 	    iodirentry.cc
 	    ioman.cc
 	    ioobj.cc
+	    ioobjtags.cc
 	    iostrm.cc
 	    iox.cc
 	    keyboardevent.cc

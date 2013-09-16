@@ -949,15 +949,14 @@ bool uiTreeViewItem::isChecked( bool qtstatus ) const
 
 const char* uiTreeViewItem::toolTip(int column) const
 {
-    static StaticStringManager stm;
-    BufferString& str = stm.getString();
-    str = column<0 || column>=qnormaltooltipstrlist_->size() ? "" :
+    mDeclStaticString( ret );
+    ret = column<0 || column>=qnormaltooltipstrlist_->size() ? "" :
 		      (*qnormaltooltipstrlist_)[column].toLatin1().data();
-    return str.buf();
+    return ret.buf();
 }
 
 
-void uiTreeViewItem::setToolTip( int column, const char*  txt )
+void uiTreeViewItem::setToolTip( int column, const char* txt )
 {
     if ( column < 0 )
 	return;

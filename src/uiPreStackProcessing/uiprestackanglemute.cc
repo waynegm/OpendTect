@@ -127,7 +127,7 @@ uiAngleCompAdvParsDlg::uiAngleCompAdvParsDlg( uiParent* p,
 					      PreStack::AngleCompParams& pars,
 					      bool offset, bool isformute )
     : uiDialog(p, uiDialog::Setup("Advanced Parameter",
-				  "Advanced angle parameters", mTODOHelpID))
+				  "Advanced angle parameters", "103.2.26"))
     , params_(pars)
     , isformute_(isformute)
     , smoothtypefld_(0)
@@ -205,11 +205,11 @@ bool uiAngleCompAdvParsDlg::acceptOK( CallBacker* )
 		   smoothwindowfld_->text() );
 	if ( smoothwindowfld_->text() == CosTaperWindow::sName() )
 	{
-	const float uservalue = smoothwinparamfld_->getfValue();
+	    const float uservalue = smoothwinparamfld_->getfValue();
 	    if ( !mIsUdf(uservalue) )
 		iopar.set( PreStack::AngleComputer::sKeyWinParam(),
 			   1 - uservalue / 100 );
-    }
+	}
     }
     else if ( isSmoothTypeFFTFilter() )
     {

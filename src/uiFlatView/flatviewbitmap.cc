@@ -47,7 +47,7 @@ void FlatView::BitMapMgr::setupChg()
 {
     clearAll();
     const FlatDataPack* dp = vwr_.pack( wva_ );
-    if ( !vwr_.isVisible(wva_) || !dp ) return;
+    if ( !vwr_.isVisible(wva_) ) return;
 
     DPM(DataPackMgr::FlatID()).obtain( dp->id() );
     Threads::Locker updlckr( dp->updateLock() );
@@ -170,6 +170,10 @@ bool FlatView::BitMapMgr::generate( const Geom::PosRectangle<double>& wr,
     A2DBitMapGenerator::initBitMap( *bmp_ );
     gen_->setBitMap( *bmp_ );
     gen_->setPixSizes( availsz.width(), availsz.height() );
+
+    if ( &pack->data() != &data_->data() ) return false;
+    // TODO: Find a better fix.
+
     gen_->fill();
 
     updlckr.unlockNow();

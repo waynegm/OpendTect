@@ -12,6 +12,7 @@ set( QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h i_qptr.h)
 set( OD_TEST_PROGS
 		callback.cc
 		commandlineparser.cc
+		math2.cc
 		refcount.cc
 		sets.cc
 		string.cc
@@ -53,6 +54,7 @@ set( OD_MODULE_SOURCES
 	    math2.cc
 	    moddepmgr.cc
 	    namedobj.cc
+	    od_iostream.cc
 	    oddirs.cc
 	    odimage.cc
 	    odinst.cc

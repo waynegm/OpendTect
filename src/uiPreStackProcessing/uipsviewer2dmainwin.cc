@@ -108,7 +108,7 @@ class uiPSPreProcessingDlg : public uiDialog
 public:
 uiPSPreProcessingDlg( uiParent* p, PreStack::ProcessManager& ppmgr,
 		      const CallBack& cb )
-    : uiDialog(p,uiDialog::Setup("Preprocessing","",mTODOHelpID) )
+    : uiDialog(p,uiDialog::Setup("Preprocessing","","103.2.13") )
     , cb_(cb)
 {
     preprocgrp_ = new PreStack::uiProcessorManager( this, ppmgr );
@@ -223,7 +223,7 @@ void uiViewer2DMainWin::reSizeItems()
 
 void uiViewer2DMainWin::doHelp( CallBacker* )
 {
-    provideHelp( "50.2.2" );
+    provideHelp( "51.1.0" );
 }
 
 
@@ -447,7 +447,7 @@ void uiViewer2DMainWin::displayAngle( bool isanglegather )
     BufferString windowcaption = "Specify Parameters for ";
     windowcaption += windowtitle;
     uiDialog angledisplaydlg( this, uiDialog::Setup(windowtitle,
-						windowcaption,mTODOHelpID) );
+						windowcaption,"51.1.3") );
 
     PreStack::AngleCompParams params;
     if ( !isanglegather ) params.anglerange_ = Interval<int>( 0 , 60 );
@@ -1147,8 +1147,8 @@ void uiViewer2DControl::applyProperties( CallBacker* )
 	}
 
 	//vwr.setAnnotChoice( selannot );
-	vwr.handleChange( FlatView::Viewer::DisplayPars );
-	vwr.handleChange( FlatView::Viewer::Annot, false );
+	vwr.handleChange(
+		FlatView::Viewer::DisplayPars | FlatView::Viewer::Annot );
     }
 }
 
@@ -1193,31 +1193,27 @@ DataPack::ID uiViewer2DMainWin::getPreProcessedID( const GatherInfo& ginfo )
     if ( !preprocmgr_->prepareWork() )
 	return -1;
 
-    const BinID stepoutbid = preprocmgr_->getInputStepout();
+    const BinID stepout = preprocmgr_->getInputStepout();
     BinID relbid;
-    HorSampling hs( false );
-    BinID startbid( -stepoutbid.inl * (isStored() ? 1 : SI().inlStep()),
-	    	    -stepoutbid.crl * (isStored() ? 1 : SI().crlStep()) );
-    BinID stopbid( stepoutbid.inl * (isStored() ? 1 : SI().inlStep()),
-	    	   stepoutbid.crl * (isStored() ? 1 : SI().crlStep()) );
-    hs.include( startbid );
-    hs.include( stopbid );
-    if ( isStored() )
-	hs.step = BinID( SI().inlStep(), SI().crlStep() );
-    HorSamplingIterator hsitr( hs );
-    while ( hsitr.next(relbid) )
+    for ( relbid.inl=-stepout.inl; relbid.inl<=stepout.inl; relbid.inl++ )
     {
-	if ( !preprocmgr_->wantsInput(relbid) )
-	    continue;
-	const BinID bid = ginfo.bid_ + relbid;
-	GatherInfo relposginfo;
-	relposginfo.isstored_ = ginfo.isstored_;
-	relposginfo.gathernm_ = ginfo.gathernm_;
-	relposginfo.bid_ = bid;
-	if ( isStored() )
-	    relposginfo.mid_ = ginfo.mid_;
+	for ( relbid.crl=-stepout.crl; relbid.crl<=stepout.crl; relbid.crl++ )
+	{
+	    if ( !preprocmgr_->wantsInput(relbid) )
+		continue;
+	    BinID facbid( 1, 1 );
+	    if ( isStored() && !is2D() )
+		facbid = BinID( SI().inlStep(), SI().crlStep() );
+	    const BinID bid = ginfo.bid_ + (relbid*facbid);
+	    GatherInfo relposginfo;
+	    relposginfo.isstored_ = ginfo.isstored_;
+	    relposginfo.gathernm_ = ginfo.gathernm_;
+	    relposginfo.bid_ = bid;
+	    if ( isStored() )
+		relposginfo.mid_ = ginfo.mid_;
 
-	setGatherforPreProc( relbid, relposginfo );
+	    setGatherforPreProc( relbid, relposginfo );
+	}
     }
 
     if ( !preprocmgr_->process() )

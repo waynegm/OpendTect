@@ -13,8 +13,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "velocityvolumeconversion.h"
 
 #include "binidvalset.h"
-#include "ioman.h"
 #include "ioobj.h"
+#include "ioobjtags.h"
 #include "seisbounds.h"
 #include "seisread.h"
 #include "seisselectionimpl.h"
@@ -114,14 +114,13 @@ bool VolumeConverter::doPrepare( int nrthreads )
     delete writer_;
     writer_ = 0;
 
-    if ( !velinpdesc_.usePar( input_->pars() ) )
+    if ( !GetVelocityTag( *input_, velinpdesc_ ) )
     {
 	errmsg_ = "Cannot read velocity information on input.";
 	return false;
     }
 
-    veloutpdesc_.fillPar( output_->pars() );
-    if ( !IOM().commitChanges( *output_ ) )
+    if ( !SetVelocityTag( *output_, veloutpdesc_ ) )
     {
 	errmsg_ = "Cannot write velocity information on output";
 	return false;

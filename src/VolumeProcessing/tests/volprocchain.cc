@@ -38,6 +38,7 @@ bool testConnectionSetup( bool quiet )
 }
 
 
+
 int main( int narg, char** argv )
 {
     od_init_test_program( narg, argv );

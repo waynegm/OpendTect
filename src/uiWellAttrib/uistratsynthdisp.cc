@@ -179,7 +179,7 @@ uiStratSynthDisp::uiStratSynthDisp( uiParent* p,
     vwr_->viewChanged.notify( mCB(this,uiStratSynthDisp,viewChg) );
 
     uiFlatViewStdControl::Setup fvsu( this );
-    fvsu.withedit(true).withthumbnail(false).withcoltabed(false)
+    fvsu.withedit(false).withthumbnail(false).withcoltabed(false)
 	.tba((int)uiToolBar::Right ).withflip(false).withsnapshot(false);
     control_ = new uiMultiFlatViewControl( *vwr_, fvsu );
     control_->zoomChanged.notify( mCB(this,uiStratSynthDisp,zoomChg) );
@@ -304,7 +304,7 @@ void uiStratSynthDisp::setSelectedTrace( int st )
     selectedtraceaux_->linestyle_ = 
 	LineStyle( LineStyle::Dot, 2, Color::DgbColor() );
 
-    vwr_->handleChange( FlatView::Viewer::Auxdata, true );
+    vwr_->handleChange( FlatView::Viewer::Auxdata );
 }
 
 
@@ -353,7 +353,7 @@ void uiStratSynthDisp::setZDataRange( const Interval<double>& zrg, bool indpth )
     }
     const Interval<double> xrg = vwr_->getDataPackRange( true );
     vwr_->setSelDataRanges( xrg, newzrg ); 
-    vwr_->handleChange( FlatView::Viewer::All );
+    vwr_->handleChange( mCast(unsigned int,FlatView::Viewer::All) );
 }
 
 
@@ -387,7 +387,7 @@ void uiStratSynthDisp::displayFRText()
     filltxtdata->poly_ += txtpos;
 
     vwr_->addAuxData( filltxtdata );
-    vwr_->handleChange( FlatView::Viewer::Annot, true );
+    vwr_->handleChange( FlatView::Viewer::Annot );
 }
 
 
@@ -423,7 +423,7 @@ void uiStratSynthDisp::drawLevel()
 	}
     }
 
-    vwr_->handleChange( FlatView::Viewer::Auxdata, true );
+    vwr_->handleChange( FlatView::Viewer::Auxdata );
 }
 
 
@@ -524,7 +524,7 @@ bool uiStratSynthDisp::haveUserScaleWavelet()
 	    rv = true;
 	    wvltfld_->setInput( mid );
 	}
-	vwr_->handleChange( FlatView::Viewer::All );
+	vwr_->handleChange( mCast(unsigned int,FlatView::Viewer::All) );
     }
     return rv;
 }

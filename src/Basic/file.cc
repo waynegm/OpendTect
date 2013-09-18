@@ -25,6 +25,7 @@ ________________________________________________________________________
 #ifdef __win__
 # include <direct.h>
 #else
+#include "sys/stat.h"
 # include <unistd.h>
 #endif
 
@@ -35,7 +36,6 @@ ________________________________________________________________________
 #include <QFileInfo>
 #include <QProcess>
 #else
-#include <sys/stat.h>
 #include <fstream>
 #endif
 
@@ -139,8 +139,24 @@ Executor* getRecursiveCopier( const char* from, const char* to )
 { return new RecursiveCopier( from, to ); }
 
 
-od_int64 getFileSize( const char* fnm )
+od_int64 getFileSize( const char* fnm, bool followlink )
 {
+    if ( !followlink && isLink(fnm) )
+    {
+        od_int64 filesize = 0;
+#ifdef __win__
+        HANDLE file = CreateFile ( fnm, GENERIC_READ, 0, NULL, OPEN_EXISTING, 
+                                   FILE_ATTRIBUTE_NORMAL, NULL );
+        filesize = GetFileSize( file, NULL );
+        CloseHandle( file );
+#else
+        struct stat filestat;
+        filesize = lstat( fnm, &filestat )>=0 ? filestat.st_size : 0;
+#endif
+
+        return filesize;
+    }
+
 #ifndef OD_NO_QT
     QFileInfo qfi( fnm );
     return qfi.size();
@@ -219,16 +235,15 @@ bool isDirectory( const char* fnm )
 
 const char* getCanonicalPath( const char* dir )
 {
+    mDeclStaticString( ret );
 #ifndef OD_NO_QT
-    static StaticStringManager stm;
-    BufferString& pathstr = stm.getString();
     QDir qdir( dir );
-    pathstr = qdir.canonicalPath().toAscii().constData();
-    return pathstr;
+    ret = qdir.canonicalPath().toAscii().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"getCanonicalPath");
-    return 0;
+    ret = dir;
 #endif
+    return ret.buf();
 }
 
 
@@ -237,11 +252,10 @@ const char* getRelativePath( const char* reltodir, const char* fnm )
 #ifndef OD_NO_QT
     BufferString reltopath = getCanonicalPath( reltodir );
     BufferString path = getCanonicalPath( fnm );
-    static StaticStringManager stm;
-    BufferString& relpathstr = stm.getString();
+    mDeclStaticString( ret );
     QDir qdir( reltopath.buf() );
-    relpathstr = qdir.relativeFilePath( path.buf() ).toAscii().constData();
-    return relpathstr.isEmpty() ? fnm : relpathstr.buf();
+    ret = qdir.relativeFilePath( path.buf() ).toAscii().constData();
+    return ret.isEmpty() ? fnm : ret.buf();
 #else
     pFreeFnErrMsg(not_implemented_str,"getRelativePath");
     return fnm;
@@ -310,7 +324,11 @@ bool isFileInUse( const char* fnm )
 {
 #ifdef __win__
     QFile qfile( fnm );
-    return qfile.isOpen();
+    if ( !qfile.open(QFile::ReadWrite) )
+	return true;
+
+    qfile.close();
+    return false;
 #else
     return false;
 #endif
@@ -476,7 +494,7 @@ bool makeWritable( const char* fnm, bool yn, bool recursive )
     cmd = "chmod";
     if ( recursive && isDirectory(fnm) )
 	cmd += " -R ";
-    cmd.add(yn ? " ug+w '" : " a-w \"").add(fnm).add("\"");
+    cmd.add(yn ? " ug+w \"" : " a-w \"").add(fnm).add("\"");
 #endif
 
     return QProcess::execute( QString(cmd.buf()) ) >= 0;
@@ -489,7 +507,7 @@ bool makeExecutable( const char* fnm, bool yn )
     return true;
 #else
     BufferString cmd( "chmod" );
-    cmd.add(yn ? " +r+x '" : " -x \"").add(fnm).add("\"");
+    cmd.add(yn ? " +r+x \"" : " -x \"").add(fnm).add("\"");
     return QProcess::execute( QString(cmd.buf()) ) >= 0;
 #endif
 }
@@ -534,31 +552,31 @@ int getKbSize( const char* fnm )
 
 const char* timeCreated( const char* fnm, const char* fmt )
 {
-    static StaticStringManager stm;
-    BufferString& timestr = stm.getString();
+    mDeclStaticString( ret );
 #ifndef OD_NO_QT
     QFileInfo qfi( fnm );
     QString qstr = qfi.created().toString( fmt );
-    timestr = qstr.toAscii().constData();
+    ret = qstr.toAscii().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"timeCreated");
+    ret = "<unknown>";
 #endif
-    return timestr.buf();
+    return ret.buf();
 }
 
 
 const char* timeLastModified( const char* fnm, const char* fmt )
 {
-    static StaticStringManager stm;
-    BufferString& timestr = stm.getString();
+    mDeclStaticString( ret );
 #ifndef OD_NO_QT
     QFileInfo qfi( fnm );
     QString qstr = qfi.lastModified().toString( fmt );
-    timestr = qstr.toAscii().constData();
+    ret = qstr.toAscii().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"timeLastModified");
+    ret = "<unknown>";
 #endif
-    return timestr.buf();
+    return ret.buf();
 }
 
 
@@ -583,88 +601,99 @@ const char* linkValue( const char* linknm )
 #ifdef __win__
     return linkTarget( linknm );
 #else
-    static StaticStringManager stm;
-    BufferString& linkstr = stm.getString();
-    const int len = readlink( linknm, linkstr.buf(), 256 );
+    mDeclStaticString( ret );
+    ret.setMinBufSize( 1024 );
+    const int len = readlink( linknm, ret.buf(), 1024 );
     if ( len < 0 )
 	return linknm;
 
-    linkstr[len] = '\0';
-    return linkstr.buf();
+    ret[len] = '\0';
+    return ret.buf();
 #endif
 }
 
 
 const char* linkTarget( const char* linknm )
 {
+    mDeclStaticString( ret );
 #ifndef OD_NO_QT
-    static StaticStringManager stm;
-    BufferString& linkstr = stm.getString();
     QFileInfo qfi( linknm );
-    linkstr = qfi.isSymLink() ? qfi.symLinkTarget().toAscii().constData()
-			      : linknm;
-    return linkstr.buf();
+    ret = qfi.isSymLink() ? qfi.symLinkTarget().toAscii().constData()
+			  : linknm;
 #else
     pFreeFnErrMsg(not_implemented_str,"linkTarget");
-    return 0;
+    ret = linknm;
 #endif
+    return ret.buf();
 }
 
 
 const char* getCurrentPath()
 {
-    static StaticStringManager stm;
-    BufferString& pathstr = stm.getString();
+    mDeclStaticString( ret );
 
 #ifndef OD_NO_QT
-    pathstr = QDir::currentPath().toAscii().constData();
+    ret = QDir::currentPath().toAscii().constData();
 #else
+    ret.setMinBufSize( 1024 );
 # ifdef __win__
-    _getcwd( pathstr.buf(), pathstr.minBufSize() );
+    _getcwd( ret.buf(), ret.minBufSize() );
 # else
-    getcwd( pathstr.buf(), pathstr.minBufSize() );
+    getcwd( ret.buf(), ret.minBufSize() );
 # endif
 #endif
-    return pathstr.buf();
+    return ret.buf();
 }
 
 
 const char* getHomePath()
 {
-    static StaticStringManager stm;
-    BufferString& pathstr = stm.getString();
+    mDeclStaticString( ret );
 #ifndef OD_NO_QT
-    pathstr = QDir::homePath().toAscii().constData();
+    ret = QDir::homePath().toAscii().constData();
 #else
     pFreeFnErrMsg(not_implemented_str,"getHomePath");
+    ret = GetEnvVar( "HOME" );
 #endif
-    return pathstr.buf();
+    return ret.buf();
 }
 
 
 const char* getTempPath()
 {
-    static StaticStringManager stm;
-    BufferString& pathstr = stm.getString();
+    mDeclStaticString( ret );
 #ifndef OD_NO_QT
-    pathstr = QDir::tempPath().toAscii().constData();
-#ifdef __win__
-    replaceCharacter( pathstr.buf(), '/', '\\' );
-#endif
+    ret = QDir::tempPath().toAscii().constData();
+# ifdef __win__
+    replaceCharacter( ret.buf(), '/', '\\' );
+# endif
 #else
     pFreeFnErrMsg(not_implemented_str,"getTmpPath");
+# ifdef __win__
+    ret = "/tmp";
+# else
+    ret = "C:\\TEMP";
+# endif
 #endif
-    return pathstr.buf();
+    return ret.buf();
 }
 
 
 const char* getRootPath( const char* path )
 {
-    static StaticStringManager stm;
-    BufferString& pathstr = stm.getString();
+    mDeclStaticString( ret );
+#ifndef OD_NO_QT
     QDir qdir( path );
-    pathstr = qdir.rootPath().toAscii().constData();
-    return pathstr.buf();
+    ret = qdir.rootPath().toAscii().constData();
+#else
+    pFreeFnErrMsg(not_implemented_str,"getRootPath");
+# ifdef __win__
+    ret = "/";
+# else
+    ret = "C:\\";
+# endif
+#endif
+    return ret.buf();
 }
 
 } // namespace File

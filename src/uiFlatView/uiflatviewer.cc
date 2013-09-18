@@ -254,15 +254,15 @@ void uiFlatViewer::setViewToBoundingBox()
 #define mAddToQueue( work ) \
     Threads::WorkManager::twm().addWork( work, 0, updatequeueid_, false, true )
 
-void uiFlatViewer::handleChange( DataChangeType dct, bool dofill )
+void uiFlatViewer::handleChange( unsigned int dct )
 {
-    if ( dct==Auxdata || dct==All )
+    if ( Math::AreBitsSet( dct, Auxdata ) )
 	mAddToQueue( auxdatawork_ );
 
-    if ( dct==Annot || dct==All )
+    if ( Math::AreBitsSet( dct, Annot ) )
 	mAddToQueue( annotwork_ );
 
-    if ( dct!=Annot && dct!=Auxdata )
+    if ( Math::AreBitsSet( dct, BitmapData | DisplayPars, false ) )
 	mAddToQueue( bitmapwork_ );
 
     view_->rePaint();
@@ -381,7 +381,6 @@ FlatView::AuxData* uiFlatViewer::removeAuxData( int idx )
     auxdata_[idx]->removeDisplay();
     return auxdata_.removeSingle(idx);
 }
-
 
 
 void uiFlatViewer::setSelDataRanges( Interval<double> xrg,Interval<double> yrg)

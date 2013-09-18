@@ -19,7 +19,19 @@ ________________________________________________________________________
 
 
 /*!
-\brief Specifies velocity type and statics for a velocity.
+Specifies velocity type and statics for a velocity.
+
+To tag a velocity volume as a velocity, this class can be used to do the work:
+
+\code
+    VelocityDesc desc( VelocityDesc::Interval );
+
+    PtrMan<IOObj> ioobj = IOM().get( multiid );
+    desc.fillPar( ioobj->pars() );
+    IOM().commitChanges( ioobj );
+
+\endcode
+
 */
 
 mExpClass(Basic) VelocityDesc
@@ -53,6 +65,7 @@ public:
     static const char*	sKeyVelocityType();
     static const char*	sKeyIsFeetPerSecond();
     static const char*	sKeyIsVelocity();
+    static const char*	sKeyVelocityVolume();
 
     static const char*	getVelUnit(bool withparens=true);
 };

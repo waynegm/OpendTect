@@ -56,6 +56,9 @@ public:
     void		setColor(const Color&,int=0);
     const Color&	getColor(int matnr=0) const;
 
+    void		addColorAtBegin(const Color&);
+    void		addColorAtEnd(const Color&);
+
     void		removeColor(int idx);
 
     void		setDiffIntensity(float,int=0);
@@ -80,6 +83,9 @@ public:
 
     void		setTransparency(float,int idx=0);
 			/*!< Should be between 0 and 1 */
+    void		setAllTransparencies( float n );
+			/*!< Should be between 0 and 1 */
+
     float		getTransparency(int idx=0) const;
 
     int			usePar(const IOPar&);
@@ -92,12 +98,16 @@ public:
     const osg::Array*	getColorArray() const;
     osg::Array*		getColorArray();
 
+    const TypeSet<Color>& getColors() { return colors_; }
+
 protected:
 			~Material();
     void		setMinNrOfMaterials(int);
     void		updateOsgColor(int,bool trigger = true);
     void		createOsgColorArray();
     void		synchronizingOsgColorArray();
+    void		removeOsgColor(int);
+    void		addOsgColorAtBegin();
 
     TypeSet<Color>	colors_;
     TypeSet<float>	diffuseintensity_;

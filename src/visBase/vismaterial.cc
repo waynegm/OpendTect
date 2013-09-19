@@ -76,8 +76,9 @@ bool OsgColorArrayUpdator::doWork(od_int64 start,od_int64 stop,int)
 {
     for ( int idx = mCast(int,start); idx<=mCast(int,stop); idx++ )
     {
-	if ( diffintensity_.size() ==1 || 
-	    diffintensity_.size() < material_->colors_.size() )
+	if ( diffintensity_.size() ==1 || transparency_.size() == 1 ||
+	    diffintensity_.size() < material_->colors_.size() ||
+	    transparency_.size() < material_->colors_.size() )
 	{
 	    material_->setMinNrOfMaterials(idx);
 	    material_->diffuseintensity_[idx] = diffintensity_[0]; 
@@ -174,6 +175,35 @@ void Material::setColor( const Color& n, int idx )
 }
 
 
+void Material::addColorAtBegin(const Color& color)
+{
+    float diffuseintensity = diffuseintensity_.size() ?
+	diffuseintensity_[ 0 ] : 0.8;
+    float transparency = transparency_.size() ?
+	transparency_[ 0 ] : 0.8;
+    
+    colors_.insert( 0, color );
+    diffuseintensity_.insert( 0, diffuseintensity );
+    transparency_.insert( 0, transparency );
+    addOsgColorAtBegin();
+
+}
+
+
+void Material::addColorAtEnd(const Color& color)
+{
+    float diffuseintensity = diffuseintensity_.size() ?
+	diffuseintensity_[ diffuseintensity_.size() - 1 ] : 0.8;
+    float transparency = transparency_.size() ?
+	transparency_[ transparency_.size() -1 ] : 0.8;
+
+    colors_.add( color );
+    diffuseintensity_.add( diffuseintensity );
+    transparency_.add( transparency );
+    updateOsgColor( colors_.size() - 1 );
+}
+
+
 const Color& Material::getColor( int idx ) const
 {
     if ( colors_.validIdx(idx) )
@@ -185,19 +215,30 @@ const Color& Material::getColor( int idx ) const
 
 void Material::removeColor( int idx )
 {
-     if ( colors_.validIdx(idx) && colors_.size()>1 )
+
+    if ( colors_.validIdx(idx) && colors_.size()>1 )
      {
 	 colors_.removeSingle( idx );
 	 transparency_.removeSingle( idx );
 	 diffuseintensity_.removeSingle( idx );
+	 removeOsgColor( idx );
 
-	 for ( int idy=idx; idy<colors_.size(); idy++ )
-	     updateOsgColor( idy );
+	 if ( colors_.size()> idx )
+	     updateOsgColor( idx );
      }
      else
      {
 	 pErrMsg("Removing invalid index or last color.");
      }
+}
+
+
+void Material::removeOsgColor( int idx )
+{
+    osg::Vec4Array* colarr = mGetOsgVec4Arr( osgcolorarray_ );
+    if ( !colarr || colarr->size()<=idx )
+	return;
+    colarr->erase( colarr->begin() + idx );
 }
 
 
@@ -222,6 +263,12 @@ void Material::setTransparency( float n, int idx )
     setMinNrOfMaterials(idx);
     transparency_[idx] = n;
     updateOsgColor( idx );
+}
+
+void Material::setAllTransparencies( float n )
+{
+    transparency_.setAll( n );
+    synchronizingOsgColorArray();
 }
 
 
@@ -301,6 +348,30 @@ void Material::updateOsgColor( int idx, bool trigger)
 
     if( trigger )
 	change.trigger();
+}
+
+
+void Material::addOsgColorAtBegin()
+{
+    const osg::Vec4 diffuse =
+    mGetOsgCol( colors_[0], diffuseintensity_[0], transparency_[0] );
+
+    material_->setAmbient( osg::Material::FRONT_AND_BACK,
+	mGetOsgCol(colors_[0],ambience_,transparency_[0]) );
+    material_->setSpecular( osg::Material::FRONT_AND_BACK,
+	mGetOsgCol(colors_[0],specularintensity_,transparency_[0]) );
+    material_->setEmission( osg::Material::FRONT_AND_BACK,
+	mGetOsgCol(colors_[0],emmissiveintensity_,transparency_[0]) );
+
+    material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
+    material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
+
+    if ( !osgcolorarray_ )
+	createOsgColorArray();
+    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
+
+    colarr.insert( colarr.begin(), diffuse );
+
 }
 
 

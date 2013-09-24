@@ -334,28 +334,35 @@ void TileResolutionData::updatePrimitiveSets()
     mAddPointIndex( geomps, idx2 );\
 }
 
-#define mAddTriangleIndexes( geomps,idx0, idx1, idx2 )\
-{\
-    bool istriangleend(false);\
-    const int pssize = geomps->getNumIndices();\
-    if ( pssize > 2 )\
-    {\
-	const unsigned int lastidx = geomps->index( pssize-1 );\
-	if ( lastidx==idx1 && geomps->index( pssize-2 )==idx0 )\
-	{\
-    	    geomps->push_back( idx2 );\
-	    istriangleend = true;\
-	}\
-	if( !istriangleend ) \
-	    { geomps->push_back( lastidx ); } \
-    }\
-    if ( pssize>2 && !istriangleend)\
-    {\
-	geomps->push_back( idx0 );\
-    }\
-    geomps->push_back( idx0 );\
-    geomps->push_back( idx1 );\
-    geomps->push_back( idx2 );\
+
+#define mAddClockwiseTriangleIndexes( geomps, idx0, idxa, idxb ) \
+{ \
+    const int pssize = geomps->getNumIndices(); \
+    const int idx1 = pssize%2 ? idxa : idxb; \
+    const int idx2 = pssize%2 ? idxb : idxa; \
+    bool continuestrip = pssize > 2; \
+    if ( continuestrip ) \
+    { \
+	const int lastidx = geomps->index( pssize-1 ); \
+	if ( lastidx==idx0 && geomps->index(pssize-2)==idx1 ) \
+    	    geomps->push_back( idx2 ); \
+	else if ( lastidx==idx1 && geomps->index(pssize-2)==idx2 ) \
+    	    geomps->push_back( idx0 ); \
+	else if ( lastidx==idx2 && geomps->index(pssize-2)==idx0 ) \
+    	    geomps->push_back( idx1 ); \
+	else \
+	{ \
+	    continuestrip = false; \
+	    geomps->push_back( lastidx ); \
+	    geomps->push_back( idx0 ); \
+	} \
+    } \
+    if ( !continuestrip ) \
+    { \
+	geomps->push_back( idx0 ); \
+	geomps->push_back( idx1 ); \
+	geomps->push_back( idx2 ); \
+    } \
 }
 
 
@@ -395,8 +402,8 @@ void TileResolutionData::tesselateCell( int idxthis )
 	    }
 	    else 
 	    {
-		mAddTriangleIndexes( trianglesps_, idxthis, 
-		    idxbottom, idxrightbottom);
+		mAddClockwiseTriangleIndexes( trianglesps_, idxthis,
+					      idxrightbottom, idxbottom );
 		mAddLineIndexes( linesps_, idxthis, idxbottom );
 		if ( usewireframe )
 		    mAddLineIndexes( wireframesps_, idxthis, idxbottom );
@@ -410,10 +417,10 @@ void TileResolutionData::tesselateCell( int idxthis )
 	{
 	    if ( rightbottomisdef ) 
 	    {
-		mAddTriangleIndexes( trianglesps_, idxthis,
-		    idxright, idxbottom );
-		mAddTriangleIndexes( trianglesps_, idxright, 
-		    idxbottom, idxrightbottom );
+		mAddClockwiseTriangleIndexes( trianglesps_, idxthis,
+					      idxright, idxbottom );
+		mAddClockwiseTriangleIndexes( trianglesps_, idxbottom, 
+					      idxright, idxrightbottom );
 		mAddLineIndexes( linesps_, idxthis, idxright );
 		mAddLineIndexes( linesps_, idxthis, idxbottom );
 		if ( usewireframe )
@@ -424,8 +431,8 @@ void TileResolutionData::tesselateCell( int idxthis )
 	    }
 	    else if ( !rightbottomisdef ) 
 	    {
-		mAddTriangleIndexes( trianglesps_, idxthis, 
-		    idxright, idxbottom );
+		mAddClockwiseTriangleIndexes( trianglesps_, idxthis, 
+					      idxright, idxbottom );
 		if ( usewireframe )
 		{
 		    mAddLineIndexes( wireframesps_, idxthis, idxright );
@@ -439,8 +446,8 @@ void TileResolutionData::tesselateCell( int idxthis )
 	{
 	    if ( rightbottomisdef ) 
 	    {
-		mAddTriangleIndexes( trianglesps_, 
-		    idxthis, idxright, idxrightbottom );
+		mAddClockwiseTriangleIndexes( trianglesps_, idxthis,
+					      idxright, idxrightbottom );
 		mAddLineIndexes( linesps_,idxthis, idxright );
 		if ( usewireframe )
 		    mAddLineIndexes( wireframesps_, idxthis, idxright );

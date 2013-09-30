@@ -753,8 +753,11 @@ bool FaultTraceExtractor3D::extractFaultTrace( int idx )
 	return false;
 
     Geometry::IndexedGeometry* idxgeom = idxdshape->getGeometry()[0];
-    
+
     Geometry::PrimitiveSet* idxps = idxgeom->getCoordsPrimitiveSet();
+
+    if ( !idxps ) 
+	return false;
 
     TypeSet<int> coordindices;
     for ( int index = 0; index< idxps->size(); index++ )

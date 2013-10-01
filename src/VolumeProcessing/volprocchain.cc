@@ -178,7 +178,7 @@ bool ChainExecutor::scheduleWork()
     const int nrepochs = firstepoch+1;
     for ( int idx=0; idx<nrepochs; idx++ )
     {
-	Epoch* epoch = new Epoch( chain_ );
+	Epoch* epoch = new Epoch( *this ); 
 	for ( int idy=0; idy<scheduledsteps_.size(); idy++ )
 	{
 	    if ( computeLatestEpoch( scheduledsteps_[idy]->getID() )==idx )
@@ -234,7 +234,7 @@ void ChainExecutor::computeComputationScope( Step::ID stepid,
     }
 
     TypeSet<Chain::Connection> outputconnections;
-    connections_	    .getConnections( stepid, true, outputconnections );
+    connections_.getConnections( stepid, true, outputconnections );
     
     stepoutputhrg.init(false);
     stepoutputzrg = StepInterval<int>::udf();
@@ -254,12 +254,14 @@ void ChainExecutor::computeComputationScope( Step::ID stepid,
 	else
 	    stepoutputhrg = requiredhrg;
 	
-	const StepInterval<int> requiredzrg = nextstep->getInputZRg( nextstepzrg );
+	const StepInterval<int> requiredzrg =
+		nextstep->getInputZRg( nextstepzrg );
 	if ( stepoutputzrg.isUdf() )
 	    stepoutputzrg = requiredzrg;
 	else
 	{
-	    stepoutputzrg = computeCommonStepInterval( stepoutputzrg, requiredzrg );
+	    stepoutputzrg =
+		computeCommonStepInterval( stepoutputzrg, requiredzrg );
 	}
 	
     }
@@ -272,7 +274,7 @@ bool ChainExecutor::setCalculationScope( const HorSampling& hrg,
     outputhrg_ = hrg;
     outputzrg_ = zrg;
     
-    return true;
+    return scheduleWork();
 }
 
 
@@ -306,8 +308,8 @@ bool ChainExecutor::Epoch::doPrepare()
 					        inputconnections );
 	for ( int idy=0; idy<inputconnections.size(); idy++ )
 	{
-	    const Step* inputstep =
-		chainexec_.chain_.getStepFromID( inputconnections[idy].inputstepid_ );
+	    const Step* inputstep = chainexec_.chain_.getStepFromID(
+					inputconnections[idy].inputstepid_ );
 	    if ( !inputstep )
 	    {
 		pErrMsg("This should not happen");
@@ -332,11 +334,13 @@ bool ChainExecutor::Epoch::doPrepare()
 	
 	chainexec_.computeComputationScope( currentstep->getID(), stepoutputhrg,
 					    stepoutputzrg );
-	currentstep->setOutput( new Attrib::DataCubes, stepoutputhrg, stepoutputzrg );
+	currentstep->setOutput( new Attrib::DataCubes, stepoutputhrg,
+				stepoutputzrg );
 	
 	
 	TypeSet<Chain::Connection> outputconnections;
-	chainexec_.connections_.getConnections( currentstep->getID(), true, outputconnections );
+	chainexec_.connections_.getConnections( currentstep->getID(),
+						true, outputconnections );
 	
 	for ( int idy=0; idy<outputconnections.size(); idy++ )
 	     currentstep->enableOutput( outputconnections[idy].outputslotid_ );
@@ -449,9 +453,9 @@ const char* ChainExecutor::message() const
 
     
 Chain::Connection::Connection( Step::ID outpstepid,
-			      Step::SlotID outpslotid,
-			      Step::ID inpstepid,
-			      Step::SlotID inpslotid )
+			       Step::SlotID outpslotid,
+			       Step::ID inpstepid,
+			       Step::SlotID inpslotid )
     : outputstepid_( outpstepid )
     , outputslotid_( outpslotid )
     , inputstepid_( inpstepid )
@@ -473,7 +477,7 @@ bool Chain::Connection::isUdf() const
 bool Chain::Connection::operator==( const VolProc::Chain::Connection& b ) const
 {
     return outputstepid_==b.outputstepid_ &&
-	    outputstepid_==b.outputslotid_ &&
+	    outputslotid_==b.outputslotid_ &&
 	    inputstepid_==b.inputstepid_ &&
 	    inputslotid_==b.inputslotid_;
 }
@@ -481,14 +485,14 @@ bool Chain::Connection::operator==( const VolProc::Chain::Connection& b ) const
     
 void Chain::Connection::fillPar( IOPar& iopar, const char* key ) const
 {
-    iopar.set( key, outputstepid_, outputstepid_,
+    iopar.set( key, outputstepid_, outputslotid_,
 	       inputstepid_, inputslotid_ );
 }
     
     
 bool Chain::Connection::usePar( const IOPar& iopar, const char* key )
 {
-    return iopar.get( key, outputstepid_, outputstepid_,
+    return iopar.get( key, outputstepid_, outputslotid_,
 		      inputstepid_, inputslotid_ );
 }
     
@@ -539,7 +543,7 @@ bool Chain::validConnection( const VolProc::Chain::Connection& c ) const
     if ( !outputstep || !outputstep->validOutputSlotID(c.outputslotid_) )
 	return false;
     
-    const Step* inputstep = getStepFromID( c.inputslotid_ );
+    const Step* inputstep = getStepFromID( c.inputstepid_ );
     if ( !inputstep || !inputstep->validInputSlotID(c.inputslotid_) )
 	return false;
     
@@ -568,10 +572,25 @@ Step* Chain::getStepFromID( Step::ID id )
     
     
 const Step* Chain::getStepFromID( Step::ID id ) const
+{ return const_cast<Chain*>( this )->getStepFromID( id ); }
+
+
+Step* Chain::getStepFromName( const char* nm )
 {
-    return const_cast<Chain*>( this )->getStepFromID( id );
-}
+    for ( int idx=0; idx<steps_.size(); idx++ )
+    {
+	const FixedString usrnm = steps_[idx]->userName();
+	if ( usrnm == nm )
+	    return steps_[idx];
+    }
     
+    return 0;
+}
+
+
+const Step* Chain::getStepFromName( const char* nm ) const
+{ return const_cast<Chain*>(this)->getStepFromName( nm ); }
+
 
 int Chain::indexOf( const Step* r ) const
 { return steps_.indexOf( r ); }
@@ -649,12 +668,13 @@ void Chain::fillPar( IOPar& par ) const
     }
     
     BufferString key;
-    par.set( sKeyNrConnections(), connections_.getConnections().size() );
-    for ( int idx=0; idx<connections_.getConnections().size(); idx++ )
+    const TypeSet<Chain::Connection>& conns = connections_.getConnections();
+    par.set( sKeyNrConnections(), conns.size() );
+    for ( int idx=0; idx<conns.size(); idx++ )
     {
-	connections_.getConnections()[idx].fillPar( par, sKeyConnection(idx,key)  );
+	conns[idx].fillPar( par, sKeyConnection(idx,key)  );
     }
-    
+
     par.set( sKey::Output(), outputstepid_, outputslotid_ );
 }
     
@@ -718,12 +738,12 @@ bool Chain::usePar( const IOPar& par )
     }
     
     int nrconns;
-    if ( par.get( sKeyNrConnections(), nrconns ))
+    if ( par.get(sKeyNrConnections(),nrconns) )
     {
 	Step::ID outputstepid;
 	Step::SlotID outputslotid;
-	if ( !par.get( sKey::Output(), outputstepid, outputslotid) ||
-	     !setOutputSlot( outputstepid, outputslotid ) )
+	if ( !par.get(sKey::Output(),outputstepid,outputslotid) ||
+	     !setOutputSlot(outputstepid,outputslotid) )
 	{
 	    errmsg_ = "Could not parse or set output slot.";
 	    return false;
@@ -758,7 +778,7 @@ bool Chain::usePar( const IOPar& par )
 	    conn.inputstepid_ = steps_[idx]->getID();
 	    conn.inputslotid_ = steps_[idx]->getInputSlotID( 0 );
 	    
-	    if ( !addConnection( conn ) )
+	    if ( !addConnection(conn) )
 	    {
 		pErrMsg("Should never happen");
 		return false;
@@ -766,7 +786,7 @@ bool Chain::usePar( const IOPar& par )
 	}
 	
 	if ( !setOutputSlot( steps_.last()->getID(),
-			     steps_.last()->getOutputSlotID( 0 ) ) )
+			     steps_.last()->getOutputSlotID(0) ) )
 	{
 	    pErrMsg("Should never happen");
 	    return false;
@@ -784,8 +804,7 @@ void Chain::setStorageID( const MultiID& mid )
 bool Chain::setOutputSlot( Step::ID stepid, Step::SlotID slotid )
 {
     const Step* step = getStepFromID( stepid );
-    
-    if ( !step || step->validOutputSlotID( slotid ) )
+    if ( !step || !step->validOutputSlotID(slotid) )
 	return false;
     
     outputstepid_ = stepid;
@@ -854,9 +873,11 @@ void Step::setChain( VolProc::Chain& c )
 const char* Step::userName() const
 { return username_.isEmpty() ? 0 : username_.buf(); }
 
-
 void Step::setUserName( const char* nm )
 { username_ = nm; }
+
+int Step::getNrInputs() const
+{ return needsInput() ? 1 : 0; }
 
 
 int Step::getInputSlotID( int idx ) const
@@ -873,7 +894,7 @@ int Step::getInputSlotID( int idx ) const
 
 int Step::getOutputSlotID( int idx ) const
 {
-    if ( idx<0 || idx>=getNrInputs() )
+    if ( idx<0 || idx>=getNrOutputs() )
     {
 	pErrMsg("Invalid output slot");
 	return Step::cUndefSlotID();
@@ -898,7 +919,7 @@ bool Step::validInputSlotID( SlotID slotid ) const
 
 bool Step::validOutputSlotID( SlotID slotid ) const
 {
-    for ( int idx=0; idx<getNrInputs(); idx++ )
+    for ( int idx=0; idx<getNrOutputs(); idx++ )
     {
 	if ( getOutputSlotID(idx)==slotid )
 	    return true;

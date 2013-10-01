@@ -62,7 +62,7 @@ public:
     virtual void		setUserName(const char* nm);
     
     virtual bool		needsInput() const		= 0;
-    virtual int			getNrInputs() const		{ return 1; }
+    virtual int			getNrInputs() const;
     virtual SlotID		getInputSlotID(int idx) const;
     virtual int			getNrOutputs() const		{ return 1; }
     virtual SlotID		getOutputSlotID(int idx) const;
@@ -78,7 +78,7 @@ public:
 				 big input is needed?*/
     
     virtual void		setInput(SlotID,const Attrib::DataCubes*);
-    virtual void		setOutput(Attrib::DataCubes*,
+    virtual void		setOutput(Attrib::DataCubes*, //add SlotID
 				      const HorSampling&,
 				      const StepInterval<int>&);
     
@@ -90,7 +90,7 @@ public:
     const Attrib::DataCubes*	getOutput() const	{ return output_; }
     Attrib::DataCubes*		getOutput()		{ return output_; }
     
-    virtual const VelocityDesc*	getVelDesc() const	{ return 0; }
+    virtual const VelocityDesc*	getVelDesc() const	{ return 0; } // old
     
     virtual bool		areSamplesIndependent() const { return true; }
 				/*!<returns whether samples in the output
@@ -122,7 +122,7 @@ protected:
     
     HorSampling			hrg_;
     StepInterval<int>		zrg_;
-    TypeSet<SlotID>		outputslotids_;
+    TypeSet<SlotID>		outputslotids_; // enabled slotids
 };
 
 
@@ -135,7 +135,8 @@ mExpClass(VolumeProcessing) Chain
 { mRefCountImpl(Chain);
 public:
     				Chain();
-    class Connection
+
+    mExpClass(VolumeProcessing) Connection
     {
     public:
 				Connection( Step::ID outpstep=Step::cUndefID(),
@@ -157,7 +158,7 @@ public:
 	
     };
     
-    class Web
+    mExpClass(VolumeProcessing) Web
     {
     public:
 	bool			addConnection(const Connection&);
@@ -167,8 +168,10 @@ public:
 				/*!Gets all connection that has step as either
 				   input or output. */
 	
-	TypeSet<Connection>&		getConnections()	{ return connections_; }
-	const TypeSet<Connection>&	getConnections() const { return connections_; }
+	TypeSet<Connection>&		getConnections()
+					{ return connections_; }
+	const TypeSet<Connection>&	getConnections() const
+					{ return connections_; }
     private:
 	TypeSet<Connection>	connections_;
     };
@@ -184,6 +187,8 @@ public:
 
     int				nrSteps() const; 
     Step*			getStep(int);
+    Step*			getStepFromName(const char*);
+    const Step*			getStepFromName(const char*) const;
     Step*			getStepFromID(Step::ID);
     const Step*			getStepFromID(Step::ID) const;
     int				indexOf(const Step*) const;
@@ -311,8 +316,7 @@ private:
     const Attrib::DataCubes*	outputvolume_;
 };
 
-
-}; //namespace
+}; // namespace VolProc
 
 #endif
 

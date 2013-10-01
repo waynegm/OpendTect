@@ -17,7 +17,7 @@ ________________________________________________________________________
 #include "uidialog.h"
 #include "factory.h"
 
-
+class BufferStringSet;
 class uiGenInput;
 class uiGroup;
 class uiTable;
@@ -34,7 +34,6 @@ public:
 
     			uiStepDialog(uiParent*,const char* stepnm,Step*);
     virtual bool	isOK() const		{ return true; }
-    bool		acceptOK(CallBacker*);
 
 protected:
 
@@ -43,10 +42,13 @@ protected:
     Step*		step_;
 
     void		addMultiInputFld();
+    void		initTable(int nrinputs);
+    void		getStepNames(BufferStringSet&) const;
     void		addNameFld(uiObject* alignobj);
     void		addNameFld(uiGroup* aligngrp);
     friend class	uiChain;
 
+    bool		acceptOK(CallBacker*);
 };
 
 

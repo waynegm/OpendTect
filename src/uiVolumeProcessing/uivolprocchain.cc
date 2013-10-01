@@ -16,12 +16,14 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "volprocchain.h"
 #include "volproctrans.h"
 
+#include "uicombobox.h"
 #include "uigeninput.h"
 #include "uiioobjsel.h"
 #include "uilabel.h"
 #include "uilistbox.h"
 #include "uimsg.h"
 #include "uiseparator.h"
+#include "uispinbox.h"
 #include "uitable.h"
 #include "uitoolbar.h"
 #include "uitoolbutton.h"
@@ -47,9 +49,62 @@ uiStepDialog::uiStepDialog( uiParent* p, const char* stepnm, Step* step )
 
 void uiStepDialog::addMultiInputFld()
 {
-    uiTable::Setup ts( 5, 1 );
-    ts.rowgrow(true).rowdesc("Input");
+    const int nrinp = step_->getNrInputs();
+    if ( nrinp == 0 )
+	return;
+
+    const int nrrows = nrinp==-1 ? 5 : nrinp;
+    uiTable::Setup ts( nrinp, 1 );
+    ts.rowgrow(false).defcollbl("Input");
     multiinpfld_ = new uiTable( this, ts, "Step inputs" );
+    initTable( nrinp );
+
+    const Chain::Web& web = step_->getChain().getConnections();
+    TypeSet<Chain::Connection> connections;
+    web.getConnections( step_->getID(), true, connections );
+    for ( int idx=0; idx<nrinp; idx++ )
+    {
+	Step::SlotID inpslotid = step_->getInputSlotID( idx );
+	Step::ID outputstepid = Step::cUndefID();
+	for ( int cidx=0; cidx<connections.size(); cidx++ )
+	{
+	    if ( connections[cidx].inputslotid_ == inpslotid )
+		outputstepid = connections[cidx].outputstepid_;
+	}
+
+	if ( outputstepid == Step::cUndefID() )
+	    continue;
+
+	Step* inputstep = step_->getChain().getStepFromID( outputstepid );
+	mDynamicCastGet(uiComboBox*,cb,
+		multiinpfld_->getCellObject(RowCol(idx,0)));
+	if ( inputstep && cb ) cb->setCurrentItem( inputstep->userName() );
+    }
+}
+
+
+void uiStepDialog::initTable( int nr )
+{
+    if ( !multiinpfld_ ) return;
+
+    BufferStringSet stepnames;
+    getStepNames( stepnames );
+    multiinpfld_->clearTable();
+    for ( int idx=0; idx<nr; idx++ )
+    {
+	uiComboBox* cb = new uiComboBox( 0, "Steps" );
+	cb->addItems( stepnames );
+	multiinpfld_->setCellObject( RowCol(idx,0), cb );
+    }
+}
+
+
+void uiStepDialog::getStepNames( BufferStringSet& names ) const
+{
+    Chain& chain = step_->getChain();
+    for ( int idx=0; idx<chain.nrSteps(); idx++ )
+	if ( step_ != chain.getStep(idx) )
+	    names.add( chain.getStep(idx)->userName() );
 }
 
 
@@ -87,7 +142,19 @@ bool uiStepDialog::acceptOK( CallBacker* )
     }
 
     step_->setUserName( nm.buf() );
+    for ( int idx=0; idx<step_->getNrInputs(); idx++ )
+    {
+	mDynamicCastGet(uiComboBox*,cb,
+		multiinpfld_->getCellObject(RowCol(idx,0)));
+	const char* stepnm = cb ? cb->text() : 0;
+	if ( !stepnm ) continue;
 
+	Step* outstep = step_->getChain().getStepFromName( stepnm );
+	Chain::Connection connection( outstep->getID(), 0,
+				step_->getID(), step_->getInputSlotID(idx) );
+	step_->getChain().addConnection( connection );
+    }
+    
     return true;
 }
 
@@ -205,13 +272,17 @@ const MultiID& uiChain::storageID() const
 
 bool uiChain::acceptOK( CallBacker* )
 {
-    if ( chain_.nrSteps() && chain_.getStep( 0 ) &&
-	 chain_.getStep( 0 )->needsInput() )
+    const int nrsteps = chain_.nrSteps();
+    if ( nrsteps>0 && chain_.getStep(0) &&
+	 chain_.getStep(0)->needsInput() )
     {
 	if ( !uiMSG().askGoOn("The first step in the chain needs an input, "
                   "and can thus not be first. Proceed anyway?", true ) )
 	    return false;
     }
+
+    const Step* laststep = chain_.getStep( nrsteps-1 );
+    chain_.setOutputSlot( laststep->getID(), laststep->getOutputSlotID(0) );
 
     if ( !doSave() )
 	return false;

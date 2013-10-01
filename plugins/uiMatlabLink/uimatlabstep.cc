@@ -36,8 +36,11 @@ uiMatlabStep::uiMatlabStep( uiParent* p, MatlabStep* step )
     : uiStepDialog(p,MatlabStep::sFactoryDisplayName(), step )
     , fileloaded_(false)
 {
+    addMultiInputFld();
+
     filefld_ = new uiFileInput( this, "Select shared object file" );
     filefld_->valuechanged.notify( mCB(this,uiMatlabStep,fileSelCB) );
+    filefld_->attach( alignedBelow, multiinpfld_ );
 
     loadbut_ = new uiPushButton( this, "Load",
 			mCB(this,uiMatlabStep,loadCB), true );

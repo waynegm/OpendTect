@@ -59,7 +59,7 @@ void uiStepDialog::addMultiInputFld()
     multiinpfld_ = new uiTable( this, ts, "Step inputs" );
     initTable( nrinp );
 
-    const Chain::Web& web = step_->getChain().getConnections();
+    const Chain::Web& web = step_->getChain().getWeb();
     TypeSet<Chain::Connection> connections;
     web.getConnections( step_->getID(), true, connections );
     for ( int idx=0; idx<nrinp; idx++ )

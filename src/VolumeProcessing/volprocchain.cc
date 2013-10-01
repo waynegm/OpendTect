@@ -108,8 +108,8 @@ ChainExecutor::ChainExecutor( Chain& vr )
     , curtask_( 0 )
     , totalnrepochs_( 1 )
 {
-    connections_ = chain_.getConnections();
-    //Todo: Optimize connections
+    web_ = chain_.getWeb();
+    //Todo: Optimize connections, check for indentical steps using same inputs
 }
 
 
@@ -162,8 +162,7 @@ bool ChainExecutor::scheduleWork()
 	firstepoch = mMAX( firstepoch, lateststepepoch );
 	
 	TypeSet<Chain::Connection> inputconnections;
-	connections_.getConnections( currentstep->getID(), false,
-				     inputconnections );
+	web_.getConnections( currentstep->getID(), false, inputconnections );
 	for ( int idx=0; idx<inputconnections.size(); idx++ )
 	{
 	    mGetStep( inputstep, inputconnections[idx].inputstepid_, false );
@@ -180,12 +179,8 @@ bool ChainExecutor::scheduleWork()
     {
 	Epoch* epoch = new Epoch( *this ); 
 	for ( int idy=0; idy<scheduledsteps_.size(); idy++ )
-	{
 	    if ( computeLatestEpoch( scheduledsteps_[idy]->getID() )==idx )
-	    {
 		epoch->addStep( scheduledsteps_[idy] );
-	    }
-	}
 	
 	epochs_ += epoch;
     }
@@ -202,7 +197,7 @@ int ChainExecutor::computeLatestEpoch( Step::ID stepid ) const
 	return 0;
     
     TypeSet<Chain::Connection> outputconnections;
-    connections_.getConnections( stepid, true, outputconnections );
+    web_.getConnections( stepid, true, outputconnections );
         
     int latestepoch = mUdf(int);
     for ( int idx=0; idx<outputconnections.size(); idx++ )
@@ -234,7 +229,7 @@ void ChainExecutor::computeComputationScope( Step::ID stepid,
     }
 
     TypeSet<Chain::Connection> outputconnections;
-    connections_.getConnections( stepid, true, outputconnections );
+    web_.getConnections( stepid, true, outputconnections );
     
     stepoutputhrg.init(false);
     stepoutputzrg = StepInterval<int>::udf();
@@ -259,10 +254,8 @@ void ChainExecutor::computeComputationScope( Step::ID stepid,
 	if ( stepoutputzrg.isUdf() )
 	    stepoutputzrg = requiredzrg;
 	else
-	{
 	    stepoutputzrg =
 		computeCommonStepInterval( stepoutputzrg, requiredzrg );
-	}
 	
     }
 }    
@@ -283,15 +276,15 @@ bool ChainExecutor::Epoch::needsStepOutput( Step::ID stepid ) const
     for ( int idx=0; idx<steps_.size(); idx++ )
     {
 	const Step* currentstep = steps_[idx];
+	if ( currentstep->getID() == stepid )
+	    return true;
 
 	TypeSet<Chain::Connection> inputconnections;
-	chainexec_.connections_.getConnections( currentstep->getID(), false,
-					       inputconnections );
+	chainexec_.web_.getConnections( currentstep->getID(), false,
+					inputconnections );
 	for ( int idy=0; idy<inputconnections.size(); idy++ )
-	{
 	    if ( inputconnections[idy].inputstepid_==stepid )
 		return true;
-	}
     }
     
     return false;
@@ -304,8 +297,8 @@ bool ChainExecutor::Epoch::doPrepare()
     {
 	Step* currentstep = steps_[idx];
 	TypeSet<Chain::Connection> inputconnections;
-	chainexec_.connections_.getConnections( currentstep->getID(), false,
-					        inputconnections );
+	chainexec_.web_.getConnections( currentstep->getID(), false,
+					inputconnections );
 	for ( int idy=0; idy<inputconnections.size(); idy++ )
 	{
 	    const Step* inputstep = chainexec_.chain_.getStepFromID(
@@ -339,14 +332,23 @@ bool ChainExecutor::Epoch::doPrepare()
 	
 	
 	TypeSet<Chain::Connection> outputconnections;
-	chainexec_.connections_.getConnections( currentstep->getID(),
-						true, outputconnections );
+	chainexec_.web_.getConnections( currentstep->getID(),
+					true, outputconnections );
 	
 	for ( int idy=0; idy<outputconnections.size(); idy++ )
 	     currentstep->enableOutput( outputconnections[idy].outputslotid_ );
 	
 	if ( currentstep->getID()==chainexec_.chain_.outputstepid_ )
 	    currentstep->enableOutput( chainexec_.chain_.outputslotid_ );
+
+	Task* newtask = currentstep->createTask();
+	if ( !newtask )
+	{
+	    pErrMsg("Could not create task");
+	    return false;
+	}
+
+	taskgroup_.addTask( newtask );
     }
     
     return true;
@@ -365,16 +367,17 @@ int ChainExecutor::nextStep()
     if ( epochs_.isEmpty() )
 	return Finished();
     
+    releaseMemory();
+
     //curtasklock_.lock();
     PtrMan<Epoch> curepoch = epochs_.pop();
-    curtask_ = &curepoch->getTask();
-    //curtasklock_.unLock();
     
     if ( !curepoch->doPrepare() )
 	return ErrorOccurred();
     
-    releaseMemory();
-    
+    curtask_ = &curepoch->getTask();
+    //curtasklock_.unLock();
+
     if ( !curtask_->execute() )
 	return ErrorOccurred();
     
@@ -521,7 +524,7 @@ bool Chain::addConnection(const VolProc::Chain::Connection& c )
     if ( !validConnection(c) )
 	return false;
     
-    connections_.getConnections().addIfNew( c );
+    web_.getConnections().addIfNew( c );
     
     return true;
 }
@@ -530,7 +533,7 @@ bool Chain::addConnection(const VolProc::Chain::Connection& c )
     
 void Chain::removeConnection(const VolProc::Chain::Connection& c )
 {
-    connections_.getConnections() -= c;
+    web_.getConnections() -= c;
 }
 
     
@@ -562,10 +565,8 @@ Step* Chain::getStep( int idx )
 Step* Chain::getStepFromID( Step::ID id )
 {
     for ( int idx=0; idx<steps_.size(); idx++ )
-    {
 	if ( steps_[idx]->getID()==id )
 	    return steps_[idx];
-    }
     
     return 0;
 }
@@ -622,10 +623,8 @@ void Chain::removeStep( int idx )
 const VelocityDesc* Chain::getVelDesc() const
 {
     for ( int idx=steps_.size()-1; idx>=0; idx-- )
-    {
 	if ( steps_[idx]->getVelDesc() )
 	    return steps_[idx]->getVelDesc();
-    }
 
     return 0;
 }
@@ -634,10 +633,8 @@ const VelocityDesc* Chain::getVelDesc() const
 bool Chain::areSamplesIndependent() const
 {
     for ( int idx=steps_.size()-1; idx>=0; idx-- )
-    {
 	if ( !steps_[idx]->areSamplesIndependent() )
 	    return false;
-    }
 
     return true;
 }
@@ -646,10 +643,8 @@ bool Chain::areSamplesIndependent() const
 bool Chain::needsFullVolume() const
 {
     for ( int idx=steps_.size()-1; idx>=0; idx-- )
-    {
 	if ( steps_[idx]->needsFullVolume() )
 	    return true;
-    }
 
     return false;
 }
@@ -668,12 +663,10 @@ void Chain::fillPar( IOPar& par ) const
     }
     
     BufferString key;
-    const TypeSet<Chain::Connection>& conns = connections_.getConnections();
+    const TypeSet<Chain::Connection>& conns = web_.getConnections();
     par.set( sKeyNrConnections(), conns.size() );
     for ( int idx=0; idx<conns.size(); idx++ )
-    {
 	conns[idx].fillPar( par, sKeyConnection(idx,key)  );
-    }
 
     par.set( sKey::Output(), outputstepid_, outputslotid_ );
 }
@@ -690,7 +683,7 @@ const char* Chain::sKeyConnection( int idx, BufferString& str )
 bool Chain::usePar( const IOPar& par )
 {
     deepErase( steps_ );
-    connections_.getConnections().erase();
+    web_.getConnections().erase();
 
     const char* parseerror = "Parsing error";
 
@@ -778,7 +771,7 @@ bool Chain::usePar( const IOPar& par )
 	    conn.inputstepid_ = steps_[idx]->getID();
 	    conn.inputslotid_ = steps_[idx]->getInputSlotID( 0 );
 	    
-	    if ( !addConnection(conn) )
+	    if ( !addConnection( conn ) )
 	    {
 		pErrMsg("Should never happen");
 		return false;
@@ -786,7 +779,7 @@ bool Chain::usePar( const IOPar& par )
 	}
 	
 	if ( !setOutputSlot( steps_.last()->getID(),
-			     steps_.last()->getOutputSlotID(0) ) )
+			     steps_.last()->getOutputSlotID( 0 ) ) )
 	{
 	    pErrMsg("Should never happen");
 	    return false;
@@ -803,10 +796,14 @@ void Chain::setStorageID( const MultiID& mid )
     
 bool Chain::setOutputSlot( Step::ID stepid, Step::SlotID slotid )
 {
-    const Step* step = getStepFromID( stepid );
-    if ( !step || !step->validOutputSlotID(slotid) )
-	return false;
-    
+    if ( steps_.size() > 1 )
+    {
+	const Step* step = getStepFromID( stepid );
+
+	if ( !step || step->validOutputSlotID( slotid ) )
+	    return false;
+    }
+
     outputstepid_ = stepid;
     outputslotid_ = slotid;
     
@@ -822,13 +819,9 @@ void Chain::Web::getConnections( Step::ID stepid, bool isinput,
 			    TypeSet<VolProc::Chain::Connection>& res ) const
 {
     for ( int idx=0; idx<connections_.size(); idx++ )
-    {
 	if ( (isinput && connections_[idx].inputstepid_==stepid) ||
 	     (!isinput && connections_[idx].outputstepid_==stepid))
-	{
 		res += connections_[idx];
-	}
-    }
 }
 
 
@@ -872,6 +865,7 @@ void Step::setChain( VolProc::Chain& c )
 
 const char* Step::userName() const
 { return username_.isEmpty() ? 0 : username_.buf(); }
+
 
 void Step::setUserName( const char* nm )
 { username_ = nm; }

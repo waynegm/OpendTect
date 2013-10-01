@@ -178,7 +178,7 @@ public:
     
     bool			addConnection(const Connection&);
     void			removeConnection(const Connection&);
-    const Web&			getConnections() const	{ return connections_; }
+    const Web&			getWeb() const	{ return web_; }
     
     void			setZStep( float z, bool zist )
 				{ zstep_=z; zist_ = zist; }
@@ -230,7 +230,7 @@ private:
     
     MultiID			storageid_;
     ObjectSet<Step>		steps_;
-    Web				connections_;
+    Web				web_;
 
     float			zstep_;
     bool			zist_;
@@ -310,7 +310,7 @@ private:
     mutable BufferString	errmsg_;
     ObjectSet<Step>		scheduledsteps_;
     ObjectSet<Epoch>		epochs_;
-    Chain::Web			connections_;
+    Chain::Web			web_;
     int				totalnrepochs_;
     
     const Attrib::DataCubes*	outputvolume_;

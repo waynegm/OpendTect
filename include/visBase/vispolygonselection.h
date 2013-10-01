@@ -66,8 +66,12 @@ public:
 				     4: some box points behind projection plane
 				*/
 
-    void			setDisplayTransformation( const mVisTrans* );
-    const mVisTrans*		getDisplayTransformation() const;
+    
+    void			setUTMCoordinateTransform(const mVisTrans*);
+				/*!< This is a special function to set transform 
+				     for computing real-world coordinates from
+				     screen coordinates.
+				*/
 
     static Notifier<PolygonSelection>* polygonFinished();
 
@@ -82,7 +86,8 @@ protected:
  
 					~PolygonSelection();
 
-    const mVisTrans*			transformation_;
+    
+    const mVisTrans*			utm2disptransform_;
 
     DrawStyle*				drawstyle_;
     mutable ODPolygon<double>*		polygon_;

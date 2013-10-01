@@ -1061,6 +1061,7 @@ void Scene::setPolygonSelector( visBase::PolygonSelection* ps )
     {
 	polyselector_ = ps;
 	polyselector_->ref();
+	polyselector_->setUTMCoordinateTransform( utm2disptransform_ );
 	mTryAlloc(coordselector_,visBase::PolygonCoord3Selector(*polyselector_));
     }
 }

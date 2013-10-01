@@ -46,7 +46,7 @@ protected:
 
 PolygonSelection::PolygonSelection()
     : VisualObjectImpl( false )
-    , transformation_( 0 )
+    , utm2disptransform_( 0 )
     , selector_( new osgGeo::PolygonSelection )
     , drawstyle_( new DrawStyle )
     , polygon_( 0 )
@@ -64,7 +64,7 @@ PolygonSelection::PolygonSelection()
 PolygonSelection::~PolygonSelection()
 {
     detachAllNotifiers();
-    unRefPtr( transformation_ );
+    unRefPtr( utm2disptransform_ );
     unRefPtr( drawstyle_ );
     unRefPtr( mastercamera_ );
     selector_->removeCallBack( selectorcb_ );
@@ -157,8 +157,8 @@ bool PolygonSelection::isInside( const Coord3& crd, bool displayspace ) const
 	return false;
 
     Coord3 checkcoord3d = crd;
-    if ( !displayspace && transformation_ )
-	transformation_->transform( checkcoord3d );
+    if ( !displayspace && utm2disptransform_ )
+	utm2disptransform_->transform( checkcoord3d );
    
     const osg::Vec2 coord2d = selector_->projectPointToScreen( 
 					    osg::Vec3((float) checkcoord3d.x,
@@ -214,10 +214,10 @@ char PolygonSelection::includesRange( const Coord3& start, const Coord3& stop,
     coords[6] = Coord3( stop.x, stop.y, start.z );
     coords[7] = Coord3( stop.x, stop.y, stop.z );
 
-    if ( !displayspace && transformation_ )
+    if ( !displayspace && utm2disptransform_ )
     {
 	for ( int idx=0; idx<8; idx++ )
-	    transformation_->transform( coords[idx] );
+	    utm2disptransform_->transform( coords[idx] );
     }
 
     ODPolygon<double> screenpts;
@@ -281,16 +281,12 @@ void PolygonSelection::polygonChangeCB( CallBacker* )
 }
 
 
-void PolygonSelection::setDisplayTransformation( const mVisTrans* nt )
+void PolygonSelection::setUTMCoordinateTransform( const mVisTrans* nt )
 {
-    if ( transformation_ ) transformation_->unRef();
-    transformation_ = nt;
-    if ( transformation_ ) transformation_->ref();
+    if ( utm2disptransform_ ) utm2disptransform_->unRef();
+    utm2disptransform_ = nt;
+    if ( utm2disptransform_ ) utm2disptransform_->ref();
 }
-
-
-const mVisTrans* PolygonSelection::getDisplayTransformation() const
-{ return transformation_; }
 
 
 PolygonCoord3Selector::PolygonCoord3Selector( const PolygonSelection& vs )

@@ -61,7 +61,6 @@ int main( int argc, char ** argv )
     }
 
     IOPar iop; iop.read( strm, sKey::Pars() );
-    sdin.close();
     if ( iop.size() == 0 )
     {
 	std::cerr << argv[0] << ": Invalid parameter file" << std::endl;

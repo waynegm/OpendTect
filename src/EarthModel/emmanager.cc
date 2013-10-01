@@ -15,7 +15,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "emsurfaceiodata.h"
 #include "emioobjinfo.h"
 #include "emundo.h"
-#include "errh.h"
 #include "executor.h"
 #include "filepath.h"
 #include "iopar.h"
@@ -73,7 +72,7 @@ void EMManager::setEmpty()
     deepUnRef( objects_ );
 
     if ( objects_.size() )
-	pErrMsg( "All objects are not unreffed" );
+	{ pErrMsg( "Not all objects are unreffed" ); }
 
     addRemove.trigger();
 
@@ -190,15 +189,10 @@ bool EMManager::objectExists( const EMObject* obj ) const
 void EMManager::addObject( EMObject* obj )
 {
     if ( !obj )
-    { pErrMsg("No object provided!");
-	return;
-    }
+	{ pErrMsg("No object provided!"); return; }
 
     if ( objects_.isPresent(obj) )
-    {
-	pErrMsg("Adding object twice");
-	return;
-    }
+	{ pErrMsg("Adding object twice"); return; }
 
     objects_ += obj;
     addRemove.trigger();
@@ -403,7 +397,8 @@ void EMManager::getSurfaceData( const MultiID& mid, SurfaceIOData& sd ) const
 void EMManager::levelToBeRemoved( CallBacker* cb )
 {
     mDynamicCastGet(Strat::LevelSet*,lvlset,cb)
-    if ( !lvlset ) pErrMsg( "Can't find levelSet" );
+    if ( !lvlset )
+	{ pErrMsg( "Callacker null or not a LevelSet" ); return; }
     const int lvlidx = lvlset->notifLvlIdx();
     if ( !lvlset->levels().validIdx( lvlidx ) ) return;
     const Strat::Level& lvl = *lvlset->levels()[lvlidx];

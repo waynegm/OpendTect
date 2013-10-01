@@ -128,7 +128,7 @@ void Strat::RefTree::setToActualTypes()
 }
 
 
-bool Strat::RefTree::read( std::istream& strm )
+bool Strat::RefTree::read( od_istream& strm )
 {
     deepErase( refs_ ); liths_.setEmpty(); deepErase( contents_ );
     ascistream astrm( strm, true );
@@ -171,6 +171,9 @@ bool Strat::RefTree::read( std::istream& strm )
 	}
     }
 
+    if ( !astrm.isOK() )
+	{ initTree(); return false; }
+
     astrm.next(); // Read away the line: 'Units'
     while ( !atEndOfSection( astrm.next() ) )
 	addLeavedUnit( astrm.keyWord(), astrm.value() );
@@ -196,7 +199,7 @@ bool Strat::RefTree::read( std::istream& strm )
 }
 
 
-bool Strat::RefTree::write( std::ostream& strm ) const
+bool Strat::RefTree::write( od_ostream& strm ) const
 {
     ascostream astrm( strm );
     astrm.putHeader( sKeyStratTree );
@@ -241,14 +244,15 @@ bool Strat::RefTree::write( std::ostream& strm ) const
 	iop.putTo( astrm );
     }
 
-    return strm.good();
+    return astrm.isOK();
 }
 
 
 void Strat::RefTree::levelToBeRemoved( CallBacker* cb )
 {
     mDynamicCastGet(Strat::LevelSet*,lvlset,cb)
-    if ( !lvlset ) pErrMsg( "Can't find levelSet" );
+    if ( !lvlset )
+	{ pErrMsg( "cb null or not a LevelSet" ); return; }
     const int lvlidx = lvlset->notifLvlIdx();
     if ( !lvlset->levels().validIdx( lvlidx ) ) return;
     const Strat::Level& lvl = *lvlset->levels()[lvlidx];
@@ -269,10 +273,11 @@ Strat::RefTree* Strat::RefTree::createStd( const char* nm )
     if ( nm && *nm )
     {
 	const BufferString fnm( getStdFileName(nm,"Tree") );
-	StreamData sd( StreamProvider(fnm).makeIStream() );
-	if ( sd.usable() )
-	    ret->read( *sd.istrm );
+	od_istream strm( fnm );
+	if ( strm.isOK() )
+	    ret->read( strm );
     }
+    
     return ret;
 }
 

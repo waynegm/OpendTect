@@ -18,7 +18,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "keystrs.h"
 #include "strmprov.h"
 #include "ascstream.h"
-#include "errh.h"
 
 #include <QKeyEvent>
 
@@ -330,14 +329,12 @@ IOPar* uiShortcutsMgr::getStored( const char* subsel )
 	return ret;
     delete ret;
 
-    StreamData sd = StreamProvider(
-	    		mGetSetupFileName("ShortCuts")).makeIStream();
-    if ( !sd.usable() )
-	{ sd.close(); return 0; }
+    od_istream strm( mGetSetupFileName("ShortCuts") );
+    if ( !strm.isOK() )
+	return 0;
 
-    ascistream astrm( *sd.istrm );
+    ascistream astrm( strm );
     IOPar* iop = new IOPar( astrm );
-    sd.close();
     if ( iop && iop->isEmpty() )
 	{ delete iop; return 0; }
 

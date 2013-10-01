@@ -12,7 +12,6 @@ ________________________________________________________________________
 
 -*/
 
-#include "errh.h"
 #include "sets.h"
 #include "threadlock.h"
 
@@ -55,7 +54,7 @@ mClass(Basic) HiddenParam
 {
 public:
     		HiddenParam( const V& undefval )
-		    : undef_( undefval ) 	{}
+		    : undef_( undefval )		{}
     void	setParam( O* obj, const V& val );
     const V&	getParam( const O* obj ) const;
 

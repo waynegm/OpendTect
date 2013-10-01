@@ -19,7 +19,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "volproctrans.h"
 
 
-bool BatchProgram::go( std::ostream& strm )
+bool BatchProgram::go( od_ostream& strm )
 { 
     OD::ModDeps().ensureLoaded( "VolumeProcessing" );
     OD::ModDeps().ensureLoaded( "Well" );
@@ -29,7 +29,7 @@ bool BatchProgram::go( std::ostream& strm )
     PtrMan<IOObj> ioobj = IOM().get( chainid );
     if ( !ioobj )
     {
-	strm << "Could not find volume processing ID: \"" << chainid << "\"\n";
+	strm << "Could not find volume processing, ID: '" << chainid << "'\n";
 	return false;
     }
     
@@ -117,7 +117,7 @@ bool BatchProgram::go( std::ostream& strm )
 	return false;
     } 
 
-    if ( !pce->execute(&strm) )
+    if ( !pce->go(strm) )
     {
 	strm << "Unexecutable Chain!";
 	return false;
@@ -171,10 +171,8 @@ bool BatchProgram::go( std::ostream& strm )
     const TypeSet<int> indices( 1, 0 );
     Attrib::DataCubesWriter writer( outputid, *cube, indices );
     writer.setSelection( cs.hrg, outputzrg );
-    if ( !writer.execute( &strm ) )
-    {
+    if ( !writer.go(strm) )
 	return false;
-    }
 
     return true;
 }

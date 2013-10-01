@@ -29,7 +29,7 @@ public:
 
 protected:
 
-    void		readFile(std::istream&);
+    void		readFile(od_istream&);
     void		addD2T(BufferString&);
     void		write(BufferStringSet&);
     bool		acceptOK(CallBacker*);
@@ -38,8 +38,8 @@ protected:
     uiTableImpDataSel*	dataselfld_;
     uiGenInput*		velocityfld_;
 
-    ObjectSet<Well::Data>   wells_;
-    Table::FormatDesc*	    fd_;
+    ObjectSet<Well::Data> wells_;
+    Table::FormatDesc*	fd_;
 };
 
 
@@ -65,7 +65,7 @@ public:
 protected:
 
     bool		acceptOK(CallBacker*);
-    void		readFile(std::istream&,BufferStringSet&,
+    void		readFile(od_istream&,BufferStringSet&,
 				 ObjectSet<Well::MarkerSet>&);
 
     uiFileInput*	inpfld_;
@@ -83,13 +83,13 @@ public:
 protected:
 
     bool		acceptOK(CallBacker*);
-    void		readFile(std::istream&,
+    void		readFile(od_istream&,
 				 ObjectSet<D2TModelData>&);
 
     uiFileInput*	inpfld_;
     uiTableImpDataSel*	dataselfld_;
 
-    Table::FormatDesc*	    fd_;
+    Table::FormatDesc*	fd_;
 };
 
 #endif

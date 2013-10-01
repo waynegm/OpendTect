@@ -10,7 +10,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "sorting.h"
 #include "trigonometry.h"
 #include "varlenarray.h"
-#include <iostream>
+#include "od_ostream.h"
+
 
 DelaunayTriangulator::DelaunayTriangulator( DAGTriangleTree& dagt )
     : tree_( dagt )  
@@ -26,7 +27,7 @@ DelaunayTriangulator::~DelaunayTriangulator()
 }
 
 
-void DelaunayTriangulator::setCalcScope(const Interval<int>& rg)
+void DelaunayTriangulator::setCalcScope( const Interval<int>& rg )
 {
     calcscope_.start =  mMAX( 0, rg.start );
     calcscope_.stop =  mMIN( tree_.coordList().size()-1, rg.stop );
@@ -317,10 +318,7 @@ bool DAGTriangleTree::insertPoint( int ci, int& dupid )
     if ( mIsUdf((*coordlist_)[ci].x) || mIsUdf((*coordlist_)[ci].y) ) 
     {
 	mMultiThread( coordlock_.readUnLock() );
-	BufferString msg = "The point ";
-	msg += ci;
-	msg +=" is not defined!";
-	pErrMsg( msg );
+	pErrMsg( BufferString("The point ",ci," is not defined!") );
 	return true; //For undefined point, skip.
     }
     mMultiThread( coordlock_.readUnLock() );
@@ -348,10 +346,7 @@ bool DAGTriangleTree::insertPoint( int ci, int& dupid )
 		return true;
 	    else
 	    {
-		BufferString msg = "\nInsert point ";
-		msg += ci;
-		msg += " failed!";
-		pErrMsg( msg );
+		pErrMsg( BufferString("Insert point ",ci," failed!") );
 		return false;
 	    }
 	}
@@ -359,10 +354,7 @@ bool DAGTriangleTree::insertPoint( int ci, int& dupid )
     else if ( res==cIsDuplicate() )
 	return true;
 
-    BufferString msg = "\nInsert point ";
-    msg += ci;
-    msg += " failed!";
-    pErrMsg( msg );
+    pErrMsg( BufferString("Insert point ",ci," failed!") );
     return false;
 }
 
@@ -425,15 +417,12 @@ char DAGTriangleTree::searchFurther( const Coord& pt, int& ti0,
 		break;
 	    }
 	    else
-		pErrMsg("Hmm");
+		{ pErrMsg("Hmm"); }
 	}
 
 	if ( !found )
-	{
-	    pErrMsg("No child found");
-	    return cError();
+	    { pErrMsg("No child found"); return cError(); }
 	}
-    }
 
     return cError();
 }
@@ -494,8 +483,7 @@ char DAGTriangleTree::isInside( const Coord& pt, int ti, int& dupid ) const
     if ( clockwise(*tricoord0, *tricoord1, *tricoord2) )
     {
 	pErrMsg( "Did not expect clockwise triangle!" );
-	const Coord* tmp;
-	mSWAP( tricoord0, tricoord2, tmp );
+	Swap( tricoord0, tricoord2 );
     }
 
     if ( isPointLeftOfLine(pt, *tricoord0, *tricoord1) ||
@@ -591,10 +579,7 @@ int DAGTriangleTree::getNeighbor( int v0, int v1, int ti ) const
     }
 
     if ( id0==-1 || id1==-1 )
-    {
-	pErrMsg( "vertex is not on the triangle" );
-	return cNoVertex();
-    }
+	{ pErrMsg( "vertex is not on the triangle" ); return cNoVertex(); }
 
     int res;
     
@@ -605,10 +590,7 @@ int DAGTriangleTree::getNeighbor( int v0, int v1, int ti ) const
     else if ( (id0==1 && id1==2) || (id0==2 && id1==1) )
 	res = searchChild( v0, v1, triangles_[ti].neighbors_[1] );
     else
-    {
-	pErrMsg("Should never happen");
-	return mUdf(int);
-    }
+	{ pErrMsg("Should never happen"); return mUdf(int); }
 
     return res;
 }
@@ -699,10 +681,7 @@ void DAGTriangleTree::legalizeTriangles( TypeSet<char>& v0s, TypeSet<char>& v1s,
 	}
 
 	if ( checkpt==cNoVertex() )
-	{
-	    pErrMsg("Impossible case.");
-	    continue;
-	}
+	    { pErrMsg("Impossible case."); continue; }
 
 	mMultiThread( coordlock_.readLock() );
 
@@ -854,19 +833,19 @@ bool DAGTriangleTree::getWeights( int vertexidx, const TypeSet<int>& conns,
 }
 
 
-void DAGTriangleTree::dumpTo(std::ostream& stream) const
+void DAGTriangleTree::dumpTo( od_ostream& stream ) const
 {
     for ( int idx=0; idx<triangles_.size(); idx++ )
     {
 	const DAGTriangle& triangle = triangles_[idx];
-	stream << (int) triangle.coordindices_[0] << '\t'
-	       << (int) triangle.coordindices_[1] << '\t'
-	       << (int) triangle.coordindices_[2] << '\n';
+	stream.add( triangle.coordindices_[0] ).add( od_tab )
+	      .add( triangle.coordindices_[1] ).add( od_tab )
+	      .add( triangle.coordindices_[2] ).add( od_newline );
     }
 }
 
 
-void DAGTriangleTree::dumpTriangulationToIV(std::ostream& stream) const
+void DAGTriangleTree::dumpTriangulationToIV( od_ostream& stream ) const
 {
     stream << "#Inventor V2.1 ascii\n\n"
 	   << "Coordinate3 {\n"
@@ -896,7 +875,7 @@ void DAGTriangleTree::dumpTriangulationToIV(std::ostream& stream) const
 	      << triangle.coordindices_[2] << ", -1"
 	      << (idx<triangles_.size()-1 ? ",\n" : "\n");
     }
-    stream << "]\n}" << std::endl;
+    stream.add( "]\n}\n" ).flush();
 }
 
 
@@ -1026,10 +1005,7 @@ bool Triangle2DInterpolator::computeWeights( const Coord& pt,
 
     const int nrvertices = tmpvertices.size();
     if ( !nrvertices )
-    {
-	pErrMsg("Hmm");
-	return false;
-    }
+	{ pErrMsg("Hmm"); return false; }
 
     if ( !dointerpolate ) //Get the nearest node only
     {
@@ -1140,10 +1116,7 @@ bool Triangle2DInterpolator::setFromAzimuth( const TypeSet<int>& tmpvertices,
     }
 
     if ( preidx==-1 && aftidx==-1 )
-    {
-	pErrMsg("Hmm");
-	return false;
-    }
+	{ pErrMsg("Hmm"); return false; }
     
     if ( preidx==-1 )
 	preidx = perimeter_[0];

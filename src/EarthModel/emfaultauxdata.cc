@@ -244,7 +244,7 @@ void FaultAuxData::renameFault( const char* fltnewname )
 	FilePath fn( newname );
 	dataset_[idx]->filename = fn.fileName(); 
     	File::rename( oldname, newname );
-	    }
+    }
 
     FilePath oldfp( oldfltfulnm );
     oldfp.setExtension( sKeyExtension() );
@@ -257,7 +257,7 @@ void FaultAuxData::renameFault( const char* fltnewname )
 void FaultAuxData::updateDataFiles( Action act, int sdidx, const char* nm )
 {
     if ( !dataset_.validIdx(sdidx) ) 
-	    return;
+	return;
 
     FilePath fp( fltfullnm_ );
     fp.setExtension( sKeyExtension() );
@@ -284,12 +284,12 @@ void FaultAuxData::updateDataFiles( Action act, int sdidx, const char* nm )
     if ( act==Remove )
     {
 	delete dataset_.removeSingle( sdidx );
-	
+    
 	BufferString prevnm = createFltDataName( fltfullnm_, sdidx );
 	BufferString nextnm = createFltDataName( fltfullnm_, sdidx+1 );
     	File::remove( prevnm );
 	for ( int idx=sdidx; idx<dataset_.size(); idx++ )
-    {
+	{
 	    File::rename( nextnm, prevnm );
 	    prevnm = nextnm;
 	    nextnm = createFltDataName( fltfullnm_, idx+2 );
@@ -300,14 +300,14 @@ void FaultAuxData::updateDataFiles( Action act, int sdidx, const char* nm )
 
     ObjectSet<IOPar> pars;
     for ( int idx=0; idx<dataset_.size(); idx++ )
-	{
+    {
 	IOPar* par = new IOPar();
 	par->set( sKey::Name(), dataset_[idx]->username );
     
 	const BufferString attrfilenm = createFltDataName( filenm,  idx ); 
 	par->set( sKey::FileName(), attrfilenm );
 	pars += par;
-	}
+    }
 
     astream.put( "Number of surface data", pars.size() );
     astream.newParagraph();
@@ -333,8 +333,7 @@ void FaultAuxData::readSDInfoFile( ObjectSet<IOPar>& sdnmpars )
     if ( !sfio.open(true) )
 	return;
 
-    std::istream& istrm = sfio.istrm();
-    ascistream astrm( istrm, true );
+    ascistream astrm( sfio.istrm(), true );
     if ( !astrm.isOfFileType( sKeyFaultAuxData() ) )
     {
 	sfio.closeSuccess();
@@ -401,7 +400,7 @@ bool FaultAuxData::storeData( int sdidx, bool binary )
     sdinfo.set( "ColSize", dataset_[sdidx]->data->info().getSize(1) );
     sdinfo.putTo( astream );
 
-    std::ostream& strm = astream.stream();
+    od_ostream& strm = astream.stream();
     const float* vals = dataset_[sdidx]->data->getData();
     if ( vals )
     {
@@ -409,10 +408,10 @@ bool FaultAuxData::storeData( int sdidx, bool binary )
 	for ( od_int64 idy=0; idy<datasz; idy++ )
 	{
 	    if ( binary )
-		strm.write( (const char*)(&vals[idy]), sizeof(float) );
+		strm.addBin( &vals[idy], sizeof(float) );
 	    else
-		strm << vals[idy] << '\t';
-    }
+		strm << vals[idy] << od_tab;
+	}
     }
     else
     {
@@ -424,15 +423,15 @@ bool FaultAuxData::storeData( int sdidx, bool binary )
 	    {
 		const float val = dataset_[sdidx]->data->get( idx, jdx );
     		if ( binary )
-    		    strm.write( (const char*)(&val), sizeof(float) );
+    		    strm.addBin( &val, sizeof(float) );
     		else
-    		    strm << val << '\t';
-    }
+    		    strm << val << od_tab;
+	    }
 	}
     }
 	
     if ( !binary ) 
-	strm << '\n';
+	strm << od_newline;
 
     File::remove( backupfp.fullPath() );
     return sfio.closeSuccess();
@@ -471,13 +470,12 @@ bool FaultAuxData::loadData( int sdidx )
     if ( !sfio.open(true) )
 	mErrRtn("Cannot open file, check your file read permission");
 
-    std::istream& istrm = sfio.istrm();
-    ascistream astream( istrm, true );
+    ascistream astream( sfio.istrm(), true );
     if ( !astream.isOfFileType( sKeyFaultAuxData() ) )
     {
 	sfio.closeSuccess();
 	mErrRtn("Wrong file type, not fault aux data");
-	}
+    }
 
     astream.next();
     IOPar sdinfo;
@@ -489,22 +487,21 @@ bool FaultAuxData::loadData( int sdidx )
     sdinfo.getYN( sKey::Binary(), binary );
     sdinfo.get( "RowSize", rowsize );
     sdinfo.get( "ColSize", colsize );
-
-    std::istream& strm = astream.stream();
     
     Array2DImpl<float>* newdata = new Array2DImpl<float>( rowsize, colsize );
     const od_int64 datasz = rowsize * colsize;
     float* arr = newdata->getData();
 
+    od_istream& strm = astream.stream();
     for ( od_int64 idx=0; idx<datasz; idx++ )
     {
 	float val;
 	if ( binary )
-	    strm.read( (char*)(&val), sizeof(float) );
+	    strm.getBin( &val, sizeof(float) );
 	else
 	    strm >> val;
 	arr[idx] = val;
-	}
+    }
 
     dataset_[sdidx]->data = newdata;
     dataset_[sdidx]->policy = OD::CopyPtr;

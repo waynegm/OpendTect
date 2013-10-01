@@ -17,7 +17,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "color.h"
 #include "coltabindex.h"
 #include "coltabsequence.h"
-#include "errh.h"
 #include "file.h"
 #include "filepath.h"
 #include "oddirs.h"
@@ -92,8 +91,9 @@ ioPixmap::ioPixmap( const char* fnm, const char* fmt )
 {
     bool isnone = true;
     if ( srcname_.isEmpty() )
-	pErrMsg("Empty icon name specified. "
-		" (if this is intentional, use uiIcon::None())");
+	{ pErrMsg("Empty icon name specified. "
+		    " (if this is intentional, use uiIcon::None())"); }
+
     if ( srcname_ != uiIcon::None() )
 	isnone = false;
     if ( isnone )

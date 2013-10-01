@@ -18,9 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "welld2tmodel.h"
 #include "wellmarker.h"
 #include "idxable.h"
-
-//#include <iostream>
-//#include <math.h>
+#include "od_ostream.h"
 
 
 static bool convToDah( const Well::Track& trck, float& val,
@@ -75,12 +73,16 @@ bool TrackAscIO::getData( Data& wd, bool tosurf ) const
 	if ( mIsUdf(c.x) || mIsUdf(c.y) )
 	    continue;
 
-	c.z = mCast( float, getdValue(2) );
-	const float newdah = mCast( float, getdValue( 3 ) );
+	c.z = getdValue(2);
+	float newdah = getfValue( 3 );
 	const bool havez = !mIsUdf(c.z);
 	const bool havedah = !mIsUdf(newdah);
 	if ( !havez && !havedah )
 	    continue;
+        else if ( !havez && havedah )
+            c.z = newdah;
+        else if ( havez && !havedah )
+            newdah = mCast( float, c.z );
 
 	if ( wd.track().size() == 0 )
 	{
@@ -154,7 +156,7 @@ Table::FormatDesc* MarkerSetAscIO::getDesc()
 }
 
 
-bool MarkerSetAscIO::get( std::istream& strm, MarkerSet& ms,
+bool MarkerSetAscIO::get( od_istream& strm, MarkerSet& ms,
        				const Track& trck ) const
 {
     ms.erase();
@@ -275,7 +277,7 @@ static bool getTVDD2TModel( D2TModel& d2t, TypeSet<double>& rawzvals,
     TypeSet<float> mds;
     TypeSet<double> ts;
     const double zwllhead = trck.pos(0).z;
-    const double srd = wll.info().srdelev;
+    const double srd = mCast(float,SI().seismicReferenceDatum());
     const double firstz = mMAX(-1.f * srd, zwllhead );
     // no write above deepest of (well head, SRD)
     // velocity above is controled by info().replvel
@@ -327,7 +329,7 @@ static bool getTVDD2TModel( D2TModel& d2t, TypeSet<double>& rawzvals,
 }
 
 
-bool D2TModelAscIO::get( std::istream& strm, D2TModel& d2t,
+bool D2TModelAscIO::get( od_istream& strm, D2TModel& d2t,
 			 const Data& wll ) const
 {
     d2t.setEmpty();
@@ -348,7 +350,7 @@ bool D2TModelAscIO::get( std::istream& strm, D2TModel& d2t,
 	if ( mIsUdf(zval) || mIsUdf(tval) )
 	    continue;
 	if ( dpthopt == 2 )
-	    zval -= wll.info().srdelev;
+	    zval -= mCast(float,SI().seismicReferenceDatum());
 	if ( dpthopt == 3 )
 	    zval -= wll.track().getKbElev();
 	if ( dpthopt == 4 )
@@ -376,7 +378,7 @@ bool D2TModelAscIO::get( std::istream& strm, D2TModel& d2t,
 
 // Well::BulkTrackAscIO
 BulkTrackAscIO::BulkTrackAscIO( const Table::FormatDesc& fd,
-				std::istream& strm )
+				od_istream& strm )
     : Table::AscIO(fd)
     , strm_(strm)
 {}
@@ -423,7 +425,7 @@ Table::TargetInfo* gtWellNameTI()
 
 // Well::BulkMarkerAscIO
 BulkMarkerAscIO::BulkMarkerAscIO( const Table::FormatDesc& fd,
-				std::istream& strm )
+				od_istream& strm )
     : Table::AscIO(fd)
     , strm_(strm)
 {}
@@ -458,7 +460,7 @@ bool BulkMarkerAscIO::identifierIsUWI() const
 
 // Well::BulkD2TModelAscIO
 BulkD2TModelAscIO::BulkD2TModelAscIO( const Table::FormatDesc& fd,
-				      std::istream& strm )
+				      od_istream& strm )
     : Table::AscIO(fd)
     , strm_(strm)
 {}

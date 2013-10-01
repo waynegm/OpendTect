@@ -12,16 +12,20 @@ ________________________________________________________________________
 
 -*/
 
+# ifdef do_import_export
 
-
-#ifdef __cpp__
+#  ifdef __cpp__
 #  include "mathfunc.h"
 
-# ifdef mDoWindowsImport
-Extern_Algo template class mExp(Algo) MathFunction<float,float>;
+mExportTemplClassInst(Algo) BendPointBasedMathFunction<float,float>;
+mExportTemplClassInst(Algo) BendPointBasedMathFunction<double,float>;
+mExportTemplClassInst(Algo) BendPointBasedMathFunction<float,double>;
+mExportTemplClassInst(Algo) BendPointBasedMathFunction<double,double>;
+
+mExportTemplClassInst(Algo) MathFunction<float,float>;
+
+# endif
+
 # endif
 
 #endif
-
-#endif
-

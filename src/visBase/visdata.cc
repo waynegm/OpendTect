@@ -8,7 +8,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "visdata.h"
 
-#include "errh.h"
 #include "keystrs.h"
 #include "thread.h"
 #include "visdataman.h"
@@ -220,7 +219,7 @@ bool DataObject::isSelected() const
 void DataObject::setDisplayTransformation( const mVisTrans* trans )
 {   
     if ( trans!=getDisplayTransformation() )
-	pErrMsg("Not implemented");
+	{ pErrMsg("Not implemented"); }
 }   
     
 

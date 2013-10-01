@@ -733,7 +733,8 @@ bool EventWriter::writeAuxData( const char* fnm )
 	return false;
     }
 	     
-    if ( !auxinfo_.write( fileio.ostrm(), EventReader::sHorizonFileType() ) )
+    if ( !auxinfo_.write( fileio.ostrm(),
+			  EventReader::sHorizonFileType() ) )
     {
 	errmsg_ = "Cannot write to ";
 	errmsg_ += horidfnm.fullPath().buf();
@@ -1076,7 +1077,7 @@ EventPatchReader::EventPatchReader( Conn* conn, EventManager* events )
 	return;
     }
 
-    std::istream& strm = ((StreamConn*)conn_)->iStream();
+    std::istream& strm = ((StreamConn*)conn_)->iStream().stdStream();
     ascistream astream( strm );
     if ( !astream.isOfFileType( EventReader::sFileType() ) )
     {
@@ -1184,7 +1185,7 @@ int EventPatchReader::nextStep()
 {
     if ( !eventmanager_ ) return Finished();
 
-    std::istream& strm = ((StreamConn*)conn_)->iStream();
+    std::istream& strm = ((StreamConn*)conn_)->iStream().stdStream();
 
     BinID curbid;
     while ( headeridx_<fileheader_.nrEvents() )
@@ -1498,12 +1499,12 @@ int EventPatchWriter::nextStep()
 	    return ErrorOccurred();
 	}
 
-	std::ostream& strm = fileio_.ostrm();
-	ascostream astream( strm );
+	ascostream astream( fileio_.ostrm() );
 	astream.putHeader( EventReader::sFileType() );
 	par.putTo( astream );
-	fileheaderoffset_ = mCast(int,strm.tellp());
-	if ( !fileheader_.toStream( strm, binary_ ) )
+	std::ostream& ostrm = astream.stream().stdStream();
+	fileheaderoffset_ = mCast(int,ostrm.tellp());
+	if ( !fileheader_.toStream( ostrm, binary_ ) )
 	{
 	    errmsg_ = "Cannot write file header to stream ";
 	    errmsg_ += fileio_.fileName();
@@ -1512,7 +1513,7 @@ int EventPatchWriter::nextStep()
 	}
     }
 
-    std::ostream& strm = fileio_.ostrm();
+    std::ostream& strm = fileio_.ostrm().stdStream();
     if ( headeridx_>=fileheader_.nrEvents() )
     {
 	strm.seekp( fileheaderoffset_, std::ios::beg );

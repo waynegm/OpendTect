@@ -15,8 +15,9 @@ ________________________________________________________________________
 #include "basicmod.h"
 #include "bufstring.h"
 #include "plftypes.h"
-#include <limits.h>
+#include "od_iostream.h"
 #include <iosfwd>
+#include <limits.h>
 
 #define mAscStrmParagraphMarker		"!"
 #define mAscStrmKeyValSep		':'
@@ -34,12 +35,14 @@ mExpClass(Basic) ascostream
 {
 
 public:
-		ascostream( std::ostream& strm )
-			: mystrm(false), streamptr(&strm) {}
-		ascostream( std::ostream* strm )
-			: mystrm(true), streamptr(strm)   {}
-					//!<\note strm becomes mine
-		~ascostream();
+
+		ascostream(od_ostream&);
+		ascostream(od_ostream*); // becomes mine
+		ascostream(std::ostream&);
+		ascostream(std::ostream*); // becomes mine
+    virtual	~ascostream();
+
+    bool	isOK() const;
 
     bool	putHeader(const char* filetype);
     bool	put(const char*,const char* val=0);
@@ -60,15 +63,12 @@ public:
 
     void	newParagraph();
 
-    std::ostream& stream()			{ return *streamptr; }
-    const std::ostream& stream() const		{ return *streamptr; }
-    operator	std::ostream&()			{ return *streamptr; }
-    operator	const std::ostream&() const	{ return *streamptr; }
+    inline od_ostream&	stream()		{ return strm_; }
 
 protected:
 
-    std::ostream* streamptr;
-    bool	mystrm;
+    od_ostream& strm_;
+    bool	strmmine_;
 
     void	putKeyword(const char*,bool wsep=true);
 
@@ -86,20 +86,21 @@ protected:
 mExpClass(Basic) ascistream
 {
 public:
-			ascistream( std::istream& strm, bool rdhead=true )
-				: mystrm(false)	{ init(&strm,rdhead); }
-			ascistream( std::istream* strm, bool rdhead=true )
-				: mystrm(true)	{ init(strm,rdhead); }
-			~ascistream();
+			ascistream(od_istream&,bool rdhead=true);
+			ascistream(od_istream*,bool rdhead=true);
+			ascistream(std::istream&,bool rdhead=true);
+			ascistream(std::istream*,bool rdhead=true);
+    virtual		~ascistream();
 
     ascistream&		next();
+    bool		isOK() const;
 
-    const char*		headerStartLine() const	{ return header.buf(); }
+    const char*		headerStartLine() const	{ return header_.buf(); }
     bool		hasStandardHeader() const;
-    const char*		fileType() const	{ return filetype.buf(); }
+    const char*		fileType() const	{ return filetype_.buf(); }
     bool		isOfFileType(const char*) const;
     const char*		version() const;
-    const char*		timeStamp() const	{ return timestamp.buf(); }
+    const char*		timeStamp() const	{ return timestamp_.buf(); }
     int			majorVersion() const;
     int			minorVersion() const;
 
@@ -108,8 +109,8 @@ public:
     bool		atEOS() const		{ return type() > KeyVal; }
 			//!< returns true if at end of segment (='paragraph')
 
-    const char*		keyWord() const		{ return keybuf.buf(); }
-    const char*		value() const		{ return valbuf.buf(); }
+    const char*		keyWord() const		{ return keybuf_.buf(); }
+    const char*		value() const		{ return valbuf_.buf(); }
     bool		hasKeyword(const char*) const;
     bool		hasValue(const char*) const;
     int			getIValue(int i=0) const;
@@ -120,26 +121,26 @@ public:
     double		getDValue(int i=0) const;
     bool		getYN(int i=0) const;
 
-    inline std::istream& stream() const		{ return *streamptr; }
+    inline od_istream&	stream()		{ return strm_; }
 
 			// This is for overriding what's in the file
-    void		setKeyWord( const char* s ) { keybuf = s; }
-    void		setValue( const char* s ) { valbuf = s; }
+    void		setKeyWord( const char* s ) { keybuf_ = s; }
+    void		setValue( const char* s ) { valbuf_ = s; }
 
 protected:
 
-    std::istream*	streamptr;
-    bool		mystrm;
-    BufferString	keybuf;
-    BufferString	valbuf;
+    od_istream&		strm_;
+    bool		strmmine_;
+    BufferString	keybuf_;
+    BufferString	valbuf_;
 
-    BufferString	header;
-    BufferString	filetype;
-    BufferString	timestamp;
+    BufferString	header_;
+    BufferString	filetype_;
+    BufferString	timestamp_;
 
 private:
 
-    void		init(std::istream*,bool);
+    void		init(bool);
 
 };
 

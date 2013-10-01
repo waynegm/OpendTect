@@ -493,7 +493,7 @@ float ElasticPropGen::getVal( const ElasticFormula& ef,
 	}
 	expr->setVariableValue( idx, val );
     }
-    val = expr ? expr->getValue() : val;
+    val = expr ? mCast(float,expr->getValue()) : val;
     delete expr;
     return val;
 }
@@ -522,9 +522,10 @@ ElasticPropSelection* ElasticPropSelection::get( const IOObj* ioobj )
     {
 	eps = new ElasticPropSelection;
 	
-	if ( !conn->forRead() || !conn->isStream() )  return 0;
-
-	ascistream astream( ((StreamConn&)(*conn)).iStream() );
+	if ( !conn->forRead() || !conn->isStream() )
+	    return 0;
+	StreamConn& strmconn = static_cast<StreamConn&>( *conn );
+	ascistream astream( strmconn.iStream() );
 	if ( !astream.isOfFileType(mTranslGroupName(ElasticPropSelection)) )
 	    return 0;
 
@@ -537,7 +538,7 @@ ElasticPropSelection* ElasticPropSelection::get( const IOObj* ioobj )
 	    BufferString nm; iop.get( sKeyPropertyName, nm ); 
 	    eps->get( tp ).setName(nm);
 	}
-	if ( !astream.stream().good() )
+	if ( !astream.isOK() )
 	    ErrMsg( "Problem reading Elastic property selection from file" );
     }
     else
@@ -558,9 +559,10 @@ bool ElasticPropSelection::put( const IOObj* ioobj ) const
     PtrMan<Conn> conn = ioobj->getConn( Conn::Write );
     if ( conn && !conn->bad() )
     {
-	if ( !conn->forWrite() || !conn->isStream() ) return false;
-
-	ascostream astream( ((StreamConn&)(*conn)).oStream() );
+	if ( !conn->forWrite() || !conn->isStream() )
+	    return false;
+	StreamConn& strmconn = static_cast<StreamConn&>( *conn );
+	ascostream astream( strmconn.oStream() );
 	const BufferString head( 
 			mTranslGroupName(ElasticPropSelection), " file" );
 	if ( !astream.putHeader( head ) ) return false;
@@ -572,7 +574,7 @@ bool ElasticPropSelection::put( const IOObj* ioobj ) const
 	    get(idx).formula().fillPar( iop ); 
 	    iop.putTo( astream ); iop.setEmpty();
 	}
-	if ( astream.stream().good() )
+	if ( astream.isOK() )
 	    retval = true;
 	else
 	    ErrMsg( "Cannot write Elastic property selection" );

@@ -166,7 +166,6 @@ bool Threads::Locker::convertToWriteLock()
 #include "debugmasks.h"
 #include "debug.h"
 #include "envvars.h"
-#include "errh.h"
 
 #ifdef __ittnotify__
 # include <ittnotify.h>
@@ -448,13 +447,9 @@ void Threads::ReadWriteLock::writeUnLock()
 {
     Threads::MutexLocker lock( statuscond_ );
     if ( status_!=mWriteLocked )
-    {
-	pErrMsg( "Object is not writelocked.");
-    }
+	{ pErrMsg( "Object is not writelocked."); }
     else
-    {
 	status_ = mUnLocked;
-    }
 
     statuscond_.signal( true );
 }
@@ -470,7 +465,7 @@ bool Threads::ReadWriteLock::convReadToWriteLock()
 	return true;
     }
     else if ( status_==mWriteLocked )
-	pErrMsg( "Object is not readlocked.");
+	{ pErrMsg( "Object is not writelocked."); }
 
     lock.unLock();
 
@@ -484,7 +479,7 @@ void Threads::ReadWriteLock::convWriteToReadLock()
 {
     Threads::MutexLocker lock( statuscond_ );
     if ( status_!=mWriteLocked )
-	pErrMsg( "Object is not writelocked.");
+	{ pErrMsg( "Object is not readlocked."); }
     status_ = mUnLocked;
     nrreaders_ = 1;
     statuscond_.signal( true );

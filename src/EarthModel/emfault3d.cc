@@ -16,7 +16,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "emmanager.h"
 #include "emrowcoliterator.h"
 #include "undo.h"
-#include "errh.h"
 #include "posfilter.h"
 #include "survinfo.h"
 #include "tabledef.h"
@@ -411,7 +410,7 @@ Coord3 getNormal( bool is2d ) const
 };
 
 
-bool FaultAscIO::get( std::istream& strm, EM::Fault& flt, bool sortsticks,
+bool FaultAscIO::get( od_istream& strm, EM::Fault& flt, bool sortsticks,
 		      const MultiID* linesetmid, bool is2d ) const
 {
     getHdrVals( strm );

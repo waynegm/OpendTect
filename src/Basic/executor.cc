@@ -8,19 +8,17 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "executor.h"
 
-#include "errh.h"
 #include "oddirs.h"
 #include "progressmeter.h"
 #include "thread.h"
-#include <iostream>
+#include "od_ostream.h"
 
 
-bool Executor::execute( std::ostream* strm, bool isfirst, bool islast,
-		        int delaybetwnsteps )
+bool Executor::goImpl( od_ostream* strm, bool isfirst, bool islast, int delay )
 {
-    if ( !strm )
+    if ( !strm || strm == &od_ostream::nullStream() )
     {
-	if ( !delaybetwnsteps ) return SequentialTask::execute();
+	if ( !delay ) return SequentialTask::execute();
 
 	int rv = MoreToDo();
 	while ( rv )
@@ -32,28 +30,28 @@ bool Executor::execute( std::ostream* strm, bool isfirst, bool islast,
 		if ( msg && *msg ) ErrMsg( msg );
 		return false;
 	    }
-	    if ( delaybetwnsteps )
-		Threads::sleep( delaybetwnsteps*0.001 );
+	    if ( delay )
+		Threads::sleep( delay*0.001 );
 	}
 	return true;
     }
 
-    std::ostream& stream = *strm;
     if ( isfirst )
-	stream << GetProjectVersionName() << "\n\n";
+	*strm << GetProjectVersionName() << "\n\n";
 
     TextStreamProgressMeter progressmeter( *strm );
     setProgressMeter( &progressmeter );
 
     bool res = SequentialTask::execute();
     if ( !res )
-	stream << "Error: " << message() << std::endl;
+	*strm << "Error: " << message() << od_newline;
 
     setProgressMeter( 0 );
 
     if ( islast )
-	stream << "\n\nEnd of process: '" << name() << "'" << std::endl;
+	*strm << "\n\nEnd of process: '" << name() << "'" << od_newline;
 
+    strm->flush();
     return res;
 }
 
@@ -208,4 +206,20 @@ const char* ExecutorGroup::nrDoneText() const
 	return Executor::nrDoneText();
 
     return executors_[currentexec_]->nrDoneText();
+}
+
+
+bool TextTaskRunner::execute( Task& t )
+{
+    mDynamicCastGet(Executor*,exec,&t)
+    if ( exec )
+	execres_ = exec->go( strm_ );
+    else
+    {
+	TextStreamProgressMeter progressmeter(strm_);
+	t.setProgressMeter( &progressmeter );
+	execres_ = t.execute();
+    }
+    
+    return execres_;
 }

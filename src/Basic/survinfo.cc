@@ -21,11 +21,10 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "strmprov.h"
 #include "oddirs.h"
 #include "iopar.h"
-#include "errh.h"
 #include "zdomain.h"
 #include "keystrs.h"
+#include "od_istream.h"
 #include <math.h>
-#include <iostream>
 
 
 static const char* sKeySI = "Survey Info";
@@ -104,8 +103,11 @@ void SurveyInfo::setInvalid() const
     myself->valid_ = false;
     
     
-    winlcrlsystem_.unRef();
-    inlcrlsystem_.unRef();
+    InlCrlSystem* old = winlcrlsystem_.setToNull();
+    if ( old ) old->unRef();
+
+    old = inlcrlsystem_.setToNull();
+    if ( old ) old->unRef();
 }
 
 
@@ -156,8 +158,11 @@ SurveyInfo::~SurveyInfo()
     delete &wcs_;
     delete &zdef_;
     
-    inlcrlsystem_.unRef();
-    winlcrlsystem_.unRef();
+    InlCrlSystem* old = winlcrlsystem_.setToNull();
+    if ( old ) old->unRef();
+
+    old = inlcrlsystem_.setToNull();
+    if ( old ) old->unRef();
 }
 
 
@@ -203,9 +208,11 @@ SurveyInfo* SurveyInfo::read( const char* survdir )
     {
 	BufferString errmsg( "Survey definition file cannot be read.\n"
 			     "Survey file '" );
-	errmsg += fp.fullPath(); errmsg += "' has file type '";
-	errmsg += astream.fileType();
-	errmsg += "'.\nThe file may be corrupt or not accessible.";
+	errmsg.add( fp.fullPath() ).add( "' has file type '" )
+		.add( astream.fileType() )
+		.add( "'.\nThe file may be corrupt or not accessible." );
+	if ( !astream.stream().isOK() )
+	    astream.stream().addErrMsgTo( errmsg );
 	ErrMsg( errmsg );
 	sfio.closeFail();
 	return new SurveyInfo;
@@ -294,12 +301,12 @@ SurveyInfo* SurveyInfo::read( const char* survdir )
     si->cs_.normalise();
     si->wcs_ = si->cs_;
 
-    char buf[1024];
-    while ( astream.stream().getline(buf,1024) )
+    BufferString line;
+    while ( astream.stream().getLine(line) )
     {
 	if ( !si->comment_.isEmpty() )
 	    si->comment_ += "\n";
-	si->comment_ += buf;
+	si->comment_ += line;
     }
     sfio.closeSuccess();
     
@@ -812,7 +819,7 @@ bool SurveyInfo::write( const char* basedir ) const
 	return false;
     }
 
-    std::ostream& strm = sfio.ostrm();
+    od_ostream& strm = sfio.ostrm();
     ascostream astream( strm );
     if ( !astream.putHeader(sKeySI) )
     {
@@ -858,7 +865,7 @@ bool SurveyInfo::write( const char* basedir ) const
 	strm << '\n';
     }
 
-    if ( strm.fail() )
+    if ( !strm.isOK() )
     {
 	sfio.closeFail();
 	ErrMsg( "Error during write of survey info file!" );

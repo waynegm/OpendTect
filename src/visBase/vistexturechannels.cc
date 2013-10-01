@@ -144,10 +144,7 @@ const ColTab::Mapper& ChannelInfo::getColTabMapper( int version ) const
 void ChannelInfo::setColTabMapperSetup( const ColTab::MapperSetup& setup )
 {
     if ( !mappers_.size() )
-    {
-	pErrMsg("No mappers");
-	return;
-    }
+	{ pErrMsg("No mappers"); return; }
 
     if ( mappers_[0]->setup_==setup )
 	return;
@@ -169,8 +166,7 @@ const ColTab::MapperSetup& ChannelInfo::getColTabMapperSetup(int channel) const
 {
     if ( channel < mappers_.size() )
 	return mappers_[channel]->setup_;
-    else
-    {
+
 	pErrMsg( "channel >= mappers_.size()" );
 	if ( mappers_.isEmpty() )
 	{
@@ -178,7 +174,6 @@ const ColTab::MapperSetup& ChannelInfo::getColTabMapperSetup(int channel) const
 	    return ctms;
 	}
 	return mappers_[mappers_.size()-1]->setup_;
-    }
 }
 
 
@@ -430,10 +425,7 @@ bool ChannelInfo::setMappedData( int version, unsigned char* data,
 	    			  OD::PtrPolicy policy )
 {
     if ( mappeddata_.size()<version )
-    {
-	pErrMsg("nrVersions not set" );
-	return false;
-    }
+	{ pErrMsg("nrVersions not set" ); return false; }
 
     if ( mappeddata_[version] )
     {
@@ -479,10 +471,7 @@ int ChannelInfo::getCurrentVersion() const { return currentversion_; }
 void ChannelInfo::setCurrentVersion( int nidx )
 {
     if ( mappeddata_.size() && (nidx<0 || nidx>=mappeddata_.size() ) )
-    {
-	pErrMsg("Invalid index");
-	return;
-    }
+	{ pErrMsg("Invalid index"); return; }
 
     currentversion_ = nidx;
     texturechannels_.update( this, true );
@@ -654,10 +643,7 @@ int TextureChannels::insertChannel( int channel )
 	return addChannel();
 
     if ( channel<0 )
-    {
-	pErrMsg("Negative index");
-	channel=0;
-    }
+	{ pErrMsg("Negative index"); channel=0; }
 
     ChannelInfo* newchannel = new ChannelInfo( *this );
     channelinfo_.insertAt( newchannel, channel );
@@ -692,7 +678,7 @@ void TextureChannels::setColTabMapperSetup( int channel,
 					    const ColTab::MapperSetup& setup )
 {
     if ( channel<0 || channel>=channelinfo_.size() )
-	pErrMsg("Index out of bounds");
+	{ pErrMsg("Index out of bounds"); return; }
 
     channelinfo_[channel]->setColTabMapperSetup( setup );
 }
@@ -701,7 +687,7 @@ void TextureChannels::setColTabMapperSetup( int channel,
 void TextureChannels::reMapData( int channel, bool dontreclip, TaskRunner* tr )
 {
     if ( channel<0 || channel>=channelinfo_.size() )
-	pErrMsg("Index out of bounds");
+	{ pErrMsg("Index out of bounds"); return; }
 
     channelinfo_[channel]->reMapData( dontreclip, tr );
 }

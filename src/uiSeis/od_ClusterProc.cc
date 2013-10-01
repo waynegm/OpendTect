@@ -27,6 +27,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "strmprov.h"
 #include "strmdata.h"
 #include "survinfo.h"
+#include "od_iostream.h"
 
 #include <iostream>
 
@@ -52,16 +53,14 @@ int main( int argc, char ** argv )
     }
     
     const BufferString parfilenm = normalargs.last()->buf();
-
-    StreamProvider spin( parfilenm );
-    StreamData sdin = spin.makeIStream();
-    if ( !sdin.usable() )
+    od_istream strm( parfilenm );
+    if ( !strm.isOK() )
     {
 	std::cerr << argv[0] << ": Cannot open parameter file" << std::endl;
 	ExitProgram( 1 );
     }
 
-    IOPar iop; iop.read( *sdin.istrm, sKey::Pars() );
+    IOPar iop; iop.read( strm, sKey::Pars() );
     sdin.close();
     if ( iop.size() == 0 )
     {
@@ -87,11 +86,12 @@ int main( int argc, char ** argv )
 	ExitProgram( ret );
     }
 
-    std::cout << "Merging output ... " << std::endl;
-    TextTaskRunner tr( std::cout );
+    od_ostream logstrm( std::cout );
+    logstrm.add( "Merging output ...\n" ).flush();
+    TextTaskRunner tr( logstrm );
     BufferString msg;
     const bool result = uiClusterProc::mergeOutput( iop, &tr, msg, withdelete );
-    std::cout << msg << std::endl;
+    logstrm.add( msg ).flush();
     ExitProgram( result ? 0 : 1 );
     return 0;
 }

@@ -259,6 +259,8 @@ uiDPSUserDefTab( uiDataPointSetCrossPlotterPropDlg* p )
     , plotter_(p->plotter())
     , dps_(p->plotter().dps())
     , hasy2_(plotter_.axisHandler(2))
+    , mathexprstring_(plotter_.userdefy1str_)
+    , mathexprstring1_(plotter_.userdefy2str_)
     , shwy1userdefpolyline_(0)
     , shwy2userdefpolyline_(0)
     , mathobj_(0)
@@ -334,7 +336,7 @@ uiDPSUserDefTab( uiDataPointSetCrossPlotterPropDlg* p )
 {
     plotter_.lineDrawn.remove( mCB(this,uiDPSUserDefTab,setFlds) );
     plotter_.mouseReleased.remove( mCB(this,uiDPSUserDefTab,getRmsErrorCB) );
-    delete mathobj_; delete mathobj1_;
+    setPolyLines( 0 ); delete mathobj_; delete mathobj1_;
 }
 
 
@@ -346,10 +348,11 @@ void checkMathExpr( CallBacker* cb )
     const BufferString& inptxt = isy1 ? inpfld_->text() : inpfld1_->text();
     const bool& errbfrplot = isy1 ? err1bfrplot_ : err2bfrplot_;
     bool& expplotted = isy1 ? exp1plotted_ : exp2plotted_;
+    bool& linedrawn = isy1 ? line1drawn_ : line2drawn_;
 
     if ( mathexpr != inptxt )
     {
-	expplotted = false;
+	expplotted = linedrawn = false;
 	isy1 ? rmsfld_->setText(0) : rmsfld1_->setText(0);
     }
     else
@@ -445,15 +448,16 @@ void checkedCB( CallBacker* )
 void initFlds( CallBacker* )
 {
     inpfld_->setText( plotter_.userdefy1str_ );
-    rmsfld_->setText( plotter_.y1rmserr_);
+    rmsfld_->setText( plotter_.y1rmserr_ );
     
     if ( hasy2_ )
     {
 	inpfld1_->setText( plotter_.userdefy2str_ );
-	rmsfld1_->setText( plotter_.y2rmserr_);
-	shwy2userdefpolyline_->setChecked( plotter_.setup().showy2userdefpolyline_ );
+	rmsfld1_->setText( plotter_.y2rmserr_ );
+	shwy2userdefpolyline_->setChecked(
+	    plotter_.setup().showy2userdefpolyline_ );
     }
-    shwy1userdefpolyline_->setChecked( plotter_.setup().showy1userdefpolyline_ );
+    shwy1userdefpolyline_->setChecked(plotter_.setup().showy1userdefpolyline_);
 }
 
 
@@ -464,7 +468,7 @@ void setPolyLines( CallBacker* cb )
     mDynamicCastGet(uiDialog*,dlg,cb);
     if ( dlg && dlg->uiResult() == 1 )
 	return;
-    else if ( dlg->uiResult() == 0 )
+    else if ( !cb || dlg->uiResult() == 0 )
     {
 	if ( line1drawn_ || err1bfrplot_ )
 	{
@@ -528,7 +532,6 @@ void drawPolyLines()
 
 void computePts( bool isy2 )
 {
-    TypeSet<uiWorldPoint> pts;
     uiDataPointSetCrossPlotter::AxisData& horz = plotter_.axisData(0);
     uiDataPointSetCrossPlotter::AxisData& vert = plotter_.axisData(isy2 ? 2:1);
     vert.handleAutoScale( plotter_.uidps().getRunCalc( vert.colid_ ) );
@@ -536,14 +539,17 @@ void computePts( bool isy2 )
     StepInterval<float> curvyvalrg( mUdf(float), -mUdf(float),
 	    vert.axis_->range().step );
     MathExpression* mathobj = isy2 ? mathobj1_ : mathobj_;
-    Interval<float> xrge = horz.rg_;
-    const float step = fabs( ( xrge.stop - xrge.start )/999.0f );
+    const bool& linedrawn = isy2 ? line2drawn_ : line1drawn_;
+    const int nrpts = linedrawn ? 70 : 1000;
+    const Interval<float> xrge = horz.rg_;
+    const float step = fabs( (xrge.stop-xrge.start)/(nrpts-1) );
+    TypeSet<uiWorldPoint> pts; pts.setCapacity( nrpts );
 
-    for ( int idx = 0; idx < 1000; idx++ )
+    for ( int idx=0; idx<nrpts; idx++ )
     {
-	float curvxval = xrge.start + ((float)idx)*step;
+	const float curvxval = xrge.start + idx*step;
 	mathobj->setVariableValue( 0, curvxval );	
-	float curvyval = mathobj->getValue();
+	const float curvyval = mCast(float,mathobj->getValue());
 	if ( !Math::IsNormalNumber(curvyval) ) break;
 	if ( mIsUdf(curvyval) || mIsUdf(curvxval) ) continue;
 
@@ -596,7 +602,7 @@ void getRmsError( bool isy2 )
 	if ( mIsUdf(xval) || mIsUdf(yval) ) continue;
 
 	mathobj->setVariableValue( 0, xval );	
-	float expyval = mathobj->getValue();	
+	float expyval = mCast(float,mathobj->getValue());	
 	if ( !Math::IsNormalNumber(expyval) || mIsUdf(expyval) ) 
 	{ shwrmserr = false; break; }
 	
@@ -791,7 +797,8 @@ uiDPSDensPlotSetTab( uiDataPointSetCrossPlotterPropDlg* p )
     cellsize_ = cellsize;
     minptinpfld_ =
 	new uiGenInput( this, "Threshold minimum points for Density Plot",
-	IntInpSpec(minptsfordensity_).setLimits(StepInterval<int>(1,mCast(int,1e6),100)) );
+	IntInpSpec(minptsfordensity_)
+	.setLimits(StepInterval<int>(1,mCast(int,1e6),100)) );
     minptinpfld_->attach( rightAlignedBelow, lbl );
     
     cellsizefld_ = new uiGenInput( this, "Cell Size", IntInpSpec(cellsize) );
@@ -827,7 +834,8 @@ void cellSzChanged( CallBacker* )
     }
 
     wcellszfld_->setValue( mNINT32( (float)plotter_.arrArea().width()/cellsz) );
-    hcellszfld_->setValue( mNINT32( (float) plotter_.arrArea().height()/cellsz) );
+    hcellszfld_->setValue( 
+			mNINT32( (float) plotter_.arrArea().height()/cellsz) );
 }
 
 void wCellNrChanged( CallBacker* )
@@ -837,7 +845,7 @@ void wCellNrChanged( CallBacker* )
 			      (float)(plotter_.arrArea().height()/cellsz);
     hcellszfld_->setValue( wcellszfld_->getIntValue()/aspectratio );
     cellsizefld_->setValue(
-	    mNINT32((float) plotter_.arrArea().width()/wcellszfld_->getIntValue()) );
+       mNINT32((float) plotter_.arrArea().width()/wcellszfld_->getIntValue()) );
     
     if ( mIsUdf(cellsz) || cellsz <=0 )
 	cellsizefld_->setValue( cellsize_ );
@@ -851,7 +859,7 @@ void hCellNrChanged( CallBacker* )
 			      (float)(plotter_.arrArea().height()/cellsz);
     wcellszfld_->setValue( hcellszfld_->getIntValue()*aspectratio );
     cellsizefld_->setValue(
-	    mNINT32((float) plotter_.arrArea().height()/hcellszfld_->getIntValue()) );
+      mNINT32((float) plotter_.arrArea().height()/hcellszfld_->getIntValue()) );
     
     if ( mIsUdf(cellsz) || cellsz <=0 )
 	cellsizefld_->setValue( cellsize_ );

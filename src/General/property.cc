@@ -13,7 +13,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "keystrs.h"
 #include "iopar.h"
 #include "separstr.h"
-#include "errh.h"
 #include <typeinfo>
 
 static const PropertyRef depthpropref( "Depth", PropertyRef::Dist );
@@ -558,7 +557,7 @@ float MathProperty::gtVal( Property::EvalOpts eo ) const
 	expr_->setVariableValue( getMathVarIdx(*expr_,idx,false), 
 	      			 constValue(idx) );
 
-    float res = expr_->getValue();
+    float res = mCast(float,expr_->getValue());
     if ( formulauom_ )
 	res = formulauom_->getSIValue( res );
 

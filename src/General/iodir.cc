@@ -12,7 +12,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ascstream.h"
 #include "separstr.h"
 #include "safefileio.h"
-#include "errh.h"
 #include "filepath.h"
 
 
@@ -107,7 +106,7 @@ void IODir::setDirName( IOObj& ioobj, const char* dirnm )
 }
 
 
-IOObj* IODir::readOmf( std::istream& strm, const char* dirnm,
+IOObj* IODir::readOmf( od_istream& strm, const char* dirnm,
 			IODir* dirptr, int needid )
 {
     ascistream astream( strm );
@@ -329,7 +328,7 @@ bool IODir::mkUniqueName( IOObj* ioobj )
 }
 
 
-bool IODir::wrOmf( std::ostream& strm ) const
+bool IODir::wrOmf( od_ostream& strm ) const
 {
     ascostream astream( strm );
     if ( !astream.putHeader( "Object Management file" ) )

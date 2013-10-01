@@ -16,6 +16,7 @@ ________________________________________________________________________
 // this header file only be used in the classes related to Horzonsection . 
 // don't include it in somewhere else !!!
 
+#include "callback.h"
 #include "thread.h"
 #include "position.h"
 #include "color.h"

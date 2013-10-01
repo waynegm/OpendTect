@@ -12,11 +12,11 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "timefun.h"
 #include "convert.h"
 #include "odver.h"
-#include "strmoper.h"
 #include "separstr.h"
+#include "od_istream.h"
+#include "od_ostream.h"
 #include <string.h>
 #include <stdlib.h>
-#include <iostream>
 
 static const char* valsep_replacement = "\\:";
 static const char* newline_replacement = "#-NL-#";
@@ -53,24 +53,38 @@ extern "C" void SetProjectVersionName( const char* s )
 }
 
 
+//--- ascostream
+
+#define mImplConstr(var,ismine) : strm_(var), strmmine_(ismine)	{}
+
+ascostream::ascostream( od_ostream& strm )
+    mImplConstr( strm, false )
+ascostream::ascostream( od_ostream* strm )
+    mImplConstr( strm ? *strm : *new od_ostream(((std::ostream*)0)), true )
+ascostream::ascostream( std::ostream& strm )
+    mImplConstr( *new od_ostream(strm), true )
+ascostream::ascostream( std::ostream* strm )
+    mImplConstr( *new od_ostream(strm), true )
 ascostream::~ascostream()
-{
-    if ( mystrm ) delete streamptr;
-}
+    { if ( strmmine_ ) delete &strm_; }
+bool ascostream::isOK() const
+    { return !strm_.isBad(); }
+
 
 
 bool ascostream::putHeader( const char* fltyp )
 {
-    stream() << GetProjectVersionName() << '\n' << fltyp << '\n'
-	     << Time::getDateTimeString() << '\n';
+    strm_ << GetProjectVersionName() << od_newline << fltyp << od_newline
+	     << Time::getDateTimeString() << od_newline;
     newParagraph();
-    return stream().good();
+    return strm_.isOK();
 }
 
 
 void ascostream::newParagraph()
 {
-    stream() << mAscStrmParagraphMarker << std::endl;
+    strm_ << mAscStrmParagraphMarker << od_newline;
+    strm_.flush();
 }
 
 
@@ -90,9 +104,9 @@ void ascostream::putKeyword( const char* keyword, bool withsep )
 	ptr = strchr( towrite.buf() + prevlen, mAscStrmKeyValSep );
     }
 
-    stream() << towrite;
+    strm_ << towrite;
     if ( withsep )
-	stream() << mAscStrmKeyValSep << ' ';
+	strm_ << mAscStrmKeyValSep << ' ';
 }
 
 
@@ -111,25 +125,25 @@ bool ascostream::put( const char* keyword, const char* value )
 	    while ( ptr )
 	    {
 		*ptr++ = '\0';
-		stream() << startptr << newline_replacement;
+		strm_ << startptr << newline_replacement;
 		startptr = ptr; 
 		ptr = strchr( ptr, '\n' );
 	    }
 	    value += startptr - str.buf();
 	}
-	stream() << value;
+	strm_ << value;
     }
 
-    stream() << '\n';
-    return stream().good();
+    strm_ << od_newline;
+    return strm_.isOK();
 }
 
 
 #define mDeclPut1IFn(typ) \
 bool ascostream::put( const char* keyword, typ value ) \
 { \
-    putKeyword( keyword ); stream() << value << '\n'; \
-    return stream().good(); \
+    putKeyword( keyword ); strm_ << value << od_newline; \
+    return strm_.isOK(); \
 }
 mDeclPut1IFn(int)
 mDeclPut1IFn(od_uint32)
@@ -139,14 +153,13 @@ mDeclPut1IFn(od_uint64)
 
 bool ascostream::put( const char* keyword, float value )
 {
-    return mIsUdf(value) ? stream().good()
-	 : put( keyword, toString(value) );
+    return mIsUdf(value) ? strm_.isOK() : put( keyword, toString(value) );
 }
 
 
 bool ascostream::put( const char* keyword, double value )
 {
-    return mIsUdf(value) ? stream().good()
+    return mIsUdf(value) ? strm_.isOK()
 	 : put( keyword, toString(value) );
 }
 
@@ -154,8 +167,8 @@ bool ascostream::put( const char* keyword, double value )
 bool ascostream::putYN( const char* keyword, bool yn )
 {
     putKeyword( keyword );
-    stream() << getYesNoString(yn) << '\n';
-    return stream().good();
+    strm_ << getYesNoString(yn) << od_newline;
+    return strm_.isOK();
 }
 
 
@@ -163,8 +176,8 @@ bool ascostream::putYN( const char* keyword, bool yn )
 bool ascostream::fn( const char* keyword, typ v1, typ v2 ) \
 { \
     FileMultiString fms; fms += v1; fms += v2; \
-    putKeyword( keyword ); stream() << fms << '\n'; \
-    return stream().good(); \
+    putKeyword( keyword ); strm_ << fms << od_newline; \
+    return strm_.isOK(); \
 }
 mDeclPut2Fn(put,int)
 mDeclPut2Fn(put,od_uint32)
@@ -179,8 +192,8 @@ mDeclPut2Fn(putYN,bool)
 bool ascostream::fn( const char* keyword, typ v1, typ v2, typ v3 ) \
 { \
     FileMultiString fms; fms += v1; fms += v2; fms += v3; \
-    putKeyword( keyword ); stream() << fms << '\n'; \
-    return stream().good(); \
+    putKeyword( keyword ); strm_ << fms << od_newline; \
+    return strm_.isOK(); \
 }
 mDeclPut3Fn(put,int)
 mDeclPut3Fn(put,od_uint32)
@@ -195,8 +208,8 @@ mDeclPut3Fn(putYN,bool)
 bool ascostream::fn( const char* keyword, typ v1, typ v2, typ v3, typ v4 ) \
 { \
     FileMultiString fms; fms += v1; fms += v2; fms += v3; fms += v4; \
-    putKeyword( keyword ); stream() << fms << '\n'; \
-    return stream().good(); \
+    putKeyword( keyword ); strm_ << fms << od_newline; \
+    return strm_.isOK(); \
 }
 mDeclPut4Fn(put,int)
 mDeclPut4Fn(put,od_uint32)
@@ -207,56 +220,71 @@ mDeclPut4Fn(put,double)
 mDeclPut4Fn(putYN,bool)
 
 
+//--- ascistream
+
+#undef mImplConstr
+#define mImplConstr(var,ismine) \
+	: strm_(var), strmmine_(ismine)	{ init(rdhead); }
+
+ascistream::ascistream( od_istream& strm, bool rdhead )
+    mImplConstr( strm, false )
+ascistream::ascistream( od_istream* strm, bool rdhead )
+    mImplConstr( strm ? *strm : *new od_istream(((std::istream*)0)), true )
+ascistream::ascistream( std::istream& strm, bool rdhead )
+    mImplConstr( *new od_istream(strm), true )
+ascistream::ascistream( std::istream* strm, bool rdhead )
+    mImplConstr( *new od_istream(strm), true )
 ascistream::~ascistream()
+    { if ( strmmine_ ) delete &strm_; }
+bool ascistream::isOK() const
+    { return strm_.isOK(); }
+
+
+void ascistream::init( bool rdhead )
 {
-    if ( mystrm ) delete streamptr;
-}
+    filetype_ = header_ = timestamp_ = "";
+    if ( !rdhead )
+	return;
 
+    if ( !strm_.getLine(header_)
+      || !strm_.getLine(filetype_)
+      || !strm_.getLine(timestamp_) )
+	return;
 
-void ascistream::init( std::istream* strm, bool rdhead )
-{
-    streamptr = strm;
-    filetype = header = timestamp = "";
-    if ( !streamptr ) return;
-
-    if ( rdhead )
+    removeTrailingBlanks(filetype_.buf());
+    if ( filetype_.size() >= 4 )
     {
-	if ( !StrmOper::readLine(stream(),&header)
-	  || !StrmOper::readLine(stream(),&filetype)
-	  || !StrmOper::readLine(stream(),&timestamp) )
-	    return;
-
-	removeTrailingBlanks(filetype.buf());
-	if ( filetype.size()>=4 )
-	{
-	    char* ptr = filetype.buf() + strlen(filetype) - 4;
-	    if ( caseInsensitiveEqual(ptr,"file",0) ) *ptr = '\0';
-	    removeTrailingBlanks(filetype.buf());
-	}
-
-	next();
+	char* ptr = filetype_.buf() + strlen(filetype_) - 4;
+	if ( caseInsensitiveEqual(ptr,"file",0) )
+	    *ptr = '\0';
+	removeTrailingBlanks(filetype_.buf());
     }
+
+    next();
 }
 
 
 bool ascistream::hasStandardHeader() const
-{ return matchString( "dTect", header.buf() ); }
+{
+    return matchString( "dTect", header_.buf() );
+}
 
 
 ascistream& ascistream::next()
 {
-    keybuf.setEmpty(); valbuf.setEmpty();
-    if ( !streamptr || !streamptr->good() )
+    keybuf_.setEmpty(); valbuf_.setEmpty();
+    if ( !strm_.isOK() )
 	return *this;
 
     BufferString lineread;
-    if ( !StrmOper::readLine(stream(),&lineread) )
+    if ( !strm_.getLine(lineread) )
 	return *this;
+
     char* linebuf = lineread.buf();
     if ( linebuf[0] == '\0' || ( linebuf[0]=='-' && linebuf[1]=='-' ) )
 	return next();
     if ( linebuf[0] == mAscStrmParagraphMarker[0] )
-	{ keybuf = mAscStrmParagraphMarker; return *this; }
+	{ keybuf_ = mAscStrmParagraphMarker; return *this; }
 
     const int sz = lineread.size();
     char* keywptr = linebuf;
@@ -269,17 +297,17 @@ ascistream& ascistream::next()
 	    *valptr++ = '\0';
 	    mTrimBlanks(valptr);
 	    break;
-    }
+	}
     }
 
     static const char keyvalsepstr[] = { mAscStrmKeyValSep, '\0' };
     mTrimBlanks( keywptr );
     replaceString( keywptr, valsep_replacement, keyvalsepstr );
-    keybuf = keywptr;
+    keybuf_ = keywptr;
     if ( valptr )
     {
 	replaceString( valptr, newline_replacement, "\n" );
-	valbuf = valptr;
+	valbuf_ = valptr;
     }
 
     return *this;
@@ -288,13 +316,13 @@ ascistream& ascistream::next()
 
 bool ascistream::isOfFileType( const char* ftyp ) const
 {
-    return matchStringCI( ftyp, filetype.buf() );
+    return matchStringCI( ftyp, filetype_.buf() );
 }
 
 
 const char* ascistream::version() const
 {
-    const char* vptr = strrchr( header.buf(), 'V' );
+    const char* vptr = strrchr( header_.buf(), 'V' );
     if ( vptr ) return vptr + 1;
     return "0.0";
 }
@@ -319,13 +347,13 @@ int ascistream::minorVersion() const
 
 ascistream::EntryType ascistream::type() const
 {
-    if ( !streamptr || !stream().good() )
+    if ( !strm_.isOK() )
 	return EndOfFile;
-    if ( keybuf.isEmpty() )
+    if ( keybuf_.isEmpty() )
 	return Empty;
-    if ( *keybuf.buf() == *mAscStrmParagraphMarker )
+    if ( *keybuf_.buf() == *mAscStrmParagraphMarker )
 	return ParagraphMark;
-    if ( valbuf.isEmpty() )
+    if ( valbuf_.isEmpty() )
 	return Keyword;
 
     return KeyVal;
@@ -334,25 +362,25 @@ ascistream::EntryType ascistream::type() const
 
 bool ascistream::hasKeyword( const char* keyw ) const
 {
-    if ( !keyw ) return keybuf.isEmpty();
+    if ( !keyw ) return keybuf_.isEmpty();
     mSkipBlanks(keyw);
-    return keybuf == keyw;
+    return keybuf_ == keyw;
 }
 
 
 bool ascistream::hasValue( const char* val ) const
 {
-    if ( !val ) return valbuf.isEmpty();
+    if ( !val ) return valbuf_.isEmpty();
     mSkipBlanks(val);
-    return valbuf == val;
+    return valbuf_ == val;
 }
 
 
 #define mDeclGetFn(typ,fn) \
 typ ascistream::get##fn( int idx ) const \
 { \
-    if ( idx < 1 ) return Conv::to<typ>( valbuf.buf() ); \
-    FileMultiString fms( valbuf.buf() ); \
+    if ( idx < 1 ) return Conv::to<typ>( valbuf_.buf() ); \
+    FileMultiString fms( valbuf_.buf() ); \
     return Conv::to<typ>( fms[idx] ); \
 }
 

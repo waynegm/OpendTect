@@ -9,7 +9,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "threadwork.h"
 #include "task.h"
 #include "thread.h"
-#include "errh.h"
 #include "sighndl.h"
 #include <signal.h>
 
@@ -318,7 +317,7 @@ void Threads::WorkManager::shutdown()
 	{
 	    if ( idx>1 )
 		msg.add( ", " );
-	    msg.add( queuenames_[idx] );
+	    msg.add( queuenames_[idx]->buf() );
 	}
 	
 	pErrMsg( msg.buf() );
@@ -340,7 +339,7 @@ int Threads::WorkManager::addQueue( QueueType type, const char* nm )
     queueids_ += id;
     queuetypes_ += type;
     queueworkload_ += 0;
-    queuenames_ += nm;
+    queuenames_.add( nm );
     queueisclosing_ += false;
 
     return id;
@@ -429,7 +428,7 @@ void Threads::WorkManager::emptyQueue( int queueid, bool finishall )
 	{
 	    workloadcond_.wait();
 	    queueidx = queueids_.indexOf( queueid );
-    }
+	}
     }
     else
     {
@@ -475,6 +474,16 @@ void Threads::WorkManager::removeQueue( int queueid, bool finishall )
     queueids_.removeSingle( queueidx );
     queueisclosing_.removeSingle( queueidx );
     queuenames_.removeSingle( queueidx );
+}
+
+
+void Threads::WorkManager::setQueueName( int queueid, const char* name )
+{
+    Threads::MutexLocker lock(workloadcond_);
+
+    const int queueidx = queueids_.indexOf( queueid );
+    if ( queueids_.validIdx(queueidx) )
+        (*queuenames_[queueidx]) = name;
 }
 
 

@@ -21,7 +21,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "bufstringset.h"
 #include "debugmasks.h"
 #include "envvars.h"
-#include "errh.h"
 #include "keyboardevent.h"
 #include "mouseevent.h"
 #include "oddirs.h"
@@ -473,7 +472,7 @@ void uiMain::exit( int retcode )
 const uiFont* uiMain::font()
 {
     if ( !font_ )
-    { font_ = &FontList().get( className(*this) );  }
+	{ font_ = &FontList().get( "Control" );  }
 
     return font_;
 }

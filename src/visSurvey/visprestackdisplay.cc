@@ -514,12 +514,12 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
 			      mCast(float, SI().crlRange(true).stop) );
 	if ( isinline )
 	{
-	    xlim.set( startpos.x, stoppos.x );
+	    xlim.set( mCast(float,startpos.x), mCast(float,stoppos.x) );
 	    xlim.sort();
 	}
 	else
 	{
-	    ylim.set( startpos.y, stoppos.y );
+	    ylim.set( mCast(float,startpos.y), mCast(float,stoppos.y) );
 	    ylim.sort();
 	}
 

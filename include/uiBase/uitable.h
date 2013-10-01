@@ -74,6 +74,7 @@ public:
 			, maxcolwdt_(2.3f*uiObject::baseFldSize())
 					  //!< units of font
 			, selmode_(NoSelection)
+			, removeselallowed_(true)
 			, snglclkedit_(true)
 			, defcollbl_(false)
 			, defrowlbl_(false)
@@ -102,6 +103,7 @@ public:
 	mDefSetupMemb(float,maxcolwdt)
 	mDefSetupMemb(float,mincolwdt)
 	mDefSetupMemb(SelectionMode,selmode)
+	mDefSetupMemb(bool,removeselallowed)
 	mDefSetupMemb(bool,snglclkedit)
 	mDefSetupMemb(bool,defrowlbl)
 	mDefSetupMemb(bool,defcollbl)
@@ -209,6 +211,10 @@ public:
     bool		isSelected(const RowCol&) const;
     bool		isRowSelected(int) const;
     bool		isColumnSelected(int) const;
+    			// next 3 return in selected order
+    bool		getSelectedRows(TypeSet<int>&) const;
+    bool		getSelectedCols(TypeSet<int>&) const;
+    bool		getSelectedCells(TypeSet<RowCol>&) const;
     int			currentRow() const;
     int			currentCol() const;
     RowCol		currentCell() const
@@ -251,7 +257,10 @@ public:
 
     const RowCol&	notifiedCell() const	{ return notifcell_; }
     void		setNotifiedCell(const RowCol& rc)
-						{ notifcell_=rc; } 
+						{ notifcell_=rc; }
+    const TypeSet<int>&	getNotifRCs() const
+			{ return seliscols_ ? notifcols_ : notifrows_; }
+    const TypeSet<RowCol>& getNotifCells() const { return notifcells_; }
     
     Notifier<uiTable>	valueChanged;
     Notifier<uiTable>	leftClicked;
@@ -262,6 +271,7 @@ public:
     const RowCol&	newCell() const		{ return newcell_; }
     Notifier<uiTable>	rowInserted;
     Notifier<uiTable>	rowDeleted;
+    Notifier<uiTable>	selectionDeleted;
     Notifier<uiTable>	colInserted;
     Notifier<uiTable>	colDeleted;
     CNotifier<uiTable,int> rowClicked;
@@ -315,6 +325,10 @@ protected:
 
     mutable ObjectSet<SelectionRange> selranges_;
     RowCol		notifcell_;
+    TypeSet<RowCol>	notifcells_;
+    TypeSet<int>	notifrows_;
+    TypeSet<int>	notifcols_;
+    bool		seliscols_;
     RowCol		newcell_;
 
     mutable Setup	setup_;
@@ -325,6 +339,7 @@ protected:
     void		geometrySet_(CallBacker*);
     void		updateCellSizes(const uiSize* sz=0);
 
+    bool		getSelected();
     void		removeRCs(const TypeSet<int>&,bool col);
     void		update(bool row,int nr);
 

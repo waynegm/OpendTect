@@ -36,6 +36,6 @@ macro( OD_ADD_PACKAGES_TARGET )
 	    -DPSD=${OD_BINARY_BASEDIR}
 	    -DCODESIGN_COMMAND=${CODESIGN_COMMAND}
 	    -P ${OD_BINARY_BASEDIR}/CMakeModules/packagescripts/ODMakePackages.cmake 
-	    DEPENDS do_install
+	    DEPENDS do_install sources
 	    COMMENT "Creating packages" ) 
 endmacro()

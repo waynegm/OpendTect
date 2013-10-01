@@ -18,6 +18,7 @@ ________________________________________________________________________
 #include "cubesampling.h"
 #include "indexinfo.h"
 #include "position.h"
+#include "od_iosfwd.h"
 class BinID;
 
 
@@ -131,8 +132,8 @@ public:
     				//!< incl=union, !incl=intersection
     void		generate(BinID start,BinID stop,BinID step);
 
-    bool		read(std::istream&,bool asc);
-    bool		write(std::ostream&,bool asc) const;
+    bool		read(od_istream&,bool asc);
+    bool		write(od_ostream&,bool asc) const;
 
     virtual int		indexOf( const LineData* l ) const
     			{ return ObjectSet<LineData>::indexOf( l ); }

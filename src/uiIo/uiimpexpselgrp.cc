@@ -153,13 +153,15 @@ bool setSelGrpSetNames( const BufferStringSet& nms )
 	astrm.put( nms.get(idx).buf() );
     astrm.newParagraph();
 
-    if ( sfio.ostrm().good() )
+    if ( sfio.ostrm().isOK() )
 	sfio.closeSuccess();
     else
     {
 	sfio.closeFail();
-	uiMSG().error( "Error during write to Cross-plot Selection index file ."
-		       "Check disk space." );
+	const BufferString errmsg(
+		"Error writing Cross-plot Selection index file.\n",
+		sfio.ostrm().errMsg() );
+	uiMSG().error( errmsg );
 	return false;
     }
 
@@ -447,14 +449,10 @@ bool SelGrpExporter::putSelections( const ObjectSet<SelectionGrp>& selgrps,
 {
     if ( !sd_.usable() ) return false;
 
-    ascostream ostrm( *sd_.ostrm ); 
-    std::ostream& strm = ostrm.stream();
+    ascostream astrm( *sd_.ostrm );
 
     if ( !selgrps.size() )
-    {
-	errmsg_ = "No selections found";
-	return false;
-    }
+	{ errmsg_ = "No selections found"; return false; }
 
     IOPar selectionpar;
     selectionpar.set( IOPar::compKey(sKey::Attribute(),"X"), xname );
@@ -474,8 +472,8 @@ bool SelGrpExporter::putSelections( const ObjectSet<SelectionGrp>& selgrps,
 	selectionpar.merge( selgrppar );
     }
 
-    selectionpar.write( ostrm.stream(), sKeyFileType );
-    const bool ret = strm.good();
+    selectionpar.write( astrm.stream(), sKeyFileType );
+    const bool ret = astrm.isOK();
     if ( !ret )
 	errmsg_ = "Error during write";
     sd_.close();

@@ -742,9 +742,11 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar )
     {
 	Seis::RaySynthGenerator::RayModel& rm = synthgen.result( imdl );
 	rm.getD2T( tmpd2ts, true );
-	if ( !tmpd2ts.isEmpty() )
+	if ( tmpd2ts.isEmpty() )
+	    continue;
+
+	while ( tmpd2ts.size() )
 	    sd->d2tmodels_ += tmpd2ts.removeSingle(0);
-	deepErase( tmpd2ts );
     }
 
     return sd;
@@ -1390,7 +1392,8 @@ const PreStack::GatherSetDataPack& PreStackSyntheticData::preStackPack() const
 }
 
 
-void PreStackSyntheticData::convertAngleDataToDegrees( PreStack::Gather* ag ) const
+void PreStackSyntheticData::convertAngleDataToDegrees(
+					PreStack::Gather* ag ) const
 {
     Array2D<float>& agdata = ag->data();
     const int dim0sz = agdata.info().getSize(0);
@@ -1439,6 +1442,20 @@ void PreStackSyntheticData::createAngleData( const ObjectSet<RayTracer1D>& rts,
 
     angledp_ = new PreStack::GatherSetDataPack( name(), anglegathers );
     DPM( DataPackMgr::CubeID() ).add( angledp_ );
+}
+
+
+float PreStackSyntheticData::offsetRangeStep() const
+{
+    float offsetstep = mUdf(float);
+    const ObjectSet<PreStack::Gather>& gathers = preStackPack().getGathers();
+    if ( !gathers.isEmpty() )
+    {
+	const PreStack::Gather& gather = *gathers[0];
+	offsetstep = gather.getOffset(1)-gather.getOffset(0);
+    }
+
+    return offsetstep;
 }
 
 

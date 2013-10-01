@@ -19,7 +19,7 @@ ________________________________________________________________________
 #include "linekey.h"
 #include "multiid.h"
 #include "wellio.h"
-#include <iosfwd>
+#include "od_iosfwd.h"
 
 class IOPar;
 
@@ -87,18 +87,19 @@ public:
 mExpClass(WellAttrib) IO : public Well::IO
 {
 public:
-    				IO(const char* f,bool isrd)
-				: Well::IO(f,isrd) {}
+    				IO( const char* f )
+				: Well::IO(f)		{}
 
     static const char*  	sKeyWellTieSetup();
+
 };
 
 
 mExpClass(WellAttrib) Writer : public IO
 {
 public:
-				Writer(const char* f)
-				    : IO(f,false) {}
+				Writer( const char* f )
+				    : IO(f) {}
 
     bool			putWellTieSetup(const WellTie::Setup&) const;
 
@@ -106,24 +107,28 @@ public:
 protected:
 
     bool          	        putIOPar(const IOPar&,const char*,
-	    					std::ostream&) const; 
-    bool                	wrHdr(std::ostream&,const char*) const;
+	    					od_ostream&) const; 
+    bool                	wrHdr(od_ostream&,const char*) const;
+
 };
+
 
 mExpClass(WellAttrib) Reader : public IO
 {
 public:
-				Reader(const char* f)
-				    : IO(f,true) {}
+				Reader( const char* f )
+				    : IO(f) {}
 
     void			getWellTieSetup(WellTie::Setup&) const;
 
     IOPar* 			getIOPar(const char*) const;
 
 protected:
-    IOPar* 			getIOPar(const char*,std::istream&) const;	
+
+    IOPar* 			getIOPar(const char*,od_istream&) const;	
+
 };
+
 
 }; //namespace WellTie
 #endif
-

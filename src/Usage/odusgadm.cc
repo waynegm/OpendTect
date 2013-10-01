@@ -12,10 +12,11 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "iopar.h"
 #include "oddirs.h"
 #include "filepath.h"
-#include "strmprov.h"
 #include "ascstream.h"
-#include <iostream>
+#include "od_iostream.h"
 
+
+od_ostream* Usage::Administrator::logstrm_ = 0;
 
 
 static ObjectSet<Usage::Administrator>& ADMS()
@@ -75,10 +76,10 @@ void Usage::Administrator::readPars()
 void Usage::Administrator::addPars( const char* dir, const char* fnm )
 {
     const FilePath fp( dir, fnm );
-    StreamData sd( StreamProvider(fp.fullPath()).makeIStream() );
-    if ( !sd.usable() ) return;
+    od_istream strm( fp.fullPath() );
+    if ( !strm.isOK() ) return;
 
-    ascistream astrm( *sd.istrm );
+    ascistream astrm( strm );
     IOPar* newpar = new IOPar( astrm );
     if ( newpar->isEmpty() )
 	delete newpar;
@@ -94,6 +95,12 @@ void Usage::Administrator::reInit()
 }
 
 
+od_ostream* Usage::Administrator::logStream()
+{
+    return logstrm_;
+}
+
+
 void Usage::Administrator::toLogFile( const char* msg ) const
 {
     if ( !logstrm_ || !msg || !*msg ) return;
@@ -104,7 +111,8 @@ void Usage::Administrator::toLogFile( const char* msg ) const
     else if ( !*msg )
 	return;
 
-    *logstrm_ << msg << std::endl;
+    *logstrm_ << msg << od_newline;
+    logstrm_->flush();
 }
 
 

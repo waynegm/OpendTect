@@ -8,7 +8,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "callback.h"
 #include "thread.h"
-#include "errh.h"
 
 #define mOneMilliSecond 0.001
 
@@ -32,7 +31,7 @@ CallBacker::~CallBacker()
 	   If not done, they may still get callbacks after the destuctor
 	   is called, but before this destructor is called.
 	 */
-    
+	
 	//Remove them now.
 	detachAllNotifiers();
     }
@@ -246,7 +245,7 @@ void NotifierAccess::addShutdownSubscription( CallBacker* cber )
 
 
 bool NotifierAccess::isShutdownSubscribed( CallBacker* cber ) const
-{ 
+{    
     Threads::Locker lckr( shutdownsubscriberlock_ );
     return shutdownsubscribers_.isPresent( cber );
 }

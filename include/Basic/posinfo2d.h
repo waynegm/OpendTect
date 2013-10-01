@@ -15,6 +15,7 @@ ________________________________________________________________________
 #include "basicmod.h"
 #include "typeset.h"
 #include "position.h"
+#include "od_iosfwd.h"
 class BinID;
 
 
@@ -97,9 +98,9 @@ public:
 	    		       float threshold_distance) const;
     bool		getPos(int trcnr,Line2DPos&) const;
 
-    void                dump(std::ostream&,bool pretty=true) const;
-    bool		read(std::istream&,bool asc);
-    bool		write(std::ostream&,bool asc,bool newlns=false) const;
+    void                dump(od_ostream&,bool pretty=true) const;
+    bool		read(od_istream&,bool asc);
+    bool		write(od_ostream&,bool asc,bool newlns=false) const;
 
     StepInterval<int>	trcNrRange() const;
     Coord		getNormal(int trcnr) const;

@@ -27,10 +27,11 @@ class uiIOObjSel;
 class uiLabel;
 class uiLabeledListBox;
 class uiTable;
+class BufferStringSet;
 class Coord3;
+class od_ostream;
 class CtxtIOObj;
 class UnitOfMeasure;
-class StreamData;
 class uiTableImpDataSel;
 
 namespace Table { class FormatDesc; }
@@ -81,6 +82,7 @@ protected:
     uiCheckBox*			timefld_;
 
     void			fillTable(CallBacker*);
+    bool			getFromScreen();
     void			updNow(CallBacker*);
     void			dtpointChangedCB(CallBacker*);
     void			dtpointRemovedCB(CallBacker*);
@@ -93,7 +95,7 @@ protected:
     void			expData(CallBacker*);
     void			getModel(Well::D2TModel&);
 
-    BufferStringSet		getColLabels() const;
+    void			getColLabels(BufferStringSet&) const;
     int				getTVDGLCol() const;
     int				getTVDSDCol() const;
     int				getTVDSSCol() const;
@@ -150,8 +152,8 @@ protected:
     uiGenInput*			multiwellsnamefld_;
 
     void			setDefaultRange(bool);
-    void			writeHeader(StreamData&,const Well::Data&);
-    void			writeLogs(StreamData&,const Well::Data&);
+    void			writeHeader(od_ostream&,const Well::Data&);
+    void			writeLogs(od_ostream&,const Well::Data&);
 
     void			typeSel(CallBacker*);
     virtual bool		acceptOK(CallBacker*);

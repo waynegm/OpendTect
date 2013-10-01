@@ -25,6 +25,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "progressmeter.h"
 #include "survinfo.h"
 #include "surv2dgeom.h"
+#include "od_ostream.h"
 
 #define mMaxSampInterpol	150;
 
@@ -121,7 +122,7 @@ Surface* HorizonUtils::getSurface( const MultiID& id )
 }
 
 
-void HorizonUtils::getPositions( std::ostream& strm, const MultiID& id,
+void HorizonUtils::getPositions( od_ostream& strm, const MultiID& id,
 				 ObjectSet<BinIDValueSet>& data )
 {
     Surface* surface = getSurface(id);
@@ -154,11 +155,11 @@ void HorizonUtils::getPositions( std::ostream& strm, const MultiID& id,
     }
 
     pm.setFinished();
-    strm << "Done!" << std::endl;
+    strm.add( "Done!\n" ).flush();
 }
 
 
-void HorizonUtils::getExactCoords( std::ostream& strm, const MultiID& id,
+void HorizonUtils::getExactCoords( od_ostream& strm, const MultiID& id,
 				   const PosInfo::GeomID& geomid,
 				   const HorSampling& hsamp,
 				   ObjectSet<DataPointSet>& data )
@@ -219,11 +220,11 @@ void HorizonUtils::getExactCoords( std::ostream& strm, const MultiID& id,
     if ( res ) res->dataChanged();
     
     pm.setFinished();
-    strm << "Done!" << std::endl;
+    strm.add( "Done!\n" ).flush();
 }
 
 
-void HorizonUtils::getWantedPositions( std::ostream& strm, 
+void HorizonUtils::getWantedPositions( od_ostream& strm, 
 				       ObjectSet<MultiID>& midset,
 				       BinIDValueSet& wantedposbivs, 
 				       const HorSampling& hs,
@@ -389,7 +390,7 @@ void HorizonUtils::addSurfaceData( const MultiID& id,
 	return;\
     }
 
-void HorizonUtils::getWantedPos2D( std::ostream& strm,
+void HorizonUtils::getWantedPos2D( od_ostream& strm,
 				   ObjectSet<MultiID>& midset, 
 				   DataPointSet* dtps,
 				   const HorSampling& horsamp,

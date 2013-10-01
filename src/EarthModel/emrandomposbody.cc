@@ -47,7 +47,7 @@ public:
 
 	ascistream astream( ((StreamConn*)conn_)->iStream() );
 
-	if ( !astream.stream().good() )
+	if ( !astream.isOK() )
 	    mRetErr( "Cannot read from input file" );
 	if ( !astream.isOfFileType( sKeyRandomPosBodyFileType() ) )
 	    mRetErr( sInvalidFile() );
@@ -69,8 +69,8 @@ public:
 	if ( !errmsg_.isEmpty() )
 	    return ErrorOccurred();
 
-	std::istream& strm = ((StreamConn*)conn_)->iStream();
-	if ( !strm.good() )
+	od_istream& strm = ((StreamConn*)conn_)->iStream();
+	if ( !strm.isOK() )
 	{
 	    rdposbody_.resetChangedFlag();
     	    return Finished();
@@ -81,22 +81,21 @@ public:
 	const char* err = "Cannot interprete file";
 
 	strm >> pos.x; 
-	if ( strm.fail() )
+	if ( !strm.isOK() )
 	{
-	    if ( !strm.good() )
+	    if ( !strm.isBad() )
 	    {
 		rdposbody_.resetChangedFlag();
 		return Finished();
 	    }
-	    errmsg_=err;return ErrorOccurred();
+	    errmsg_ = err; return ErrorOccurred();
 	}
 
-	strm >> pos.y; if ( strm.fail() ) {errmsg_=err;return ErrorOccurred();}
-	strm >> pos.z; if ( strm.fail() ) {errmsg_=err;return ErrorOccurred();}
 	int posid;
-	strm >> posid; if ( strm.fail() ) {errmsg_=err;return ErrorOccurred();}
+	strm >> pos.y >> pos.z >> posid;
 
-	if ( !strm.good() ) { errmsg_ = err; return ErrorOccurred(); }
+	if ( !strm.isOK() )
+	    { errmsg_ = err; return ErrorOccurred(); }
 	rdposbody_.addPos( pos );
 	nrdone_++;
 
@@ -136,7 +135,7 @@ public:
 	
 	ascostream astream( ((StreamConn*)conn_)->oStream() );
 	astream.putHeader( RandomPosBody::typeStr() );
-	if ( !astream.stream().good() )
+	if ( !astream.isOK() )
 	    mRetErr( "Cannot write to output Pick Set file" );
 
 	IOPar pars;

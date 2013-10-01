@@ -98,7 +98,7 @@ void EventStretch::doStretchSqueeze()
 	ctrlidxs += idx1;
 	ctrlvals += seispickset_[idx].zpos_;
     }
-    IdxAble::callibrateArray( d2tarr.arr(), d2tsz,
+    IdxAble::calibrateArray( d2tarr.arr(), d2tsz,
 	    		      ctrlvals.arr(), ctrlidxs.arr(),
 			      ctrlvals.size(), false, calibratedarr.arr() );
 

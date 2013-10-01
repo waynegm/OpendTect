@@ -16,7 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ioman.h"
 #include "ioobj.h"
 #include "ptrman.h"
-#include "strmprov.h"
+#include "od_istream.h"
 #include "survinfo.h"
 #include "tableascio.h"
 #include "tabledef.h"
@@ -60,8 +60,9 @@ uiSimpleMultiWellCreate::uiSimpleMultiWellCreate( uiParent* p )
     , overwritepol_(0)
 {
     tbl_ = new uiTable( this, uiTable::Setup(20,7).rowgrow(true)
-	    		.colgrow(false).removecolallowed(false)
-			.manualresize( true ), "Data Table" );
+	    					  .manualresize(true)
+						  .selmode(uiTable::Multi),
+		        "Data Table" );
     tbl_->setColumnLabel( 0, "Well name" );
     const char* xunstr = SI().getXYUnitString();
     tbl_->setColumnLabel( 1, BufferString("[X",xunstr,"]") );
@@ -98,11 +99,16 @@ class uiSimpleMultiWellCreateReadDataAscio : public Table::AscIO
 {
 public:
 uiSimpleMultiWellCreateReadDataAscio( const Table::FormatDesc& fd,
-				      std::istream& strm )
+				      od_istream& strm )
     : Table::AscIO(fd)
     , strm_(strm)
 {
     atend_ = !getHdrVals( strm_ );
+}
+
+bool isXY()
+{
+    return formOf( false, 1 ) == 0;
 }
 
 bool getLine()
@@ -115,8 +121,17 @@ bool getLine()
     atend_ = false;
 
     wcd_.nm_ = text( 0 );
+    if ( isXY() )
+    {
     wcd_.coord_.x = getdValue( 1 );
     wcd_.coord_.y = getdValue( 2 );
+    }
+    else
+    {
+	const BinID bid( getIntValue(1), getIntValue(2) );
+	wcd_.coord_ = SI().transform( bid );
+    }
+
     if ( wcd_.nm_.isEmpty()
       || mIsUdf(wcd_.coord_.x) || mIsUdf(wcd_.coord_.y)
       || (wcd_.coord_.x == 0 && wcd_.coord_.y == 0) )
@@ -129,7 +144,7 @@ bool getLine()
     return true;
 }
 
-    std::istream&		strm_;
+    od_istream&		strm_;
 
     bool		atend_;
     uiSMWCData		wcd_;
@@ -172,14 +187,14 @@ bool acceptOK( CallBacker* )
     const BufferString fnm( inpfld_->fileName() );
     if ( fnm.isEmpty() )
 	mErrRet( "Please enter the input file name" )
-    StreamData sd( StreamProvider(fnm).makeIStream() );
-    if ( !sd.usable() )
+    od_istream strm( fnm );
+    if ( !strm.isOK() )
 	mErrRet( "Cannot open input file" )
 
     if ( !dataselfld_->commit() )
 	return false;
 
-    uiSimpleMultiWellCreateReadDataAscio aio( fd_, *sd.istrm );
+    uiSimpleMultiWellCreateReadDataAscio aio( fd_, strm );
     int prevrow = -1;
     while ( aio.getLine() )
 	par_.addRow( aio.wcd_, prevrow );

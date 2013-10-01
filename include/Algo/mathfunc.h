@@ -16,10 +16,12 @@ ________________________________________________________________________
 
 #include "algomod.h"
 #include "mathfunc.h"
+#include "interpol1d.h"
 #include "position.h"
 #include "ptrman.h"
 #include "samplingdata.h"
 #include "varlenarray.h"
+#include "typeset.h"
 
 #include <math.h>
 
@@ -40,17 +42,7 @@ mClass(Algo) MathFunctionND
 public:
     virtual	~MathFunctionND() {}
 
-    template <class IDXABL>
-    RT			getValue( const IDXABL& x ) const
-			{
-			    const int nrdim = getNrDim();
-			    mAllocVarLenArr( PT, pos, nrdim );
-			    for ( int idx=0; idx<nrdim; idx++ )
-				pos[idx] = x[idx];
-			    return getValue( (const PT*) pos );
-			}
-
-    virtual RT		getValue(const PT*) const		= 0;
+    virtual RT		getNDValue(const PT*) const		= 0;
     virtual int		getNrDim() const 			= 0;
 };
 
@@ -70,14 +62,16 @@ mClass(Algo) MathFunction : public MathFunctionND<RT,PT>
 {
 public:
 
-    virtual RT		getValue(const PT* pos) const	{ return getValue(*pos); }
+    virtual RT		getNDValue( const PT* pos ) const
+						{ return getValue(*pos); }
     virtual int		getNrDim() const		{ return 1; }
 
-    virtual RT		getValue( PT p ) const		= 0;
+    virtual RT		getValue( PT ) const	= 0;
 
 };
 
 typedef MathFunction<float,float> FloatMathFunction;
+typedef MathFunction<double,double> DoubleMathFunction;
 
 
 /*!
@@ -89,16 +83,16 @@ mClass(Algo) MathFunctionSampler
 {
 public:
 			MathFunctionSampler( const MathFunction<RT,PT>& f )
-			    : func( f )
+			    : func_( f )
 			{}
     RT			operator[](int idx) const
-			{ return func.getValue( sd.atIndex(idx) ); }
+			{ return func_.getValue( sd.atIndex(idx) ); }
 
     SamplingData<PT>	sd;
 
 protected:
 
-    const MathFunction<RT,PT>&	func;
+    const MathFunction<RT,PT>&	func_;
 
 };
 
@@ -114,7 +108,7 @@ public:
 
     virtual RT	getValue(PT,PT) const		= 0;
 
-    RT		getValue( const PT* pos ) const
+    RT		getNDValue( const PT* pos ) const
     		        { return getValue(pos[0],pos[1]);}
     int		getNrDim() const { return 2; }
 
@@ -131,7 +125,7 @@ public:
 
     virtual RT	getValue(PT,PT,PT) const	= 0;
 
-    RT		getValue( const PT* pos ) const
+    RT		getNDValue( const PT* pos ) const
     		        { return getValue(pos[0],pos[1],pos[2]);}
     int		getNrDim() const { return 3; }
 
@@ -153,14 +147,15 @@ public:
   return). Undef sections are therefore supported.
 */
 
-mExpClass(Algo) PointBasedMathFunction : public FloatMathFunction
+template <class xT,class yT>
+mClass(Algo) BendPointBasedMathFunction : public MathFunction<yT,xT>
 {
 public:
 
     enum InterpolType	{ Linear, Poly, Snap };
     enum ExtrapolType   { None, EndVal, ExtraPolGradient };
 
-    			PointBasedMathFunction( InterpolType t=Linear,
+    			BendPointBasedMathFunction( InterpolType t=Linear,
 			       			ExtrapolType extr=EndVal )
 			    : itype_(t)
 			    , extrapol_(extr)	{}
@@ -168,32 +163,34 @@ public:
     void		setEmpty()		{ x_.setSize(0); y_.setSize(0);}
     int			size() const		{ return x_.size(); }
     bool		isEmpty() const		{ return x_.isEmpty(); }
-    void		add(float x,float y);
+    void		add(xT x,yT y);
     void		remove(int idx);
-    float		getValue( float x ) const
+    yT			getValue( xT x ) const
 			{ return itype_ == Snap ? snapVal(x) : interpVal(x); }
-    float		getValue( const float* p ) const { return getValue(*p); }
 
-    const TypeSet<float>& xVals() const		{ return x_; }
-    const TypeSet<float>& yVals() const		{ return y_; }
+    const TypeSet<xT>& xVals() const		{ return x_; }
+    const TypeSet<yT>& yVals() const		{ return y_; }
 
     InterpolType	interpolType() const	{ return itype_; }
     bool		extrapolate() const	{ return extrapol_; }
     void		setInterpolType( InterpolType t ) { itype_ = t; }
     void		setExtrapolate( ExtrapolType yn ) { extrapol_ = yn; }
+    virtual yT		getNDValue( const xT* p ) const	{ return getValue(*p); }
 
 protected:
 
     InterpolType	itype_;
     ExtrapolType	extrapol_;
-    TypeSet<float>	x_;
-    TypeSet<float>	y_;
+    TypeSet<xT>		x_;
+    TypeSet<yT>		y_;
 
-    int			baseIdx(float) const;
-    float		snapVal(float) const;
-    float		interpVal(float) const;
-    float		outsideVal(float) const;
+    int			baseIdx(xT) const;
+    yT			snapVal(xT) const;
+    yT			interpVal(xT) const;
+    yT			outsideVal(xT) const;
 };
+
+typedef BendPointBasedMathFunction<float,float> PointBasedMathFunction;
 
 
 /*!
@@ -224,10 +221,8 @@ public:
 			    for ( int idx=0; idx<nrdim; idx++ )
 				pos[idx] = P[idx] + N[idx]*lambda;
 
-			    return func.getValue( pos );
+			    return func.getNDValue( pos );
 			}
-    RT			getValue( const PT* p ) const
-			{ return getValue( *p ); }
 
 protected:
 
@@ -264,7 +259,6 @@ public:
 			    if ( Values::isUdf(pos) ) return mUdf(float);
 			    return pos*pos * a + pos * b + c;
 			}
-    float		getValue( const float* p ) const { return getValue(*p); }
 
     float		getExtremePos() const
 			{
@@ -336,7 +330,6 @@ public:
 			    const float possq = pos * pos;
 			    return possq * pos * a + possq * b + pos * c + d;
 			}
-    float		getValue( const float* p ) const { return getValue(*p); }
 
     SecondOrderPoly*	createDerivative() const
 			{ return new SecondOrderPoly( a*3, b*2, c ); }
@@ -359,6 +352,149 @@ public:
     float		a, b, c, d;
 };
 
+template <class mXT, class mYT> inline
+int BendPointBasedMathFunction<mXT,mYT>::baseIdx( mXT x ) const
+{
+    const int sz = x_.size();
+    if ( sz < 1 )		return -1;
+    const mXT x0 = x_[0];
+    if ( x < x0 )		return -1;
+    if ( sz == 1 )		return x >= x0 ? 0 : -1;
+    const mXT xlast = x_[sz-1];
+    if ( x >= xlast )		return sz-1;
+    if ( sz == 2 )		return 0;
+
+    int ilo = 0; int ihi = sz - 1;
+    while ( ihi - ilo > 1 )
+    {
+	int imid = (ihi+ilo) / 2;
+	if ( x < x_[imid] )
+	    ihi = imid;
+	else
+	    ilo = imid;
+    }
+
+    return ilo;
+}
+
+
+template <class mXT, class mYT> inline
+void BendPointBasedMathFunction<mXT,mYT>::add( mXT x, mYT y )
+{
+    if ( mIsUdf(x) ) return;
+
+    const int baseidx = baseIdx( x );
+    x_ += x; y_ += y;
+
+    const int sz = x_.size();
+    if ( baseidx > sz - 3 )
+	return;
+
+    mXT prevx = x; mYT prevy = y;
+    for ( int idx=baseidx+1; idx<sz; idx++ )
+    {
+	mXT tmpx = x_[idx]; mYT tmpy = y_[idx];
+	x_[idx] = prevx; y_[idx] = prevy;
+	prevx = tmpx; prevy = tmpy;
+    }
+}
+
+
+template <class mXT, class mYT> inline
+void BendPointBasedMathFunction<mXT,mYT>::remove( int idx )
+{
+    if ( idx<0 || idx>=size() )
+	return;
+
+    x_.removeSingle( idx );
+    y_.removeSingle( idx );
+}
+
+
+template <class mXT, class mYT> inline
+mYT BendPointBasedMathFunction<mXT,mYT>::outsideVal( mXT x ) const
+{
+    if ( extrapol_ == None )
+	return mUdf(mYT);
+    
+    const int sz = x_.size();
+    
+    if ( extrapol_==EndVal || sz<2 )
+	return x-x_[0] < x_[sz-1]-x ? y_[0] : y_[sz-1];
+    
+    if ( x < x_[0] )
+    {
+	const mYT gradient = (mYT)(y_[1]-y_[0]) / (mYT) (x_[1]-x_[0]);
+	return (mYT)(y_[0] + (x-x_[0]) * gradient);
+    }
+    
+    const mYT gradient = (mYT)(y_[sz-1]-y_[sz-2]) / (mYT) (x_[sz-1]-x_[sz-2]);
+    return (mYT)(y_[sz-1] + (x-x_[sz-1]) * gradient);
+}
+
+
+
+
+template <class mXT, class mYT> inline
+mYT BendPointBasedMathFunction<mXT,mYT>::snapVal( mXT x ) const
+{
+    const int sz = x_.size();
+    if ( sz < 1 ) return mUdf(mYT);
+ 
+    const int baseidx = baseIdx( x );
+
+    if ( baseidx < 0 )
+	return y_[0];
+    if ( baseidx > sz-2 )
+	return y_[sz - 1];
+    return x - x_[baseidx] < x_[baseidx+1] - x ? y_[baseidx] : y_[baseidx+1];
+}
+
+
+template <class mXT, class mYT> inline
+mYT BendPointBasedMathFunction<mXT,mYT>::interpVal( mXT x ) const
+{
+    const int sz = x_.size();
+    if ( sz < 1 ) return mUdf(mYT);
+   
+    if ( x < x_[0] || x > x_[sz-1] )
+	return outsideVal(x);
+    else if ( sz < 2 )
+	return y_[0];
+
+    const int i0 = baseIdx( x );
+    const mYT v0 = y_[i0];
+    if ( i0 == sz-1 )
+	return v0;
+
+    const mXT x0 = x_[i0];
+    const int i1 = i0 + 1; const mXT x1 = x_[i1]; const mYT v1 = y_[i1];
+    const mXT dx = x1 - x0;
+    if ( dx == 0 ) return v0;
+
+    const mXT relx = (x - x0) / dx;
+    if ( mIsUdf(v0) || mIsUdf(v1) )
+	return relx < 0.5 ? v0 : v1;
+
+    // OK - we have 2 nearest points and they:
+    // - are not undef
+    // - don't coincide
+
+    if ( itype_ == Linear )
+	return (mYT)(v1 * relx + v0 * (1-relx));
+
+    const int im1 = i0 > 0 ? i0 - 1 : i0;
+    const mXT xm1 = im1 == i0 ? x0 - dx : x_[im1];
+    const mYT vm1 = mIsUdf(y_[im1]) ? v0 : y_[im1];
+
+    const int i2 = i1 < sz-1 ? i1 + 1 : i1;
+    const mXT x2 = i2 == i1 ? x1 + dx : x_[i2];
+    const mYT v2 = mIsUdf(y_[i2]) ? v1 : y_[i2];
+
+    return (mYT)Interpolate::poly1D( (float) xm1, vm1, (float) x0, v0,
+				     (float) x1, v1,
+				     (float) x2, v2, (float) x );
+}
 
 #endif
 

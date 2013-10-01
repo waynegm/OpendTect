@@ -16,7 +16,7 @@ ________________________________________________________________________
 #include "namedobj.h"
 #include "objectset.h"
 #include "position.h"
-
+#include "od_iosfwd.h"
 #include <iosfwd>
 
 class IOPar;
@@ -79,8 +79,8 @@ public:
     			//!< returns err msg, or null when OK
    
 
-    void		getFrom(std::istream&,BufferString*);
-    void		putTo(std::ostream&) const;
+    void		getFrom(od_istream&,BufferString*);
+    void		putTo(od_ostream&) const;
 
     bool		remove(TraceID::GeomID geomid);
     				//!< Also removes from disk

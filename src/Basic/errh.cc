@@ -14,99 +14,110 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "filepath.h"
 #include "oddirs.h"
 #include "envvars.h"
+#include "od_ostream.h"
 #include <iostream>
-#include <fstream>
 
 #ifdef HAS_BREAKPAD
 #include "client\windows\handler\exception_handler.h"
 #include <QString>
 #endif
 
-Export_Basic const char* logMsgFileName();
-Export_Basic std::ostream& logMsgStrm();
+namespace OD { Export_Basic od_ostream& logMsgStrm(); }
 bool ErrMsgClass::printProgrammerErrs =
 # ifdef __debug__
     true;
 # else
     false;
 # endif
-static BufferString logmsgfnm;
 Export_Basic int gLogFilesRedirectCode = -1;
-// Not set. 0 = stderr, 1 = log file
-
+// -1 == Not set. 0 = stderr, 1 = log file
 
 static bool crashonprogerror = false;
 
-Export_Basic const char* logMsgFileName()
+
+namespace OD {
+
+Export_Basic od_ostream& logMsgStrm()
 {
-    return logmsgfnm.buf();
+    static od_ostream* strm = 0;
+    if ( strm )
+	return *strm;
+
+    BufferString errmsg;
+    if ( gLogFilesRedirectCode > 0 && !GetEnvVarYN("OD_LOG_STDERR") )
+    {
+	const char* basedd = GetBaseDataDir();
+	if ( !File::isDirectory(basedd) )
+	    errmsg = "Directory for data storage is invalid";
+	else
+	{
+	    FilePath fp( basedd, "LogFiles" );
+	    const BufferString dirnm = fp.fullPath();
+	    if ( !File::exists(dirnm) )
+		File::createDir( dirnm );
+	    if ( !File::isDirectory(dirnm) )
+		errmsg = "Cannot create proper directory for log file";
+	    else
+	    {
+		const FilePath pfp( GetPersonalDir() );
+		BufferString fnm( pfp.fileName() );
+		const char* odusr = GetSoftwareUser();
+		if ( odusr && *odusr )
+		    { fnm += "_"; fnm += odusr; }
+		BufferString datestr = Time::getDateTimeString();
+		replaceString( datestr.buf(), ", ", "-" );
+		replaceCharacter( datestr.buf(), ':', '.' );
+		replaceCharacter( datestr.buf(), ' ', '_' );
+		fnm += "_"; fnm += datestr.buf();
+		fnm += ".txt";
+
+		fp.add( fnm );
+		BufferString logmsgfnm = fp.fullPath();
+		strm = new od_ostream( logmsgfnm );
+		if ( !strm->isOK() )
+		{
+		    errmsg.set( "Cannot create log file '" )
+			  .add( logmsgfnm ).add( "'" );
+		    delete strm; strm = 0;
+		}
+	    }
+	}
+    }
+
+    if ( !strm )
+    {
+#	ifdef __win__
+	    strm = &od_ostream::nullStream();
+#	else
+	    strm = new od_ostream( std::cerr );
+#	endif
+	if ( !errmsg.isEmpty() )
+	    *strm << errmsg;
+    }
+
+    return *strm;
+}
+
+Export_Basic void programmerErrMsg( const char* inpmsg, const char* cname,
+				    const char* fname, int linenr )
+{
+    BufferString msg( cname, " | " );
+    msg.add( fname ).add( ":" ).add( linenr )
+	.add( " >> " ).add( inpmsg ).add( " <<" );
+    ErrMsg( msg.buf(), true );
 }
 
 
-#ifndef __win__
-	#define mErrRet(s){ strm = &std::cerr;  \
-	*strm << "Cannot open file for log messages:\n\t" << s << std::endl; \
-	return *strm; } 
-#else 
-	#define mErrRet(s){ strm = new std::ofstream( "nul" ); \
-	*strm << "Cannot open file for log messages:\n\t" << s << std::endl; \
-	return *strm; }
-#endif
-	
-  
-Export_Basic std::ostream& logMsgStrm()
-{
-    if ( gLogFilesRedirectCode < 1 )
-	return std::cerr;
-
-    static std::ostream* strm = 0;
-    if ( strm ) return *strm;
-
-    if ( GetEnvVarYN("OD_LOG_STDERR") )
-	{ strm = &std::cerr; return *strm; }
-
-    const char* basedd = GetBaseDataDir();
-    if ( !File::isDirectory(basedd) )
-	mErrRet( "Directory for data storage is invalid" )
-
-    FilePath fp( basedd, "LogFiles" );
-    const BufferString dirnm = fp.fullPath();
-    if ( !File::exists(dirnm) )
-	File::createDir( dirnm );
-    if ( !File::isDirectory(dirnm) )
-	mErrRet( "Cannot create proper directory for log file" )
-
-    const FilePath pfp( GetPersonalDir() );
-    BufferString fnm( pfp.fileName() );
-    const char* odusr = GetSoftwareUser();
-    if ( odusr && *odusr )
-	{ fnm += "_"; fnm += odusr; }
-    BufferString datestr = Time::getDateTimeString();
-    replaceCharacter( datestr.buf(), ' ', '-' );
-    replaceCharacter( datestr.buf(), ':', '.' );
-    fnm += "_"; fnm += datestr.buf();
-    fnm += ".txt";
-
-    fp.add( fnm );
-    logmsgfnm = fp.fullPath();
-    StreamData sd = StreamProvider( logmsgfnm ).makeOStream( false );
-    if ( !sd.usable() )
-    {
-	BufferString msg( "Cannot create log file '" );
-	msg += logmsgfnm; msg += "'";
-	logmsgfnm = "";
-	mErrRet( msg );
-    }
-
-    strm = sd.ostrm;
-    return *strm;
 }
 
 
 void UsrMsg( const char* msg, MsgClass::Type t )
 {
     if ( !MsgClass::theCB().willCall() )
-	logMsgStrm() << msg << std::endl;
+    {
+	OD::logMsgStrm() << msg << od_newline;
+	OD::logMsgStrm().flush();
+    }
     else
     {
 	MsgClass obj( msg, t );
@@ -132,7 +143,7 @@ void ErrMsg( const char* msg, bool progr )
 	else if ( msg && *msg )
 	{
 	    const char* start = *msg == '[' ? "" : "Err: ";
-	    logMsgStrm() << start << msg << std::endl;
+	    OD::logMsgStrm().add( start ).add( msg ).add( od_newline ).flush();
 	}
     }
     else

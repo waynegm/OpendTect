@@ -43,7 +43,7 @@ public:
     
     bool		isDist() const;
     bool		isVel() const;
-    
+      
 protected:
 
     const LaySeqAttrib&			attr_;

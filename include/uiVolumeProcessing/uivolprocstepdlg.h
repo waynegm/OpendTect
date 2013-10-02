@@ -42,12 +42,14 @@ protected:
     Step*		step_;
 
     void		addMultiInputFld();
-    void		initTable(int nrinputs);
+    void		initInputTable(int nrinputs);
     void		getStepNames(BufferStringSet&) const;
     void		addNameFld(uiObject* alignobj);
     void		addNameFld(uiGroup* aligngrp);
     friend class	uiChain;
 
+    void		addConnectionFromMultiInput();
+    void		addDefaultConnection();
     bool		acceptOK(CallBacker*);
 };
 

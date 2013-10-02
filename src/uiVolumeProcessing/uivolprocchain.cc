@@ -53,11 +53,11 @@ void uiStepDialog::addMultiInputFld()
     if ( nrinp == 0 )
 	return;
 
-    const int nrrows = nrinp==-1 ? 5 : nrinp;
-    uiTable::Setup ts( nrinp, 1 );
-    ts.rowgrow(false).defcollbl("Input");
+    const int nrrows = nrinp==-1 ? 2 : nrinp;
+    uiTable::Setup ts( nrrows, 1 );
     multiinpfld_ = new uiTable( this, ts, "Step inputs" );
-    initTable( nrinp );
+    multiinpfld_->setColumnLabel( 0, "Input" );
+    initInputTable( nrinp );
 
     const Chain::Web& web = step_->getChain().getWeb();
     TypeSet<Chain::Connection> connections;
@@ -83,7 +83,7 @@ void uiStepDialog::addMultiInputFld()
 }
 
 
-void uiStepDialog::initTable( int nr )
+void uiStepDialog::initInputTable( int nr )
 {
     if ( !multiinpfld_ ) return;
 
@@ -132,16 +132,8 @@ void uiStepDialog::addNameFld( uiGroup* aligngrp )
 }
 
 
-bool uiStepDialog::acceptOK( CallBacker* )
+void uiStepDialog::addConnectionFromMultiInput()
 {
-    const BufferString nm( namefld_->text() );
-    if ( nm.isEmpty() )
-    {
-	uiMSG().error( "Please enter a name for this step" );
-	return false;
-    }
-
-    step_->setUserName( nm.buf() );
     for ( int idx=0; idx<step_->getNrInputs(); idx++ )
     {
 	mDynamicCastGet(uiComboBox*,cb,
@@ -154,6 +146,36 @@ bool uiStepDialog::acceptOK( CallBacker* )
 				step_->getID(), step_->getInputSlotID(idx) );
 	step_->getChain().addConnection( connection );
     }
+}
+
+
+void uiStepDialog::addDefaultConnection()
+{
+    const ObjectSet<Step>& steps = step_->getChain().getSteps();
+    const int curidx = steps.indexOf( step_ );
+    const Step* prevstep = curidx > 0 ? steps[curidx-1] : 0;
+    if ( !prevstep ) return;
+
+    Chain::Connection connection( prevstep->getID(), 0,
+	step_->getID(), step_->getInputSlotID(0) );
+    step_->getChain().addConnection( connection );
+}
+
+
+bool uiStepDialog::acceptOK( CallBacker* )
+{
+    const BufferString nm( namefld_->text() );
+    if ( nm.isEmpty() )
+    {
+	uiMSG().error( "Please enter a name for this step" );
+	return false;
+    }
+
+    step_->setUserName( nm.buf() );
+    if ( multiinpfld_ )
+	addConnectionFromMultiInput();
+    else
+	addDefaultConnection();    
     
     return true;
 }

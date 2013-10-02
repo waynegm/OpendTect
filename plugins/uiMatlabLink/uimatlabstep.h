@@ -40,8 +40,8 @@ protected:
     void		loadCB(CallBacker*);
     bool		acceptOK(CallBacker*);
 
-    void		fillTable(const BufferStringSet&,
-				  const BufferStringSet&);
+    void		fillParTable(const BufferStringSet&,
+				     const BufferStringSet&);
     bool		readTable(BufferStringSet&,BufferStringSet&) const;
 
     uiFileInput*	filefld_;

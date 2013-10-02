@@ -30,6 +30,7 @@ public:
     bool		usePar(const IOPar&);
 
     bool		needsInput() const 		{ return true; }
+    int			getNrInputs() const;
     bool		canInputAndOutputBeSame() const	{ return true; }
     bool		needsFullVolume() const		{ return true; }
     bool		areSamplesIndependent() const	{ return false; }
@@ -40,6 +41,7 @@ public:
     void		setSharedLibFileName(const char*);
     const char*		sharedLibFileName() const;
 
+    void		setNrInputs(int);
     void		setParameters(const BufferStringSet& nms,
 				      const BufferStringSet& vals);
     void		getParameters(BufferStringSet& nms,
@@ -53,6 +55,7 @@ protected:
     FixedString		errmsg_;
     BufferString	sharedlibfnm_;
 
+    int			nrinputs_;
     BufferStringSet	parnames_;
     BufferStringSet	parvalues_;
 };

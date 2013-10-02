@@ -151,6 +151,7 @@ static const char* sKeyParValues()	{ return "Parameter Values"; }
 
 // MatlabStep
 MatlabStep::MatlabStep()
+    : nrinputs_(-1)
 {}
 
 MatlabStep::~MatlabStep()
@@ -182,6 +183,13 @@ Task* MatlabStep::createTask()
 
     return task;
 }
+
+
+void MatlabStep::setNrInputs( int nrinp )
+{ nrinputs_ = nrinp; }
+
+int MatlabStep::getNrInputs() const
+{ return nrinputs_; }
 
 
 void MatlabStep::setSharedLibFileName( const char* fnm )

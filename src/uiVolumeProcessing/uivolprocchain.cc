@@ -175,7 +175,7 @@ bool uiStepDialog::acceptOK( CallBacker* )
     if ( multiinpfld_ )
 	addConnectionFromMultiInput();
     else
-	addDefaultConnection();    
+	addDefaultConnection();
     
     return true;
 }

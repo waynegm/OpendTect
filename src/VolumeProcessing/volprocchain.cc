@@ -799,8 +799,7 @@ bool Chain::setOutputSlot( Step::ID stepid, Step::SlotID slotid )
     if ( steps_.size() > 1 )
     {
 	const Step* step = getStepFromID( stepid );
-
-	if ( !step || step->validOutputSlotID( slotid ) )
+	if ( !step || !step->validOutputSlotID(slotid) )
 	    return false;
     }
 

@@ -18,35 +18,6 @@ ________________________________________________________________________
 #include "arrayndslice.h"
 #include "mathfunc.h"
 #include "periodicvalue.h"
-#include "odcomplex.h"
-
-
-#include <math.h>
-
-#ifndef M_PI
-# define M_PI           3.14159265358979323846  /* pi */
-#endif
-
-template <class T>
-inline void operator<<( std::ostream& strm, const ArrayND<T>& array )
-{ 
-    ArrayNDIter iter( array.info() );
-    const int ndim = array.info().getNDim();
-
-    strm << ndim << ' ';
-
-    for ( int idx=0; idx<ndim; idx++ )
-	strm << array.info().getSize(idx) << ' ';
-
-    do 
-    {
-	strm << array.getND( iter.getPos() );
-
-	strm << ' ';
-    } while ( iter.next() );
-
-    strm.flush();
-}
 
 
 /*!
@@ -57,10 +28,10 @@ remove only the average or an eventual linear trend.
 */
 
 #define mComputeTrendAandB( sz ) \
-	const T aval = ( (TT)sz * crosssum - sum * (TT)sumindexes ) / \
-		       ( (TT)sz * (TT)sumsqidx - (TT)sumindexes * (TT)sumindexes );\
-	const T bval = ( sum * (TT)sumsqidx - (TT)sumindexes * crosssum ) / \
-		       ( (TT)sz * (TT)sumsqidx - (TT)sumindexes * (TT)sumindexes );
+	aval = ( (TT)sz * crosssum - sum * (TT)sumindexes ) / \
+	       ( (TT)sz * (TT)sumsqidx - (TT)sumindexes * (TT)sumindexes );\
+	bval = ( sum * (TT)sumsqidx - (TT)sumindexes * crosssum ) / \
+	       ( (TT)sz * (TT)sumsqidx - (TT)sumindexes * (TT)sumindexes );
 
 template <class T, class TT>
 inline bool removeBias( ArrayND<T>* in, ArrayND<T>* out_=0, bool onlyavg=true )
@@ -72,6 +43,8 @@ inline bool removeBias( ArrayND<T>* in, ArrayND<T>* out_=0, bool onlyavg=true )
     od_int64 sumindexes = 0;
     od_int64 sumsqidx = 0;
     T crosssum = 0;
+    T aval = mUdf(T);
+    T bval = mUdf(T);
 
     if ( out_ && in->info() != out_->info() ) return false;
 
@@ -82,46 +55,78 @@ inline bool removeBias( ArrayND<T>* in, ArrayND<T>* out_=0, bool onlyavg=true )
 
     if ( inpptr && outptr )
     {
+	int count = 0;
 	for ( int idx=0; idx<sz; idx++ )
 	{
+	    const T value = inpptr[idx];
+	    if ( mIsUdf(value) )
+		continue;
+
 	    sum += inpptr[idx];
+	    count++;
+	    if ( onlyavg )
+		continue;
+
 	    sumindexes += idx;
 	    sumsqidx += idx * idx;
 	    crosssum += inpptr[idx] * (TT)idx;
-	} 
+	}
 
-	avg = sum / (TT)sz;
-	mComputeTrendAandB(sz)
+	if ( !count )
+	    return false;
+
+	if ( onlyavg )
+	    avg = sum / (TT)count;
+	else
+	    mComputeTrendAandB(count)
 
 	for ( int idx=0; idx<sz; idx++ )
-	    outptr[idx] = onlyavg ? inpptr[idx] - avg
-				  : inpptr[idx] - (aval*(TT)idx+bval);
+	{
+	    const T value = inpptr[idx];
+	    outptr[idx] = mIsUdf(value ) ? mUdf(T)
+					 : onlyavg ? value - avg
+					 : value - (aval*(TT)idx+bval);
+	}
     }
     else
     {
 	ArrayNDIter iter( in->info() );
 	int index = 0;
+	int count = 0;
 
 	do
 	{
 	    const T value = in->getND( iter.getPos() );
+	    index++;
+	    if ( mIsUdf(value) )
+		continue;
+
 	    sum += value;
+	    count++;
+	    if ( onlyavg )
+		continue;
+
 	    sumindexes += index;
 	    sumsqidx += index * index;
 	    crosssum += value * (TT)index;
-	    index++;
 	} while ( iter.next() );
 
 	iter.reset();
-	index = 0;
-	avg = sum / (TT)sz;
-	mComputeTrendAandB(index)
+	if ( !count )
+	    return false;
 
+	if ( onlyavg )
+	    avg = sum / (TT)count;
+	else
+	    mComputeTrendAandB(count)
+
+	index = 0;
 	do
 	{
-	    const T outval = 
-		onlyavg ? in->getND( iter.getPos() ) - avg
-		        : in->getND( iter.getPos() ) - avg-(aval*(TT)index+bval);
+	    const T inpval = in->getND( iter.getPos() );
+	    const T outval = mIsUdf(inpval) ? mUdf(T)
+			   : onlyavg ? inpval - avg
+			   	     : inpval - avg-(aval*(TT)index+bval);
 	    out->setND(iter.getPos(), outval );
 	    index++;
 	} while ( iter.next() );
@@ -130,23 +135,91 @@ inline bool removeBias( ArrayND<T>* in, ArrayND<T>* out_=0, bool onlyavg=true )
     return true;
 }
 
+/*!
+   This function returns the average of all defined values in the Arrray1D.
+   Only if the array is empty or contains only undef values it returns udf.
+*/
 
 template <class T>
-inline T computeAvg( ArrayND<T>* in )
+inline T getAverage( const ArrayND<T>& in )
 {
-    T avg = 0;
-    const int sz = in->info().getTotalSz();
-    T* inpptr = in->getData();
+    const int sz = in.info().getTotalSz();
+    if ( sz < 1 )
+	return mUdf(T);
 
-    if ( inpptr )
+    T avg = 0; int count = 0;
+    for ( int idx=0; idx<sz; idx++ )
     {
-	for ( int idx=0; idx<sz; idx++ )
-	    avg += inpptr[idx]; 
-
-	avg /= sz;
+	const T val = in.get( idx );
+	if ( !mIsUdf(val) )
+	{
+	    avg += val;
+	    count++;
+	}
     }
 
+    if ( count == 0 )
+	return mUdf(T);
+
+    avg /= count;
     return avg;
+}
+
+
+/*!
+   Returns whether there are undefs in the Array1D.
+*/
+
+template <class fT>
+inline bool hasUndefs( const Array1D<fT>& in )
+{
+    const int sz = in.info().getSize(0);
+    for ( int idx=0; idx<sz; idx++ )
+    {
+	const fT val = in.get( idx );
+	if ( mIsUdf(val) )
+	    return true;
+    }
+
+    return false;
+}
+
+
+/*!
+   The function interpUdf fills all the undefined values in a Array1D
+   by using an inter- or extrapolation from the defined values.
+   It uses the BendPointBasedMathFunction for this.
+   Note that even if there is only one defined value, this function will fill
+   the entire array by this value.
+
+   Returns whether any substitution was made.
+*/
+
+template <class fT>
+inline bool interpUdf( Array1D<fT>& in,
+	typename BendPointBasedMathFunction<fT,fT>::InterpolType ipoltyp=
+			BendPointBasedMathFunction<fT,fT>::Poly )
+{
+    if ( !hasUndefs(in) )
+	return false;
+
+    BendPointBasedMathFunction<fT,fT> data( ipoltyp );
+    const int sz = in.info().getSize(0);
+    for ( int idx=0; idx<sz; idx++ )
+    {
+	const fT val = in.get( idx );
+	if ( !mIsUdf(val) )
+	    data.add( mCast(fT,idx), val );
+    }
+
+    for ( int idx=0; idx<sz; idx++ )
+    {
+	const fT val = in.get( idx );
+	if ( mIsUdf(val) )
+	    in.set( idx, data.getValue( mCast(fT,idx) ) );
+    }
+
+    return true;
 }
 
 

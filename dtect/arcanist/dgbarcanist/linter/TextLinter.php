@@ -59,11 +59,11 @@ final class TextLinter extends ArcanistLinter {
       return;
     }
 
-    $this->lintNewlines($path);
-
-    if ($this->didStopAllLinters()) {
-      return;
-    }
+    //$this->lintNewlines($path);
+//
+    //if ($this->didStopAllLinters()) {
+      //return;
+    //}
 
     $this->lintCharset($path);
 
@@ -74,7 +74,10 @@ final class TextLinter extends ArcanistLinter {
     $this->lintEOFNewline($path);
     $this->lintTrailingWhitespace($path);
 
-    $this->lintLineLength($path);
+    $iscmake = strpos( $path, ".cmake" )!==false;
+
+    if (!$iscmake)
+      $this->lintLineLength($path);
 
     if ($this->getEngine()->getCommitHookMode()) {
       $this->lintNoCommit($path);
@@ -104,12 +107,11 @@ final class TextLinter extends ArcanistLinter {
 	$nrtabs = (int) ($curpos/$tab_stop);
 	$stop = ($nrtabs+1)*$tab_stop;
 	$nrspaces = $stop-$curpos;
-	for ( $idy=$nrspaces; $idy>=0; $idy-- ) {
+	for ( $idy=$nrspaces-1; $idy>=0; $idy-- ) {
 	  $res = $res." ";
 	}
       } 
-      else {
-
+      else if ( $text[$idx]!=="\r" ) {
 	$res = $res.$text[$idx];
       }
      
@@ -134,7 +136,8 @@ final class TextLinter extends ArcanistLinter {
 	      $line_idx + 1,
 	      1,
 	      self::LINT_LINE_WRAP,
-	      'This line is '.number_format(strlen($expandedline)).' characters long, '.
+	      'This line is '.number_format(strlen($expandedline)).
+	      ' characters long, '.
 	      'but the convention is '.$width.' characters.',
 	      $expandedline);
 	}
@@ -158,7 +161,7 @@ final class TextLinter extends ArcanistLinter {
     $data = $this->getData($path);
 
     $matches = null;
-    $bad = '[^\x09\x0A\x20-\x7E]';
+    $bad = '[^\x09\x0A\x0D\x20-\x7E]';
     $preg = preg_match_all(
       "/{$bad}(.*{$bad})?/",
       $data,
@@ -190,7 +193,7 @@ final class TextLinter extends ArcanistLinter {
 
     $matches = null;
     $preg = preg_match_all(
-      '/ +$/m',
+      '/[ \t]+$/m',
       $data,
       $matches,
       PREG_OFFSET_CAPTURE);

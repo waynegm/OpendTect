@@ -327,8 +327,20 @@ bool ChainExecutor::Epoch::doPrepare()
 	
 	chainexec_.computeComputationScope( currentstep->getID(), stepoutputhrg,
 					    stepoutputzrg );
-	currentstep->setOutput( new Attrib::DataCubes, stepoutputhrg,
-				stepoutputzrg );
+
+	CubeSampling csamp;
+	csamp.hrg = stepoutputhrg;
+	Attrib::DataCubes* outcube  = new Attrib::DataCubes;
+	outcube->ref();
+	outcube->setSizeAndPos( csamp );
+	if ( !outcube->addCube(mUdf(float),0) )
+	{
+	    errmsg_ = "Cannot allocate enough memory.";
+	    outcube->unRef();
+	    return false;
+	}
+
+	currentstep->setOutput( outcube, stepoutputhrg,	stepoutputzrg );
 	
 	
 	TypeSet<Chain::Connection> outputconnections;
@@ -355,9 +367,22 @@ bool ChainExecutor::Epoch::doPrepare()
 }
 
 
+const Attrib::DataCubes* ChainExecutor::Epoch::getOutput() const
+{
+    return steps_[steps_.size()-1] ? steps_[steps_.size()-1]->getOutput() : 0;
+}
+
+
 const Attrib::DataCubes* ChainExecutor::getOutput() const
 { return outputvolume_; }
 
+
+#define mCleanUpAndRet( ret ) \
+{ \
+    delete curepoch; \
+    curtask_ = 0; \
+    return ret; \
+}
 
 int ChainExecutor::nextStep()
 {
@@ -370,18 +395,21 @@ int ChainExecutor::nextStep()
     releaseMemory();
 
     //curtasklock_.lock();
-    PtrMan<Epoch> curepoch = epochs_.pop();
+    Epoch* curepoch = epochs_.pop();
     
     if ( !curepoch->doPrepare() )
-	return ErrorOccurred();
+	mCleanUpAndRet( ErrorOccurred() )
     
     curtask_ = &curepoch->getTask();
     //curtasklock_.unLock();
 
     if ( !curtask_->execute() )
-	return ErrorOccurred();
+	mCleanUpAndRet( ErrorOccurred() )
+
+    if ( epochs_.isEmpty() )		//we just executed the last one
+	outputvolume_ = curepoch->getOutput();
     
-    return epochs_.isEmpty() ? Finished() : MoreToDo();
+    mCleanUpAndRet( epochs_.isEmpty() ? Finished() : MoreToDo() )
 }
 
 
@@ -419,7 +447,7 @@ od_int64 ChainExecutor::nrDone() const
 {
     //Threads::Locker lckr( curtasklock_ );
     const float percentperepoch = 100.f/totalnrepochs_;
-    const int epochsdone = totalnrepochs_-epochs_.size()-1;
+    const int epochsdone = totalnrepochs_-epochs_.size();
     float percentagedone = percentperepoch*epochsdone;
 
     if ( curtask_ )

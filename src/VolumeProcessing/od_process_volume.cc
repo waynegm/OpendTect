@@ -163,8 +163,14 @@ bool BatchProgram::go( std::ostream& strm )
 	if ( !IOM().commitChanges( *outputobj ) )
 	{
 	    strm << "Warning: Could not write velocity information to database"
-	            " for " << outputobj->name() << "\n\n";
+	                        " for " << outputobj->name() << "\n\n";
 	}
+    }
+
+    if ( !cube )
+    {
+	strm << "Could not retrieve output";
+	return false;
     }
 
     const TypeSet<int> indices( 1, 0 );

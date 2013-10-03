@@ -276,6 +276,7 @@ private:
 	Task&			getTask()		{ return taskgroup_; }
 	
 	bool			needsStepOutput(Step::ID) const;
+	const Attrib::DataCubes* getOutput() const;
 	
     private:
 	

@@ -18,36 +18,22 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Array>
 
 mCreateFactoryEntry( visBase::TextureCoords );
-mCreateFactoryEntry( visBase::TextureCoords2 );
 
 namespace visBase
 {
 
-TextureCoords2::TextureCoords2()
-    : mutex_( *new Threads::Mutex )
-{ 
-}
+#define mFreeTag	1e32f	// preferably different than OD undef value
+#define mIsFreeTag(x)	( ((x)>9.99999e31f) && ((x)<1.00001e32f) )
 
-
-TextureCoords2::~TextureCoords2()
-{
-}
-
-
-void TextureCoords2::setCoord( int idx, const Coord& pos )
-{
-   /* Threads::MutexLocker lock( mutex_ );
-    coords_->point.set1Value( idx, (float)pos.x, (float)pos.y );*/
-}
-
-
-SoNode* TextureCoords2::gtInvntrNode()
-{ return 0; }
+#define mFreeOsgVec2	osg::Vec2( mFreeTag, mFreeTag )
+#define mIsFreeIdx(idx)	mIsFreeTag( (*mGetOsgVec2Arr(osgcoords_))[idx][0] )
 
 
 TextureCoords::TextureCoords()
-    : mutex_( *new Threads::Mutex )
+    : lock_( Threads::Lock::MultiRead )
     , osgcoords_( new osg::Vec2Array )
+    , nrfreecoords_( 0 )
+    , lastsearchedidx_( -1 )
 {
     mGetOsgVec2Arr(osgcoords_)->ref();
 }
@@ -55,141 +41,149 @@ TextureCoords::TextureCoords()
 
 TextureCoords::~TextureCoords()
 {
-    delete &mutex_;
     mGetOsgVec2Arr(osgcoords_)->unref();
 }
 
 
-int TextureCoords::size(bool includedeleted) const
-{ return  mGetOsgVec2Arr(osgcoords_)->size(); }
+int TextureCoords::size( bool includedeleted ) const
+{
+    Threads::Locker locker( lock_ );
+    const int sz = mGetOsgVec2Arr(osgcoords_)->size();
+    return includedeleted ? sz : sz-nrfreecoords_;
+}
 
 
 void TextureCoords::setCoord( int idx, const Coord3& pos )
 {
-    Coord crd;
-    crd.x = pos.x;
-    crd.y = pos.y;
-    setCoord( idx, crd );
+    setCoord( idx, mCast(Coord,pos) );
 }
 
 
 void TextureCoords::setCoord( int idx, const Coord& pos )
 {
-    Threads::MutexLocker lock( mutex_ );
+    if ( idx<0 )
+	return;
 
-    if ( idx >=mGetOsgVec2Arr(osgcoords_)->size() )
+    Threads::Locker locker( lock_, Threads::Locker::WriteLock );
+    int sz = mGetOsgVec2Arr(osgcoords_)->size();
+
+    while ( idx >= sz )	
     {
-	osg::Vec2f txcoord;
-	txcoord[0] = pos.x;
-	txcoord[1] = pos.y;
-	mGetOsgVec2Arr(osgcoords_)->push_back( txcoord );
+	mGetOsgVec2Arr(osgcoords_)->push_back( mFreeOsgVec2 );
+	nrfreecoords_++;
+	sz++;
     }
-    else
-    {
-	(*mGetOsgVec2Arr(osgcoords_))[idx][0] = pos.x;
-	(*mGetOsgVec2Arr(osgcoords_))[idx][1] = pos.y;
-    }
+
+    if ( mIsFreeIdx(idx) )
+	nrfreecoords_--;
+
+    (*mGetOsgVec2Arr(osgcoords_))[idx] = Conv::to<osg::Vec2>( pos );
 }
 
 
 int TextureCoords::addCoord( const Coord3& pos )
 {
-    Coord crd;
-    crd.x = pos.x;
-    crd.y = pos.y;
-
-    return addCoord( crd );
+    return addCoord( mCast(Coord,pos) );
 }
 
 
 int TextureCoords::addCoord( const Coord& pos )
 {
-    Threads::MutexLocker lock( mutex_ );
-    osg::Vec2f txcoord;
-    txcoord[0] = pos.x;
-    txcoord[1] = pos.y;
-    mGetOsgVec2Arr(osgcoords_)->push_back( txcoord );
-
-    return mGetOsgVec2Arr(osgcoords_)->size() - 1;
+    const int idx = searchFreeIdx();
+    setCoord( idx, pos ); 
+    return idx;
 }
 
 
 Coord3 TextureCoords::getCoord( int idx ) const
 {
-    Threads::MutexLocker lock( mutex_ );
+    Threads::Locker locker( lock_ );
+    const int sz = mGetOsgVec2Arr(osgcoords_)->size();
 
-    Coord3 crd( 0.0, 0.0, 0.0 );
+    if ( idx<0 || idx>=sz || mIsFreeIdx(idx) )
+	return Coord3::udf();
 
-    if ( idx < mGetOsgVec2Arr(osgcoords_)->size() )
-    {
-	osg::Vec2 osgcrd = mGetOsgVec2Arr(osgcoords_)->at( idx );
-	crd.x = osgcrd[0];
-	crd.y = osgcrd[1];
-	crd.z = 0.0f;
-    }
-    return crd;
+    return Coord3( Conv::to<Coord>((*mGetOsgVec2Arr(osgcoords_))[idx]), 0.0 );
 }
 
 
 void TextureCoords::clear()
 {
-    Threads::MutexLocker lock( mutex_ );
+    Threads::Locker locker( lock_, Threads::Locker::WriteLock );
     mGetOsgVec2Arr( osgcoords_ )->clear();
+    nrfreecoords_ = 0;
+    lastsearchedidx_ = -1;
 }
 
 
 int TextureCoords::nextID( int previd ) const
 {
- /*   Threads::MutexLocker lock( mutex_ );
-    const int sz = coords_->point.getNum();
+    if ( previd < -1 )
+	return -1;
 
-    int res = previd+1;
-    while ( res<sz )
+    Threads::Locker locker( lock_ );
+    const int sz = mGetOsgVec2Arr(osgcoords_)->size();
+
+    for ( int idx=previd+1; idx<sz; idx++ )
     {
-	if ( unusedcoords_.indexOf(res)==-1 )
-	    return res;
+	if ( !mIsFreeIdx(idx) )
+	    return idx;
     }
 
-    return -1;*/
-    return - 1;
+    return -1;
 }
 
 
-
-bool TextureCoords::removeCoord(int idx)
+void TextureCoords::removeCoord( int idx )
 {
-    Threads::MutexLocker lock( mutex_ );
+    Threads::Locker locker( lock_ );
+    int sz = mGetOsgVec2Arr(osgcoords_)->size();
 
-    if ( idx >=  mGetOsgVec2Arr(osgcoords_)->size() )
-	return false;
+    if ( idx<0 || idx>=sz || mIsFreeIdx(idx) )
+	return;
 
-    mGetOsgVec2Arr(osgcoords_)->erase(
-	mGetOsgVec2Arr(osgcoords_)->begin() + idx );
-    return true;
-}
+    locker.convertToWriteLock();
+    (*mGetOsgVec2Arr(osgcoords_))[idx] = mFreeOsgVec2;
+    nrfreecoords_++;
 
-
-SoNode* TextureCoords::gtInvntrNode()
-{ return 0; }
-
-
-int  TextureCoords::getFreeIdx()
-{
-  /*  if ( unusedcoords_.size() )
+    while ( sz && mIsFreeIdx(sz-1) )
     {
-	const int res = unusedcoords_[unusedcoords_.size()-1];
-	unusedcoords_.removeSingle(unusedcoords_.size()-1);
-	return res;
+	mGetOsgVec2Arr(osgcoords_)->pop_back();
+	nrfreecoords_--;
+	sz--;
+    }
+}
+
+
+int TextureCoords::searchFreeIdx()
+{
+    Threads::Locker locker( lock_ );
+    const int sz = mGetOsgVec2Arr(osgcoords_)->size();
+
+    if ( nrfreecoords_ > 0 )
+    {
+	locker.convertToWriteLock();
+
+	for ( int count=0; count<sz; count++ )
+	{
+	    lastsearchedidx_++;
+	    if ( lastsearchedidx_ >= sz )
+		lastsearchedidx_ = 0;
+
+	    if ( mIsFreeIdx(lastsearchedidx_) )
+		return lastsearchedidx_;
+	}
     }
 
-    return coords_->point.getNum();*/
-    return 0;
+    return sz;
 }
+
+
+//==========================================================================
 
 
 TextureCoordListAdapter::TextureCoordListAdapter( TextureCoords& c )
     : texturecoords_( c )
-    , nrremovedidx_( 0 )
 { texturecoords_.ref(); }
 
 
@@ -226,24 +220,10 @@ void TextureCoordListAdapter::remove( int idx )
 { texturecoords_.removeCoord( idx ); }
 
 
-void TextureCoordListAdapter::remove(const TypeSet<int>& idxs)
+void TextureCoordListAdapter::remove( const TypeSet<int>& idxs )
 {
-    if ( !idxs.size() ) return;
-
-    TypeSet<int> removedidxs;
-    for ( int idx = idxs.size()-1; idx>=0; idx-- )
-    {
-	if ( removedidxs.isPresent( idx ) )
-	    continue;
-	const int toberemoveidx = 
-	    idxs[idx] >= nrremovedidx_ ? idxs[idx] - nrremovedidx_ : idxs[idx];
-
-	if ( texturecoords_.removeCoord( toberemoveidx ) )
-	{
-	    removedidxs += idxs[idx];
-	    nrremovedidx_++;
-	}
-    }
+    for ( int idx=idxs.size()-1; idx>=0; idx-- )
+	texturecoords_.removeCoord( idxs[idx] );
 }
 
 

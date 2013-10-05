@@ -80,21 +80,30 @@ MultiInputStep::~MultiInputStep()
 
 Task* MultiInputStep::createTask()
 {
-    if ( !input_ || input_->nrCubes()<1 )
+    const Attrib::DataCubes* input1 = getInput( getInputSlotID(0) );
+    const Attrib::DataCubes* input2 = getInput( getInputSlotID(1) );
+    Attrib::DataCubes* output = getOutput( getOutputSlotID(0) );
+    if ( !input1 || input1->nrCubes()<1 )
     {
-	errmsg_ = "No input provided.";
+	errmsg_ = "No first input provided.";
 	return 0;
     }
 
-    if ( !output_ || output_->nrCubes()<1 )
+    if ( !input2 || input2->nrCubes()<1 )
+    {
+	errmsg_ = "No second input provided.";
+	return 0;
+    }
+
+    if ( !output || output->nrCubes()<1 )
     {
 	errmsg_ = "No output provided.";
 	return 0;
     }
 
     MultiInputTask* task =
-	new MultiInputTask( *this, input_->getCube(0), input_->getCube(0),
-			    output_->getCube(0) );
+	new MultiInputTask( *this, input1->getCube(0), input2->getCube(0),
+			    output->getCube(0) );
     if ( !task->init() )
     {
 	errmsg_ = task->message();

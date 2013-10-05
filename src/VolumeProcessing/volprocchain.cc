@@ -162,10 +162,10 @@ bool ChainExecutor::scheduleWork()
 	firstepoch = mMAX( firstepoch, lateststepepoch );
 	
 	TypeSet<Chain::Connection> inputconnections;
-	web_.getConnections( currentstep->getID(), false, inputconnections );
+	web_.getConnections( currentstep->getID(), true, inputconnections );
 	for ( int idx=0; idx<inputconnections.size(); idx++ )
 	{
-	    mGetStep( inputstep, inputconnections[idx].inputstepid_, false );
+	    mGetStep( inputstep, inputconnections[idx].outputstepid_, false );
 	    if ( scheduledsteps_.isPresent( inputstep ) ||
 		 unscheduledsteps.isPresent( inputstep ) )
 		continue;
@@ -197,20 +197,19 @@ int ChainExecutor::computeLatestEpoch( Step::ID stepid ) const
 	return 0;
     
     TypeSet<Chain::Connection> outputconnections;
-    web_.getConnections( stepid, true, outputconnections );
+    web_.getConnections( stepid, false, outputconnections );
         
     int latestepoch = mUdf(int);
     for ( int idx=0; idx<outputconnections.size(); idx++ )
     {
 	const int curepoch =
-	    computeLatestEpoch( outputconnections[idx].outputstepid_ );
+	    computeLatestEpoch( outputconnections[idx].inputstepid_ );
 	if ( mIsUdf(curepoch) )
 	    continue;
 	
 	const int newepoch = curepoch+1;
-	
 	if ( mIsUdf(latestepoch) || newepoch>latestepoch )
-	    latestepoch = curepoch;
+	    latestepoch = newepoch;
     }
     
     return latestepoch;
@@ -229,7 +228,7 @@ void ChainExecutor::computeComputationScope( Step::ID stepid,
     }
 
     TypeSet<Chain::Connection> outputconnections;
-    web_.getConnections( stepid, true, outputconnections );
+    web_.getConnections( stepid, false, outputconnections );
     
     stepoutputhrg.init(false);
     stepoutputzrg = StepInterval<int>::udf();
@@ -237,7 +236,7 @@ void ChainExecutor::computeComputationScope( Step::ID stepid,
     for ( int idx=0; idx<outputconnections.size(); idx++ )
     {
 	const Step* nextstep = chain_.getStepFromID(
-			    outputconnections[idx].outputstepid_ );
+			    outputconnections[idx].inputstepid_ );
 	
 	HorSampling nextstephrg;
 	StepInterval<int> nextstepzrg;
@@ -297,12 +296,12 @@ bool ChainExecutor::Epoch::doPrepare()
     {
 	Step* currentstep = steps_[idx];
 	TypeSet<Chain::Connection> inputconnections;
-	chainexec_.web_.getConnections( currentstep->getID(), false,
+	chainexec_.web_.getConnections( currentstep->getID(), true,
 					inputconnections );
 	for ( int idy=0; idy<inputconnections.size(); idy++ )
 	{
 	    const Step* inputstep = chainexec_.chain_.getStepFromID(
-					inputconnections[idy].inputstepid_ );
+					inputconnections[idy].outputstepid_ );
 	    if ( !inputstep )
 	    {
 		pErrMsg("This should not happen");
@@ -330,7 +329,7 @@ bool ChainExecutor::Epoch::doPrepare()
 
 	CubeSampling csamp;
 	csamp.hrg = stepoutputhrg;
-	Attrib::DataCubes* outcube  = new Attrib::DataCubes;
+	Attrib::DataCubes* outcube = new Attrib::DataCubes;
 	outcube->ref();
 	outcube->setSizeAndPos( csamp );
 	if ( !outcube->addCube(mUdf(float),0) )
@@ -340,12 +339,13 @@ bool ChainExecutor::Epoch::doPrepare()
 	    return false;
 	}
 
-	currentstep->setOutput( outcube, stepoutputhrg,	stepoutputzrg );
-	
-	
+	Step::SlotID outputslotid = 0; // TODO: get correct slotid
+	currentstep->setOutput( outputslotid, outcube,
+				stepoutputhrg, stepoutputzrg );
+		
 	TypeSet<Chain::Connection> outputconnections;
 	chainexec_.web_.getConnections( currentstep->getID(),
-					true, outputconnections );
+					false, outputconnections );
 	
 	for ( int idy=0; idy<outputconnections.size(); idy++ )
 	     currentstep->enableOutput( outputconnections[idy].outputslotid_ );
@@ -391,8 +391,9 @@ int ChainExecutor::nextStep()
     
     if ( epochs_.isEmpty() )
 	return Finished();
-    
-    releaseMemory();
+
+//TODO: Check this call. When enabled there's a crash
+//    releaseMemory();
 
     //curtasklock_.lock();
     Epoch* curepoch = epochs_.pop();
@@ -856,23 +857,37 @@ void Chain::Web::getConnections( Step::ID stepid, bool isinput,
 Step::Step()
     : chain_( 0 )
     , output_( 0 )
-    , input_( 0 )
     , id_( cUndefID() )
-{}
+{
+    inputs_.allowNull();
+}
 
 
 Step::~Step()
 {
-    releaseData();
+    deepUnRef( inputs_ );
+    if ( output_ ) output_->unRef();
+}
+
+
+void Step::resetInput()
+{
+    deepUnRef( inputs_ );
+    inputslotids_.erase();
+    for ( int idx=0; idx<getNrInputs(); idx++ )
+    {
+	inputs_ += 0;
+	inputslotids_ += idx;
+    }
 }
 
 
 void Step::releaseData()
 {
     if ( output_ ) output_->unRef();
-    if ( input_ ) input_->unRef();
     output_ = 0;
-    input_ = 0;
+
+    resetInput();
 }
 
     
@@ -909,8 +924,12 @@ int Step::getInputSlotID( int idx ) const
 	return Step::cUndefSlotID();
     }
     
-    return idx;
+    return inputslotids_.validIdx(idx) ? inputslotids_[idx] : idx;
 }
+
+
+void Step::getInputName( SlotID slotid, BufferString& res ) const
+{ res = "Input "; res.add( slotid ); }
 
 
 int Step::getOutputSlotID( int idx ) const
@@ -924,8 +943,7 @@ int Step::getOutputSlotID( int idx ) const
     return idx;
 }
 
-    
-    
+
 bool Step::validInputSlotID( SlotID slotid ) const
 {
     for ( int idx=0; idx<getNrInputs(); idx++ )
@@ -948,8 +966,7 @@ bool Step::validOutputSlotID( SlotID slotid ) const
     
     return false;
 }
-    
-    
+
 
 HorSampling Step::getInputHRg( const HorSampling& hr ) const
 { return hr; }
@@ -960,17 +977,31 @@ StepInterval<int>
 { return si; }
 
 
-void Step::setInput( SlotID, const Attrib::DataCubes* dc )
+void Step::setInput( SlotID slotid, const Attrib::DataCubes* dc )
 {
-    if ( input_ ) input_->unRef();
-    input_ = dc;
-    if ( input_ ) input_->ref();
+    if ( inputs_.isEmpty() )
+	resetInput();
+
+    const int idx = inputslotids_.indexOf( slotid );
+    if ( !inputs_.validIdx(idx) )
+	return;
+    
+    if ( inputs_[idx] )	inputs_[idx]->unRef();
+    inputs_.replace( idx, dc );
+    if ( inputs_[idx] ) inputs_[idx]->ref();
 }
 
 
-void Step::setOutput( Attrib::DataCubes* dc,
+const Attrib::DataCubes* Step::getInput( SlotID slotid ) const
+{
+    const int idx = inputslotids_.indexOf( slotid );
+    return inputs_.validIdx(idx) ? inputs_[idx] : 0;
+}
+
+
+void Step::setOutput( SlotID slotid, Attrib::DataCubes* dc,
 		      const HorSampling& hrg,
-		      const StepInterval<int>& zrg ) 
+		      const StepInterval<int>& zrg )
 {
     if ( output_ ) output_->unRef();
     output_ = dc;
@@ -979,6 +1010,17 @@ void Step::setOutput( Attrib::DataCubes* dc,
     hrg_ = hrg;
     zrg_ = zrg;
 }
+
+
+Attrib::DataCubes* Step::getOutput( SlotID slotid )
+{
+    // TODO: implement using slotid
+    return output_;
+}
+
+
+const Attrib::DataCubes* Step::getOutput( SlotID slotid ) const
+{ return const_cast<Step*>(this)->getOutput( slotid ); }
 
 
 void Step::enableOutput( SlotID slotid )
@@ -1006,10 +1048,8 @@ bool Step::usePar( const IOPar& par )
 {
     username_.empty();
     par.get( sKey::Name(), username_ );
-    if ( !par.get( sKey::ID(), id_ ) && chain_ )
-    {
+    if ( !par.get(sKey::ID(),id_) && chain_ )
 	id_ = chain_->getNewStepID();
-    }
     
     return true;
 }
@@ -1022,4 +1062,3 @@ Task* Step::createTask()
 
     return 0;
 }
-

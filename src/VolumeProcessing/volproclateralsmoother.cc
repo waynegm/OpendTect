@@ -393,12 +393,14 @@ bool LateralSmoother::usePar( const IOPar& pars )
 
 Task* LateralSmoother::createTask()
 {
-    if ( !input_ || !output_ )
+    const Attrib::DataCubes* input = getInput( getInputSlotID(0) );
+    Attrib::DataCubes* output = getOutput( getOutputSlotID(0) );
+    if ( !input || !output )
 	return 0;
 
-    if ( input_->inlsampling_.step!=output_->inlsampling_.step ||
-	 input_->crlsampling_.step!=output_->crlsampling_.step || 
-	 !mIsEqual(input_->zstep_,output_->zstep_,1e-3*SI().zRange(true).step)) 
+    if ( input->inlsampling_.step!=output->inlsampling_.step ||
+	 input->crlsampling_.step!=output->crlsampling_.step || 
+	 !mIsEqual(input->zstep_,output->zstep_,1e-3*SI().zRange(true).step)) 
     {
 	return 0;
     }
@@ -407,8 +409,8 @@ Task* LateralSmoother::createTask()
     {
 	if ( !mIsUdf(pars_.rowdist_) )
 	{
-	    pars_.rowdist_ = (SI().inlDistance()*input_->inlsampling_.step)/
-			     (SI().crlDistance()*input_->crlsampling_.step);
+	    pars_.rowdist_ = (SI().inlDistance()*input->inlsampling_.step)/
+			     (SI().crlDistance()*input->crlsampling_.step);
 	}
     }
     else
@@ -418,21 +420,21 @@ Task* LateralSmoother::createTask()
 
     pars_.filludf_ = true;
 
-    Interval<int> inlsamples( input_->inlsampling_.nearestIndex(hrg_.start.inl),
-	    		      input_->inlsampling_.nearestIndex(hrg_.stop.inl));
+    Interval<int> inlsamples( input->inlsampling_.nearestIndex(hrg_.start.inl),
+	    		      input->inlsampling_.nearestIndex(hrg_.stop.inl));
 
-    Interval<int> crlsamples( input_->crlsampling_.nearestIndex(hrg_.start.crl),
-	    		      input_->crlsampling_.nearestIndex(hrg_.stop.crl));
+    Interval<int> crlsamples( input->crlsampling_.nearestIndex(hrg_.start.crl),
+	    		      input->crlsampling_.nearestIndex(hrg_.stop.crl));
 
 
-    return new LateralSmootherTask( input_->getCube( 0 ),
-	    input_->inlsampling_.start,
-	    input_->crlsampling_.start,
-	    input_->z0_,
-	    output_->getCube( 0 ),
-	    output_->inlsampling_.start,
-	    output_->crlsampling_.start,
-	    output_->z0_,
+    return new LateralSmootherTask( input->getCube( 0 ),
+	    input->inlsampling_.start,
+	    input->crlsampling_.start,
+	    input->z0_,
+	    output->getCube( 0 ),
+	    output->inlsampling_.start,
+	    output->crlsampling_.start,
+	    output->z0_,
 	    inlsamples, crlsamples, zrg_,
 	    pars_, mirroredges_, interpolateundefs_, fixedvalue_ );
 

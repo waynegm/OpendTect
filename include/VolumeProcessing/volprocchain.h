@@ -61,14 +61,16 @@ public:
     virtual const char*		userName() const;
     virtual void		setUserName(const char* nm);
     
+    void			resetInput();
     virtual bool		needsInput() const		= 0;
     virtual int			getNrInputs() const;
     virtual SlotID		getInputSlotID(int idx) const;
+    virtual void		getInputName(SlotID,BufferString&) const;
+
     virtual int			getNrOutputs() const		{ return 1; }
     virtual SlotID		getOutputSlotID(int idx) const;
     bool			validInputSlotID(SlotID) const;
     bool			validOutputSlotID(SlotID) const;
-
 
     virtual HorSampling		getInputHRg(const HorSampling&) const;
 				/*!<When computing HorSampling, how
@@ -78,9 +80,12 @@ public:
 				 big input is needed?*/
     
     virtual void		setInput(SlotID,const Attrib::DataCubes*);
-    virtual void		setOutput(Attrib::DataCubes*, //add SlotID
+    const Attrib::DataCubes*	getInput(SlotID) const;
+    virtual void		setOutput(SlotID,Attrib::DataCubes*,
 				      const HorSampling&,
 				      const StepInterval<int>&);
+    const Attrib::DataCubes*	getOutput(SlotID) const;
+    Attrib::DataCubes*		getOutput(SlotID);
     
     int				getOutputIdx(SlotID) const;
     void			enableOutput(SlotID);
@@ -115,14 +120,18 @@ protected:
     
     Chain*			chain_;
     
-    Attrib::DataCubes*		output_;
-    const Attrib::DataCubes*	input_;
+    ObjectSet<const Attrib::DataCubes>	inputs_;
+    TypeSet<SlotID>		inputslotids_;
+
     BufferString		username_;
     ID				id_;
-    
+ 
     HorSampling			hrg_;
     StepInterval<int>		zrg_;
     TypeSet<SlotID>		outputslotids_; // enabled slotids
+
+private:
+    Attrib::DataCubes*		output_;
 };
 
 

@@ -108,7 +108,7 @@ void uiStepDialog::getStepNames( BufferStringSet& names ) const
 }
 
 
-void uiStepDialog::addNameFld( uiObject* alignobj )
+void uiStepDialog::addNameFld( uiObject* alignobj, bool leftalign )
 {
     uiSeparator* sep = 0;
     if ( alignobj )
@@ -120,15 +120,16 @@ void uiStepDialog::addNameFld( uiObject* alignobj )
     if ( alignobj )
     {
 	namefld_->attach( ensureBelow, sep );
-	namefld_->attach( alignedBelow, alignobj );
+	namefld_->attach(
+	    leftalign ? leftAlignedBelow : alignedBelow, alignobj );
     }
 }
 
 
-void uiStepDialog::addNameFld( uiGroup* aligngrp )
+void uiStepDialog::addNameFld( uiGroup* aligngrp, bool leftalign )
 {
     uiObject* alignobj = aligngrp ? aligngrp->attachObj() : 0;
-    addNameFld( alignobj );
+    addNameFld( alignobj, leftalign );
 }
 
 
@@ -142,6 +143,8 @@ void uiStepDialog::addConnectionFromMultiInput()
 	if ( !stepnm ) continue;
 
 	Step* outstep = step_->getChain().getStepFromName( stepnm );
+	if ( !outstep ) continue;
+
 	Chain::Connection connection( outstep->getID(), 0,
 				step_->getID(), step_->getInputSlotID(idx) );
 	step_->getChain().addConnection( connection );

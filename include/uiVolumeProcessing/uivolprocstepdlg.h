@@ -44,8 +44,8 @@ protected:
     void		addMultiInputFld();
     void		initInputTable(int nrinputs);
     void		getStepNames(BufferStringSet&) const;
-    void		addNameFld(uiObject* alignobj);
-    void		addNameFld(uiGroup* aligngrp);
+    void		addNameFld(uiObject* alignobj,bool leftal=false);
+    void		addNameFld(uiGroup* aligngrp,bool leftal=false);
     friend class	uiChain;
 
     void		addConnectionFromMultiInput();

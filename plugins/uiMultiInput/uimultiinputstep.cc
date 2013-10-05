@@ -31,7 +31,7 @@ uiMultiInputStep::uiMultiInputStep( uiParent* p, MultiInputStep* step )
     : uiStepDialog(p,MultiInputStep::sFactoryDisplayName(), step )
 {
     addMultiInputFld();
-    addNameFld( multiinpfld_ );
+    addNameFld( multiinpfld_, true );
 }
 
 

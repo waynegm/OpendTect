@@ -52,7 +52,7 @@ protected:
 			MatlabStep();
 			~MatlabStep();
 
-    FixedString		errmsg_;
+    BufferString	errmsg_;
     BufferString	sharedlibfnm_;
 
     int			nrinputs_;

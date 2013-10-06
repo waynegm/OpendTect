@@ -120,7 +120,7 @@ bool MatlabTask::doWork( od_int64 start, od_int64 stop, int )
 */
 
     // for multiple inputs:
-    int dims[1]; dims[0] = step_.getNrInputs();
+    mwSize dims[1]; dims[0] = step_.getNrInputs();
     mxArray* mxarrin = mxCreateCellArray( 1, dims );
     for ( int idx=0; idx<step_.getNrInputs(); idx++ )
     {
@@ -136,7 +136,7 @@ bool MatlabTask::doWork( od_int64 start, od_int64 stop, int )
 	ArrayNDCopier arrndcopier( inparr );
 	arrndcopier.init( true );
 	arrndcopier.execute();
-	mxSetCell( mxarrin, idx, arrndcopier.getMxArray();
+	mxSetCell( mxarrin, mwSize(idx), arrndcopier.getMxArray() );
     }
 
     mxArray* mxarrout = 0;

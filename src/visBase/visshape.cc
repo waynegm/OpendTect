@@ -19,6 +19,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visevent.h"
 #include "vismaterial.h"
 #include "visnormals.h"
+#include "vistexturechannels.h"
 #include "vistexturecoords.h"
 
 #include <osg/PrimitiveSet>
@@ -27,7 +28,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/Geode>
 #include <osg/Material>
 #include <osg/LightModel>
+#include <osgGeo/LayeredTexture>
 #include <osgUtil/SmoothingVisitor>
+#include <osgUtil/CullVisitor>
 
 
 mCreateFactoryEntry( visBase::VertexShape );
@@ -100,22 +103,21 @@ int Shape::getMaterialBinding() const
 
 void Shape::setTwoSidedLight( bool yn )
 {
-    osg::StateSet* st = osgNode()->getOrCreateStateSet();
-    if ( st )
+    osg::StateSet* stateset = osgNode()->getOrCreateStateSet();
+    if ( !stateset )
+	return;
+
+    osg::LightModel* lightmodel = (osg::LightModel*)
+		    stateset->getAttribute( osg::StateAttribute::LIGHTMODEL );
+
+    if ( !lightmodel )
     {
-	if ( !yn )
-	{
-	    st->setMode( GL_LIGHTING, !yn );
-	    st->setMode( GL_LIGHT0, !yn );
-	    st->setMode( GL_LIGHT1, !yn );
-	    st->setMode( GL_FRONT_FACE, !yn );
-	    st->setMode( GL_RESCALE_NORMAL, !yn );
-	}
-	osg::ref_ptr<osg::LightModel> ltModel = new osg::LightModel; 
-	ltModel->setTwoSided( yn ); 
-	st->setAttributeAndModes( ltModel.get(), osg::StateAttribute::OVERRIDE | 
-	    osg::StateAttribute::ON );
+	lightmodel = new osg::LightModel;
+	stateset->setAttributeAndModes( lightmodel,
+		    osg::StateAttribute::OVERRIDE | osg::StateAttribute::ON );
     }
+
+    lightmodel->setTwoSided( yn );
 }
 
 
@@ -147,6 +149,97 @@ int Shape::usePar( const IOPar& par )
     return 1;
 }
 
+//=============================================================================
+
+
+class ShapeNodeCallbackHandler: public osg::NodeCallback
+{
+public:
+    ShapeNodeCallbackHandler( VertexShape& vtxshape )
+	: vtxshape_( vtxshape )
+    {} 
+
+    virtual void	operator()(osg::Node*,osg::NodeVisitor*);
+    void		updateTexture();
+
+protected:
+    VertexShape&		vtxshape_;
+};
+
+
+#define mGetLayeredTexture( laytex ) \
+    osgGeo::LayeredTexture* laytex = \
+		vtxshape_.channels_ ? vtxshape_.channels_->getOsgTexture() : 0;
+
+void ShapeNodeCallbackHandler::operator()( osg::Node* node,
+					   osg::NodeVisitor* nv )
+{
+    mGetLayeredTexture( laytex );
+
+    if ( laytex && nv->getVisitorType()==osg::NodeVisitor::UPDATE_VISITOR )
+    {
+	if ( vtxshape_.needstextureupdate_ || laytex->needsRetiling() )
+	    updateTexture();
+
+	traverse( node, nv );
+    }
+    else if ( laytex && nv->getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
+    {
+	osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
+	if ( laytex->getSetupStateSet() )
+	    cv->pushStateSet( laytex->getSetupStateSet() );
+
+	traverse( node, nv );
+
+	if ( laytex->getSetupStateSet() )
+	    cv->popStateSet();
+    }
+    else
+	traverse( node, nv );
+}
+
+
+void ShapeNodeCallbackHandler::updateTexture()
+{
+    mGetLayeredTexture( laytex );
+
+    if ( !laytex || !vtxshape_.osggeom_ || !vtxshape_.texturecoords_ )
+	return;
+
+    laytex->setTextureSizePolicy( osgGeo::LayeredTexture::AnySize );
+    laytex->reInitTiling();
+    const Coord size( Conv::to<Coord>(laytex->imageEnvelopeSize()) );
+    if ( size.x>laytex->maxTextureSize() || size.y>laytex->maxTextureSize() )
+	pErrMsg( "Texture size overflow, because tiling not yet supported" );
+
+    if ( laytex->isOn() &&
+		vtxshape_.coords_->size()!=vtxshape_.texturecoords_->size() )
+    {
+	pErrMsg( "One texture coordinate per vertex expected" );
+    }
+
+    const osg::Vec2f origin( 0.0f, 0.0f );
+    const osg::Vec2f opposite( laytex->textureEnvelopeSize() );
+    std::vector<osgGeo::LayeredTexture::TextureCoordData> tcdata;
+
+    vtxshape_.osggeom_->setStateSet( !laytex->isOn() ? 0 :
+		    laytex->createCutoutStateSet(origin, opposite, tcdata) );
+
+    for ( int unit=0; unit<laytex->nrTextureUnits(); unit++ )
+	vtxshape_.osggeom_->setTexCoordArray( unit, 0 );
+
+    for ( int idx=0; idx<tcdata.size(); idx++ )
+    {
+	vtxshape_.osggeom_->setTexCoordArray( tcdata[idx]._textureUnit,
+			mGetOsgVec2Arr(vtxshape_.texturecoords_->osgArray()) );
+    }
+
+    vtxshape_.needstextureupdate_ = false;
+}
+
+
+//=============================================================================
+
     
 #define mVertexShapeConstructor( geode ) \
      normals_( 0 ) \
@@ -156,13 +249,16 @@ int Shape::usePar( const IOPar& par )
     , node_( 0 ) \
     , osggeom_( 0 ) \
     , primitivetype_( Geometry::PrimitiveSet::Other ) \
-    , useosgsmoothnormal_( false )
+    , useosgsmoothnormal_( false ) \
+    , channels_( 0 ) \
+    , osgcallbackhandler_( 0 ) \
+    , needstextureupdate_( false )
     
     
 VertexShape::VertexShape()
     : mVertexShapeConstructor( new osg::Geode )
 {
-    setupGeode();
+    setupOsgNode();
 }
     
     
@@ -170,9 +266,10 @@ VertexShape::VertexShape( Geometry::IndexedPrimitiveSet::PrimitiveType tp,
 			  bool creategeode )
     : mVertexShapeConstructor( creategeode ? new osg::Geode : 0 )
 {
-    setupGeode();
+    setupOsgNode();
     setPrimitiveType( tp );
 }
+
 
 void VertexShape::setMaterial( Material* mt )
 {
@@ -182,22 +279,28 @@ void VertexShape::setMaterial( Material* mt )
 
     Shape::setMaterial( mt );
     materialChangeCB( 0 );
-    
 }
 
 
-void VertexShape::setupGeode()
+void VertexShape::setupOsgNode()
 {
+    node_ = new osg::Group;	// Needed because pushStateSet() applied in
+    node_->ref();		// osgcallbackhandler_ has no effect on geodes
+    setOsgNode( node_ );
+    osgcallbackhandler_ = new ShapeNodeCallbackHandler( *this );
+    osgcallbackhandler_->ref();
+    node_->setUpdateCallback( osgcallbackhandler_ );
+    node_->setCullCallback( osgcallbackhandler_ );
+
     if ( geode_ )
     {
-	setOsgNode( geode_ );
 	useOsgAutoNormalComputation( false );
 	geode_->ref();
 	osggeom_ = new osg::Geometry;
 	osggeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
 	osggeom_->setDataVariance( osg::Object::DYNAMIC );
 	geode_->addDrawable( osggeom_ );
-	node_ = geode_;
+	node_->asGroup()->addChild( geode_ );
     }
     
     setCoordinates( Coordinates::create() );
@@ -244,13 +347,22 @@ void VertexShape::setPrimitiveType( Geometry::PrimitiveSet::PrimitiveType tp )
 
 VertexShape::~VertexShape()
 {
-   if ( getMaterial() )
+    if ( getMaterial() )
 	getMaterial()->change.remove( mCB(this,VertexShape,materialChangeCB) );
+
+    if ( osgcallbackhandler_ )
+    {
+	node_->removeUpdateCallback( osgcallbackhandler_ );
+	node_->removeCullCallback( osgcallbackhandler_ );
+	osgcallbackhandler_->unref();
+    }
+
+    if ( geode_ ) geode_->unref();
     if ( node_ ) node_->unref();
     if ( normals_ ) normals_->unRef();
     if ( coords_ ) coords_->unRef();
     if ( texturecoords_ ) texturecoords_->unRef();
-    
+
     deepUnRef( primitivesets_ );
 }
     
@@ -311,9 +423,14 @@ if ( osggeom_ )
 );
     
 mDefSetGetItem( VertexShape, TextureCoords, texturecoords_,
-if ( osggeom_ ) osggeom_->setTexCoordArray( 0, 0 ),
-if ( osggeom_ ) osggeom_->setTexCoordArray( 0,
-mGetOsgVec2Arr(texturecoords_->osgArray())));
+		needstextureupdate_=true , needstextureupdate_=true );
+
+
+void VertexShape::setTextureChannels( TextureChannels* channels )
+{
+    channels_ = channels;
+    needstextureupdate_ = true;
+}
 
 
 #define mCheckCreateShapeHints() \
@@ -392,7 +509,8 @@ public:
 	return GL_POINTS;
     }
 };
-    
+
+
 void VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
 {
     p->ref();
@@ -462,7 +580,7 @@ public:
     
 			mImplOsgFuncs
     virtual void	setEmpty()
-    			{ element_->erase(element_->begin(), element_->end() ); }
+    			{ element_->erase(element_->begin(),element_->end()); }
     virtual void	append( int idx ) { element_->push_back( idx ); }
     virtual int		pop() { return 0; }
     virtual int		set(int,int) { return 0; }

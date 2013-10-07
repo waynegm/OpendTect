@@ -28,6 +28,7 @@ class VisColorTab;
 class Material;
 class Coordinates;
 class Normals;
+class TextureChannels;
 class TextureCoords;
 
 
@@ -70,8 +71,12 @@ protected:
 };
 
 
+class ShapeNodeCallbackHandler;
+
 mExpClass(visBase) VertexShape : public Shape
 {
+    friend class ShapeNodeCallbackHandler;
+
 public:
     static VertexShape*	create()
 			mCreateDataObj(VertexShape);
@@ -112,13 +117,15 @@ public:
     void		setMaterial( Material* mt );
     void		materialChangeCB( CallBacker*  );
     void		useOsgAutoNormalComputation(bool);
+
+    void		setTextureChannels(TextureChannels*);
     
 protected:
     			VertexShape( Geometry::PrimitiveSet::PrimitiveType,
 				     bool creategeode );
     			~VertexShape();
     
-    void		setupGeode();
+    void		setupOsgNode();
     
     virtual void	addPrimitiveSetToScene(osg::PrimitiveSet*);
     virtual void	removePrimitiveSetFromScene(const osg::PrimitiveSet*);
@@ -133,6 +140,10 @@ protected:
     osg::Geometry*	osggeom_;
 
     bool		useosgsmoothnormal_;
+
+    RefMan<TextureChannels>	channels_;
+    ShapeNodeCallbackHandler*	osgcallbackhandler_;
+    bool			needstextureupdate_;
     
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
     Geometry::PrimitiveSet::PrimitiveType	primitivetype_;

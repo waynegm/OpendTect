@@ -92,6 +92,7 @@ RandomPos2Body::RandomPos2Body()
     vtxshape_->ref();
     addChild( vtxshape_->osgNode() );
     vtxshape_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
+    vtxshape_->setNormalBindType( VertexShape::BIND_PER_VERTEX );
 
     // renderOneSide( 0 );
     renderOneSide( 1 );	// OSG-TODO: Why does it not look good for two-sided?

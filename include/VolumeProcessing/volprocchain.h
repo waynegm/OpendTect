@@ -308,7 +308,7 @@ private:
     
     void			releaseMemory();
     
-    Task*			curtask_;
+    Epoch*			curepoch_;
 
     bool			isok_;
     bool			firstisprep_;

@@ -105,8 +105,8 @@ ChainExecutor::ChainExecutor( Chain& vr )
     , isok_( true )
     , outputzrg_( 0, 0, 0 )
     , outputvolume_( 0 )
-    , curtask_( 0 )
     , totalnrepochs_( 1 )
+    , curepoch_( 0 )
 {
     web_ = chain_.getWeb();
     //Todo: Optimize connections, check for indentical steps using same inputs
@@ -116,6 +116,8 @@ ChainExecutor::ChainExecutor( Chain& vr )
 ChainExecutor::~ChainExecutor()
 {
     deepErase( epochs_ );
+    if ( curepoch_ )
+	delete curepoch_;
 }
 
 
@@ -379,38 +381,47 @@ const Attrib::DataCubes* ChainExecutor::getOutput() const
 
 #define mCleanUpAndRet( ret ) \
 { \
-    delete curepoch; \
-    curtask_ = 0; \
+    delete curepoch_; \
+    curepoch_ = 0; \
     return ret; \
 }
 
 int ChainExecutor::nextStep()
 {
+
+    if ( curepoch_ )
+    {
+	delete curepoch_;
+	curepoch_ = 0;
+    }
+
     if ( !isok_ )
 	return ErrorOccurred();
     
     if ( epochs_.isEmpty() )
 	return Finished();
 
-//TODO: Check this call. When enabled there's a crash
-//    releaseMemory();
+    releaseMemory();
 
     //curtasklock_.lock();
-    Epoch* curepoch = epochs_.pop();
+    curepoch_ = epochs_.pop();
     
-    if ( !curepoch->doPrepare() )
+    if ( !curepoch_->doPrepare() )
 	mCleanUpAndRet( ErrorOccurred() )
     
-    curtask_ = &curepoch->getTask();
+    Task& curtask = curepoch_->getTask();
+    curtask.setProgressMeter( progressmeter_ );
+    curtask.enableWorkControl( true );
+
     //curtasklock_.unLock();
 
-    if ( !curtask_->execute() )
+    if ( !curtask.execute() )
 	mCleanUpAndRet( ErrorOccurred() )
 
     if ( epochs_.isEmpty() )		//we just executed the last one
-	outputvolume_ = curepoch->getOutput();
-    
-    mCleanUpAndRet( epochs_.isEmpty() ? Finished() : MoreToDo() )
+	outputvolume_ = curepoch_->getOutput();
+
+    return epochs_.isEmpty() ? Finished() : MoreToDo();
 }
 
 
@@ -439,8 +450,8 @@ void ChainExecutor::controlWork( Task::Control ctrl )
 {
     Task::controlWork( ctrl );
     //Threads::Locker lckr( curtasklock_ );
-    if ( curtask_ )
-	curtask_->controlWork( ctrl );
+    if ( curepoch_ )
+	curepoch_->getTask().controlWork( ctrl );
 }
 
 
@@ -451,10 +462,12 @@ od_int64 ChainExecutor::nrDone() const
     const int epochsdone = totalnrepochs_-epochs_.size();
     float percentagedone = percentperepoch*epochsdone;
 
-    if ( curtask_ )
+    if ( curepoch_ )
     {
-	const od_int64 nrdone = curtask_->nrDone();
-	const od_int64 totalnr = curtask_->totalNr();
+	Task& curtask = curepoch_->getTask();
+
+	const od_int64 nrdone = curtask.nrDone();
+	const od_int64 totalnr = curtask.totalNr();
 	if ( nrdone>=0 && totalnr>0 )
 	{
 	    const float curtaskpercentatge = percentperepoch * nrdone / totalnr;
@@ -478,8 +491,8 @@ const char* ChainExecutor::message() const
 	return errmsg_;
 
     //Threads::Locker lckr( curtasklock_ );
-    if ( curtask_ )
-	return curtask_->message();
+    if ( curepoch_ )
+	return curepoch_->getTask().message();
     return 0;
 }
 

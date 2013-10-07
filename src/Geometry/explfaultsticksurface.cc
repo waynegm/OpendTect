@@ -27,6 +27,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 namespace Geometry {
 
+#define mCoordsPerTriangle 3 
 
 class ExplFaultStickTexturePositionExtracter : public ParallelTask
 {
@@ -152,9 +153,9 @@ bool processPixelOnStick( int stickidx, int knotpos, Coord3& pos )
 	else if ( knotpos>knotcoords[idx] && knotpos<knotcoords[idx+1] )
 	{
 	    const Coord3 p0 = explsurf_.coordlist_->get( geomidxps->get(idx) );
-	    const Coord3 p1 = explsurf_.coordlist_->get( geomidxps->get(idx+1) );
-	    pos = p0+(p1-p0)*(knotpos-knotcoords[idx])/(
-		    knotcoords[idx+1]-knotcoords[idx]);
+	    const Coord3 p1 = explsurf_.coordlist_->get( geomidxps->get(idx+1));
+	    pos = p0+(p1-p0)*(knotpos-knotcoords[idx])/
+					(knotcoords[idx+1]-knotcoords[idx]);
 	    return true;
 	}
     }
@@ -205,11 +206,11 @@ bool processPixelOnPanel( int panelidx, int stickpos, int knotpos, Coord3& pos )
     const int lendid = lgeomidxps->size()-1;
     const int rendid = rgeomidxps->size()-1;
 
-    for ( int idx=0; idx<triangleidxps->size()/4; idx++ )
+    for ( int idx=0; idx<triangleidxps->size()/mCoordsPerTriangle; idx++ )
     {
-	const int v0 = triangleidxps->get( 4*idx );
-	const int v1 = triangleidxps->get( 4*idx+1 );
-	const int v2 = triangleidxps->get( 4*idx+2 );
+	const int v0 = triangleidxps->get( mCoordsPerTriangle*idx );
+	const int v1 = triangleidxps->get( mCoordsPerTriangle*idx+1 );
+	const int v2 = triangleidxps->get( mCoordsPerTriangle*idx+2 );
 
 	const int lp0 = lgeomidxps->indexOf(v0);
 	const int lp1 = lgeomidxps->indexOf(v1);
@@ -568,8 +569,6 @@ bool ExplFaultStickSurface::reTriangulateSurface()
 
 void ExplFaultStickSurface::updateTextureCoords()
 {
-    SortedTable<int,Coord3> texturecoords;
-
     for ( int stickidx=0; stickidx<sticks_.size(); stickidx++ )
     {
 	IndexedGeometry* stick = sticks_[stickidx];
@@ -580,7 +579,7 @@ void ExplFaultStickSurface::updateTextureCoords()
 	for ( int idx=0; idx<idxps->size(); idx++ )
 	{
 	    const int ci = idxps->get(idx);
-	    if ( ci==-1 )
+	    if ( ci == -1 )
 		continue;
 
 	    const float rowcoord =
@@ -589,39 +588,8 @@ void ExplFaultStickSurface::updateTextureCoords()
 	    const float knotpos = 
 		((*textureknotcoords_[stickidx])[idx] + 0.5f)/ texturesize_.row;
 
-	    texturecoords.set( ci, Coord3(knotpos,rowcoord,0) );
+	    texturecoordlist_->set( ci, Coord3(knotpos,rowcoord,0) );
 	}
-    }
-
-    for ( int panelidx=0; panelidx<paneltriangles_.size(); panelidx++ )
-    {
-	IndexedGeometry* triangles = paneltriangles_[panelidx];
-	if ( !triangles )
-	    continue;
-
-	Geometry::PrimitiveSet* idxps = triangles->getCoordsPrimitiveSet();
-
-	SortedTable<int,int> texturecoordindices;
-	for ( int idx=0; idx<idxps->size(); idx++ )
-	{
-	    const int ci = idxps->get(idx);
-	    int tci;
-	    if ( ci==-1 )
-		tci = -1;
-	    else
-	    {
-		Coord3 tc;
-		if ( !texturecoords.get( ci, tc ) )
-		{
-		    tci = -1;
-		    pErrMsg("Hough!");
-		}
-		else if ( !texturecoordindices.get( ci, tci ) )
-		    tci = texturecoordlist_->add( tc );
-	    }
-	}
-    
-	triangles->ischanged_ = true;
     }
 }
 
@@ -687,11 +655,11 @@ int ExplFaultStickSurface::textureColSz( const int panelidx )
 	return 1;
 
     int res = 0;
-    for ( int idx=0; idx<triangleps->size()/4; idx++ )
+    for ( int idx=0; idx<triangleps->size()/mCoordsPerTriangle; idx++ )
     {
-	const int v0 = triangleps->get(4*idx);
-	const int v1 = triangleps->get(4*idx+1);
-	const int v2 = triangleps->get(4*idx+2);
+	const int v0 = triangleps->get(mCoordsPerTriangle*idx);
+	const int v1 = triangleps->get(mCoordsPerTriangle*idx+1);
+	const int v2 = triangleps->get(mCoordsPerTriangle*idx+2);
 
 	const bool v0onstick0 = knots0ps->indexOf(v0)!=-1;
 	const bool v1onstick0 = knots0ps->indexOf(v1)!=-1;
@@ -1406,8 +1374,8 @@ void ExplFaultStickSurface::emptyPanel( int panelidx )
     mSqDistArr( il, ir ) = mUdf(float); \
 }
 
-void ExplFaultStickSurface::addTriangle( 
-    IndexedGeometry* triangles, int a, int b, int c )						
+void ExplFaultStickSurface::addTriangle( IndexedGeometry* triangles,
+					 int a, int b, int c )
 {									
     TypeSet<int> coordindices;						
     coordindices += (a);						
@@ -1431,9 +1399,10 @@ void ExplFaultStickSurface::fillPanel( int panelidx )
     if ( lines && !lines->isEmpty() )
 	lines->removeAll( false );
     
-    Geometry::PrimitiveSet* lknotsps=sticks_[panelidx]->getCoordsPrimitiveSet();
-
-    Geometry::PrimitiveSet* rknotsps=sticks_[panelidx+1]->getCoordsPrimitiveSet();
+    Geometry::PrimitiveSet* lknotsps =
+				sticks_[panelidx]->getCoordsPrimitiveSet();
+    Geometry::PrimitiveSet* rknotsps =
+				sticks_[panelidx+1]->getCoordsPrimitiveSet();
 
     const int lsize = lknotsps->size(); 
     const int rsize = rknotsps->size();
@@ -1470,14 +1439,18 @@ void ExplFaultStickSurface::fillPanel( int panelidx )
 	if ( lsize==1 )
 	{
     	    for ( int idx=1; idx<rsize; idx++ )
-		addTriangle( 
-		triangles,lknotsps->get(0),rknotsps->get(idx),rknotsps->get(idx-1) );
+	    {
+		addTriangle( triangles, lknotsps->get(0),
+			     rknotsps->get(idx), rknotsps->get(idx-1) );
+	    }
 	}
 	else 
 	{
     	    for ( int idx=1; idx<lsize; idx++ )
-    		addTriangle( triangles, 
-		lknotsps->get(idx),lknotsps->get(idx-1),rknotsps->get(0) );
+	    {
+    		addTriangle( triangles, lknotsps->get(idx),
+			     lknotsps->get(idx-1), rknotsps->get(0) );
+	    }
 	}
 	return;
     }

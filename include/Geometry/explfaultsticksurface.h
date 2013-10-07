@@ -114,10 +114,9 @@ protected:
     void		shiftStick(int stickidx,int nrunits);
     void		updateStickShifting();
     bool		reTriangulateSurface();
-    bool		 setProjTexturePositions(DataPointSet& dpset);
+    bool		setProjTexturePositions(DataPointSet& dpset);
 
-    void		addTriangle(IndexedGeometry*, int a, int b, int c );						\
-
+    void		addTriangle(IndexedGeometry*,int a,int b,int c);
 
     bool		displaysticks_;
     bool		displaypanels_;

@@ -152,7 +152,6 @@ public:
     void			showSelectedSurfaceData();
     const BufferStringSet*	selectedSurfaceDataNames() const;
     const Array2D<float>*	getTextureData(int attrib);
-    void			matChangeCB(CallBacker*);
 
 protected:
 

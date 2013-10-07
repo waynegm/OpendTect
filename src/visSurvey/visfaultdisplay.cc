@@ -44,9 +44,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vispolygonselection.h"
 #include "visseis2ddisplay.h"
 #include "vistransform.h"
+#include "vistexturechannels.h"
 #include "vispolygonoffset.h"
-
-/* OSG-TODO: Port MultiTexture2 texture_ to TextureChannels channels_ */
 
 
 mCreateFactoryEntry( visSurvey::FaultDisplay );
@@ -115,9 +114,7 @@ FaultDisplay::FaultDisplay()
     drawstyle_->ref();
     addNodeState( drawstyle_ );
     drawstyle_->setLineStyle( LineStyle(LineStyle::Solid,2) );
-
-    if ( getMaterial() )
-	mAttachCB( getMaterial()->change, FaultDisplay::matChangeCB );
+    texuredatas_.allowNull( true );
 }
 
 
@@ -181,9 +178,9 @@ FaultDisplay::~FaultDisplay()
 
     DataPackMgr& dpman = DPM( DataPackMgr::SurfID() );
     for ( int idx=0; idx<datapackids_.size(); idx++ )
-    {
 	dpman.release( datapackids_[idx] );
-    }
+
+    deepErase( texuredatas_ );
 }
 
 
@@ -259,12 +256,13 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	paneldisplay_ = visBase::GeomIndexedShape::create();
 	paneldisplay_->ref();
 	paneldisplay_->setDisplayTransformation( displaytransform_ );
-	paneldisplay_->setMaterial( 0 );
+	paneldisplay_->setMaterial( getMaterial() );
 	paneldisplay_->setSelectable( false );
 	paneldisplay_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
 	paneldisplay_->useOsgNormal( true );
-	paneldisplay_->renderOneSide( 1 );
+	paneldisplay_->renderOneSide( 0 );
 	paneldisplay_->addNodeState( polyoffset );
+	paneldisplay_->setTextureChannels( channels_ );
 
 	addChild( paneldisplay_->osgNode() );
     }
@@ -382,7 +380,8 @@ MultiID FaultDisplay::getMultiID() const
 
 void FaultDisplay::setColor( Color nc )
 {
-    if ( emfault_ ) emfault_->setPreferredColor(nc);
+    if ( emfault_ )
+	emfault_->setPreferredColor( nc );
     else
     {
 	nontexturecol_ = nc;
@@ -395,12 +394,6 @@ void FaultDisplay::updateSingleColor()
 {
     const bool usesinglecolor = !showingTexture();
 
-    const Color prevcol = getMaterial()->getColor();
-    const Color newcol = usesinglecolor ? nontexturecol_*0.8 : Color::White();
-    if ( newcol==prevcol )
-	return;
-
-    getMaterial()->setColor( newcol );
     activestickmarker_->getMaterial()->setColor( nontexturecol_ );
 
     for ( int idx=0; idx<horintersections_.size(); idx++ )
@@ -409,7 +402,17 @@ void FaultDisplay::updateSingleColor()
     if ( stickdisplay_ )
 	stickdisplay_->getMaterial()->setColor( nontexturecol_ );
 
-    colorchange.trigger();
+    channels_->turnOn( !usesinglecolor );
+
+    const Color prevcol = getMaterial()->getColor();
+    const Color newcol = usesinglecolor ? nontexturecol_*0.8 : Color::White();
+    if ( newcol != prevcol )
+    {
+	getMaterial()->setColor( newcol );
+	colorchange.trigger();
+    }
+    else if ( !usesinglecolor )			// To update color column in
+	getMaterial()->change.trigger();	// tree if texture is shown
 }
 
 
@@ -442,6 +445,7 @@ void FaultDisplay::setDepthAsAttrib( int attrib )
 {
     const Attrib::SelSpec as( "", Attrib::SelSpec::cNoAttrib(), false, "" );
     setSelSpec( attrib, as );
+
     TypeSet<DataPointSet::DataRow> pts; 
     BufferStringSet nms; 
     DataPointSet positions( pts, nms, false, true ); 
@@ -699,7 +703,8 @@ Coord3 FaultDisplay::disp2world( const Coord3& displaypos ) const
 
 
 #define mZScale() \
-    ( scene_ ? scene_->getZScale()*scene_->getFixedZStretch() : inlcrlsystem_->zScale() )
+    ( scene_ ? scene_->getZScale()*scene_->getFixedZStretch() \
+	     : inlcrlsystem_->zScale() )
 
 void FaultDisplay::mouseCB( CallBacker* cb )
 {
@@ -1064,7 +1069,7 @@ void FaultDisplay::getRandomPos( DataPointSet& dpset, TaskRunner* tr ) const
     if ( explicitpanels_ )
     {
 	explicitpanels_->getTexturePositions( dpset, tr );
-	paneldisplay_->touch( true );
+	paneldisplay_->touch( false, false );
     }
 }
 
@@ -1097,7 +1102,7 @@ void FaultDisplay::setRandomPosData( int attrib, const DataPointSet* dpset,
 
 
 void FaultDisplay::setRandomPosDataInternal( int attrib,
-    const DataPointSet* dpset, int column, TaskRunner* )
+    const DataPointSet* dpset, int column, TaskRunner* tr )
 {
     if ( attrib>=nrAttribs() || !dpset || dpset->nrCols()<3 ||
 	 !explicitpanels_ )
@@ -1108,6 +1113,7 @@ void FaultDisplay::setRandomPosDataInternal( int attrib,
     }
 
     const RowCol sz = explicitpanels_->getTextureSize();
+
     while ( texuredatas_.size()-1 < attrib )
 	texuredatas_ += 0;
 
@@ -1136,6 +1142,10 @@ void FaultDisplay::setRandomPosDataInternal( int attrib,
     }
 
     delete texuredatas_.replace( attrib, texturedata );
+    channels_->setSize( 1, texturedata->info().getSize(0),
+			   texturedata->info().getSize(1) );
+    channels_->setUnMappedData( attrib, 0, texturedata->getData(),
+	    			OD::UsePtr, tr );
     validtexture_ = true;
     usestexture_ = true;
     updateSingleColor();
@@ -1158,6 +1168,11 @@ void FaultDisplay::showSelectedSurfaceData()
 	const Array2D<float>* data = auxdata->loadIfNotLoaded(selindies[idx]);
 	if ( !data )
 	    continue;
+
+	channels_->setSize( 1, data->info().getSize(0),
+			       data->info().getSize(1) );
+	channels_->setUnMappedData( lastattridx--, 0, data->getData(),
+				    OD::UsePtr, 0 );
 	if ( lastattridx<0 )
 	    break;
     }
@@ -1542,7 +1557,8 @@ void FaultDisplay::updateEditorMarkers()
     if ( !emfault_ || !viseditor_ )
 	return;
     
-    PtrMan<EM::EMObjectIterator> iter = emfault_->geometry().createIterator(-1);    while ( true )
+    PtrMan<EM::EMObjectIterator> iter = emfault_->geometry().createIterator(-1);
+    while ( true )
     {
 	const EM::PosID pid = iter->next();
 	if ( pid.objectID() == -1 )
@@ -1706,7 +1722,7 @@ bool FaultDisplay::coincidesWithPlane(
 		if ( plane->calcDist(interpos) <= 0.5*onestepdist )
 		{
 		    if ( prevdist <= 0.5*onestepdist )
-			intersectpoints.removeSingle( intersectpoints.size()-1 );
+			intersectpoints.removeSingle(intersectpoints.size()-1);
 
 		    res = res || coincidemode;
 		    intersectpoints += interpos;
@@ -1832,9 +1848,13 @@ int FaultDisplay::addDataPack( const DataPointSet& dpset ) const
 bool FaultDisplay::setDataPackID( int attrib, DataPack::ID dpid,
 				  TaskRunner* tr )
 {
+    if ( !datapackids_.validIdx(attrib) )
+	return false;
+
     DataPackMgr& dpman = DPM( DataPackMgr::SurfID() );
     const DataPack* datapack = dpman.obtain( dpid );
-    if ( !datapack || !datapackids_.validIdx(attrib) ) return false;
+    if ( !datapack )
+	return false;
 
     DataPack::ID oldid = datapackids_[attrib];
     datapackids_[attrib] = dpid;
@@ -1848,10 +1868,5 @@ DataPack::ID FaultDisplay::getDataPackID( int attrib ) const
     return datapackids_[attrib];
 }
 
-void FaultDisplay::matChangeCB(CallBacker*)
-{
-    if ( paneldisplay_ )
-        paneldisplay_->updateMaterialFrom( getMaterial() ); 
-}
 
 }; // namespace visSurvey

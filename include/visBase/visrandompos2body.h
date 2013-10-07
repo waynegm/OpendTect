@@ -54,9 +54,9 @@ protected:
     VertexShape*		vtxshape_;
     const mVisTrans*		transformation_;
     int				renderside_;
-    				/*!< 0 = visisble from one side.
-				   1 = visisble from positive side
-				  -1 = visisble from negative side. */
+    				/*!< 0 = visible from both sides.
+				   1 = visible from positive side
+				  -1 = visible from negative side. */
 
 };
 

@@ -49,9 +49,9 @@ public:
 
     bool			touch(bool forall,TaskRunner* =0);
     void			renderOneSide( int side );
-    				/*!< 0 = visisble from both sides.
-				     1 = visisble from positive side
-				    -1 = visisble from negative side. */
+    				/*!< 0 = visible from both sides.
+				     1 = visible from positive side
+				    -1 = visible from negative side. */
 					
     				//For body section display only. 
     char			enabledSection() const;

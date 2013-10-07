@@ -32,6 +32,7 @@ class Normals;
 class TextureCoords;
 class ForegroundLifter;
 class VertexShape;
+class TextureChannels;
 
 /*!Visualisation for Geometry::IndexedShape. */
 
@@ -49,13 +50,13 @@ public:
     				//!<Does not become mine, should remain
 				//!<in memory
 
-    bool			touch(bool forall,bool createnew = true,
-				      TaskRunner* =0 ) ;
+    bool			touch(bool forall,bool createnew=true,
+				      TaskRunner* =0);
 
     void			renderOneSide(int side);
-    				/*!< 0 = visisble from both sides.
+    				/*!< 0 = visible from both sides.
 				     1 = visible from positive side
-				     -1 = visible from negative side. */
+				    -1 = visible from negative side. */
 
     void			setLineStyle(const LineStyle&);
 				/*!<for polylin3d, only the radius is used.*/
@@ -78,13 +79,14 @@ public:
     void			updateMaterialFrom(const Material*);
 
     void			setPrimitiveType( 
-				const Geometry::PrimitiveSet::PrimitiveType );
+				const Geometry::PrimitiveSet::PrimitiveType);
 
     enum			GeomShapeType{ Triangle, PolyLine, PolyLine3D };
     void			setIndexedGeometryShapeType( 
-						  GeomShapeType geomshapetype );
+						  GeomShapeType geomshapetype);
     void			useOsgNormal(bool);
 
+    void			setTextureChannels(TextureChannels*);
 
 protected:
 				~GeomIndexedShape();

@@ -18,6 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "viscoord.h"
 #include "vismaterial.h"
 #include "visnormals.h"
+#include "vistexturechannels.h"
 #include "vistexturecoords.h"
 #include "vispolyline.h"
 
@@ -111,18 +112,11 @@ GeomIndexedShape::ColorHandler::~ColorHandler()
 void GeomIndexedShape::renderOneSide( int side )
 {
     renderside_ = side;
-    if ( !renderside_ )
-    {
-	vtexshape_->setTwoSidedLight( false );
-    }
-    if ( renderside_ == 1)
-    {
-	vtexshape_->setTwoSidedLight( true );
-    }
+
+    if ( side >= 0 )
+	vtexshape_->setTwoSidedLight( !side );
     else
-    {
 	pErrMsg("Not implemented");
-    }
 }
 
 
@@ -219,7 +213,7 @@ void GeomIndexedShape::setDataSequence( const ColTab::Sequence& seq )
 	    colorhandler_->material_->setColor( col, idx+1 );
 	}
 
-	colorhandler_->material_->setColor( seq.undefColor(), mUndefMaterial+1 );
+	colorhandler_->material_->setColor(seq.undefColor(),mUndefMaterial+1);
     }
 
    if ( isColTabEnabled() )
@@ -262,7 +256,7 @@ bool GeomIndexedShape::touch( bool forall, bool createnew, TaskRunner* tr )
     if( !shape_ )
 	return false;
 
-    if ( !shape_->needsUpdate() ) 
+    if ( !shape_->needsUpdate() && createnew )
 	return true;
 
     Coordinates* coords = 0;
@@ -282,17 +276,17 @@ bool GeomIndexedShape::touch( bool forall, bool createnew, TaskRunner* tr )
     else
     {
 	CoordListAdapter* coordlist = 
-	    dynamic_cast<CoordListAdapter*> ( shape_->coordList() );
+	    dynamic_cast<CoordListAdapter*>( shape_->coordList() );
 	coords = coordlist->getCoordinates();
 	NormalListAdapter* normallist =
-	    dynamic_cast<NormalListAdapter*> ( shape_->normalCoordList() );
+	    dynamic_cast<NormalListAdapter*>( shape_->normalCoordList() );
 	normals = normallist->getNormals();
 	TextureCoordListAdapter* texturelist =
-	    dynamic_cast<TextureCoordListAdapter*> ( shape_->textureCoordList() );
+	    dynamic_cast<TextureCoordListAdapter*>( shape_->textureCoordList());
 	texturecoords = texturelist->getTextureCoords();
     }
 
-    if( !shape_->update( forall, tr ) )
+    if ( shape_->needsUpdate() && !shape_->update(forall,tr) )
 	return false;
 
     vtexshape_->removeAllPrimitiveSets();
@@ -313,10 +307,7 @@ bool GeomIndexedShape::touch( bool forall, bool createnew, TaskRunner* tr )
     }
 
     if ( texturecoords->size() )
-    {
-	texturecoords->setDisplayTransformation( getDisplayTransformation() );
 	vtexshape_->setTextureCoords( texturecoords );
-    }
 
     ObjectSet<Geometry::IndexedGeometry>& geoms=shape_->getGeometry();
 
@@ -448,8 +439,8 @@ void GeomIndexedShape::mapAttributeToColorTableMaterial()
 
 void GeomIndexedShape::reClip()
 {
-    colorhandler_->mapper_.setData( 
-	&colorhandler_->attributecache_, colorhandler_->attributecache_.size() );
+    colorhandler_->mapper_.setData( &colorhandler_->attributecache_,
+				    colorhandler_->attributecache_.size() );
 }
 
 
@@ -467,7 +458,7 @@ void GeomIndexedShape::setLineStyle( const LineStyle& lnstyle)
 }
 
 
-void GeomIndexedShape::setIndexedGeometryShapeType( GeomShapeType geomshapetype )
+void GeomIndexedShape::setIndexedGeometryShapeType( GeomShapeType geomshapetype)
 {
     if ( geomshapetype == geomshapetype_ )
 	return;
@@ -493,5 +484,12 @@ void GeomIndexedShape::useOsgNormal( bool yn )
 {
      useosgnormal_ = yn;
 }
+
+
+void GeomIndexedShape::setTextureChannels( TextureChannels* channels )
+{
+    vtexshape_->setTextureChannels( channels );
+}
+
 
 }; // namespace visBase

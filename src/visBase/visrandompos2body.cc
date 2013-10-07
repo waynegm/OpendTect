@@ -93,7 +93,8 @@ RandomPos2Body::RandomPos2Body()
     addChild( vtxshape_->osgNode() );
     vtxshape_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
 
-    renderOneSide( 0 );
+    // renderOneSide( 0 );
+    renderOneSide( 1 );	// OSG-TODO: Why does it not look good for two-sided?
 }
 
 
@@ -110,14 +111,10 @@ void RandomPos2Body::renderOneSide( int side )
 {
     renderside_ = side;
 
-    if ( !renderside_ )
-    {
-	vtxshape_->setTwoSidedLight( false );
-    }
+    if ( side >= 0 )
+	vtxshape_->setTwoSidedLight( !side );
     else
-    {
 	pErrMsg("Not implemented");
-    }
 }
 
 

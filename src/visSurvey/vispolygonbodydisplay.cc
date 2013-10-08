@@ -390,9 +390,7 @@ void PolygonBodyDisplay::updateSingleColor()
     if ( polygondisplay_ )
 	polygondisplay_->getMaterial()->setColor( nontexturecol_ );
 
-    visBase::Material* mt = getMaterial();
-    mt->setColor( nontexturecol_ );
-    bodydisplay_->updateMaterialFrom( mt );
+    bodydisplay_->updateMaterialFrom( getMaterial() );
 }
 
 

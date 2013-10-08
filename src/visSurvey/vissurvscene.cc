@@ -535,7 +535,7 @@ void Scene::setAnnotColor( const Color& col )
 }
 
 
-const Color& Scene::getAnnotColor() const
+const Color Scene::getAnnotColor() const
 {
     return annot_->getMaterial()->getColor();
 }

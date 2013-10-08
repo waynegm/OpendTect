@@ -172,7 +172,7 @@ public:
     const char*			zDomainID() const;
 
     void			setAnnotColor(const Color&);
-    const Color&		getAnnotColor() const;
+    const Color	    		getAnnotColor() const;
     void			setMarkerPos(const Coord3&,int sceneid);
     void			setMarkerSize(float );
     float			getMarkerSize() const;

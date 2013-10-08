@@ -136,6 +136,8 @@ protected:
 
     ObjectSet<PlaneIntersectInfo>		intsinfo_;
     visBase::Transformation*			model2displayspacetransform_;
+    const mVisTrans*				intersectiontransform_;
+
 };
 
 };

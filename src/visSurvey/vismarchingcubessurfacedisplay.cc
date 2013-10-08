@@ -28,6 +28,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visplanedatadisplay.h"
 #include "vismaterial.h"
 #include "vistransform.h"
+#include "vispolygonoffset.h"
+#include "positionlist.h"
 
 
 mCreateFactoryEntry( visSurvey::MarchingCubesDisplay );
@@ -42,6 +44,7 @@ MarchingCubesDisplay::MarchingCubesDisplay()
     , impbody_( 0 )
     , displayintersections_( false )		   
     , model2displayspacetransform_( 0 )
+    , intersectiontransform_( 0 )
 
 {
     cache_.allowNull( true );
@@ -75,6 +78,9 @@ MarchingCubesDisplay::~MarchingCubesDisplay()
 
     if ( model2displayspacetransform_ )
 	model2displayspacetransform_->unRef();
+
+    if ( intersectiontransform_ )
+	intersectiontransform_->unRef();
 }
 
 
@@ -622,6 +628,14 @@ int MarchingCubesDisplay::usePar( const IOPar& par )
 
 void MarchingCubesDisplay::setDisplayTransformation( const mVisTrans* nt)
 {
+    if ( intersectiontransform_ )
+	intersectiontransform_->unRef();
+
+    intersectiontransform_ = nt;
+
+    if ( intersectiontransform_ )
+	intersectiontransform_->ref();
+    
     if ( emsurface_ )
     {
 	SamplingData<float> inlinesampling = emsurface_->inlSampling();
@@ -642,10 +656,6 @@ void MarchingCubesDisplay::setDisplayTransformation( const mVisTrans* nt)
     if ( displaysurface_ ) 
 	displaysurface_->setDisplayTransformation(model2displayspacetransform_);
 
-    for ( int idx=0; idx<intsinfo_.size(); idx++ )
-	intsinfo_[idx]->visshape_->setDisplayTransformation(
-	model2displayspacetransform_ );
-
 }
 
 
@@ -661,7 +671,7 @@ void MarchingCubesDisplay::materialChangeCB( CallBacker* )
 	displaysurface_->getShape()->updateMaterialFrom( getMaterial() );
 
     for ( int idx=0; idx<intsinfo_.size(); idx++ )
-	intsinfo_[idx]->visshape_->setMaterial( getMaterial() );
+	intsinfo_[idx]->visshape_->updateMaterialFrom( getMaterial() );
 }
 
 
@@ -779,9 +789,7 @@ void MarchingCubesDisplay::otherObjectsMoved(
 	if ( planepresent ) continue;
 
 	PlaneIntersectInfo* pi = new PlaneIntersectInfo();
-	pi->visshape_->setDisplayTransformation( getDisplayTransformation() );
-	pi->visshape_->setRightHandSystem( righthandsystem_ );
-	pi->visshape_->setMaterial( getMaterial() );
+	pi->visshape_->updateMaterialFrom( getMaterial() );
 	pi->visshape_->turnOn( displayintersections_ );
 	addChild( pi->visshape_->osgNode() );
 
@@ -840,7 +848,11 @@ void MarchingCubesDisplay::updateIntersectionDisplay()
     for ( int idx=0; idx<intsinfo_.size(); idx++ )
     {
 	if ( displayintersections_ )
-	    intsinfo_[idx]->visshape_->touch( false );
+	{
+	    intsinfo_[idx]->visshape_->setDisplayTransformation(
+		intersectiontransform_ );
+	    intsinfo_[idx]->visshape_->touch( false, false );
+	}
 	
 	intsinfo_[idx]->visshape_->turnOn( displayintersections_ );
     }
@@ -856,14 +868,26 @@ MarchingCubesDisplay::PlaneIntersectInfo::PlaneIntersectInfo()
     planeorientation_ = -1;
     planepos_ = mUdf(float);
     computed_ = false;
+    visBase::PolygonOffset* offset = new visBase::PolygonOffset;
+    offset->setFactor( -1.0f );
+    offset->setUnits( 1.0f );
+    offset->setMode( 
+	visBase::PolygonOffset::Projected | visBase::PolygonOffset::On  );
 
     visshape_ = visBase::GeomIndexedShape::create();
     visshape_->ref();
     visshape_->setSelectable( false );
-    visshape_->renderOneSide( 0 );
-    
     shape_ = new Geometry::ExplicitIndexedShape();
+   
+    visshape_->addNodeState( offset );
     visshape_->setSurface( shape_ );
+    visshape_->setIndexedGeometryShapeType(visBase::GeomIndexedShape::Triangle);
+    visshape_->setPrimitiveType( Geometry::PrimitiveSet::TriangleStrip );
+    visshape_->setNormalBindType( visBase::VertexShape::BIND_OVERALL );
+    visshape_->renderOneSide( 0 );
+
+   /* Coord3List* crdlist = shape_->normalCoordList();
+    crdlist->add( Coord3( 1, 0, 0) );*/
     shape_->addGeometry( new Geometry::IndexedGeometry(
 		Geometry::IndexedGeometry::TriangleStrip,shape_->coordList(),
 		shape_->normalCoordList(),shape_->textureCoordList()) );

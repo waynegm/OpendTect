@@ -566,7 +566,7 @@ void uiODSceneMgr::showRotAxis( CallBacker* cb )
     mDoAllScenes(sovwr_,showRotAxis,tb?tb->isOn():false);
     for ( int idx=0; idx<scenes_.size(); idx++ )
     {
-	const Color& col = applMgr().visServer()->getSceneAnnotCol( idx );
+	const Color col = applMgr().visServer()->getSceneAnnotCol( idx );
 	scenes_[idx]->sovwr_->setAxisAnnotColor( col );
     }
 }

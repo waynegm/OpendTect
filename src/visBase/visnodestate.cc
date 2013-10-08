@@ -10,8 +10,10 @@ ________________________________________________________________________
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "visnodestate.h"
+#include "vispolygonoffset.h"
 
 #include <osg/StateSet>
+#include <osg/PolygonOffset>
 
 using namespace visBase;
 
@@ -38,7 +40,7 @@ void NodeState::attachStateSet( osg::StateSet* ns )
     ns->ref();
     
     for ( int idx=0; idx<attributes_.size(); idx++ )
-	ns->setAttribute( attributes_[idx] );
+	applyAttribute( ns, attributes_[idx] );
 }
 
 
@@ -50,7 +52,7 @@ void NodeState::detachStateSet( osg::StateSet* ns )
     statesets_ -= ns;
     
     for ( int idx=0; idx<attributes_.size(); idx++ )
-	ns->setAttribute( attributes_[idx] );
+	ns->removeAttribute( attributes_[idx] );
     
     ns->unref();
 }
@@ -83,4 +85,11 @@ void NodeState::doRemove( osg::StateAttribute* as)
     
     attributes_ -= as;
     as->unref();
+}
+
+
+void NodeState::applyAttribute( osg::StateSet* ns, osg::StateAttribute* attr)
+{
+    if ( ns )
+	ns->setAttribute( attr );
 }

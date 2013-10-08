@@ -37,8 +37,10 @@ protected:
     
 private:
     
-    void				doAdd(osg::StateAttribute*);
-    void				doRemove(osg::StateAttribute*);
+    void			doAdd(osg::StateAttribute*);
+    void			doRemove(osg::StateAttribute*);
+    virtual void		applyAttribute(osg::StateSet*,
+					       osg::StateAttribute*);
     
     ObjectSet<osg::StateAttribute>	attributes_;
     ObjectSet<osg::StateSet>		statesets_;

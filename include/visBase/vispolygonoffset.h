@@ -32,11 +32,25 @@ public:
 
     void			setUnits(float);
     float			getUnits() const;
+    enum			Mode 
+				{ Off=0,On=1,Override=2,Projected=4,Inherit=8 };
+    void			setMode(unsigned int);
+				//!<cooresponding to  osg::StateAttributesvalue: GLMODE
+				//!<OFF,ON,OVERRIDE,PROTECTED and INHERIT 
+				//!< or their combination.
+    osg::PolygonOffset*		osgPolygonOffset() { return offset_; }
+    unsigned int		getMode() {return mode_; }
 
 protected:
     				~PolygonOffset();
 
     osg::PolygonOffset*		offset_;
+    unsigned int		mode_;
+
+private:			
+    void			applyAttribute(
+				osg::StateSet*, osg::StateAttribute*);
+
 };
 
 };

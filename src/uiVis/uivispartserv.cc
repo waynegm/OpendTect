@@ -2137,7 +2137,7 @@ bool uiVisPartServer::isLocked( int id ) const
 }
 
 
-const Color& uiVisPartServer::getSceneAnnotCol( int sceneidx )
+const Color uiVisPartServer::getSceneAnnotCol( int sceneidx )
 {
     return scenes_[ sceneidx ]->getAnnotColor();
 }

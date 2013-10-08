@@ -115,6 +115,9 @@ FaultDisplay::FaultDisplay()
     addNodeState( drawstyle_ );
     drawstyle_->setLineStyle( LineStyle(LineStyle::Solid,2) );
     texuredatas_.allowNull( true );
+
+    if ( getMaterial() )
+	mAttachCB( getMaterial()->change, FaultDisplay::matChangeCB );
 }
 
 
@@ -256,7 +259,7 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	paneldisplay_ = visBase::GeomIndexedShape::create();
 	paneldisplay_->ref();
 	paneldisplay_->setDisplayTransformation( displaytransform_ );
-	paneldisplay_->setMaterial( getMaterial() );
+	paneldisplay_->setMaterial( 0 );
 	paneldisplay_->setSelectable( false );
 	paneldisplay_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
 	paneldisplay_->useOsgNormal( true );
@@ -1866,6 +1869,13 @@ bool FaultDisplay::setDataPackID( int attrib, DataPack::ID dpid,
 DataPack::ID FaultDisplay::getDataPackID( int attrib ) const
 {
     return datapackids_[attrib];
+}
+
+
+void FaultDisplay::matChangeCB(CallBacker*)
+{
+    if ( paneldisplay_ )
+	paneldisplay_->updateMaterialFrom( getMaterial() );
 }
 
 

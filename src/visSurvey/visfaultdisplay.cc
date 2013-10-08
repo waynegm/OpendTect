@@ -248,8 +248,8 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	setName( emfault_->name() );
 
     visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
-    polyoffset->setFactor( -5.0f );
-    polyoffset->setUnits( -1.0f );
+    polyoffset->setFactor( -1.0f );
+    polyoffset->setUnits( 1.0f );
 
     if ( !paneldisplay_ )
     {
@@ -399,8 +399,8 @@ void FaultDisplay::updateSingleColor()
     for ( int idx=0; idx<horintersections_.size(); idx++ )
 	horintersections_[idx]->getMaterial()->setColor( nontexturecol_ );
 
-    if ( stickdisplay_ )
-	stickdisplay_->getMaterial()->setColor( nontexturecol_ );
+    if ( stickdisplay_ && stickdisplay_->getMaterial() )
+	stickdisplay_->updateMaterialFrom( getMaterial() );
 
     channels_->turnOn( !usesinglecolor );
 

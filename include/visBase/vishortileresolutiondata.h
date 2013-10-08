@@ -69,6 +69,7 @@ public:
     osg::BoundingBox&	updateBBox();
     void		updatePrimitiveSets();
     void		setLineColor(Color& color);
+    visBase::Coordinates*	getCoordinates() { return vertices_; };
 
 protected:
 
@@ -107,6 +108,7 @@ protected:
     int				nrverticesperside_;
     double			cosanglexinl_;
     double			sinanglexinl_;
+    bool			needsetposition_;
 
 private:
 
@@ -126,6 +128,8 @@ private:
     void			buildTraingleGeometry(int idx);
     void			buildPointGeometry(int idx);
     void			setInvalidNormal(int row,int col);
+    bool			setVerticesFromHighestResolution();
+
 
 };
 

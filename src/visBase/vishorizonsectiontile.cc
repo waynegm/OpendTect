@@ -359,16 +359,19 @@ void HorizonSectionTile::setPositions( const TypeSet<Coord3>& pos )
     bbox_.init();
 
     datalock_.lock();
-    for ( char res=0; res< hrsection_.nrhorsectnrres_; res++)
-    {
-	tileresolutiondata_[res]->initVertices();
-	tileresolutiondata_[res]->setDisplayTransformation( trans );
-	tileresolutiondata_[res]->setAllVertices( pos );
-	bbox_.expandBy( tileresolutiondata_[res]->bbox_ );
-	tileresolutiondata_[res]->needsretesselation_ = cMustRetesselate;
-	tileresolutiondata_[res]->allnormalsinvalid_ = true;
-	tileresolutiondata_[res]->invalidnormals_.erase();
-    }
+
+    tileresolutiondata_[0]->initVertices();
+    tileresolutiondata_[0]->setDisplayTransformation( trans );
+    tileresolutiondata_[0]->setAllVertices( pos );
+    bbox_.expandBy( tileresolutiondata_[0]->bbox_ );
+    tileresolutiondata_[0]->needsretesselation_ = cMustRetesselate;
+    tileresolutiondata_[0]->allnormalsinvalid_ = true;
+    tileresolutiondata_[0]->invalidnormals_.erase();
+    tileresolutiondata_[0]->needsetposition_ = false;
+
+    for ( char res=1; res< hrsection_.nrhorsectnrres_; res++)
+	tileresolutiondata_[res]->needsetposition_ = true;
+
     nrdefinedvertices_ = tileresolutiondata_[Triangle]->nrdefinedvertices_;
     datalock_.unLock();
 
@@ -376,6 +379,11 @@ void HorizonSectionTile::setPositions( const TypeSet<Coord3>& pos )
 
 }
 
+
+const visBase::Coordinates* HorizonSectionTile::getHighestResolutionCoordinates()
+{
+    return tileresolutiondata_[0]->getCoordinates();
+}
 
 void HorizonSectionTile::updatePrimitiveSets()
 {

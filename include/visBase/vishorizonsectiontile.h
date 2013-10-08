@@ -45,7 +45,7 @@ namespace visBase
     class HorizonSection;  
     class TileResolutionData;
     class HorizonSectionTileGlue;
-
+    class Coordinates;
 //A tile with 65x65 nodes.
 class HorizonSectionTile : CallBacker
 {
@@ -92,6 +92,7 @@ protected:
     void		    setDisplayGeometryType(unsigned int geometrytype);
 
     void		    updatePrimitiveSets();
+    const visBase::Coordinates*   getHighestResolutionCoordinates();
 
 
 protected:

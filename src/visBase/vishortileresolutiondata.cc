@@ -57,7 +57,8 @@ TileResolutionData::TileResolutionData( const HorizonSectionTile* sectile,
     , pointsosgps_( 0 )
     , wireframesosgps_( 0 )
     , cosanglexinl_( cos(SI().computeAngleXInl()) )
-    , sinanglexinl_( sin(SI().computeAngleXInl()) )		     
+    , sinanglexinl_( sin(SI().computeAngleXInl()) )
+    , needsetposition_( true )
 
 {
     geodes_->ref();
@@ -203,6 +204,10 @@ void TileResolutionData::setSingleVertex( int row, int col,
 
     const int coordidx = row*nrverticesperside_ + col;
 
+    Coord3 orgcrd = vertices_->getPos( coordidx );
+    if ( pos == vertices_->getPos( coordidx) )
+	return;
+
     osg::Vec3Array* arr = mGetOsgVec3Arr( vertices_->osgArray() );
 
     const bool olddefined = mIsOsgDef((*arr)[coordidx]);
@@ -251,6 +256,12 @@ void TileResolutionData::setSingleVertex( int row, int col,
 
 bool TileResolutionData::tesselateResolution( bool onlyifabsness )
 {
+   if ( needsetposition_ )
+   {
+     if ( !setVerticesFromHighestResolution() )
+	 return false;
+   }
+    
     if ( resolution_<0 || needsretesselation_==cNoTesselationNeeded ||
 	( needsretesselation_==cShouldRetesselate && onlyifabsness ) )
 	return false;
@@ -275,6 +286,55 @@ bool TileResolutionData::tesselateResolution( bool onlyifabsness )
     return true;
 }
 
+
+bool TileResolutionData::setVerticesFromHighestResolution()
+{
+    HorizonSectionTile* tile = const_cast<HorizonSectionTile*>( sectile_ );
+    const visBase::Coordinates* highestrescoords = 
+	tile->getHighestResolutionCoordinates();
+
+    if( !tile || !highestrescoords) return false;
+
+    const RefMan<const Transformation> trans = 
+	sectile_->hrsection_.transformation_;
+
+    vertices_->setDisplayTransformation( trans );
+    const HorizonSection& hrsection = sectile_->hrsection_;
+    const int spacing = hrsection.spacing_[resolution_];
+    const int nrcoords = hrsection.nrcoordspertileside_;
+    int crdidx = 0;
+    bbox_.init();
+
+    for ( int row=0; row<nrcoords; row+=spacing )
+    {
+	for ( int col=0; col<nrcoords; col+=spacing )
+	{
+	    int coordIdx = col + row*nrcoords;
+	    Coord3 vertex = highestrescoords->getPos( coordIdx );
+	    if ( coordIdx >= highestrescoords->size() || !vertex.isDefined() )
+	    {
+		vertex[2] = mUdf(float);
+	    }
+	    else
+		nrdefinedvertices_ ++;
+	    vertices_->setPos( crdidx, vertex );
+	    const osg::Vec3Array* arr = 
+		dynamic_cast<osg::Vec3Array*>(vertices_->osgArray());
+	    const osg::Vec3f coord = arr->at( crdidx );
+	    if( vertex[2] != mUdf(float) )
+		bbox_.expandBy( coord );
+	    crdidx++;
+	}
+    }
+
+    needsretesselation_ = cMustRetesselate;
+    allnormalsinvalid_ = true;
+    invalidnormals_.erase();
+    needsetposition_ = false;
+
+    return true;
+
+}
 
 void TileResolutionData::setPrimitiveSet( unsigned int geometrytype, 
     osg::DrawElementsUShort* geomps )
@@ -333,7 +393,6 @@ void TileResolutionData::updatePrimitiveSets()
     mAddPointIndex( geomps, idx1 );\
     mAddPointIndex( geomps, idx2 );\
 }
-
 
 #define mAddClockwiseTriangleIndexes( geomps, idx0, idxa, idxb ) \
 { \
@@ -593,8 +652,6 @@ void TileResolutionData::initVertices()
     osg::Vec3Array* normals = mGetOsgVec3Arr( normals_ );
     normals->resize( coordsize );
     std::fill( normals->begin(), normals->end(), osg::Vec3f( 0, 0, -1 ) );
-    vertices_->setAllPositions( 
-	Coord3(  mUdf( float ), mUdf( float ), mUdf( float ) ), coordsize, 0 );
     mGetOsgVec2Arr(txcoords_)->resize( coordsize );
 }
 

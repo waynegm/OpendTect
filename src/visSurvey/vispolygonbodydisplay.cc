@@ -74,7 +74,7 @@ PolygonBodyDisplay::PolygonBodyDisplay()
 
     visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
     polyoffset->setFactor( -1.0f );
-    polyoffset->setUnits( -1.0f );
+    polyoffset->setUnits( 1.0f );
     nearestpolygonmarker_->addNodeState( polyoffset );
 
     if ( getMaterial() )
@@ -440,6 +440,7 @@ void PolygonBodyDisplay::display( bool polygons, bool body )
 }
 
 
+
 bool PolygonBodyDisplay::arePolygonsDisplayed() const 
 { return displaypolygons_; }
 
@@ -777,6 +778,7 @@ void PolygonBodyDisplay::updateManipulator()
     if ( nearestpolygonmarker_ ) 
 	nearestpolygonmarker_->turnOn( show );
 
+    //polygonsurfeditor_->editpositionchange.trigger();
 }
 
 

@@ -104,8 +104,6 @@ public:
     const mVisTrans*	getDisplayTransformation() const;
     			/*!<\note Direcly relayed to the coordinates */
     
-    int			getNormalBindType();
-
     void		dirtyCoordinates();
 
     void		addPrimitiveSet(Geometry::PrimitiveSet*);
@@ -117,6 +115,17 @@ public:
     void		setMaterial( Material* mt );
     void		materialChangeCB( CallBacker*  );
     void		useOsgAutoNormalComputation(bool);
+
+    enum		BindType{ BIND_OFF = 0,BIND_OVERALL, 
+				       BIND_PER_PRIMITIVE_SET, 
+				       BIND_PER_PRIMITIVE, BIND_PER_VERTEX};
+    void		setColorBindType(BindType);
+    int			getNormalBindType();
+    void		setNormalBindType(BindType);
+    void		updatePartialGeometry(Interval<int>);
+    void		useVertexBufferRender(bool);
+			/*!<\true, osg use vertex buffer to render and ignore displaylist
+			false, osg use display list to render.*/
 
     void		setTextureChannels(TextureChannels*);
     
@@ -141,12 +150,20 @@ protected:
 
     bool		useosgsmoothnormal_;
 
+    BindType		colorbindtype_;
+    BindType		normalbindtype_;
+
     RefMan<TextureChannels>	channels_;
     ShapeNodeCallbackHandler*	osgcallbackhandler_;
     bool			needstextureupdate_;
     
-    ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
     Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
+
+    Threads::Lock 				lock_;
+						/*!<lock will protect primitiveset
+						and osg color array*/
+    ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
+
 };
 
 #undef mDeclSetGetItem

@@ -30,6 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/LightModel>
 #include <osgGeo/LayeredTexture>
 #include <osgUtil/SmoothingVisitor>
+#include <osgUtil/Optimizer>
 #include <osgUtil/CullVisitor>
 
 
@@ -253,10 +254,12 @@ void ShapeNodeCallbackHandler::updateTexture()
     , channels_( 0 ) \
     , osgcallbackhandler_( 0 ) \
     , needstextureupdate_( false )
-    
-    
+
+
 VertexShape::VertexShape()
     : mVertexShapeConstructor( new osg::Geode )
+    , colorbindtype_( BIND_OFF )
+    , normalbindtype_( BIND_PER_VERTEX )
 {
     setupOsgNode();
 }
@@ -297,13 +300,31 @@ void VertexShape::setupOsgNode()
 	useOsgAutoNormalComputation( false );
 	geode_->ref();
 	osggeom_ = new osg::Geometry;
-	osggeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
-	osggeom_->setDataVariance( osg::Object::DYNAMIC );
+	setNormalBindType( BIND_PER_VERTEX );
+	setColorBindType( BIND_OVERALL );
+	osggeom_->setDataVariance( osg::Object::STATIC );
+	osggeom_->setFastPathHint( true );
 	geode_->addDrawable( osggeom_ );
 	node_->asGroup()->addChild( geode_ );
+	useVertexBufferRender( false );
     }
-    
     setCoordinates( Coordinates::create() );
+    if ( geode_ && coords_ )
+    {
+	osgUtil::Optimizer optimizer;
+	optimizer.optimize( geode_ );
+    }
+
+}
+
+
+void VertexShape::useVertexBufferRender( bool yn )
+{
+    if ( osggeom_ )
+    {
+	osggeom_->setUseDisplayList( !yn );
+	osggeom_->setUseVertexBufferObjects( yn );
+    }
 }
 
 
@@ -375,7 +396,6 @@ void VertexShape::dirtyCoordinates()
     osggeom_->dirtyBound();
     if ( useosgsmoothnormal_ )
 	osgUtil::SmoothingVisitor::smooth( *osggeom_ );
-
 }
 
 
@@ -384,24 +404,44 @@ void VertexShape::useOsgAutoNormalComputation( bool yn )
     useosgsmoothnormal_ = yn;
 }
 
+void VertexShape::setColorBindType( BindType bt )
+{
+    colorbindtype_ =  bt;
+}
+
+
+int VertexShape::getNormalBindType()
+{
+    return normalbindtype_;
+}
+
+
+void VertexShape::setNormalBindType( BindType normalbindtype )
+{
+    if ( osggeom_ )
+    {
+	osggeom_->setNormalBinding( 
+	    osg::Geometry::AttributeBinding( normalbindtype ) );
+	normalbindtype_ = normalbindtype;
+    }
+}
+
 
 void VertexShape::materialChangeCB( CallBacker* )
 {
     if( !osggeom_  || !material_  || !coords_ ) return;
 
-    osg::Vec4Array* colorarr = mGetOsgVec4Arr( material_->getColorArray() );
-    if( coords_->size() && coords_->size() == colorarr->size() )
+    if ( colorbindtype_ == BIND_OFF )
     {
-	osggeom_->setColorBinding( osg::Geometry::BIND_PER_VERTEX );
-	osggeom_->setColorArray( colorarr );
+	if( coords_->size() && coords_->size() == material_->nrOfMaterial() )
+	    colorbindtype_ = BIND_PER_VERTEX;
+	else
+	    colorbindtype_ = BIND_OVERALL;
     }
-    else
-    {
-	osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
-	(*colors)[0] = Conv::to<osg::Vec4>( material_->getColor( 0 ) );
-	osggeom_->setColorBinding( osg::Geometry::BIND_OVERALL );
-	osggeom_->setColorArray( colors );
-    }
+
+    material_->setColorBindType( colorbindtype_ );
+    if ( osggeom_->getVertexArray()->getNumElements() > 0 )
+        material_->attachGeometry( osggeom_ );
 }
 
 
@@ -418,7 +458,6 @@ if ( osggeom_ ) osggeom_->setNormalArray( 0 ),
 if ( osggeom_ ) 
 { 
     osggeom_->setNormalArray(mGetOsgVec3Arr(normals_->osgArray()));
-    osggeom_->setNormalBinding( osg::Geometry::BIND_PER_VERTEX );
 }
 );
     
@@ -513,28 +552,35 @@ public:
 
 void VertexShape::addPrimitiveSet( Geometry::PrimitiveSet* p )
 {
+    Threads::Locker lckr( lock_, Threads::Locker::WriteLock );
+    if ( !p || primitivesets_.indexOf( p ) != -1 )
+	return;
+    
     p->ref();
     p->setPrimitiveType( primitivetype_ );
     
     mDynamicCastGet(OSGPrimitiveSet*, osgps, p );
     addPrimitiveSetToScene( osgps->getPrimitiveSet() );
-    
+
     primitivesets_ += p;
 }
     
-    
+
 void VertexShape::removePrimitiveSet( const Geometry::PrimitiveSet* p )
 {
+    Threads::Locker lckr( lock_, Threads::Locker::WriteLock );
     const int pidx = primitivesets_.indexOf( p );
-    mDynamicCastGet( OSGPrimitiveSet*, osgps,primitivesets_[pidx]  );
+    if ( pidx == -1 ) return;
+    mDynamicCastGet( OSGPrimitiveSet*, osgps,primitivesets_[pidx] );
     removePrimitiveSetFromScene( osgps->getPrimitiveSet() );
-    
     primitivesets_.removeSingle( pidx )->unRef();
+
 }
 
 
 void VertexShape::removeAllPrimitiveSets()
 {
+    Threads::Locker lckr( lock_, Threads::Locker::WriteLock );
     for ( int idx = primitivesets_.size()-1; idx >= 0; idx-- )
 	removePrimitiveSet( primitivesets_[idx] );
 }
@@ -545,7 +591,24 @@ void VertexShape::addPrimitiveSetToScene( osg::PrimitiveSet* ps )
     osggeom_->addPrimitiveSet( ps );
 }
     
-    
+
+void VertexShape::updatePartialGeometry( Interval<int> psrange )
+{
+    // wait for further implementing only update psrange, rests of primitive sets will be static 
+
+   /* osg::Vec4Array* colorarr = mGetOsgVec4Arr( material_->getColorArray() );
+    osg::Vec4Array* osgcolorarr = mGetOsgVec4Arr( osggeom_->getColorArray() );*/
+
+    useVertexBufferRender( true );
+    osggeom_->dirtyBound();
+   /* Threads::Locker lckr( lock_, Threads::Locker::WriteLock );
+    for ( int idx = psrange.start; idx< psrange.stop; idx++ )
+	(*osgcolorarr)[idx] = (*colorarr)[idx];
+    lckr.unlockNow();*/
+    useVertexBufferRender( false );
+}
+
+
 int VertexShape::nrPrimitiveSets() const
 { return primitivesets_.size(); }
 

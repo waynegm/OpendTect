@@ -56,8 +56,8 @@ public:
 			//!<If material is null, markers will be single color
 
     void		setMarkersSingleColor(const Color& singlecolor);
-			//!<all markers will use the same color, the color can also
-			//!<be set by markerstyle
+			//!<all markers will use the same color, the color can
+			//!< also be set by markerstyle
     Color		getMarkersSingleColor() const;
 
     void		setMarkerStyle(const MarkerStyle3D&);
@@ -109,6 +109,7 @@ public:
 			quality of marker visualization. */
 
 protected:
+    void		materialChangeCB(CallBacker*);
 				~MarkerSet();
     
     RefMan<Coordinates>		coords_;

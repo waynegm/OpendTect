@@ -118,7 +118,7 @@ protected:
 			VisualObjectImpl(bool selectable);
     virtual		~VisualObjectImpl();
 
-    void		materialChangeCB(CallBacker*);
+    virtual void	materialChangeCB(CallBacker*);
 
     Material*		material_;
     bool		righthandsystem_;

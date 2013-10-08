@@ -68,20 +68,33 @@ void MarkerSet::setMaterial( visBase::Material* mat )
 
    if ( material_ )
        markerset_->setColorArray( 0 );
-  
    
    visBase::VisualObjectImpl::setMaterial( mat );
-    if ( material_ )
-    {
-	markerset_->setColorArray(
-	    mGetOsgVec4Arr( material_->getColorArray() ) );
-	markerset_->useSingleColor( false );
-    }
-    else 
-    {
-	markerset_->setColorArray( 0 );
-	markerset_->useSingleColor( true );
-    }
+
+   materialChangeCB( 0 );
+
+}
+
+
+void MarkerSet::materialChangeCB( CallBacker* cb)
+{
+     if ( material_ )
+     {
+	 const TypeSet<Color> colors = material_->getColors();
+	 osg::ref_ptr<osg::Vec4Array> osgcolorarr = 
+	     new osg::Vec4Array( colors.size() );
+
+	 for ( int idx = 0; idx< colors.size(); idx++ )
+	     (*osgcolorarr)[idx]  = Conv::to<osg::Vec4>( colors[idx] );
+
+	 markerset_->setColorArray( osgcolorarr.get() );
+	 markerset_->useSingleColor( false );
+     }
+     else 
+     {
+	    markerset_->setColorArray( 0 );
+	    markerset_->useSingleColor( true );
+     }
 
 }
 
@@ -91,6 +104,7 @@ void MarkerSet::clearMarkers()
     if ( coords_ ) coords_->setEmpty();
     if ( normals_ ) normals_->clear();
     if ( material_ ) material_->clear();
+
 }
 
 

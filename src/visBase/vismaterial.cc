@@ -16,6 +16,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <osg/Material>
 #include <osg/Array>
+#include <osg/Geometry>
 
 namespace visBase
 {
@@ -24,8 +25,7 @@ namespace visBase
 class OsgColorArrayUpdator: public ParallelTask			
 {
 public:
-    OsgColorArrayUpdator(Material* p, const od_int64 size, 
-		    const TypeSet<float>&, const TypeSet<float>&);
+    OsgColorArrayUpdator(Material* p, const od_int64 size );
     od_int64	totalNr() const { return totalnrcolors_; }
 
 protected:
@@ -36,38 +36,21 @@ protected:
 private:
     Material* material_;
     Threads::Atomic<od_int64>	totalnrcolors_;
-    const TypeSet<float> diffintensity_;
-    const TypeSet<float> transparency_;
 
 };
 
 
-OsgColorArrayUpdator::OsgColorArrayUpdator( Material* p, const od_int64 size,
-				  const TypeSet<float>& diffintensity, 
-				  const TypeSet<float>& transparency)
+OsgColorArrayUpdator::OsgColorArrayUpdator( Material* p, const od_int64 size )
     : material_( p )
     , totalnrcolors_( size )
-    , diffintensity_( diffintensity )
-    , transparency_ ( transparency )
 {
 }
 
 bool OsgColorArrayUpdator::doPrepare(int)
 {
-    if (mGetOsgVec4Arr(material_->osgcolorarray_) )
-	mGetOsgVec4Arr(material_->osgcolorarray_)->resize( 
-				material_->colors_.size() );
-    
-    if( diffintensity_.size() ==1 || 
-    diffintensity_.size() < material_->colors_.size() ) 
-    {
-	while (material_->diffuseintensity_.size()<= material_->colors_.size())
-	{
-	    material_->diffuseintensity_+= 0.8;
-	    material_->transparency_+= 0.0;
-	}
-    }
-
+    if ( material_->osgcolorarray_->getNumElements()<totalnrcolors_ )
+	return false;
+   
     return true;
 }
 
@@ -75,20 +58,10 @@ bool OsgColorArrayUpdator::doPrepare(int)
 bool OsgColorArrayUpdator::doWork(od_int64 start,od_int64 stop,int)
 {
     for ( int idx = mCast(int,start); idx<=mCast(int,stop); idx++ )
-    {
-	if ( diffintensity_.size() ==1 || transparency_.size() == 1 ||
-	    diffintensity_.size() < material_->colors_.size() ||
-	    transparency_.size() < material_->colors_.size() )
-	{
-	    material_->setMinNrOfMaterials(idx);
-	    material_->diffuseintensity_[idx] = diffintensity_[0]; 
-	    material_->transparency_[idx] = transparency_[0];
-	}
 	material_->updateOsgColor( idx, false );
-    }
+
     return true;
 }
-
 
 
 const char* Material::sKeyColor()		{ return "Color"; }
@@ -99,6 +72,14 @@ const char* Material::sKeyEmmissiveIntensity()	{ return "Emmissive Intensity";}
 const char* Material::sKeyShininess()		{ return "Shininess"; }
 const char* Material::sKeyTransparency()	{ return "Transparency"; }
 
+
+#define mGetWriteLock(nm) \
+    Threads::Locker nm( lock_, Threads::Locker::WriteLock )
+
+#define mGetReadLock(nm) \
+    Threads::Locker lckr( lock_, Threads::Locker::ReadLock )
+   
+
 Material::Material()
     : material_( addAttribute(new osg::Material) )
     , osgcolorarray_( 0 )
@@ -107,11 +88,11 @@ Material::Material()
     , emmissiveintensity_( 0 )
     , shininess_( 0 )
     , change( this )
+    , colorbindtype_( 1 )
 {
     material_->ref();
     setColorMode( Off );
     setMinNrOfMaterials(0);
-    updateOsgColor(0);
 }
 
 
@@ -119,102 +100,85 @@ Material::~Material()
 {
     material_->unref();
     if ( osgcolorarray_ ) osgcolorarray_->unref();
+    for ( int idx = 0; idx< attachedgeoms_.size(); idx++ )
+	attachedgeoms_.removeSingle( idx );
 }
 
 
 #define mSetProp( prop ) prop = mat.prop
-void Material::setFrom( const Material& mat )
+void Material::setFrom( const Material& mat, bool trigger )
 {
     setColors( mat.colors_, false );
-    setPropertiesFrom( mat );
+    setPropertiesFrom( mat, trigger );
 }
 
 
-void Material::setPropertiesFrom( const Material& mat )
+void Material::setPropertiesFrom( const Material& mat,bool trigger )
 {
+    mGetWriteLock( lckr );
     mSetProp( diffuseintensity_ );
     mSetProp( ambience_ );
     mSetProp( specularintensity_ );
     mSetProp( emmissiveintensity_ );
     mSetProp( shininess_ );
     mSetProp( transparency_ );
-
-    synchronizingOsgColorArray();
+    setMinNrOfMaterials( colors_.size()- 1, true, trigger );
 }
 
 
 void Material::setColors( const TypeSet<Color>& colors, bool synchronizing )
 {
+    mGetWriteLock( lckr );
     colors_.erase();
     colors_ = colors;
-    if ( synchronizing )
-	synchronizingOsgColorArray();
+    setMinNrOfMaterials( colors_.size()-1, synchronizing );
+
 }
 
 
-void Material::synchronizingOsgColorArray()
+void Material::synchronizingOsgColorArray( bool trigger )
 {
-    OsgColorArrayUpdator updator( 
-	this, colors_.size(), diffuseintensity_, transparency_);
-    TaskRunner tr;
+    if ( !colors_.size() ) return;
 
-    if( TaskRunner::execute( &tr,updator ) )
+    OsgColorArrayUpdator updator( this, colors_.size() );
+
+    if ( updator.execute() && trigger )
+    {
 	change.trigger();
-
+    }
 }
 
 
 void Material::setColor( const Color& n, int idx )
 {
-    setMinNrOfMaterials(idx);
+    mGetWriteLock( lckr );
+    setMinNrOfMaterials( idx,true,false );
+
     if ( colors_[idx]==n )
 	return;
-
     colors_[idx] = n;
+
     updateOsgColor( idx );
-}
-
-
-void Material::addColorAtBegin(const Color& color)
-{
-    float diffuseintensity = diffuseintensity_.size() ?
-	diffuseintensity_[ 0 ] : 0.8;
-    float transparency = transparency_.size() ?
-	transparency_[ 0 ] : 0.8;
-    
-    colors_.insert( 0, color );
-    diffuseintensity_.insert( 0, diffuseintensity );
-    transparency_.insert( 0, transparency );
-    addOsgColorAtBegin();
 
 }
 
 
-void Material::addColorAtEnd(const Color& color)
+Color Material::getColor( int idx ) const
 {
-    float diffuseintensity = diffuseintensity_.size() ?
-	diffuseintensity_[ diffuseintensity_.size() - 1 ] : 0.8;
-    float transparency = transparency_.size() ?
-	transparency_[ transparency_.size() -1 ] : 0.8;
+    mGetReadLock( lckr );
+    if ( idx >= colors_.size() )
+	return Color( 0, 0, 0 );
 
-    colors_.add( color );
-    diffuseintensity_.add( diffuseintensity );
-    transparency_.add( transparency );
-    updateOsgColor( colors_.size() - 1 );
-}
-
-
-const Color& Material::getColor( int idx ) const
-{
     if ( colors_.validIdx(idx) )
-	return colors_[idx];
+	return Color( colors_[idx] );
 
-    return colors_[0];
+    return Color( colors_[0] );
 }
 
 
 void Material::removeColor( int idx )
 {
+    mGetWriteLock( lckr );
 
     if ( colors_.validIdx(idx) && colors_.size()>1 )
      {
@@ -222,9 +186,6 @@ void Material::removeColor( int idx )
 	 transparency_.removeSingle( idx );
 	 diffuseintensity_.removeSingle( idx );
 	 removeOsgColor( idx );
-
-	 if ( colors_.size()> idx )
-	     updateOsgColor( idx );
      }
      else
      {
@@ -236,6 +197,7 @@ void Material::removeColor( int idx )
 void Material::removeOsgColor( int idx )
 {
     osg::Vec4Array* colarr = mGetOsgVec4Arr( osgcolorarray_ );
+
     if ( !colarr || colarr->size()<=idx )
 	return;
     colarr->erase( colarr->begin() + idx );
@@ -244,6 +206,8 @@ void Material::removeOsgColor( int idx )
 
 void Material::setDiffIntensity( float n, int idx )
 {
+    mGetWriteLock( lckr );
+
     setMinNrOfMaterials(idx);
     diffuseintensity_[idx] = n;
     updateOsgColor( idx );
@@ -252,37 +216,80 @@ void Material::setDiffIntensity( float n, int idx )
 
 float Material::getDiffIntensity( int idx ) const
 {
-    if ( idx>=0 && idx<diffuseintensity_.size() )
-	return diffuseintensity_[idx];
-    return diffuseintensity_[0];
+    float diffuseintensity( 0 );
+    
+    mGetReadLock( lckr );
+    if ( idx< diffuseintensity_.size() )
+    {
+	if ( idx>=0 && idx<diffuseintensity_.size() )
+	    diffuseintensity = diffuseintensity_[idx];
+	else
+	    diffuseintensity = diffuseintensity_[ 0 ];
+
+    }
+
+    return diffuseintensity;
 }
 
 
 void Material::setTransparency( float n, int idx )
 {
+    mGetWriteLock( lckr );
     setMinNrOfMaterials(idx);
+   
     transparency_[idx] = n;
     updateOsgColor( idx );
 }
 
 void Material::setAllTransparencies( float n )
 {
+    mGetWriteLock( lckr );
     transparency_.setAll( n );
+    setMinNrOfMaterials( colors_.size() -1 );
+}
+
+
+void Material::setTransparencies( float n, const Interval<int>& range )
+{
+    mGetWriteLock( lckr );
+    setMinNrOfMaterials(range.stop-1, false );
+
+    for ( int idx = range.start; idx<range.stop; idx++ )
+	transparency_[idx] = n;
+
     synchronizingOsgColorArray();
 }
 
 
 float Material::getTransparency( int idx ) const
 {
-    if ( idx>=0 && idx<transparency_.size() )
-	return transparency_[idx];
-    return transparency_[0];
+    float transparency( 0 );
+
+    mGetReadLock( lckr );
+    if ( idx < transparency_.size() )
+    {
+	if ( idx>=0 && idx<transparency_.size() )
+	    transparency = transparency_[idx];
+	else
+	    transparency = transparency_[0];
+
+    }
+
+    return transparency;
+}
+
+
+const TypeSet<Color> Material::getColors() 
+{ 
+    mGetReadLock( lckr );
+    return colors_; 
 }
 
 
 #define mSetGetProperty( Type, func, var ) \
 void Material::set##func( Type n ) \
 { \
+    mGetReadLock( lck ); \
     var = n; \
     updateOsgColor( 0 ); \
 } \
@@ -304,6 +311,9 @@ mSetGetProperty( float, Shininess, shininess_ );
 
 void Material::updateOsgColor( int idx, bool trigger)
 {
+    if ( !osgcolorarray_ || idx > (*mGetOsgVec4Arr(osgcolorarray_)).size() )
+	return;
+    
     const osg::Vec4 diffuse =
 	mGetOsgCol( colors_[idx], diffuseintensity_[idx], transparency_[idx] );
     
@@ -320,8 +330,6 @@ void Material::updateOsgColor( int idx, bool trigger)
 	material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
 	material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
 
-	if ( !osgcolorarray_ )
-	    createOsgColorArray();
 	osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
 	if ( colarr.size() )
 	    colarr[0] = diffuse;
@@ -330,20 +338,8 @@ void Material::updateOsgColor( int idx, bool trigger)
     }
     else
     {
-	if ( !osgcolorarray_ )
-	{
-	    createOsgColorArray();
-	    mGetOsgVec4Arr(osgcolorarray_)->push_back( diffuse );
-	}
-	else
-	{
-	    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
-	    
-	    if ( colarr.size()<=idx )
-		colarr.resize( idx+1 );
-	    
-	    colarr[idx] = diffuse;
-	}
+	 osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
+	 colarr[idx] = diffuse;
     }
 
     if( trigger )
@@ -351,41 +347,103 @@ void Material::updateOsgColor( int idx, bool trigger)
 }
 
 
-void Material::addOsgColorAtBegin()
+int Material::nrOfMaterial() const
 {
-    const osg::Vec4 diffuse =
-    mGetOsgCol( colors_[0], diffuseintensity_[0], transparency_[0] );
+    mGetReadLock( lckr );
+    return colors_.size();
+}
 
-    material_->setAmbient( osg::Material::FRONT_AND_BACK,
-	mGetOsgCol(colors_[0],ambience_,transparency_[0]) );
-    material_->setSpecular( osg::Material::FRONT_AND_BACK,
-	mGetOsgCol(colors_[0],specularintensity_,transparency_[0]) );
-    material_->setEmission( osg::Material::FRONT_AND_BACK,
-	mGetOsgCol(colors_[0],emmissiveintensity_,transparency_[0]) );
 
-    material_->setShininess(osg::Material::FRONT_AND_BACK, shininess_ );
-    material_->setDiffuse(osg::Material::FRONT_AND_BACK, diffuse );
+void Material::setMinNrOfMaterials(int minnr, bool synchronize, bool trigger)
+{
+    while ( colors_.size()<=minnr )
+	colors_ += Color(179,179,179);
 
-    if ( !osgcolorarray_ )
-	createOsgColorArray();
-    osg::Vec4Array& colarr = *mGetOsgVec4Arr(osgcolorarray_);
+    float inidiffuseintensity( 0.8 );
+    if ( diffuseintensity_.size() )
+	inidiffuseintensity = diffuseintensity_[0];
 
-    colarr.insert( colarr.begin(), diffuse );
+    while ( diffuseintensity_.size() <= minnr )
+	diffuseintensity_ += inidiffuseintensity;
+
+    float initransparency( 0 );
+    if ( transparency_.size() )
+	initransparency = transparency_[0];
+
+    while ( transparency_.size() <= minnr )
+	transparency_ += initransparency;
+
+    if ( !synchronize )
+	return;
+
+    if ( !osgcolorarray_ ||
+	 ( *mGetOsgVec4Arr(osgcolorarray_) ).size() != colors_.size() )
+	createOsgColorArray( colors_.size() );
+    
+    for ( int idx=0; idx<attachedgeoms_.size(); idx++ )
+	attachGeometry( attachedgeoms_[idx] );
+
+    synchronizingOsgColorArray( trigger );
 
 }
 
 
-int Material::nrOfMaterial() const
-{ return colors_.size(); }
-
-
-void Material::setMinNrOfMaterials(int minnr)
+void Material::attachGeometry( osg::Geometry* geom )
 {
-    while ( colors_.size()<=minnr )
+    if ( !geom || !osgcolorarray_ || osgcolorarray_->getNumElements() == 0 )
+	return;
+
+    const int pidx = attachedgeoms_.indexOf( geom );
+    if ( pidx == -1 ) 
+	attachedgeoms_ += geom;
+    
+    if ( osgcolorarray_ )
     {
-	colors_ += Color(179,179,179);
-	diffuseintensity_ += 0.8;
-	transparency_ += 0.0;
+	mGetWriteLock( lckr );
+	geom->setColorBinding((osg::Geometry::AttributeBinding)colorbindtype_ );
+	if ( colorbindtype_ == osg::Geometry::BIND_OVERALL )
+	{
+	    osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array(1);
+	    (*colors)[0] = (*mGetOsgVec4Arr( osgcolorarray_))[0];
+	    geom->setColorArray( colors );
+	}
+	else
+	    geom->setColorArray( osgcolorarray_ );
+
+	geom->dirtyBound();
+
+    }
+
+}
+
+
+void Material::detachGeometry( osg::Geometry* geom )
+{
+    mGetWriteLock( lckr );
+    const int pidx = attachedgeoms_.indexOf( geom );
+    if ( pidx == -1 ) return;
+    attachedgeoms_[pidx]->setColorArray( 0 );
+}
+
+
+void Material::setColorBindType(unsigned int type)
+{
+    colorbindtype_ = type;
+}
+
+
+void Material::setNrOfMaterials( int nr )
+{
+    mGetWriteLock( lckr );
+    if ( nr < colors_.size() )
+    {
+	for (int idx = colors_.size()-1; idx>nr; idx-- )
+	    removeColor( idx );
+    }
+    if ( nr > colors_.size() )
+    {
+	setMinNrOfMaterials( nr, false );
+	updateOsgColor( nr, false );
     }
 }
 
@@ -433,27 +491,11 @@ void Material::fillPar( IOPar& iopar ) const
 }
     
     
-const osg::Array* Material::getColorArray() const
-{
-    return osgcolorarray_;
-}
-    
-
-osg::Array* Material::getColorArray()
-{
-    if ( !osgcolorarray_ )
-	createOsgColorArray();
-
-    return osgcolorarray_;
-}
-
-
-void Material::createOsgColorArray()
+void Material::createOsgColorArray( int size )
 {
     if ( osgcolorarray_ )
-	return;
-    
-    osgcolorarray_ = new osg::Vec4Array;
+	osgcolorarray_->unref();
+    osgcolorarray_ = new osg::Vec4Array( size );
     osgcolorarray_->ref();
 }
 
@@ -494,6 +536,7 @@ Material::ColorMode Material::getColorMode() const
 
 void	Material::clear()
 {
+    mGetWriteLock( lckr );
     if ( colors_.size() )
         colors_.erase();
     diffuseintensity_.erase();

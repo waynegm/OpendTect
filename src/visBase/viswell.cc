@@ -69,6 +69,7 @@ Well::Well()
     markerset_->setMaterial( new Material );
 
     track_ = PolyLine::create();
+    track_->setColorBindType( VertexShape::BIND_OVERALL );
     track_->ref();  
 
     track_->addPrimitiveSet( Geometry::RangePrimitiveSet::create() );

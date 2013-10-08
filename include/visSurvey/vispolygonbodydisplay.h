@@ -27,7 +27,6 @@ namespace visBase
     class DrawStyle;
     class GeomIndexedShape;
     class PolyLine3D;
-    class ShapeHints;
     class Transformation;
     class TriangleStripSet;
 };
@@ -126,7 +125,6 @@ protected:
 
     visBase::EventCatcher*		eventcatcher_;
     const mVisTrans*			displaytransform_;
-    visBase::ShapeHints*		shapehints_;
 
     visBase::GeomIndexedShape*		bodydisplay_;
     Geometry::ExplPolygonSurface*	explicitbody_;

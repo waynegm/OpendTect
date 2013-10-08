@@ -30,7 +30,7 @@ OrthogonalSlice::OrthogonalSlice()
     dragger_->setMaterial(0);
     dragger_->removeScaleTabs();
     dragger_->motion.notify( mCB(this,OrthogonalSlice,draggerMovementCB) );
-    addChild( dragger_->getInventorNode() );
+    addChild( dragger_->osgNode() );
     
 //    slice_->alphaUse = SoOrthoSlice::ALPHA_AS_IS;
     
@@ -181,7 +181,7 @@ void OrthogonalSlice::removeDragger()
     if ( dragger_ )
     {
 	dragger_->motion.remove(mCB(this, OrthogonalSlice, draggerMovementCB));
-	removeChild( dragger_->getInventorNode() );
+	removeChild( dragger_->osgNode() );
 	dragger_->unRef();
 	dragger_ = 0;
     }

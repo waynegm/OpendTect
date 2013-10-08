@@ -68,7 +68,7 @@ FaultStickSetDisplay::FaultStickSetDisplay()
     sticks_->ref();
     visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
     polyoffset->setFactor( -1.0f );
-    polyoffset->setUnits( -1.0f );
+    polyoffset->setUnits( 1.0f );
     addChild( sticks_->osgNode() );
     sticks_->setName( "FaultSticks" );
    

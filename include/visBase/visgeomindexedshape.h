@@ -85,6 +85,9 @@ public:
     void			setIndexedGeometryShapeType( 
 						  GeomShapeType geomshapetype);
     void			useOsgNormal(bool);
+    void			setNormalBindType(VertexShape::BindType);
+    void			setColorBindType(VertexShape::BindType);
+    void			addNodeState(visBase::NodeState*);
 
     void			setTextureChannels(TextureChannels*);
 

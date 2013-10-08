@@ -138,7 +138,7 @@ void GeomIndexedShape::updateMaterialFrom( const Material* mat )
 {
     if ( !mat ) return;
 
-    singlematerial_->setFrom( *mat);
+    singlematerial_->setFrom( *mat );
 
     if ( isColTabEnabled() && colorhandler_ )
     {
@@ -161,8 +161,30 @@ void GeomIndexedShape::updateGeometryMaterial()
     {
 	colorhandler_->material_->setPropertiesFrom( *getMaterial() );
 	mapAttributeToColorTableMaterial();
+	vtexshape_->setColorBindType( VertexShape::BIND_PER_VERTEX );
 	vtexshape_->setMaterial( coltabmaterial_ );
     }
+}
+
+void GeomIndexedShape::setNormalBindType( VertexShape::BindType type )
+{
+    if ( vtexshape_ )
+	vtexshape_->setNormalBindType( type );
+}
+
+
+void GeomIndexedShape::setColorBindType( VertexShape::BindType type )
+{
+    if ( vtexshape_ )
+	vtexshape_->setColorBindType( type );
+}
+
+
+void GeomIndexedShape::addNodeState( visBase::NodeState* ns )
+{
+    if ( vtexshape_ )
+	vtexshape_->addNodeState( ns );
+
 }
 
 
@@ -171,10 +193,19 @@ void GeomIndexedShape::enableColTab( bool yn )
     if ( !vtexshape_->getMaterial() ) return;
     
     if ( yn )
+    {
+	    setColorBindType( VertexShape::BIND_PER_VERTEX );
+	    setMaterial( coltabmaterial_ );
 	    vtexshape_->setMaterial( coltabmaterial_ );
+    }
     else 
+    {
+	setColorBindType( VertexShape::BIND_OVERALL );
+	setMaterial( singlematerial_ );
 	vtexshape_->setMaterial( singlematerial_ );
+    }
 
+    VisualObjectImpl::materialChangeCB( 0 );
     colortableenabled_  = yn;
 }
 
@@ -206,14 +237,16 @@ void GeomIndexedShape::setDataSequence( const ColTab::Sequence& seq )
     if ( seq!=colorhandler_->sequence_ )
     {
 	colorhandler_->sequence_ = seq;
+	TypeSet<Color> colors;
 	for ( int idx=0; idx<mNrMaterialSteps; idx++ )
 	{
 	    const float val = ( (float) idx )/( mNrMaterialSteps-1 );
 	    const Color col = seq.color( val );
-	    colorhandler_->material_->setColor( col, idx+1 );
+	    colors += col;
 	}
 
-	colorhandler_->material_->setColor(seq.undefColor(),mUndefMaterial+1);
+	colors += seq.undefColor();
+	colorhandler_->material_->setColors( colors, false );
     }
 
    if ( isColTabEnabled() )

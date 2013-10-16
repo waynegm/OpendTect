@@ -1807,10 +1807,6 @@ void FaultDisplay::setLineRadius( visBase::GeomIndexedShape* shape )
 {
     const bool islinesolid = lineStyle()->type_ == LineStyle::Solid;
     const float linewidth = islinesolid ? 0.5f*lineStyle()->width_ : -1.0f;
-    const float inllen =
-	inlcrlsystem_->inlDistance() * inlcrlsystem_->inlRange().width();
-    const float crllen =
-	inlcrlsystem_->crlDistance() * inlcrlsystem_->crlRange().width();
 
     LineStyle lnstyle( *lineStyle() ) ;
     lnstyle.width_ = (int)( 2*linewidth );

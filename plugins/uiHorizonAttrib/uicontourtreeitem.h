@@ -32,7 +32,7 @@ namespace visSurvey { class SurveyObject; class HorizonDisplay; }
 namespace visBase
 {
     class DrawStyle;
-    class IndexedPolyLine;
+    class PolyLine;
     class Material;
     class Text2;
     class PolygonOffset;
@@ -79,7 +79,7 @@ protected:
     void			visClosingCB(CallBacker*);
   
     void			startCreateUICContours();
-    bool			createIndexedPolyLines();
+    bool			createPolyLines();
     bool			setLabels(visBase::Text2*);
     bool			computeUICContourSteps(const Array2D<float>&);
 
@@ -97,7 +97,7 @@ protected:
     bool			showlabels_;
     int				linewidth_;
 				// objects for contours
-    visBase::IndexedPolyLine*	lines_;
+    visBase::PolyLine*		lines_;
     visBase::DrawStyle*		drawstyle_;
     visBase::Material*		material_;
     visBase::Text2*		labels_;

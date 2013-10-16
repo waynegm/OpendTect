@@ -272,7 +272,8 @@ bool uiContourTreeItemContourGenerator::generateContours( int contouridx,
     // if having label, add label into contour data
     if ( lblpositionrg.stop > lblpositionrg.start )
     {
-	const float labelval = uicitem_->attrnm_==uiContourTreeItem::sKeyZValue()
+	const float labelval =
+	    uicitem_->attrnm_==uiContourTreeItem::sKeyZValue()
 	    ? (contourval+uicitem_->zshift_) * zfactor_ : contourval;
 	contourdata.labelranges_.add( lblpositionrg );
 	contourdata.labels_.add( toString( (int)labelval ) );
@@ -368,7 +369,7 @@ void uiContourTreeItemContourGenerator::addContourLabel(
     {
 	label->setText( lbl );
 	label->setPosition( pos, true );
-	label->setFontData( FontData(14) );
+	label->setFontData( FontData( 18 ) );
     }
 }
 
@@ -715,7 +716,7 @@ void uiContourTreeItem::startCreateUICContours()
     const Array2D<float>*  field = getDataSet( hordisp ); 
 
     if ( !field || 
-	 !createIndexedPolyLines() || 
+	 !createPolyLines() || 
 	 !computeUICContourSteps( *field ) )
 	return;
 
@@ -766,7 +767,7 @@ Array2D<float>* uiContourTreeItem::getDataSet(
 }
 
 
-bool uiContourTreeItem::createIndexedPolyLines()
+bool uiContourTreeItem::createPolyLines()
 {
     if ( lines_ ) 
     {
@@ -774,7 +775,7 @@ bool uiContourTreeItem::createIndexedPolyLines()
 	return true;
     }
 
-    if ( ( lines_ = visBase::IndexedPolyLine::create() ) == 0 ) return false;
+    if ( ( lines_ = visBase::PolyLine::create() ) == 0 ) return false;
     lines_->ref();
 
     applMgr()->visServer()->addObject( lines_, sceneID(), false );
@@ -868,9 +869,8 @@ bool uiContourTreeItem::computeUICContourSteps( const Array2D<float>& field )
 
 void uiContourTreeItem::removeOldUICContoursFromScene()
 {
-    int nrps = lines_->nrPrimitiveSets();
-    for ( int ips = nrps-1; ips >= 0; ips-- )
-	lines_->removePrimitiveSet( lines_->getPrimitiveSet( ips ) );
+   if ( lines_ )
+       lines_->removeAllPrimitiveSets();
 }
 
 

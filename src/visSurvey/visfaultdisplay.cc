@@ -67,7 +67,7 @@ const char* FaultDisplay::sKeyLineStyle()	{ return "Linestyle"; }
 FaultDisplay::FaultDisplay()
     : MultiTextureSurveyObject( true )
     , emfault_( 0 )
-    , activestickmarker_( visBase::IndexedPolyLine3D::create() )
+    , activestickmarker_( visBase::PolyLine3D::create() )
     , validtexture_( false )
     , paneldisplay_( 0 )
     , stickdisplay_( 0 )
@@ -995,8 +995,8 @@ void FaultDisplay::emChangeCB( CallBacker* cb )
 
 void FaultDisplay::updateActiveStickMarker()
 {
-    activestickmarker_->removeCoordIndexAfter(-1);
-    activestickmarker_->getCoordinates()->removeAfter(-1);
+    activestickmarker_->removeAllPrimitiveSets();
+    activestickmarker_->getCoordinates()->setEmpty();
 
     if ( mIsUdf(activestick_) || !showmanipulator_ || !displaysticks_ )
 	activestickmarker_->turnOn( false );
@@ -1030,7 +1030,6 @@ void FaultDisplay::updateActiveStickMarker()
     {
 	const Coord3 pos = fss->getKnot( rc );
 	const int ci = activestickmarker_->getCoordinates()->addPos( pos );
-	activestickmarker_->setCoordIndex( idx++, ci );
     }
 
     activestickmarker_->turnOn( true );
@@ -1796,7 +1795,6 @@ void FaultDisplay::setLineStyle( const LineStyle& lst )
     if ( lineStyle()->width_<0 || lst.width_<0 )
     {
 	drawstyle_->setLineStyle( lst );
-	// Refresh hack at transition SoIndexedLineSet3D<->SoIndexedLineSet
 	scene_->objectMoved( 0 );
     }
     else
@@ -1822,8 +1820,8 @@ void FaultDisplay::setLineRadius( visBase::GeomIndexedShape* shape )
     if ( shape )
 	shape->setLineStyle( lnstyle );
 
-    activestickmarker_->setRadius( mMAX(linewidth+2.5f, 1.0f),
-				   true, maxlinethickness+2.5f );
+    int width = (int)mMAX(linewidth+3.5f, 1.0f);
+    activestickmarker_->setLineStyle(LineStyle(LineStyle::Solid, width) );
 }
 
 

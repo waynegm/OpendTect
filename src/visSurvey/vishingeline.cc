@@ -307,18 +307,18 @@ void EdgeLineSetDisplay::triggerRightClick(const visBase::EventInfo* ei)
 	    }
 	}
 
-	if ( line!=-1 )
-	{
-	    const visBase::PolyLine3D* polyline = polylines[line];
-//	    const int pickedcoordidx = polyline->getClosestCoordIndex(*ei);
-	 //   if ( pickedcoordidx!=-1 )
-	 //   {
-		//rightclidedline = line;
-		//rightclidedsegment = (*polylinesegments[line])[pickedcoordidx];
-		//rightclidedsegmentpos =
-		//    (*polylinesegmentpos[line])[pickedcoordidx];
-	 //   }
-	}
+//	if ( line!=-1 )
+//	{
+//	    const visBase::PolyLine3D* polyline = polylines[line];
+////	    const int pickedcoordidx = polyline->getClosestCoordIndex(*ei);
+//	 //   if ( pickedcoordidx!=-1 )
+//	 //   {
+//		//rightclidedline = line;
+//		//rightclidedsegment = (*polylinesegments[line])[pickedcoordidx];
+//		//rightclidedsegmentpos =
+//		//    (*polylinesegmentpos[line])[pickedcoordidx];
+//	 //   }
+//	}
     }
 
     visBase::VisualObject::triggerRightClick(ei);

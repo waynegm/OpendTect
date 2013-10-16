@@ -88,28 +88,6 @@ protected:
 };
 
 
-mExpClass(visBase) IndexedPolyLine	: public IndexedShape
-{
-public:
-    static IndexedPolyLine*	create()
-				mCreateDataObj(IndexedPolyLine);
-};
-
-
-mExpClass(visBase) IndexedPolyLine3D	: public IndexedShape
-{
-public:
-    static IndexedPolyLine3D*	create()
-				mCreateDataObj(IndexedPolyLine3D);
-
-    float			getRadius() const;
-    void			setRadius(float,bool constantonscreen=true,
-	    				  float maxworldsize=-1);
-    void			setRightHandSystem(bool yn);
-    bool			isRightHandSystem() const;
-};
-
-
 }; // Namespace
 
 

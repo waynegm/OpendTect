@@ -20,8 +20,6 @@ static const char* rcsID mUsedVar = "$Id$";
 
 mCreateFactoryEntry( visBase::PolyLine );
 mCreateFactoryEntry( visBase::PolyLine3D );
-mCreateFactoryEntry( visBase::IndexedPolyLine );
-mCreateFactoryEntry( visBase::IndexedPolyLine3D );
 
 namespace visBase
 {
@@ -168,36 +166,5 @@ void PolyLine3D::setDisplayTransformation( const mVisTrans* trans)
     VertexShape::setDisplayTransformation( trans );
     setCoordinates( coords_ );
 }
-
-
-IndexedPolyLine::IndexedPolyLine()
-    : IndexedShape( Geometry::PrimitiveSet::LineStrips )
-{ }
-
-
-IndexedPolyLine3D::IndexedPolyLine3D()
-    : IndexedShape( Geometry::PrimitiveSet::LineStrips )
-{ }
-
-
-float IndexedPolyLine3D::getRadius() const
-{
-    return 1;
-}
-
-
-void IndexedPolyLine3D::setRadius(float nv,bool fixedonscreen,float maxdisplaysize)
-{
-}
-
-
-void IndexedPolyLine3D::setRightHandSystem( bool yn )
-{
-}
-
-
-bool IndexedPolyLine3D::isRightHandSystem() const
-{ return true; }
-
 
 }; // namespace visBase

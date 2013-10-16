@@ -1024,12 +1024,11 @@ void FaultDisplay::updateActiveStickMarker()
 	return;
     }
 
-    int idx = 0;
     RowCol rc( activestick_, 0 );
     for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col += colrg.step )
     {
 	const Coord3 pos = fss->getKnot( rc );
-	const int ci = activestickmarker_->getCoordinates()->addPos( pos );
+	activestickmarker_->getCoordinates()->addPos( pos );
     }
 
     activestickmarker_->turnOn( true );
@@ -1812,7 +1811,6 @@ void FaultDisplay::setLineRadius( visBase::GeomIndexedShape* shape )
 	inlcrlsystem_->inlDistance() * inlcrlsystem_->inlRange().width();
     const float crllen =
 	inlcrlsystem_->crlDistance() * inlcrlsystem_->crlRange().width();
-    const float maxlinethickness = 0.02f * mMAX( inllen, crllen );
 
     LineStyle lnstyle( *lineStyle() ) ;
     lnstyle.width_ = (int)( 2*linewidth );

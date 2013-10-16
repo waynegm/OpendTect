@@ -41,8 +41,9 @@ FlatViewer::FlatViewer()
     , channels_( TextureChannels::create() )
     , channel2rgba_( ColTabTextureChannel2RGBA::create() )
     , rectangle_( TextureRectangle::create() )
-    , x1gridlines_( IndexedPolyLine::create() )
-    , x2gridlines_( IndexedPolyLine::create() )
+    , x1gridlines_( PolyLine::create() )
+    , x2gridlines_( PolyLine::create() )
+    , gridlinematerial_( new Material )
 {
     channel2rgba_->ref();
     channel2rgba_->allowShading( true );
@@ -60,13 +61,15 @@ FlatViewer::FlatViewer()
     rectangle_->setTextureChannels( channels_ );
     addChild( rectangle_->osgNode() );
 
+    setMaterial( gridlinematerial_ );
+    gridlinematerial_->setColor( Color( 0, 0, 0 ) );
+
     x1gridlines_->ref();
-    x1gridlines_->setMaterial( new Material );
-    x1gridlines_->getMaterial()->setColor( Color(0,0,0,0) );
+    x1gridlines_->setMaterial( gridlinematerial_ );
     addChild( x1gridlines_->osgNode() );
 
     x2gridlines_->ref();
-    x2gridlines_->setMaterial( x1gridlines_->getMaterial() );
+    x2gridlines_->setMaterial( gridlinematerial_ );
     addChild( x2gridlines_->osgNode() );
 }
 
@@ -210,7 +213,7 @@ void FlatViewer::updateGridLines( bool x1 )
     }
 
     const FlatPosData* posdata = pack(false) ? &pack(false)->posData() : 0;
-    IndexedPolyLine* gridlines = x1 ? x1gridlines_ : x2gridlines_;
+    PolyLine* gridlines = x1 ? x1gridlines_ : x2gridlines_;
 
     if ( !posdata || (x1 && !appearance().annot_.x1_.showgridlines_ ) ||
 	 (!x1 && !appearance().annot_.x2_.showgridlines_ ) )
@@ -218,6 +221,9 @@ void FlatViewer::updateGridLines( bool x1 )
 	gridlines->turnOn( false );
 	return;
     }
+
+    gridlines->removeAllPrimitiveSets();
+    gridlines->getCoordinates()->setEmpty();
 
     Interval<float> range; range.setFrom( posdata->range( x1 ) );
     range.sort();
@@ -228,7 +234,6 @@ void FlatViewer::updateGridLines( bool x1 )
 	sd = getDefaultGridSampling( x1 );
 
     int coordidx = 0, ciidx = 0;
-    Coordinates* coords = gridlines->getCoordinates();
     float pos = sd.start;
     while ( range.includes( pos, false ) )
     {
@@ -241,17 +246,19 @@ void FlatViewer::updateGridLines( bool x1 )
 	    ? c01_*(1-relpos)+c11_*relpos
 	    : c10_*(1-relpos)+c11_*relpos;
 	
-	coords->setPos( coordidx, startpos );
-	gridlines->setCoordIndex( ciidx++, coordidx++ );
-
-	coords->setPos( coordidx, stoppos );
-	gridlines->setCoordIndex( ciidx++, coordidx++ );
-	gridlines->setCoordIndex( ciidx++, -1 );
-
+	gridlines->addPoint( startpos );
+	gridlines->addPoint( stoppos );
+	const int lastidx = gridlines->size();
+	Geometry::RangePrimitiveSet* ps = 
+	    Geometry::RangePrimitiveSet::create();
+	Interval<int> range( lastidx-2, lastidx -1);
+	ps->setRange( range );
+	ps->ref();
+	gridlines->addPrimitiveSet( ps );
 	pos += sd.step;
     }
 
-    gridlines->removeCoordIndexAfter( ciidx-1 );
+    gridlines->dirtyCoordinates();
     gridlines->turnOn( true );
 }
 
@@ -306,6 +313,12 @@ void FlatViewer::setDisplayTransformation( const mVisTrans* trans )
 {
    if ( rectangle_ )
     rectangle_->setDisplayTransformation( trans );
+   
+   if ( x1gridlines_ )
+       x1gridlines_->setDisplayTransformation( trans );
+
+   if ( x2gridlines_ )
+       x2gridlines_->setDisplayTransformation( trans );
 
 }
 

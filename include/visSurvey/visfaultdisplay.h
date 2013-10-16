@@ -26,7 +26,7 @@ namespace visBase
 {
     class GeomIndexedShape;
     class Transformation;
-    class IndexedPolyLine3D;
+    class PolyLine3D;
     class DrawStyle;
 };
 
@@ -226,7 +226,7 @@ protected:
     bool				displayintersections_;
     bool				displayhorintersections_;
     
-    visBase::IndexedPolyLine3D*		activestickmarker_;
+    visBase::PolyLine3D*		activestickmarker_;
     int					activestick_;
 
     EM::Fault3D*			emfault_;

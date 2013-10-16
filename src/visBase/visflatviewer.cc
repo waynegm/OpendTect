@@ -233,7 +233,6 @@ void FlatViewer::updateGridLines( bool x1 )
     if ( mIsUdf(sd.start) || mIsUdf(sd.step) )
 	sd = getDefaultGridSampling( x1 );
 
-    int coordidx = 0, ciidx = 0;
     float pos = sd.start;
     while ( range.includes( pos, false ) )
     {
@@ -251,8 +250,8 @@ void FlatViewer::updateGridLines( bool x1 )
 	const int lastidx = gridlines->size();
 	Geometry::RangePrimitiveSet* ps = 
 	    Geometry::RangePrimitiveSet::create();
-	Interval<int> range( lastidx-2, lastidx -1);
-	ps->setRange( range );
+	Interval<int> psrange( lastidx-2, lastidx -1);
+	ps->setRange( psrange );
 	ps->ref();
 	gridlines->addPrimitiveSet( ps );
 	pos += sd.step;

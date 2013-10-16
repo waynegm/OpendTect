@@ -16,6 +16,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visdrawstyle.h"
 #include "vismaterial.h"
 #include "vistransform.h"
+#include "vispolygonoffset.h"
+#include "survinfo.h"
 #include "draw.h"
 #include "iopar.h"
 
@@ -37,12 +39,20 @@ GridLines::GridLines()
     , csinlchanged_(false)
     , cscrlchanged_(false)
     , cszchanged_(false)
+    , polygonoffset_( 0 )
+    , linematerial_( new Material )
 {
     inlines_ = crosslines_ = zlines_ = trcnrlines_ = 0;
     drawstyle_->ref();
-    pErrMsg("Todo: Add drawstyle to stateset.");
+    setMaterial( linematerial_ );
 
-    setMaterial( 0 );
+    polygonoffset_ = new PolygonOffset;
+    polygonoffset_->ref();
+    polygonoffset_->setFactor( -1.0f );
+    polygonoffset_->setUnits( 1.0f );
+    polygonoffset_->setMode( 
+	visBase::PolygonOffset::Projected | visBase::PolygonOffset::On  );
+
 }
 
 
@@ -50,12 +60,13 @@ GridLines::~GridLines()
 {
     for ( int idx=0; idx<polylineset_.size(); idx++ )
     {
-	removeChild( polylineset_[idx]->getInventorNode() );
+	removeChild( polylineset_[idx]->osgNode() );
 	polylineset_[idx]->unRef();
 	polylineset_.removeSingle(idx--);
     }
     
     drawstyle_->unRef();
+    polygonoffset_->unRef();
 }
 
 
@@ -177,34 +188,40 @@ void GridLines::setPlaneCubeSampling( const CubeSampling& cs )
 }
 
 
-void GridLines::addLine( IndexedPolyLine& lines, const Coord3& start,
+void GridLines::addLine( PolyLine& lines, const Coord3& start,
 			 const Coord3& stop )
 {
-    Coordinates* coords = lines.getCoordinates();
-    const int startidx = coords->addPos( start );
-    const int stopidx = coords->addPos( stop );
-    const int nrcrdidx = lines.nrCoordIndex();
-    lines.setCoordIndex( nrcrdidx, startidx );
-    lines.setCoordIndex( nrcrdidx+1, stopidx );
-    lines.setCoordIndex( nrcrdidx+2, -1 );
+    lines.addPoint( start );
+    lines.addPoint( stop );
+    const int lastidx = lines.size();
+    Geometry::RangePrimitiveSet* ps = 
+	Geometry::RangePrimitiveSet::create();
+    Interval<int> range( lastidx-2, lastidx -1);
+    ps->setRange( range );
+    ps->ref();
+    lines.addPrimitiveSet( ps );
 }
 
 
-IndexedPolyLine* GridLines::addLineSet()
+PolyLine* GridLines::addLineSet()
 {
-    IndexedPolyLine* polyline = IndexedPolyLine::create();
-    polyline->setMaterial( new Material );
+    PolyLine* polyline = PolyLine::create();
+    polyline->setMaterial( linematerial_ );
     polyline->ref();
+    polyline->removeAllPrimitiveSets();
+    polyline->addNodeState( polygonoffset_ );
+    polyline->addNodeState( drawstyle_ );
+    polyline->setDisplayTransformation( transformation_ );
     polylineset_ += polyline;
-    addChild( polyline->getInventorNode() );
+    addChild( polyline->osgNode() );
     return polyline;
 }
 
 
-void GridLines::emptyLineSet( IndexedPolyLine* line )
+void GridLines::emptyLineSet( PolyLine* line )
 {
-    line->removeCoordIndexAfter( -1 );
-    line->getCoordinates()->removeAfter( -1 );
+    line->removeAllPrimitiveSets();
+    line->getCoordinates()->setEmpty();
 }
 
 
@@ -241,6 +258,9 @@ void GridLines::drawCrosslines()
 		 Coord3(planecs_.hrg.start.inl,crl,planecs_.zrg.start),
 		 Coord3(planecs_.hrg.stop.inl,crl,planecs_.zrg.stop) );
     }
+    if ( crosslines_ )
+	crosslines_->dirtyCoordinates();
+
     cscrlchanged_ = false;
 }
 
@@ -312,9 +332,12 @@ void GridLines::setDisplayTransformation( const mVisTrans* tf )
 {
     if ( transformation_ )
 	transformation_->unRef();
-    transformation_ = tf;
+
+    transformation_  = tf;
+
     if ( transformation_ )
 	transformation_->ref();
+
 }
 
 

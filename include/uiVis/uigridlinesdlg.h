@@ -25,12 +25,14 @@ mExpClass(uiVis) uiGridLinesDlg : public uiDialog
 {
 public:
 			uiGridLinesDlg(uiParent*,visSurvey::PlaneDataDisplay*);
-
+			~uiGridLinesDlg();
 protected:
-
     void		setParameters();
     void 		showGridLineCB(CallBacker*);
     bool                acceptOK(CallBacker*);
+    bool                rejectOK(CallBacker*);
+    bool		updateGridLines();
+    void		settingChangedCB(CallBacker*);
 
     uiCheckBox*		inlfld_;
     uiCheckBox*		crlfld_;

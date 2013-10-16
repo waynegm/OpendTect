@@ -27,8 +27,9 @@ namespace visBase
 */
 
 class DrawStyle;
-class IndexedPolyLine;
+class PolyLine;
 class Transformation;
+class PolygonOffset;
 
 mExpClass(visBase) GridLines : public VisualObjectImpl
 {
@@ -63,18 +64,20 @@ protected:
     bool			cscrlchanged_;
     bool			cszchanged_;
 
-    IndexedPolyLine*		inlines_;
-    IndexedPolyLine*		crosslines_;
-    IndexedPolyLine*		zlines_;
-    IndexedPolyLine*		trcnrlines_;
+    PolyLine*			inlines_;
+    PolyLine*			crosslines_;
+    PolyLine*			zlines_;
+    PolyLine*			trcnrlines_;
+    PolygonOffset*		polygonoffset_;
 
-    ObjectSet<IndexedPolyLine>	polylineset_;
+    ObjectSet<PolyLine>		polylineset_;
     DrawStyle*			drawstyle_;
-    const mVisTrans*		transformation_;
+    const  mVisTrans*		transformation_;
+    Material*			linematerial_;
 
-    void			emptyLineSet(IndexedPolyLine*);
-    IndexedPolyLine*		addLineSet();
-    void			addLine(IndexedPolyLine&,const Coord3& start,
+    void			emptyLineSet(PolyLine*);
+    PolyLine*			addLineSet();
+    void			addLine(PolyLine&,const Coord3& start,
 					const Coord3& stop);
 
     void			drawInlines();

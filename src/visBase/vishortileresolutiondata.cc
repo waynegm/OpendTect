@@ -24,7 +24,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <osg/LightModel>
 #include <osg/LineWidth>
 #include <osg/Point>
-#include <osg/PolygonOffset>
 #include <osg/BoundingBox>
 #include <osg/UserDataContainer>
 
@@ -51,7 +50,6 @@ TileResolutionData::TileResolutionData( const HorizonSectionTile* sectile,
     , txcoords_( new osg::Vec2Array )
     , linecolor_( new osg::Vec4Array )
     , geodes_( new osg::DefaultUserDataContainer )
-    , polyoffset_( new osg::PolygonOffset )
     , trianglesosgps_( 0 )
     , linesosgps_( 0 )
     , pointsosgps_( 0 )
@@ -108,10 +106,8 @@ void TileResolutionData::setDisplayGeometryType( int dispgeometrytype )
 {
     osgswitch_->setAllChildrenOff();
     osgswitch_->setValue( Triangle, true );
-    polyoffset_->setFactor( -1.0f );
     if ( dispgeometrytype != Triangle ) 
     {
-	polyoffset_->setFactor( 1.0f );
 	osgswitch_->setValue( dispgeometrytype, true );
     }
 }
@@ -635,13 +631,6 @@ void TileResolutionData::buildOsgGeometres()
 
     createPrimitiveSets();
     refOsgPrimitiveSets();
-    
-    osg::ref_ptr<osg::StateSet> switchstateset = new osg::StateSet;
-    polyoffset_->setFactor( -1.0f );
-    polyoffset_->setUnits( 1.0f );
-    switchstateset->setAttributeAndModes( 
-	polyoffset_,osg::StateAttribute::OVERRIDE|osg::StateAttribute::ON );
-    osgswitch_->setStateSet( switchstateset );
 
 }
 

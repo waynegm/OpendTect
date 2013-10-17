@@ -35,7 +35,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistransform.h"
 #include "viscoord.h"
 #include "vissurvobj.h"
-#include "vispolygonoffset.h"
 #include "zdomain.h"
 #include "visdrawstyle.h"
 
@@ -66,16 +65,12 @@ FaultStickSetDisplay::FaultStickSetDisplay()
     , stickselectmode_(false)
 {
     sticks_->ref();
-    visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
-    polyoffset->setFactor( -1.0f );
-    polyoffset->setUnits( 1.0f );
     addChild( sticks_->osgNode() );
     sticks_->setName( "FaultSticks" );
    
     activestick_->ref();
     visBase::DrawStyle* ds = activestick_->addNodeState(new visBase::DrawStyle);
     ds->setLineStyle( LineStyle( LineStyle::Solid, 3 ) );
-    activestick_->addNodeState( polyoffset );
     addChild( activestick_->osgNode() );
 
     for ( int idx=0; idx<3; idx++ )
@@ -518,7 +513,8 @@ Coord3 FaultStickSetDisplay::disp2world( const Coord3& displaypos ) const
 static float zdragoffset = 0;
 
 #define mZScale() \
-    ( scene_ ? scene_->getZScale()*scene_->getFixedZStretch() : inlcrlsystem_->zScale() )
+    ( scene_ ? scene_->getZScale()*scene_->getFixedZStretch()\
+    : inlcrlsystem_->zScale() )\
 
 #define mSetUserInteractionEnd() \
     if ( !viseditor_->sower().moreToSow() ) \
@@ -964,7 +960,7 @@ bool FaultStickSetDisplay::coincidesWithPlane(
 		if ( plane->calcDist(interpos) <= 0.5*onestepdist )
 		{
 		    if ( prevdist <= 0.5*onestepdist )
-			intersectpoints.removeSingle( intersectpoints.size()-1 );
+			intersectpoints.removeSingle(intersectpoints.size()-1);
 
 		    res = res || coincidemode;
 		    intersectpoints += interpos;
@@ -1126,7 +1122,7 @@ void FaultStickSetDisplay::polygonFinishedCB( CallBacker* cb )
     {
 	const StickIntersectPoint* sip = stickintersectpoints_[idx];
 	Geometry::FaultStickSet* fss =
-			    emfss_->geometry().sectionGeometry( (EM::SectionID)sip->sid_ );
+	      emfss_->geometry().sectionGeometry( (EM::SectionID)sip->sid_ );
 
 	if ( !fss || fss->isStickSelected(sip->sticknr_)!=ctrldown_ )
 	    continue;
@@ -1187,7 +1183,7 @@ void FaultStickSetDisplay::updateKnotMarkers()
     {
 	const StickIntersectPoint* sip = stickintersectpoints_[idx];
 	Geometry::FaultStickSet* fss =
-			    emfss_->geometry().sectionGeometry( (EM::SectionID)sip->sid_ );
+	     emfss_->geometry().sectionGeometry( (EM::SectionID)sip->sid_ );
 	if ( !fss ) continue;
 	if ( fss->isStickSelected(sip->sticknr_) )
 	    groupidx = 1;

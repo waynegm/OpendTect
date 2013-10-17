@@ -35,7 +35,6 @@ namespace osg
     class Array;
     class StateSet;
     class DrawElementsUShort;
-    class PolygonOffset;
 }
 
 namespace osgUtil { class CullVisitor; }
@@ -96,7 +95,6 @@ protected:
     osg::DrawElementsUShort*	wireframesosgps_;
 
     osg::BoundingBox		bbox_;
-    osg::PolygonOffset*		polyoffset_;
     Threads::Mutex 		tesselatemutex_;
 
     bool			updateprimitiveset_;
@@ -119,8 +117,8 @@ private:
 
     void			tesselateCell(int cellidx);
     void			computeNormal(int nmidx, osg::Vec3&);
-    double			calcGradient(int row, int col,					
-				const StepInterval<int>& rcrange, bool isrow);
+    double	calcGradient(int row,int col,const StepInterval<int>& rcrange,
+		             bool isrow);
     void			refOsgPrimitiveSets();
     void			unRefOsgPrimitiveSets();
     void			createPrimitiveSets();

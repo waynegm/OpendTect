@@ -26,7 +26,6 @@ namespace visBase
     class Lines;
     class MarkerSet;
     class DrawStyle;
-    class PolygonOffset;
 }
 
 namespace Geometry { class FaultStickSet; class IndexedPrimitiveSet; } 

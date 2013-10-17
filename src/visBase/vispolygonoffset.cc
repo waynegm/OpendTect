@@ -19,7 +19,7 @@ PolygonOffset::PolygonOffset()
     : offset_( addAttribute( new osg::PolygonOffset ) )
 {
     offset_->ref();
-    mode_ = (unsigned int) ( Override | On ); 
+    mode_ = (unsigned int) ( On ); 
 }
 
 
@@ -52,7 +52,8 @@ float PolygonOffset::getUnits() const
     return offset_->getUnits();
 }
 
-void PolygonOffset::applyAttribute( osg::StateSet* ns, osg::StateAttribute* attr)
+void PolygonOffset::applyAttribute( osg::StateSet* ns, 
+    osg::StateAttribute* attr)
 {
     osg::StateAttribute::GLMode mvalue = (osg::StateAttribute::GLMode)mode_;
     ns->setAttributeAndModes( attr, mvalue );

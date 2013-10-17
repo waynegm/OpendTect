@@ -35,7 +35,6 @@ namespace visBase
     class PolyLine;
     class Material;
     class Text2;
-    class PolygonOffset;
 }
 namespace EM { class Horizon3D; }
 
@@ -101,7 +100,6 @@ protected:
     visBase::DrawStyle*		drawstyle_;
     visBase::Material*		material_;
     visBase::Text2*		labels_;
-    visBase::PolygonOffset*	polyoffset_;
 				// 
     Interval<float>		contoursteprange_;
     StepInterval<float>		contourintv_;

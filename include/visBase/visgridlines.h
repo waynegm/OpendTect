@@ -29,7 +29,6 @@ namespace visBase
 class DrawStyle;
 class PolyLine;
 class Transformation;
-class PolygonOffset;
 
 mExpClass(visBase) GridLines : public VisualObjectImpl
 {
@@ -68,7 +67,6 @@ protected:
     PolyLine*			crosslines_;
     PolyLine*			zlines_;
     PolyLine*			trcnrlines_;
-    PolygonOffset*		polygonoffset_;
 
     ObjectSet<PolyLine>		polylineset_;
     DrawStyle*			drawstyle_;

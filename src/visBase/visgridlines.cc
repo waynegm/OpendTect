@@ -39,19 +39,11 @@ GridLines::GridLines()
     , csinlchanged_(false)
     , cscrlchanged_(false)
     , cszchanged_(false)
-    , polygonoffset_( 0 )
     , linematerial_( new Material )
 {
     inlines_ = crosslines_ = zlines_ = trcnrlines_ = 0;
     drawstyle_->ref();
     setMaterial( linematerial_ );
-
-    polygonoffset_ = new PolygonOffset;
-    polygonoffset_->ref();
-    polygonoffset_->setFactor( -1.0f );
-    polygonoffset_->setUnits( 1.0f );
-    polygonoffset_->setMode( 
-	visBase::PolygonOffset::Projected | visBase::PolygonOffset::On  );
 
 }
 
@@ -66,7 +58,6 @@ GridLines::~GridLines()
     }
     
     drawstyle_->unRef();
-    polygonoffset_->unRef();
 }
 
 
@@ -209,7 +200,6 @@ PolyLine* GridLines::addLineSet()
     polyline->setMaterial( linematerial_ );
     polyline->ref();
     polyline->removeAllPrimitiveSets();
-    polyline->addNodeState( polygonoffset_ );
     polyline->addNodeState( drawstyle_ );
     polyline->setDisplayTransformation( transformation_ );
     polylineset_ += polyline;

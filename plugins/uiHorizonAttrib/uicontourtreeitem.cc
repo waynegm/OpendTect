@@ -46,7 +46,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vispolyline.h"
 #include "vistext.h"
 #include "vistransform.h"
-#include "vispolygonoffset.h"
 #include "viscoord.h"
 #include "zaxistransform.h"
 #include "executor.h"
@@ -511,7 +510,6 @@ uiContourTreeItem::uiContourTreeItem( const char* parenttype )
     , color_(0,0,0)
     , showlabels_(true)
     , labels_( 0 )
-    , polyoffset_( 0 )
 {
     optionsmenuitem_.iconfnm = "disppars";
     ODMainWin()->applMgr().visServer()->removeAllNotifier().notify(
@@ -602,7 +600,6 @@ void uiContourTreeItem::removeAll()
     }
     mUnRefAndZero( drawstyle_ );
     mUnRefAndZero( material_ );
-    mUnRefAndZero( polyoffset_ );
     removeLabels();
 }
 
@@ -799,13 +796,6 @@ bool uiContourTreeItem::createPolyLines()
 	lines_->setMaterial( material_ );
     }
 
-    if( !polyoffset_ )
-    {
-	mCreateAndRef( polyoffset_,PolygonOffset );
-	polyoffset_->setFactor( -1.0f );
-	polyoffset_->setUnits( -1.0f );
-	lines_->addNodeState( polyoffset_ );
-    }
     return true;
 }
 

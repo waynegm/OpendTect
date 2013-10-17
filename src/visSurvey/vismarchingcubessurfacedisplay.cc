@@ -872,7 +872,7 @@ MarchingCubesDisplay::PlaneIntersectInfo::PlaneIntersectInfo()
     offset->setFactor( -1.0f );
     offset->setUnits( 1.0f );
     offset->setMode( 
-	visBase::PolygonOffset::Projected | visBase::PolygonOffset::On  );
+	visBase::PolygonOffset::Protected | visBase::PolygonOffset::On  );
 
     visshape_ = visBase::GeomIndexedShape::create();
     visshape_->ref();

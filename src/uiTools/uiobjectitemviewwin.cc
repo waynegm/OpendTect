@@ -50,7 +50,8 @@ uiObjectItemViewWin::uiObjectItemViewWin(uiParent* p, const Setup& su)
     mainviewer_->disableScrollZoom();
     mainviewer_->reSize.notify( mCB(this,uiObjectItemViewWin,reSizeCB) );
     mainviewer_->rubberBandUsed.notify(mCB(this,uiObjectItemViewWin,rubBandCB));
-    mainviewer_->scrollBarUsed.notify(mCB(this,uiObjectItemViewWin,scrollBarCB));
+    mainviewer_->scrollBarUsed.notify(
+	    mCB(this,uiObjectItemViewWin,scrollBarCB) );
     infobar_ = new uiObjectItemViewInfoBar( this );
     infobar_->setPrefWidth( startwidth_ - mScrollBarSize );
     infobar_->setPrefHeight( su.infoheight_ );
@@ -73,13 +74,6 @@ uiObjectItemViewWin::uiObjectItemViewWin(uiParent* p, const Setup& su)
 
     makeSliders();
     versliderfld_->attach( ensureRightOf, dummyview );
-}
-
-
-uiObjectItemViewWin::~uiObjectItemViewWin()
-{
-    delete mainviewer_;
-    delete infobar_;
 }
 
 
@@ -296,11 +290,11 @@ void uiObjectItemViewWin::fitToScreen( CallBacker* )
 {
     mDynamicCastGet(uiGraphicsObjectScene*,sc,&mainviewer_->scene())
     const uiSize screensz( mainviewer_->width(), mainviewer_->height() );
-    if ( screensz.width()<=0 || screensz.height()<=0 )
+    if ( screensz.width()<=0 || screensz.height()<=0 ) 
 	return;
 
     const uiSize layoutsz(sc->layoutSize().width(),sc->layoutSize().height());
-    if ( layoutsz.width()<=0 || layoutsz.height()<=0 ) return;
+    if ( layoutsz.width()<=0 || layoutsz.height()<=0 )  return;
     float xratio = screensz.width()/(float)layoutsz.width();
     float yratio = screensz.height()/(float)layoutsz.height();
     float newhslval = hslval_*xratio;
@@ -377,6 +371,8 @@ void uiObjectItemViewWin::rubBandCB( CallBacker* )
 
 
 
+
+
 uiObjectItemViewInfoBar::uiObjectItemViewInfoBar( uiParent* p )
         : uiObjectItemView(p)
 {
@@ -437,7 +433,8 @@ void uiObjectItemViewInfoBar::reSizeItems()
 
 
 #define mDefBut(but,fnm,cbnm,tt) \
-    but = new uiToolButton(toolbar_,fnm,tt,mCB(this,uiObjectItemViewControl,cbnm) ); \
+    but = new uiToolButton(toolbar_,fnm,tt, \
+    mCB(this,uiObjectItemViewControl,cbnm) ); \
     toolbar_->addButton( but );
 
 uiObjectItemViewControl::uiObjectItemViewControl( uiObjectItemView& mw )

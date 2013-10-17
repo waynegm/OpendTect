@@ -58,10 +58,9 @@ public:
     };
 
 			uiObjectItemViewWin(uiParent*,const Setup&);
-			~uiObjectItemViewWin();
 
 
-    int 		nrItems() const { return mainviewer_->nrItems(); }
+    int 		nrItems() const { return mainviewer_->nrItems(); } 
     uiObjectItemView*	mainViewer() 	{ return mainviewer_; }
 
     void 		addObject(uiObject* grp,uiObject* infogrp=0);
@@ -99,7 +98,7 @@ protected:
     float		hslval_;
     float		vslval_;
     LinScaler		scaler_;
-    uiSize		screensz_;
+    uiSize              screensz_;
     bool		fittoscreen_;
 
     void		init();
@@ -111,7 +110,7 @@ protected:
     void 		addItem(uiObjectItem* itm,uiObjectItem* infoitm=0);
     void		insertItem(int idx,uiObjectItem*,uiObjectItem* info=0);
 
-    void		reSizeCB(CallBacker*);
+    void              	reSizeCB(CallBacker*);
     void		fitToScreen(CallBacker*);
     void		reSizeSld(CallBacker*);
     void		rubBandCB(CallBacker*);

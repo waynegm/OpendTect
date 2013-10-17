@@ -216,7 +216,8 @@ void DepthTabPlaneDragger::initOsgDragger()
     osgdragger_->addDraggerCallback( osgcallbackhandler_ );
 
     osgdragger_->getOrCreateStateSet()->setAttributeAndModes(
-	    	new osg::PolygonOffset(-1.0,-1.0), osg::StateAttribute::ON );
+		    new osg::PolygonOffset(-1.0,-1.0), 
+		    osg::StateAttribute::PROTECTED | osg::StateAttribute::ON );
     osgdragger_->getOrCreateStateSet()->setRenderingHint(
 					    osg::StateSet::TRANSPARENT_BIN );
 
@@ -263,7 +264,8 @@ void DepthTabPlaneDragger::initOsgDragger()
     geode->getStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
     geode->getStateSet()->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
     geode->getStateSet()->setAttributeAndModes(
-	    	new osg::PolygonOffset(1.0,1.0), osg::StateAttribute::ON );
+		    new osg::PolygonOffset(1.0,1.0),
+		    osg::StateAttribute::PROTECTED | osg::StateAttribute::ON );
     geode->setNodeMask( geode->getNodeMask() &
 			~visBase::cIntersectionTraversalMask() );
 
@@ -455,12 +457,14 @@ void DepthTabPlaneDragger::setTransDragKeys( bool depth, int ns )
 
 	if ( tpd && depth )
 	{
-	    //tpd->getTranslate1DDragger()->setActivationMouseButtonMask( osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
+	    //tpd->getTranslate1DDragger()->setActivationMouseButtonMask(
+	    //			osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
 	    tpd->getTranslate1DDragger()->setActivationModKeyMask( mask );
 	}
 	if ( tpd && !depth )
 	{
-	    //tpd->getTranslate1DDragger()->setActivationMouseButtonMask( osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
+	    //tpd->getTranslate1DDragger()->setActivationMouseButtonMask(
+	    //			osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON );
 	    tpd->getTranslate2DDragger()->setActivationModKeyMask( mask );
 	}
     }

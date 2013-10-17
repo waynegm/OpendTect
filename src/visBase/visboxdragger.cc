@@ -116,8 +116,9 @@ void BoxDraggerCallbackHandler::adjustPolygonOffset( bool start )
 		ss->removeAttribute( osg::StateAttribute::POLYGONOFFSET );
 	    else if ( !ss->getAttribute(osg::StateAttribute::POLYGONOFFSET) )
 	    {
-		ss->setAttributeAndModes(                
-		    new osg::PolygonOffset(0.0,0.0),osg::StateAttribute::ON );
+		ss->setAttributeAndModes(
+		    new osg::PolygonOffset(0.0,0.0),
+		    osg::StateAttribute::PROTECTED | osg::StateAttribute::ON );
 	    }
 	}
     }
@@ -225,7 +226,8 @@ BoxDragger::BoxDragger()
     }
 
     osgboxdragger_->getOrCreateStateSet()->setAttributeAndModes(
-	    new osg::PolygonOffset(-1.0,-1.0),osg::StateAttribute::ON );
+		    new osg::PolygonOffset(-1.0,-1.0),
+		    osg::StateAttribute::PROTECTED | osg::StateAttribute::ON );
 
 #if OSG_MIN_VERSION_REQUIRED(3,1,3)
     osgboxdragger_->setIntersectionMask( cIntersectionTraversalMask() );
@@ -245,7 +247,8 @@ BoxDragger::BoxDragger()
     geode->getOrCreateStateSet()->setMode( GL_BLEND, osg::StateAttribute::ON );
     geode->getStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
     geode->getStateSet()->setAttributeAndModes(
-		    new osg::PolygonOffset(1.0,1.0), osg::StateAttribute::ON );
+		    new osg::PolygonOffset(1.0,1.0),
+		    osg::StateAttribute::PROTECTED | osg::StateAttribute::ON );
     geode->getStateSet()->setRenderingHint( osg::StateSet::TRANSPARENT_BIN );
     geode->setNodeMask( geode->getNodeMask() &
 	    		~visBase::cIntersectionTraversalMask() );

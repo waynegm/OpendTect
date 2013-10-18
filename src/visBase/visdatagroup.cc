@@ -128,6 +128,7 @@ int DataObjectGroup::getFirstIdx( const DataObject* sceneobj ) const
 
 void DataObjectGroup::removeObject( int idx )
 {
+    if ( idx< 0 )  return;
     DataObject* sceneobject = objects_[idx];
     osggroup_->removeChild( sceneobject->osgNode() );
 

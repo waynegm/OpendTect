@@ -19,6 +19,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistristripset.h"
 #include "visshape.h"
 #include "visnormals.h"
+#include "vispolygonoffset.h"
 
 
 mCreateFactoryEntry( visBase::RandomPos2Body );
@@ -93,6 +94,14 @@ RandomPos2Body::RandomPos2Body()
     addChild( vtxshape_->osgNode() );
     vtxshape_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
     vtxshape_->setNormalBindType( VertexShape::BIND_PER_VERTEX );
+
+    visBase::PolygonOffset* offset = new visBase::PolygonOffset;
+    offset->setFactor( -1.0f );
+    offset->setUnits( 1.0f );
+    offset->setMode( 
+	visBase::PolygonOffset::Protected | visBase::PolygonOffset::On  );
+
+    vtxshape_->addNodeState( offset );
 
     // renderOneSide( 0 );
     renderOneSide( 1 );	// OSG-TODO: Why does it not look good for two-sided?

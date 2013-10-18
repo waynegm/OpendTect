@@ -45,7 +45,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "visseis2ddisplay.h"
 #include "vistransform.h"
 #include "vistexturechannels.h"
-#include "vispolygonoffset.h"
 
 
 mCreateFactoryEntry( visSurvey::FaultDisplay );
@@ -250,10 +249,6 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
     if ( !emfault_->name().isEmpty() )
 	setName( emfault_->name() );
 
-    visBase::PolygonOffset* polyoffset = new visBase::PolygonOffset;
-    polyoffset->setFactor( -1.0f );
-    polyoffset->setUnits( 1.0f );
-
     if ( !paneldisplay_ )
     {
 	paneldisplay_ = visBase::GeomIndexedShape::create();
@@ -264,7 +259,6 @@ bool FaultDisplay::setEMID( const EM::ObjectID& emid )
 	paneldisplay_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
 	paneldisplay_->useOsgNormal( true );
 	paneldisplay_->renderOneSide( 0 );
-	paneldisplay_->addNodeState( polyoffset );
 	paneldisplay_->setTextureChannels( channels_ );
 
 	addChild( paneldisplay_->osgNode() );

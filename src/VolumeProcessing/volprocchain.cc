@@ -143,14 +143,16 @@ bool ChainExecutor::scheduleWork()
     
     ObjectSet<Step> unscheduledsteps;
     
-    mGetStep( outputstep, chain_.outputstepid_, false );
+    //This is the output step of the whole chain,
+    //but the input step of the connection since in receives data
+    mGetStep( chainoutputstep, chain_.outputstepid_, false );
         
-    unscheduledsteps += outputstep;
+    unscheduledsteps += chainoutputstep;
     
     int firstepoch = 0;
     while ( unscheduledsteps.size() )
     {
-	Step* currentstep = unscheduledsteps.pop();
+	Step* currentstep = unscheduledsteps.pop(); //an inputstep
 	if ( !scheduledsteps_.addIfNew( currentstep ) )
 	    continue;
 	
@@ -167,12 +169,12 @@ bool ChainExecutor::scheduleWork()
 	web_.getConnections( currentstep->getID(), true, inputconnections );
 	for ( int idx=0; idx<inputconnections.size(); idx++ )
 	{
-	    mGetStep( inputstep, inputconnections[idx].outputstepid_, false );
-	    if ( scheduledsteps_.isPresent( inputstep ) ||
-		 unscheduledsteps.isPresent( inputstep ) )
+	    mGetStep( outputstep, inputconnections[idx].outputstepid_, false );
+	    if ( scheduledsteps_.isPresent( outputstep ) ||
+		 unscheduledsteps.isPresent( outputstep ) )
 		continue;
 	    
-	    unscheduledsteps += inputstep;
+	    unscheduledsteps += outputstep;
 	}
     }
 
@@ -281,10 +283,10 @@ bool ChainExecutor::Epoch::needsStepOutput( Step::ID stepid ) const
 	    return true;
 
 	TypeSet<Chain::Connection> inputconnections;
-	chainexec_.web_.getConnections( currentstep->getID(), false,
+	chainexec_.web_.getConnections( currentstep->getID(), true,
 					inputconnections );
 	for ( int idy=0; idy<inputconnections.size(); idy++ )
-	    if ( inputconnections[idy].inputstepid_==stepid )
+	    if ( inputconnections[idy].outputstepid_==stepid )
 		return true;
     }
     
@@ -302,17 +304,18 @@ bool ChainExecutor::Epoch::doPrepare()
 					inputconnections );
 	for ( int idy=0; idy<inputconnections.size(); idy++ )
 	{
-	    const Step* inputstep = chainexec_.chain_.getStepFromID(
+	    const Step* outputstep = chainexec_.chain_.getStepFromID(
 					inputconnections[idy].outputstepid_ );
-	    if ( !inputstep )
+	    if ( !outputstep )
 	    {
 		pErrMsg("This should not happen");
 		return false;
 	    }
 	    
-	    RefMan<const Attrib::DataCubes> input = inputstep->getOutput();
-	    const Step::SlotID outputslot = inputconnections[idy].outputslotid_;
-	    const int outputidx = inputstep->getOutputIdx( outputslot );
+	    RefMan<const Attrib::DataCubes> input = outputstep->getOutput();
+	    const Step::OutputSlotID outputslot =
+					inputconnections[idy].outputslotid_;
+	    const int outputidx = outputstep->getOutputIdx( outputslot );
 	    
 	    if ( !input->validCubeIdx(outputidx) )
 	    {
@@ -341,7 +344,7 @@ bool ChainExecutor::Epoch::doPrepare()
 	    return false;
 	}
 
-	Step::SlotID outputslotid = 0; // TODO: get correct slotid
+	Step::OutputSlotID outputslotid = 0; // TODO: get correct slotid
 	currentstep->setOutput( outputslotid, outcube,
 				stepoutputhrg, stepoutputzrg );
 		
@@ -498,9 +501,9 @@ const char* ChainExecutor::message() const
 
     
 Chain::Connection::Connection( Step::ID outpstepid,
-			       Step::SlotID outpslotid,
+			       Step::OutputSlotID outpslotid,
 			       Step::ID inpstepid,
-			       Step::SlotID inpslotid )
+			       Step::InputSlotID inpslotid )
     : outputstepid_( outpstepid )
     , outputslotid_( outpslotid )
     , inputstepid_( inpstepid )
@@ -591,7 +594,7 @@ bool Chain::validConnection( const VolProc::Chain::Connection& c ) const
     const Step* inputstep = getStepFromID( c.inputstepid_ );
     if ( !inputstep || !inputstep->validInputSlotID(c.inputslotid_) )
 	return false;
-    
+
     return true;
 }
 
@@ -776,7 +779,7 @@ bool Chain::usePar( const IOPar& par )
     if ( par.get(sKeyNrConnections(),nrconns) )
     {
 	Step::ID outputstepid;
-	Step::SlotID outputslotid;
+	Step::OutputSlotID outputslotid;
 	if ( !par.get(sKey::Output(),outputstepid,outputslotid) ||
 	     !setOutputSlot(outputstepid,outputslotid) )
 	{
@@ -808,10 +811,10 @@ bool Chain::usePar( const IOPar& par )
 	for ( int idx=1; idx<steps_.size(); idx++ )
 	{
 	    Connection conn;
-	    conn.outputstepid_ = steps_[idx-1]->getID();
-	    conn.outputslotid_ = steps_[idx-1]->getOutputSlotID( 0 );
 	    conn.inputstepid_ = steps_[idx]->getID();
 	    conn.inputslotid_ = steps_[idx]->getInputSlotID( 0 );
+	    conn.outputstepid_ = steps_[idx-1]->getID();
+	    conn.outputslotid_ = steps_[idx-1]->getOutputSlotID( 0 );
 	    
 	    if ( !addConnection( conn ) )
 	    {
@@ -836,7 +839,7 @@ void Chain::setStorageID( const MultiID& mid )
 { storageid_ = mid; }
     
     
-bool Chain::setOutputSlot( Step::ID stepid, Step::SlotID slotid )
+bool Chain::setOutputSlot( Step::ID stepid, Step::OutputSlotID slotid )
 {
     if ( steps_.size() > 1 )
     {
@@ -941,7 +944,7 @@ int Step::getInputSlotID( int idx ) const
 }
 
 
-void Step::getInputName( SlotID slotid, BufferString& res ) const
+void Step::getInputSlotName( InputSlotID slotid, BufferString& res ) const
 { res = "Input "; res.add( slotid ); }
 
 
@@ -957,7 +960,7 @@ int Step::getOutputSlotID( int idx ) const
 }
 
 
-bool Step::validInputSlotID( SlotID slotid ) const
+bool Step::validInputSlotID( InputSlotID slotid ) const
 {
     for ( int idx=0; idx<getNrInputs(); idx++ )
     {
@@ -969,7 +972,7 @@ bool Step::validInputSlotID( SlotID slotid ) const
 }
 
 
-bool Step::validOutputSlotID( SlotID slotid ) const
+bool Step::validOutputSlotID( OutputSlotID slotid ) const
 {
     for ( int idx=0; idx<getNrOutputs(); idx++ )
     {
@@ -990,7 +993,7 @@ StepInterval<int>
 { return si; }
 
 
-void Step::setInput( SlotID slotid, const Attrib::DataCubes* dc )
+void Step::setInput( InputSlotID slotid, const Attrib::DataCubes* dc )
 {
     if ( inputs_.isEmpty() )
 	resetInput();
@@ -1005,14 +1008,14 @@ void Step::setInput( SlotID slotid, const Attrib::DataCubes* dc )
 }
 
 
-const Attrib::DataCubes* Step::getInput( SlotID slotid ) const
+const Attrib::DataCubes* Step::getInput( InputSlotID slotid ) const
 {
     const int idx = inputslotids_.indexOf( slotid );
     return inputs_.validIdx(idx) ? inputs_[idx] : 0;
 }
 
 
-void Step::setOutput( SlotID slotid, Attrib::DataCubes* dc,
+void Step::setOutput( OutputSlotID slotid, Attrib::DataCubes* dc,
 		      const HorSampling& hrg,
 		      const StepInterval<int>& zrg )
 {
@@ -1025,24 +1028,24 @@ void Step::setOutput( SlotID slotid, Attrib::DataCubes* dc,
 }
 
 
-Attrib::DataCubes* Step::getOutput( SlotID slotid )
+Attrib::DataCubes* Step::getOutput( OutputSlotID slotid )
 {
     // TODO: implement using slotid
     return output_;
 }
 
 
-const Attrib::DataCubes* Step::getOutput( SlotID slotid ) const
+const Attrib::DataCubes* Step::getOutput( OutputSlotID slotid ) const
 { return const_cast<Step*>(this)->getOutput( slotid ); }
 
 
-void Step::enableOutput( SlotID slotid )
+void Step::enableOutput( OutputSlotID slotid )
 {
     outputslotids_.addIfNew( slotid );
 }
 
 
-int Step::getOutputIdx( SlotID slotid ) const
+int Step::getOutputIdx( OutputSlotID slotid ) const
 {
     return outputslotids_.indexOf( slotid );
 }

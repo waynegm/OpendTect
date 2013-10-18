@@ -182,7 +182,7 @@ Task* MatlabStep::createTask()
 	const Attrib::DataCubes* input = getInput( getInputSlotID(idx) );
 	if ( !input || input->nrCubes()<1 )
 	{
-	    getInputName( getInputSlotID(idx), errmsg_ );
+	    getInputSlotName( getInputSlotID(idx), errmsg_ );
 	    errmsg_.add( " not provided." );
 	    return 0;
 	}

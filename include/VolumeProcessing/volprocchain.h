@@ -46,13 +46,14 @@ mExpClass(VolumeProcessing) Step
 {
 public:
 				typedef int ID;
-				typedef int SlotID;
+				typedef int InputSlotID;
+				typedef int OutputSlotID;
     
 				mDefineFactoryInClass( Step, factory );
     virtual			~Step();
     
     static ID			cUndefID()		{ return mUdf(int); }
-    static SlotID		cUndefSlotID()		{ return mUdf(int); }
+    static int			cUndefSlotID()		{ return mUdf(int); }
     ID				getID() const		{ return id_; }
     
     Chain&			getChain()		{ return *chain_; }
@@ -64,13 +65,14 @@ public:
     void			resetInput();
     virtual bool		needsInput() const		= 0;
     virtual int			getNrInputs() const;
-    virtual SlotID		getInputSlotID(int idx) const;
-    virtual void		getInputName(SlotID,BufferString&) const;
+    virtual InputSlotID		getInputSlotID(int idx) const;
+    virtual void		getInputSlotName(InputSlotID,
+	    					 BufferString&) const;
 
     virtual int			getNrOutputs() const		{ return 1; }
-    virtual SlotID		getOutputSlotID(int idx) const;
-    bool			validInputSlotID(SlotID) const;
-    bool			validOutputSlotID(SlotID) const;
+    virtual OutputSlotID	getOutputSlotID(int idx) const;
+    bool			validInputSlotID(InputSlotID) const;
+    bool			validOutputSlotID(OutputSlotID) const;
 
     virtual HorSampling		getInputHRg(const HorSampling&) const;
 				/*!<When computing HorSampling, how
@@ -79,16 +81,16 @@ public:
 				/*!<When computing HorSampling, how
 				 big input is needed?*/
     
-    virtual void		setInput(SlotID,const Attrib::DataCubes*);
-    const Attrib::DataCubes*	getInput(SlotID) const;
-    virtual void		setOutput(SlotID,Attrib::DataCubes*,
+    virtual void		setInput(InputSlotID,const Attrib::DataCubes*);
+    const Attrib::DataCubes*	getInput(InputSlotID) const;
+    virtual void		setOutput(OutputSlotID,Attrib::DataCubes*,
 				      const HorSampling&,
 				      const StepInterval<int>&);
-    const Attrib::DataCubes*	getOutput(SlotID) const;
-    Attrib::DataCubes*		getOutput(SlotID);
+    const Attrib::DataCubes*	getOutput(OutputSlotID) const;
+    Attrib::DataCubes*		getOutput(OutputSlotID);
     
-    int				getOutputIdx(SlotID) const;
-    void			enableOutput(SlotID);
+    int				getOutputIdx(OutputSlotID) const;
+    void			enableOutput(OutputSlotID);
     
     virtual bool		canInputAndOutputBeSame() const { return false;}
     virtual bool		needsFullVolume() const { return true; }
@@ -118,17 +120,17 @@ protected:
     virtual bool	computeBinID(const BinID&,int threadid)	{ return false;}
     virtual bool	prepareComp(int nrthreads)		{ return true;}
     
-    Chain*			chain_;
+    Chain*				chain_;
     
     ObjectSet<const Attrib::DataCubes>	inputs_;
-    TypeSet<SlotID>		inputslotids_;
+    TypeSet<InputSlotID>		inputslotids_;
 
-    BufferString		username_;
-    ID				id_;
+    BufferString			username_;
+    ID					id_;
  
-    HorSampling			hrg_;
-    StepInterval<int>		zrg_;
-    TypeSet<SlotID>		outputslotids_; // enabled slotids
+    HorSampling				hrg_;
+    StepInterval<int>			zrg_;
+    TypeSet<OutputSlotID>		outputslotids_; // enabled slotids
 
 private:
     Attrib::DataCubes*		output_;
@@ -148,23 +150,25 @@ public:
     mExpClass(VolumeProcessing) Connection
     {
     public:
-				Connection( Step::ID outpstep=Step::cUndefID(),
-				    Step::SlotID outpslot=Step::cUndefSlotID(),
-				    Step::ID inpstep=Step::cUndefID(),
-				    Step::SlotID inpslot=Step::cUndefSlotID());
+			Connection( Step::ID outpstep=Step::cUndefID(),
+			    Step::OutputSlotID outpslot=Step::cUndefSlotID(),
+			    Step::ID inpstep=Step::cUndefID(),
+			    Step::InputSlotID inpslot=Step::cUndefSlotID());
 	
-	bool			isUdf() const;
-	bool			operator==(const Connection&) const;
-	bool			operator!=(const Connection&) const;
+	bool		isUdf() const;
+	bool		operator==(const Connection&) const;
+	bool		operator!=(const Connection&) const;
 	
-	void			fillPar(IOPar&,const char* key) const;
-	bool			usePar(const IOPar&,const char* key);
+	void		fillPar(IOPar&,const char* key) const;
+	bool		usePar(const IOPar&,const char* key);
 
-	Step::ID		outputstepid_;
-	Step::SlotID		outputslotid_;
+				//!Step that is receiving data
 	Step::ID		inputstepid_;
-	Step::SlotID		inputslotid_;
-	
+	Step::InputSlotID	inputslotid_;
+
+				//!Step that is sending data
+	Step::ID		outputstepid_;
+	Step::OutputSlotID	outputslotid_;
     };
     
     mExpClass(VolumeProcessing) Web
@@ -207,14 +211,13 @@ public:
     void			removeStep(int);
     const ObjectSet<Step>&	getSteps() const	{ return steps_; }
     
-    bool			setOutputSlot(Step::ID,Step::SlotID) const;
+    bool			setOutputSlot(Step::ID,Step::OutputSlotID);
 
     const VelocityDesc*		getVelDesc() const;
 
     void			fillPar(IOPar&) const;
     bool			usePar(const IOPar&);
 
-    bool			setOutputSlot(Step::ID,Step::SlotID);
     void			setStorageID(const MultiID& mid);
     const MultiID&		storageID() const { return storageid_; }
 
@@ -235,7 +238,7 @@ private:
     static const char*		sKeyConnection(int idx,BufferString&);
     
     Step::ID			outputstepid_;
-    Step::SlotID		outputslotid_;
+    Step::OutputSlotID		outputslotid_;
     
     MultiID			storageid_;
     ObjectSet<Step>		steps_;

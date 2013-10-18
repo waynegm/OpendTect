@@ -64,7 +64,7 @@ void uiStepDialog::addMultiInputFld()
     web.getConnections( step_->getID(), true, connections );
     for ( int idx=0; idx<nrinp; idx++ )
     {
-	Step::SlotID inpslotid = step_->getInputSlotID( idx );
+	Step::InputSlotID inpslotid = step_->getInputSlotID( idx );
 	Step::ID outputstepid = Step::cUndefID();
 	for ( int cidx=0; cidx<connections.size(); cidx++ )
 	{

@@ -57,9 +57,14 @@ NormalCalculator::NormalCalculator( Normals* normals, const od_int64 size,
 {
 }
 
-
 bool NormalCalculator::doWork(od_int64 start,od_int64 stop,int)
 {
+/* OSG-TODO: This implementation is not OK, and must be renewed in case
+   we decide to set useOsgAutoNormalComputation(false). Reversing is only
+   required when dealing with triangle strips, normals must be averaged
+   and not overwritten, and what about the display transformation? */
+
+/*
     for ( int idx = mCast(int,start); idx<=mCast(int,stop); idx++ )
     {
 	const int nrtriangle = idx/3;
@@ -81,6 +86,7 @@ bool NormalCalculator::doWork(od_int64 start,od_int64 stop,int)
 	normals_->setNormal( psidx_[idx+1], normal );
 	normals_->setNormal( psidx_[idx+2], normal );
     }
+*/
     return true;
 }
 
@@ -94,17 +100,9 @@ RandomPos2Body::RandomPos2Body()
     addChild( vtxshape_->osgNode() );
     vtxshape_->setPrimitiveType( Geometry::PrimitiveSet::Triangles );
     vtxshape_->setNormalBindType( VertexShape::BIND_PER_VERTEX );
+    vtxshape_->useOsgAutoNormalComputation( true );
 
-    visBase::PolygonOffset* offset = new visBase::PolygonOffset;
-    offset->setFactor( -1.0f );
-    offset->setUnits( 1.0f );
-    offset->setMode( 
-	visBase::PolygonOffset::Protected | visBase::PolygonOffset::On  );
-
-    vtxshape_->addNodeState( offset );
-
-    // renderOneSide( 0 );
-    renderOneSide( 1 );	// OSG-TODO: Why does it not look good for two-sided?
+    renderOneSide( 0 );
 }
 
 
@@ -119,12 +117,7 @@ RandomPos2Body::~RandomPos2Body()
 
 void RandomPos2Body::renderOneSide( int side )
 {
-    renderside_ = side;
-
-    if ( side >= 0 )
-	vtxshape_->setTwoSidedLight( !side );
-    else
-	pErrMsg("Not implemented");
+    vtxshape_->renderOneSide( side );
 }
 
 
@@ -209,10 +202,11 @@ bool RandomPos2Body::setPoints( const TypeSet<Coord3>& pts )
 	Geometry::IndexedPrimitiveSet::create( false );
     primitiveset->ref();
 
-    primitiveset->append( result.arr(), result. size() );
+    primitiveset->append( result.arr(), result.size() );
     vtxshape_->addPrimitiveSet( primitiveset );
     primitiveset->unRef();
 
+/* OSG-TODO: Remove if we keep using useOsgAutoNormalComputation(true)
     Normals* normals = Normals::create();
     normals->ref();
     
@@ -223,7 +217,7 @@ bool RandomPos2Body::setPoints( const TypeSet<Coord3>& pts )
 	vtxshape_->setNormals( normals );
     
     normals->unRef();
-
+*/
     vtxshape_->dirtyCoordinates();
     
     return true;

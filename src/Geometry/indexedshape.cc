@@ -178,14 +178,8 @@ void IndexedGeometry::appendCoordIndicesAsTriangles(
 
     for ( int idx = 0; idx< indices.size()-2; idx++ )
     {
-	const int pssize = primitiveset_->size();
-	const int nrtriangles = pssize/3;
+	const bool doreverse = reverse != bool(idx%2);
 
-	bool doreverse = false;
-	if ( reverse )
-	{ 
-	    doreverse = bool( nrtriangles%2 ) ? true : false;
-	}
 	const int startidx = doreverse ? idx+2 : idx;
 	const int endidx = doreverse ? idx : idx+2;
 	primitiveset_->append( indices[startidx] );

@@ -111,12 +111,7 @@ GeomIndexedShape::ColorHandler::~ColorHandler()
 
 void GeomIndexedShape::renderOneSide( int side )
 {
-    renderside_ = side;
-
-    if ( side >= 0 )
-	vtexshape_->setTwoSidedLight( !side );
-    else
-	pErrMsg("Not implemented");
+    vtexshape_->renderOneSide( side );
 }
 
 
@@ -286,7 +281,7 @@ void GeomIndexedShape::setSurface( Geometry::IndexedShape* ns, TaskRunner* tr )
 
 bool GeomIndexedShape::touch( bool forall, bool createnew, TaskRunner* tr )
 {
-    if( !shape_ )
+    if ( !shape_ )
 	return false;
 
     if ( !shape_->needsUpdate() && createnew )

@@ -65,6 +65,10 @@ public:
 
     float		inlDistance() const;
     float		crlDistance() const;
+
+    bool		isClockWise() const;
+    			/*!< Orientation is determined by rotating the
+			     inline axis to the crossline axis. */
     
     const CubeSampling&	sampling() const	{ return cs_; }
     
@@ -87,7 +91,8 @@ protected:
 /*!
 \brief Holds survey general information.
 
-  The surveyinfo is the primary source for ranges and steps.It also provides the  transformation between inline/xline <-> coordinates and lat/long estimates.
+  Surveyinfo is the primary source for ranges and steps. It also provides the
+  transformation between inline/xline <-> coordinates and lat/long estimates.
   
   Note: the Z range step is only a default. It should not be used further
   because different cubes/lines have different sample rates.

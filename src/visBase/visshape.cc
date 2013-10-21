@@ -22,6 +22,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vistexturechannels.h"
 #include "vistexturecoords.h"
 
+#include <osg/CullFace>
 #include <osg/PrimitiveSet>
 #include <osg/Switch>
 #include <osg/Geometry>
@@ -102,23 +103,23 @@ int Shape::getMaterialBinding() const
 }
 
 
-void Shape::setTwoSidedLight( bool yn )
+void Shape::renderOneSide( int side )
 {
     osg::StateSet* stateset = osgNode()->getOrCreateStateSet();
     if ( !stateset )
 	return;
 
-    osg::LightModel* lightmodel = (osg::LightModel*)
-		    stateset->getAttribute( osg::StateAttribute::LIGHTMODEL );
+    osg::ref_ptr<osg::LightModel> lightmodel = new osg::LightModel;
+    lightmodel->setTwoSided( true );
+    stateset->setAttributeAndModes( lightmodel, osg::StateAttribute::ON );
 
-    if ( !lightmodel )
-    {
-	lightmodel = new osg::LightModel;
-	stateset->setAttributeAndModes( lightmodel,
-		    osg::StateAttribute::OVERRIDE | osg::StateAttribute::ON );
-    }
+    stateset->removeAttribute( osg::StateAttribute::CULLFACE );
+    if ( side == 0 )
+	return;
 
-    lightmodel->setTwoSided( yn );
+    osg::ref_ptr<osg::CullFace> cullface = new osg::CullFace;
+    cullface->setMode( side<0 ? osg::CullFace::FRONT : osg::CullFace::BACK );
+    stateset->setAttributeAndModes( cullface, osg::StateAttribute::ON );
 }
 
 
@@ -429,7 +430,7 @@ void VertexShape::setNormalBindType( BindType normalbindtype )
 
 void VertexShape::materialChangeCB( CallBacker* )
 {
-    if( !osggeom_  || !material_  || !coords_ ) return;
+    if ( !osggeom_  || !material_  || !coords_ ) return;
 
     if ( colorbindtype_ == BIND_OFF )
     {
@@ -594,7 +595,8 @@ void VertexShape::addPrimitiveSetToScene( osg::PrimitiveSet* ps )
 
 void VertexShape::updatePartialGeometry( Interval<int> psrange )
 {
-    // wait for further implementing only update psrange, rests of primitive sets will be static 
+    /* wait for further implementing only update psrange, rests of primitive
+       sets will be static */
 
    /* osg::Vec4Array* colorarr = mGetOsgVec4Arr( material_->getColorArray() );
     osg::Vec4Array* osgcolorarr = mGetOsgVec4Arr( osggeom_->getColorArray() );*/

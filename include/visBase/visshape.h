@@ -54,11 +54,17 @@ public:
 
     int				getMaterialBinding() const;
 
+    void			renderOneSide(int side);
+				/*!< 0 = visible from both sides.
+				     1 = visible from positive side
+				    -1 = visible from negative side. */
+
     int				usePar(const IOPar&);
     void			fillPar(IOPar&) const;
-    void			setTwoSidedLight(bool);
 
-    
+    				// Latency, will be removed at next commit
+    void                        setTwoSidedLight(bool) { renderOneSide(0); } 
+
 protected:
 				Shape();
     virtual			~Shape();
@@ -124,8 +130,8 @@ public:
     void		setNormalBindType(BindType);
     void		updatePartialGeometry(Interval<int>);
     void		useVertexBufferRender(bool);
-			/*!<\true, osg use vertex buffer to render and ignore displaylist
-			false, osg use display list to render.*/
+			/*!<\true, osg use vertex buffer to render and ignore
+			    displaylist false, osg use display list to render.*/
 
     void		setTextureChannels(TextureChannels*);
     
@@ -160,7 +166,7 @@ protected:
     Geometry::PrimitiveSet::PrimitiveType	primitivetype_;
 
     Threads::Lock 				lock_;
-						/*!<lock will protect primitiveset
+						/*!<lock protects primitiveset
 						and osg color array*/
     ObjectSet<Geometry::PrimitiveSet>		primitivesets_;
 

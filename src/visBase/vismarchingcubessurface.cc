@@ -38,9 +38,9 @@ MarchingCubesSurface::MarchingCubesSurface()
     addChild( shape_->osgNode() );
     shape_->setSelectable( false );
     shape_->setMaterial( 0 );
+    shape_->useOsgNormal( true );
 
-    // renderOneSide( 0 );
-    renderOneSide( 1 );	// OSG-TODO: Why does it not look good for two-sided?
+    renderOneSide( 0 );
 }
 
 

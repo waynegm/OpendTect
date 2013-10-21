@@ -46,18 +46,15 @@ public:
     const mVisTrans*		getDisplayTransformation() const;
 
     void			renderOneSide(int side);
-
+    				/*!< 0 = visible from both sides.
+				   1 = visible from positive side
+				  -1 = visible from negative side. */
 protected:
     				~RandomPos2Body();
 
     TypeSet<Coord3>		picks_;			
     VertexShape*		vtxshape_;
     const mVisTrans*		transformation_;
-    int				renderside_;
-    				/*!< 0 = visible from both sides.
-				   1 = visible from positive side
-				  -1 = visible from negative side. */
-
 };
 
 

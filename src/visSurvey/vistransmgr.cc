@@ -117,15 +117,17 @@ void SceneTransformManager::computeICRotationTransform( const InlCrlSystem& ics,
     const double mat22 = x[1];
     const double mat24 = x[2];
 
+    const int sign = ics.isClockWise() ? -1 : 1;
+
     rotation->setA(	mat11,	mat12,	0,	mat14,
-		mat21,	mat22,	0,	mat24,
-		0,	0,	1,	0,
-		0,	0,	0,	1 );
+			mat21,	mat22,	0,	mat24,
+			0,	0,	sign,	0,
+			0,	0,	0,	1 );
     
     if ( disptrans )
 	disptrans->setA( inldist,	0,		0,		0,
 			 0,		crldist,	0,		0,
-			 0,		0,		zfactor,	0,
+			 0,		0,		sign*zfactor,	0,
 			 0,		0,		0,		1 );
 }
 

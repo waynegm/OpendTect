@@ -63,24 +63,30 @@ uiSurveyBoxObject::uiSurveyBoxObject( BaseMapObject* bmo, bool withlabels )
 }
 
 
-void uiSurveyBoxObject::setSurveyInfo( const SurveyInfo& si )
+void uiSurveyBoxObject::setSurveyInfo( const SurveyInfo* si )
 {
-    survinfo_ = &si;
+    survinfo_ = si;
+}
+
+
+void uiSurveyBoxObject::setVisibility( bool yn )
+{
+    itemGrp()->setVisible( yn );
 }
 
 
 void uiSurveyBoxObject::update()
 {
     if ( !survinfo_ || !transform_ )
-	return;
+	{ setVisibility( false ); return; }
 
     const SurveyInfo& si = *survinfo_;
     const CubeSampling& cs = si.sampling( false );
     Coord mapcnr[4];
     mapcnr[0] = si.transform( cs.hrg.start );
-    mapcnr[1] = si.transform( BinID(cs.hrg.start.inl,cs.hrg.stop.crl) );
+    mapcnr[1] = si.transform( BinID(cs.hrg.start.inl(),cs.hrg.stop.crl()) );
     mapcnr[2] = si.transform( cs.hrg.stop );
-    mapcnr[3] = si.transform( BinID(cs.hrg.stop.inl,cs.hrg.start.crl) );
+    mapcnr[3] = si.transform( BinID(cs.hrg.stop.inl(),cs.hrg.start.crl()) );
 
     uiPoint cpt[4];
     for ( int idx=0; idx<vertices_.size(); idx++ )
@@ -98,14 +104,15 @@ void uiSurveyBoxObject::update()
 	const int oppidx = idx < 2 ? idx + 2 : idx - 2;
 	const bool bot = cpt[idx].y > cpt[oppidx].y;
         BinID bid = si.transform( mapcnr[idx] );
-	Alignment al( Alignment::HCenter, bot ? Alignment::Top : Alignment::Bottom );
-	BufferString annot;
-        annot += bid.inl; annot += "/"; annot += bid.crl;
+	Alignment al( Alignment::HCenter,
+		      bot ? Alignment::Top : Alignment::Bottom );
 	uiPoint txtpos( cpt[idx].x, cpt[idx].y );
 	labels_[idx]->setPos( txtpos );
-	labels_[idx]->setText( annot.buf() );
+	labels_[idx]->setText( bid.getUsrStr() );
 	labels_[idx]->setAlignment( al );
     }
+
+    setVisibility( true );
 }
 
 
@@ -133,16 +140,22 @@ uiNorthArrowObject::uiNorthArrowObject( BaseMapObject* bmo, bool withangle )
 }
 
 
-void uiNorthArrowObject::setSurveyInfo( const SurveyInfo& si )
+void uiNorthArrowObject::setSurveyInfo( const SurveyInfo* si )
 {
-    survinfo_ = &si;
+    survinfo_ = si;
+}
+
+
+void uiNorthArrowObject::setVisibility( bool yn )
+{
+    itemGrp()->setVisible( yn );
 }
 
 
 void uiNorthArrowObject::update()
 {
     if ( !survinfo_ || !transform_ )
-	return;
+	{ setVisibility( false ); return; }
 
     static const float halfpi = M_PI * .5;
     static const float quartpi = M_PI * .25;
@@ -197,6 +210,7 @@ void uiNorthArrowObject::update()
 	
     anglelabel_->setPos( mCast(float,lastx), mCast(float,yarrowtop) );
     anglelabel_->setText( angtxt );
+    setVisibility( true );
 }
 
 
@@ -220,8 +234,10 @@ uiSurveyMap::uiSurveyMap( uiParent* p, bool withtitle )
 }
 
 
-void uiSurveyMap::drawMap( const SurveyInfo* si )
+void uiSurveyMap::setSurveyInfo( const SurveyInfo* si )
 {
+    survinfo_ = si;
+
     if ( !survbox_ )
     {
 	survbox_ = new uiSurveyBoxObject( 0, true );
@@ -233,24 +249,24 @@ void uiSurveyMap::drawMap( const SurveyInfo* si )
 	}
     }
 
-    if ( !si )
-	return;
-
-    if ( si != survinfo_ )
-	survinfo_ = si;
-
-    view_.setViewArea( 0, 0, view_.scene().width(), view_.scene().height() );
-
-    uiBorder border( 20, title_ ? 70 : 20, 20, 20 );
-    uiSize sz( (int)view_.scene().width(), (int)view_.scene().height() );
-    uiRect rc = border.getRect( sz );
-    w2ui_.set( rc, *si );
-    if ( title_ )
-	title_->setText( si->name() );
-
-    survbox_->setSurveyInfo( *si );
+    survbox_->setSurveyInfo( survinfo_ );
     if ( northarrow_ )
-	northarrow_->setSurveyInfo( *si );
+	northarrow_->setSurveyInfo( survinfo_ );
+    if ( title_ )
+	title_->setVisible( survinfo_ );
+
+    if ( survinfo_ )
+    {
+	view_.setViewArea( 0, 0, view_.scene().width(),
+				 view_.scene().height() );
+
+	uiBorder border( 20, title_ ? 70 : 20, 20, 20 );
+	uiSize sz( (int)view_.scene().width(), (int)view_.scene().height() );
+	uiRect rc = border.getRect( sz );
+	w2ui_.set( rc, *survinfo_ );
+	if ( title_ )
+	    title_->setText( survinfo_->name() );
+    }
 
     uiBaseMap::reDraw();
 }
@@ -258,9 +274,5 @@ void uiSurveyMap::drawMap( const SurveyInfo* si )
 
 void uiSurveyMap::reDraw( bool )
 {
-    if ( !survinfo_ )
-	return;
-
-    drawMap( survinfo_ );
+    setSurveyInfo( survinfo_ );
 }
-

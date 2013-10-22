@@ -14,7 +14,7 @@ ________________________________________________________________________
 -*/
  
 #include "basicmod.h"
-#include "position.h"
+#include "coord.h"
 
 
 /*!
@@ -32,8 +32,8 @@ public:
     static Coord	transform(const LatLong&); //!< Uses SI()
     static LatLong	transform(const Coord&);   //!< Uses SI()
 
-    void		fill(char*) const;
-    bool		use(const char*);
+    const char*		getUsrStr() const;
+    bool		parseUsrStr(const char*);
 
     void		getDMS(bool lat,int&,int&,float&) const;
     void		setDMS(bool lat,int,int,float);
@@ -63,8 +63,8 @@ public:
     LatLong		transform(const Coord&) const;
     Coord		transform(const LatLong&) const;
 
-    void		fill(char*) const;
-    bool		use(const char*);
+    const char*		getUsrStr() const;
+    bool		parseUsrStr(const char*);
 
     Coord		refCoord() const	{ return refcoord_; }
     LatLong		refLatLong() const	{ return reflatlng_; }

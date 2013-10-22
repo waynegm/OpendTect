@@ -27,7 +27,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uitoolbutton.h"
 
 #include "envvars.h"
-#include "errh.h"
 #include "filepath.h"
 #include "helpview.h"
 #include "iopar.h"
@@ -222,7 +221,7 @@ uiMainWinBody::~uiMainWinBody()
     {
 	toolbarsmnu_->clear();
 	if ( toolbarsmnu_->isStandAlone() )
-    delete toolbarsmnu_;
+	    delete toolbarsmnu_;
     }
 
     if ( !deletefromod_ )
@@ -292,7 +291,7 @@ void uiMainWinBody::construct( int nrstatusflds, bool wantmenubar )
 	    statusbar = new uiStatusBar( &handle(),
 					  "MainWindow StatusBar handle", *mbar);
 	else
-	    pErrMsg("No statusbar returned from Qt");
+	    { pErrMsg("No statusbar returned from Qt"); }
 
 	if ( nrstatusflds > 0 )
 	{
@@ -306,7 +305,7 @@ void uiMainWinBody::construct( int nrstatusflds, bool wantmenubar )
 	if ( qmenubar )
 	    menubar = new uiMenuBar( &handle(), "MenuBar", qmenubar );
 	else
-	    pErrMsg("No menubar returned from Qt");
+	    { pErrMsg("No menubar returned from Qt"); }
 
 	toolbarsmnu_ = new uiMenu( &handle(), "Toolbars" );
     }
@@ -386,8 +385,9 @@ QMenu* uiMainWinBody::createPopupMenu()
 
 void uiMainWinBody::popTimTick( CallBacker* )
 {
-    if ( popped_up ) { pErrMsg( "huh?" );  return; }
-	popped_up = true;
+    if ( popped_up )
+    	{ pErrMsg( "huh?" ); return; }
+    popped_up = true;
 
 // TODO: Remove when we can get rid of the popTimTick
     if ( prefsz_.hNrPics()>0 && prefsz_.vNrPics()>0 )
@@ -514,10 +514,7 @@ void uiMainWinBody::updateToolbarsMenu()
 void uiMainWinBody::addToolBar( uiToolBar* tb )
 {
     if ( toolbars_.isPresent(tb) )
-    {
-	pErrMsg("Toolbar is already added");
-	return;
-    }
+	{ pErrMsg("Toolbar is already added"); return; }
     QMainWindow::addToolBar( (Qt::ToolBarArea)tb->prefArea(), tb->qwidget() );
     toolbars_ += tb;
     renewToolbarsMenu();
@@ -1155,16 +1152,8 @@ const char* uiMainWin::uniqueWinTitle( const char* txt,
 bool uiMainWin::grab( const char* filenm, int zoom,
 		      const char* format, int quality ) const
 {
-    const QDesktopWidget* desktop = QApplication::desktop();
-    if ( !desktop )
-	return false;
-
-    const WId desktopwinid = desktop->winId();
-    const QPixmap desktopsnapshot = QPixmap::grabWindow( desktopwinid,
-							 desktop->x(),
-							 desktop->y(),
-							 desktop->width(),
-							 desktop->height() );
+    const WId desktopwinid = QApplication::desktop()->winId();
+    const QPixmap desktopsnapshot = QPixmap::grabWindow( desktopwinid );
     QPixmap snapshot = desktopsnapshot;
     if ( zoom > 0 )
     {
@@ -1174,8 +1163,7 @@ bool uiMainWin::grab( const char* filenm, int zoom,
 
 	const int width = qwin->frameGeometry().width();
 	const int height = qwin->frameGeometry().height();
-	const int qwiny = qwin->geometry().y(); //better image, tackling the task bar
-	snapshot = desktopsnapshot.copy( qwin->x(), qwiny, width, height );
+	snapshot = desktopsnapshot.copy( qwin->x(), qwin->y(), width, height );
     }
 
     return snapshot.save( QString(filenm), format, quality );
@@ -1797,8 +1785,8 @@ void uiDialog::setButtonText( Button but, const char* txt )
         case CANCEL	: setCancelText( txt ); break;
         case SAVE	: enableSaveButton( txt ); break;
         case HELP	: pErrMsg("set help txt but"); break;
-        case CREDITS: pErrMsg("set credits txt but");
-        case TRANSLATE: pErrMsg("set transl txt but");
+        case CREDITS	: pErrMsg("set credits txt but"); break;
+        case TRANSLATE	: pErrMsg("set transl txt but"); break;
     }
 }
 

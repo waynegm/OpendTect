@@ -203,10 +203,7 @@ void uiODApplMgr::surveyToBeChanged( CallBacker* )
 
     bool anythingasked = false;
     if ( !appl_.askStore(anythingasked,"Survey change") )
-    {
-	IOM().disallowSurveyChange();
-	return;
-    }
+	{ IOM().setChangeSurveyBlocked( true ); return; }
 
     if ( nlaserv_ ) nlaserv_->reset();
     delete attrserv_; attrserv_ = 0;
@@ -632,7 +629,7 @@ void uiODApplMgr::calShiftAttribute( int attrib, const Attrib::SelSpec& as )
 
     attribvals[0] = 0.0; //depth
 
-    BinIDValueSet::Pos bvspos;
+    BinIDValueSet::SPos bvspos;
     while ( dpsset[0]->bivSet().next(bvspos) )
     {
 	const BinID binid = dpsset[0]->bivSet().getBinID( bvspos );
@@ -786,9 +783,9 @@ bool uiODApplMgr::evaluate2DAttribute( int visid, int attrib )
     if ( !s2d ) return false;
 
     CubeSampling cs;
-    cs.hrg.start.inl = cs.hrg.stop.inl = 0;
-    cs.hrg.start.crl = s2d->getTraceNrRange().start;
-    cs.hrg.stop.crl = s2d->getTraceNrRange().stop;
+    cs.hrg.start.inl() = cs.hrg.stop.inl() = 0;
+    cs.hrg.start.crl() = s2d->getTraceNrRange().start;
+    cs.hrg.stop.crl() = s2d->getTraceNrRange().stop;
     cs.zrg.setFrom( s2d->getZRange(false) );
 
     uiTaskRunner uitr( &appl_ ); 

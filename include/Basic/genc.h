@@ -19,13 +19,9 @@ Some general utilities, that need to be accessible in many places:
 #include "gendefs.h"
 #endif
 
-
-#ifdef __cpp__
 # include "string2.h"
+
 extern "C" {
-#else
-# include "string2_c.h"
-#endif
 
 mGlobal(Basic) const char* GetProjectVersionName(void);
 		/*!< "dTect Vx.x" */
@@ -91,19 +87,12 @@ mGlobal( Basic ) void ForkProcess(void);
     
 mGlobal( Basic ) int InSysAdmMode(void);
 mGlobal( Basic ) void SetInSysAdmMode(void);
-    
-    
+
+
 inline void EmptyFunction() 			{}
 /* Used in some macros and ifdefs */
 
-#ifdef __cpp__
 }
-#else
-/* C only */
-
-typedef char	FileNameString[mMaxFilePathLength+1];
-
-#endif
 
 
 #endif

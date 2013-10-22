@@ -24,7 +24,6 @@ ________________________________________________________________________
 class SoCoordinate3;
 class SoGroup;
 class UTMPosition;
-class Executor;
 
 namespace Geometry { class PosIdHolder; }
 

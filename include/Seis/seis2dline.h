@@ -16,9 +16,8 @@ ________________________________________________________________________
 #include "namedobj.h"
 #include "linekey.h"
 #include "objectset.h"
-#include <iosfwd>
+#include "od_iosfwd.h"
 
-class IOPar;
 class IOObj;
 class Executor;
 class SeisTrcBuf;
@@ -29,7 +28,6 @@ class SeisTrcWriter;
 class Seis2DLinePutter;
 class Seis2DLineIOProvider;
 class OD_2DLineGeometryFrom2DLinesTransf;
-template <class T> class StepInterval;
 namespace PosInfo	{ class LineSet2DData; class Line2DData; }
 namespace Seis		{ class SelData; }
 
@@ -109,8 +107,8 @@ public:
     bool		haveMatch(int,const BinIDValueSet&) const;
     			//!< Uses getGeometry
 
-    void		getFrom(std::istream&,BufferString*);
-    void		putTo(std::ostream&) const;
+    void		getFrom(od_istream&,BufferString*);
+    void		putTo(od_ostream&) const;
 
     static void		invalidateCache();
 
@@ -139,7 +137,7 @@ public:
 private:
     bool		getGeometry(PosInfo::LineSet2DData&) const;
     bool		getGeometry(int,PosInfo::Line2DData&) const;
-    Executor*		geometryDumper(std::ostream&,bool inc_nr,
+    Executor*		geometryDumper(od_ostream&,bool inc_nr,
 	    				float z_val=mUdf(float),
 	    				const char* linekey=0) const;
 

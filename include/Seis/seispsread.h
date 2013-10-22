@@ -13,8 +13,8 @@ ________________________________________________________________________
 -*/
 
 #include "seismod.h"
-#include "position.h"
-class IOPar;
+#include "bufstring.h"
+#include "binid.h"
 class SeisTrc;
 class SeisTrcBuf;
 class BufferStringSet;

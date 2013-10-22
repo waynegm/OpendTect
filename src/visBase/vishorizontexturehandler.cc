@@ -302,7 +302,7 @@ void HorizonTextureHandler::updateTexture(int channel,int sectionid,
 	versiondata += vals;
     }
 
-    BinIDValueSet::Pos pos;
+    BinIDValueSet::SPos pos;
     const int startsourceidx = nrfixedcols + (nrfixedcols==sidcol ? 1 : 0);
     while ( data->next(pos,true) )
     {
@@ -313,16 +313,16 @@ void HorizonTextureHandler::updateTexture(int channel,int sectionid,
 	const BinID bid = data->getBinID( pos );
 	if ( horsection_->userchangedisplayrg_ )
 	{
-	    if ( !rrg.includes(bid.inl, false) ||!crg.includes(bid.crl,false) )
+	    if ( !rrg.includes(bid.inl(), false) ||!crg.includes(bid.crl(),false) )
 		continue;
 
-	    if ( ( bid.inl-rrg.start ) % rrg.step || 
-		 ( bid.crl-crg.start ) % crg.step )
+	    if ( ( bid.inl()-rrg.start ) % rrg.step || 
+		 ( bid.crl()-crg.start ) % crg.step )
 		continue;
 	}
 
-	const int inlidx = rrg.nearestIndex( bid.inl );
-	const int crlidx = crg.nearestIndex( bid.crl );
+	const int inlidx = rrg.nearestIndex( bid.inl() );
+	const int crlidx = crg.nearestIndex( bid.crl() );
 
 	const int offset = inlidx*nrcols + crlidx;
 	if ( offset>=nrcells )

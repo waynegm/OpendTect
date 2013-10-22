@@ -29,6 +29,7 @@ mImplFactory1Param(Property,const PropertyRef&,Property::factory)
 DefineEnumNames(PropertyRef,StdType,0,"Standard Property")
 {
 	"Anisotropy",
+	"Area",
 	"Classification",
 	"Compressibility",
 	"Density",
@@ -45,7 +46,8 @@ DefineEnumNames(PropertyRef,StdType,0,"Standard Property")
 	"Temperature",
 	"Time",
 	"Velocity",
-	"Volumetrics",
+	"Volumetrics", // ratios: relative
+	"Volume", // absolute
 	"Other",
 	0
 };
@@ -69,9 +71,10 @@ PropRef_ThickRef_Man()
     IOM().afterSurveyChange.notify( mCB(this,PropRef_ThickRef_Man,setZUnit) );
 }
 
+
 void setZUnit( CallBacker* cb=0 )
 {
-    ref_->disp_.unit_ = SI().depthsInFeetByDefault() ? "ft" : "m";
+    ref_->disp_.unit_ = UnitOfMeasure::zUnitAnnot(false, true, false );
 }
 
     PropertyRef*	ref_;

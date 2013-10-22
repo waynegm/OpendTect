@@ -159,24 +159,24 @@ TypeSet< Interval<int> > DataCubesOutput::getLocalZRanges( const BinID&,
 
 void DataCubesOutput::adjustInlCrlStep( const CubeSampling& cs )
 {
-    if ( cs.hrg.step.inl > desiredvolume_.hrg.step.inl )
+    if ( cs.hrg.step.inl() > desiredvolume_.hrg.step.inl() )
     {
-	desiredvolume_.hrg.step.inl = cs.hrg.step.inl;
-	dcsampling_.hrg.step.inl = cs.hrg.step.inl;
-	desiredvolume_.hrg.start.inl = cs.hrg.start.inl;
+	desiredvolume_.hrg.step.inl() = cs.hrg.step.inl();
+	dcsampling_.hrg.step.inl() = cs.hrg.step.inl();
+	desiredvolume_.hrg.start.inl() = cs.hrg.start.inl();
     }
-    if ( cs.hrg.step.crl > desiredvolume_.hrg.step.crl )
+    if ( cs.hrg.step.crl() > desiredvolume_.hrg.step.crl() )
     {
-	desiredvolume_.hrg.step.crl = cs.hrg.step.crl;
-	dcsampling_.hrg.step.crl = cs.hrg.step.crl;
-	desiredvolume_.hrg.start.crl = cs.hrg.start.crl;
+	desiredvolume_.hrg.step.crl() = cs.hrg.step.crl();
+	dcsampling_.hrg.step.crl() = cs.hrg.step.crl();
+	desiredvolume_.hrg.start.crl() = cs.hrg.start.crl();
     }
 }
 
 
 #define mGetSz(dir)\
-	dir##sz = (dcsampling_.hrg.stop.dir - dcsampling_.hrg.start.dir)\
-		  /dcsampling_.hrg.step.dir + 1;\
+	dir##sz = (dcsampling_.hrg.stop.dir() - dcsampling_.hrg.start.dir())\
+		  /dcsampling_.hrg.step.dir() + 1;\
 
 #define mGetZSz()\
 	zsz = mNINT32( ( dcsampling_.zrg.stop - dcsampling_.zrg.start )\
@@ -221,9 +221,9 @@ void DataCubesOutput::collectData( const DataHolder& data, float refstep,
 	    			 mMIN(inputrg.stop, outrg.stop ) );
 
     const int inlidx =
-	datacubes_->inlsampling_.nearestIndex(info.binid.inl);
+	datacubes_->inlsampling_.nearestIndex(info.binid.inl());
     const int crlidx =
-	datacubes_->crlsampling_.nearestIndex(info.binid.crl);
+	datacubes_->crlsampling_.nearestIndex(info.binid.crl());
 
     for ( int desout=0; desout<desoutputs_.size(); desout++ )
     {
@@ -279,12 +279,12 @@ void DataCubesOutput::init( float refstep )
 {
     datacubes_ = new Attrib::DataCubes;
     datacubes_->ref();
-    datacubes_->inlsampling_= StepInterval<int>(dcsampling_.hrg.start.inl,
-						dcsampling_.hrg.stop.inl,
-						dcsampling_.hrg.step.inl);
-    datacubes_->crlsampling_= StepInterval<int>(dcsampling_.hrg.start.crl,
-						dcsampling_.hrg.stop.crl,
-						dcsampling_.hrg.step.crl);
+    datacubes_->inlsampling_= StepInterval<int>(dcsampling_.hrg.start.inl(),
+						dcsampling_.hrg.stop.inl(),
+						dcsampling_.hrg.step.inl());
+    datacubes_->crlsampling_= StepInterval<int>(dcsampling_.hrg.start.crl(),
+						dcsampling_.hrg.stop.crl(),
+						dcsampling_.hrg.step.crl());
     datacubes_->z0_ = mNINT32(dcsampling_.zrg.start/refstep);
     datacubes_->zstep_ = refstep;
     int inlsz, crlsz, zsz;
@@ -629,7 +629,7 @@ TwoDOutput::~TwoDOutput()
 
 bool TwoDOutput::wantsOutput( const BinID& bid ) const
 {
-    return seldata_->crlRange().includes(bid.crl,true);
+    return seldata_->crlRange().includes(bid.crl(),true);
 }
 
 
@@ -645,10 +645,10 @@ void TwoDOutput::setGeometry( const Interval<int>& trg,
 bool TwoDOutput::getDesiredVolume( CubeSampling& cs ) const
 {
     const Interval<int> rg( seldata_->crlRange() );
-    cs.hrg.start.crl = rg.start; cs.hrg.stop.crl = rg.stop;
+    cs.hrg.start.crl() = rg.start; cs.hrg.stop.crl() = rg.stop;
     const Interval<float> zrg( seldata_->zRange() );
     cs.zrg = StepInterval<float>( zrg.start, zrg.stop, SI().zStep() );
-    cs.hrg.start.inl = cs.hrg.stop.inl = 0;
+    cs.hrg.start.inl() = cs.hrg.stop.inl() = 0;
     return true;
 }
 
@@ -709,7 +709,7 @@ LocationOutput::LocationOutput( BinIDValueSet& bidvalset )
 {
     ensureSelType( Seis::Table );
     seldata_->setIsAll( false );
-    ((Seis::TableSelData*)seldata_)->binidValueSet().allowDuplicateBids( true );
+    ((Seis::TableSelData*)seldata_)->binidValueSet().allowDuplicateBinIDs(true);
     ((Seis::TableSelData*)seldata_)->binidValueSet() = bidvalset;
 
     arebiddupl_ = areBIDDuplicated();
@@ -719,8 +719,8 @@ LocationOutput::LocationOutput( BinIDValueSet& bidvalset )
 void LocationOutput::collectData( const DataHolder& data, float refstep,
 				  const SeisTrcInfo& info )
 {
-    BinIDValueSet::Pos pos = bidvalset_.findFirst( info.binid );
-    if ( !pos.valid() ) return;
+    BinIDValueSet::SPos pos = bidvalset_.find( info.binid );
+    if ( !pos.isValid() ) return;
 
     const int desnrvals = desoutputs_.size()+1;
     if ( bidvalset_.nrVals() < desnrvals )
@@ -767,8 +767,8 @@ void LocationOutput::computeAndSetVals( const DataHolder& data, float refstep,
 
 bool LocationOutput::wantsOutput( const BinID& bid ) const
 {
-    BinIDValueSet::Pos pos = bidvalset_.findFirst( bid );
-    return pos.valid();
+    BinIDValueSet::SPos pos = bidvalset_.find( bid );
+    return pos.isValid();
 }
 
 
@@ -779,8 +779,8 @@ TypeSet< Interval<int> > LocationOutput::getLocalZRanges(
     //TODO not 100% optimized, case of picksets for instance->find better algo
     TypeSet< Interval<int> > sampleinterval;
 
-    BinIDValueSet::Pos pos = bidvalset_.findFirst( bid );
-    while ( pos.valid() )
+    BinIDValueSet::SPos pos = bidvalset_.find( bid );
+    while ( pos.isValid() )
     {
 	const float* vals = bidvalset_.getVals( pos );
 	int zidx;
@@ -807,7 +807,7 @@ TypeSet< Interval<int> > LocationOutput::getLocalZRanges(
 bool LocationOutput::areBIDDuplicated() const
 {
     BinIDValueSet tmpset(bidvalset_);
-    tmpset.allowDuplicateBids(false);
+    tmpset.allowDuplicateBinIDs(false);
 
     return tmpset.totalSize()<bidvalset_.totalSize();
 }
@@ -823,7 +823,7 @@ TrcSelectionOutput::TrcSelectionOutput( const BinIDValueSet& bidvalset,
     delete seldata_;
     Seis::TableSelData& sd = *new Seis::TableSelData( bidvalset );
     seldata_ = &sd;
-    sd.binidValueSet().allowDuplicateBids( true );
+    sd.binidValueSet().allowDuplicateBinIDs( true );
 
     const int nrinterv = bidvalset.nrVals() / 2;
     float zmin = mUdf(float);
@@ -838,7 +838,7 @@ TrcSelectionOutput::TrcSelectionOutput( const BinIDValueSet& bidvalset,
 
     if ( !mIsUdf(zmin) && !mIsUdf(-zmax) )
     {
-	BinIDValueSet::Pos pos;
+	BinIDValueSet::SPos pos;
 	bidvalset.next( pos );
 	sd.binidValueSet().add( bidvalset.getBinID(pos), zmin );
 	sd.binidValueSet().add( bidvalset.getBinID(pos), zmax );
@@ -903,8 +903,8 @@ void TrcSelectionOutput::collectData( const DataHolder& data, float refstep,
 
 bool TrcSelectionOutput::wantsOutput( const BinID& bid ) const
 {
-    BinIDValueSet::Pos pos = bidvalset_.findFirst( bid );
-    return pos.valid();
+    BinIDValueSet::SPos pos = bidvalset_.find( bid );
+    return pos.isValid();
 }
 
 
@@ -934,7 +934,7 @@ TypeSet< Interval<int> > TrcSelectionOutput::getLocalZRanges(
 						const BinID& bid, float zstep,
        						TypeSet<float>&	) const
 {
-    BinIDValueSet::Pos pos = bidvalset_.findFirst( bid );
+    BinIDValueSet::SPos pos = bidvalset_.find( bid );
     BinID binid;
     TypeSet<float> values;
     bidvalset_.get( pos, binid, values );
@@ -978,8 +978,8 @@ bool TrcSelectionOutput::getDesiredVolume( CubeSampling& cs ) const
 const CubeSampling Trc2DVarZStorOutput::getCS()
 {
     CubeSampling cs;
-    cs.hrg.start.inl = 0; cs.hrg.stop.inl = mUdf(int);
-    cs.hrg.start.crl = 1; cs.hrg.stop.crl = mUdf(int);
+    cs.hrg.start.inl() = 0; cs.hrg.stop.inl() = mUdf(int);
+    cs.hrg.start.crl() = 1; cs.hrg.stop.crl() = mUdf(int);
     return cs;
 }
 
@@ -1186,7 +1186,7 @@ TableOutput::TableOutput( DataPointSet& datapointset, int firstcol )
 {
     ensureSelType( Seis::Table );
     seldata_->setIsAll( false );
-    ((Seis::TableSelData*)seldata_)->binidValueSet().allowDuplicateBids( true );
+    ((Seis::TableSelData*)seldata_)->binidValueSet().allowDuplicateBinIDs(true);
     ((Seis::TableSelData*)seldata_)->binidValueSet() = datapointset_.bivSet();
 
     arebiddupl_ = areBIDDuplicated();
@@ -1264,8 +1264,8 @@ void TableOutput::computeAndSetVals( const DataHolder& data, float refstep,
 
 bool TableOutput::wantsOutput( const BinID& bid ) const
 {
-    BinIDValueSet::Pos pos = datapointset_.bivSet().findFirst( bid );
-    return pos.valid();
+    BinIDValueSet::SPos pos = datapointset_.bivSet().find( bid );
+    return pos.isValid();
 }
 
 
@@ -1288,10 +1288,10 @@ TypeSet< Interval<int> > TableOutput::getLocalZRanges(
     TypeSet< Interval<int> > sampleinterval;
 
     const BinIDValueSet& bvs = datapointset_.bivSet();
-    BinIDValueSet::Pos pos = bvs.findFirst( bid );
+    BinIDValueSet::SPos pos = bvs.find( bid );
 
     DataPointSet::RowID rid = datapointset_.getRowID( pos );
-    while ( pos.valid() && bid == bvs.getBinID(pos) )
+    while ( pos.isValid() && bid == bvs.getBinID(pos) )
     {
 	addLocalInterval( sampleinterval, exactz, rid, zstep );
 	datapointset_.bivSet().next( pos );

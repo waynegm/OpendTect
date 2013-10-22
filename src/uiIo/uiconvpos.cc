@@ -17,7 +17,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uidialog.h"
 #include "uifileinput.h"
 #include "uimsg.h"
-#include <iostream>
+#include "od_iostream.h"
 
 #define mMaxLineBuf 32000
 static BufferString lastinpfile;
@@ -112,8 +112,8 @@ void uiConvertPos::getCoord( CallBacker* )
     Coord coord( survinfo.transform( binid ) );
     xfld->setValue( coord.x );
     yfld->setValue( coord.y );
-    inlfld->setValue( binid.inl );
-    crlfld->setValue( binid.crl );
+    inlfld->setValue( binid.inl() );
+    crlfld->setValue( binid.crl() );
 }
 
 
@@ -128,8 +128,8 @@ void uiConvertPos::getBinID( CallBacker* )
     }
 
     BinID binid( survinfo.transform( coord ) );
-    inlfld->setValue( binid.inl );
-    crlfld->setValue( binid.crl );
+    inlfld->setValue( binid.inl() );
+    crlfld->setValue( binid.crl() );
     xfld->setValue( coord.x );
     yfld->setValue( coord.y );
 }
@@ -141,45 +141,46 @@ void uiConvertPos::convFile( CallBacker* )
 {
     char buf[255];
     const BufferString inpfnm = inpfilefld->fileName();
-    StreamData sdin = StreamProvider(inpfnm).makeIStream();
-    if ( !sdin.usable() )
+
+    od_istream istream( inpfnm );
+    if ( !istream.isOK() )
 	mErrRet("Input file is not readable" );
 
     const BufferString outfnm = outfilefld->fileName();
-    StreamData sdout = StreamProvider(outfnm).makeOStream();
-    if ( !sdout.usable() )
-	{ sdin.close(); mErrRet("Cannot open output file" ); }
+    od_ostream ostream( outfnm );
+    if ( !ostream.isOK() )
+    { mErrRet("Cannot open output file" ); }
 
     lastinpfile = inpfnm; lastoutfile = outfnm;
 
-    char linebuf[mMaxLineBuf]; Coord c;
+    BufferString linebuf; Coord c;
     const bool xy2ic = isxy2bidfld->getBoolValue();
     int nrln = 0;
-    while ( *sdin.istrm )
+    while ( istream.isOK() )
     {
-	*sdin.istrm >> c.x;
-	if ( sdin.istrm->eof() ) break;
-	*sdin.istrm >> c.y;
-	sdin.istrm->getline( linebuf, mMaxLineBuf );
-	if ( sdin.istrm->bad() ) break;
+        istream.get( c.x );
+        istream.get( c.y );
+	if ( !istream.isOK() ) break;
+
+        istream.getLine( linebuf );
+        if ( istream.isBad() ) break;
 	if ( xy2ic )
 	{
 	    BinID bid( SI().transform(c) );
-	    *sdout.ostrm << bid.inl << ' ' << bid.crl << linebuf << '\n';
+	    ostream << bid.inl() << ' ' << bid.crl() << linebuf << '\n';
 	}
 	else
 	{
 	    BinID bid( mNINT32(c.x), mNINT32(c.y) );
 	    c = SI().transform( bid );
 	    getStringFromDouble( 0, c.x, buf );
-	    *sdout.ostrm << buf << ' ';
+	    ostream << buf << ' ';
 	    getStringFromDouble( 0, c.y, buf );
-	    *sdout.ostrm << buf << linebuf << '\n';
+	    ostream << buf << linebuf << '\n';
 	}
 	nrln++;
     }
 
-    sdin.close(); sdout.close();
     getStringFromInt(nrln,buf);
     uiMSG().message( "Total number of converted lines: ", buf );
 }

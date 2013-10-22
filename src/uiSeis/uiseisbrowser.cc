@@ -265,8 +265,8 @@ BinID uiSeisBrowser::getNextBid( const BinID& cur, int idx,
 				   bool before ) const
 {
     const BinID& step = tr_->readMgr()->info().geom_.step;
-    return crlwise_ ? BinID( cur.inl + (before?-1:1) * step.inl * idx, cur.crl)
-		    : BinID( cur.inl, cur.crl + (before?-1:1) * step.crl * idx);
+    return crlwise_ ? BinID( cur.inl() + (before?-1:1) * step.inl() * idx, cur.crl())
+		    : BinID( cur.inl(), cur.crl() + (before?-1:1) * step.crl() * idx);
 }
 
 
@@ -301,8 +301,8 @@ bool uiSeisBrowser::doSetPos( const BinID& bid, bool force )
 
     commitChanges();
     BinID binid( bid );
-    const bool inlok = is2D() || !mIsUdf(bid.inl);
-    const bool crlok = !mIsUdf(bid.crl);
+    const bool inlok = is2D() || !mIsUdf(bid.inl());
+    const bool crlok = !mIsUdf(bid.crl());
     if ( !inlok || !crlok )
     {
 	tr_->toStart();
@@ -416,17 +416,12 @@ void uiSeisBrowser::fillTable()
 
 void uiSeisBrowser::fillTableColumn( const SeisTrc& trc, int colidx )
 {
-    RowCol rc; rc.col = colidx;
-    BufferString lbl;
-    if ( is2D() )
-	lbl = trc.info().binid.crl;
-    else
-	{ lbl = trc.info().binid.inl; lbl += "/"; lbl += trc.info().binid.crl; }
-    tbl_->setColumnLabel( colidx, lbl );
+    tbl_->setColumnLabel( colidx, trc.info().binid.getUsrStr( is2D() ) );
 
-    for ( rc.row=0; rc.row<nrsamples_; rc.row++ )
+    RowCol rc; rc.col() = colidx;
+    for ( rc.row()=0; rc.row()<nrsamples_; rc.row()++ )
     {
-	const float val = trc.get( rc.row, compnr_ );
+	const float val = trc.get( rc.row(), compnr_ );
 	tbl_->setValue( rc, val );
     }
 }
@@ -553,18 +548,18 @@ void uiSeisBrowser::commitChanges()
     if ( tbuf_.size() < 1 ) return;
 
     BoolTypeSet changed( tbuf_.size(), false );
-    for ( RowCol pos(0,0); pos.col<tbuf_.size(); pos.col++)
+    for ( RowCol pos(0,0); pos.col()<tbuf_.size(); pos.col()++)
     {
-        SeisTrc& trc = *tbuf_.get( pos.col );
-	for ( pos.row=0; pos.row<nrsamples_; pos.row++) 
+        SeisTrc& trc = *tbuf_.get( pos.col() );
+	for ( pos.row()=0; pos.row()<nrsamples_; pos.row()++) 
      	{
 	    const float tableval = tbl_->getfValue( pos );
-	    const float trcval = trc.get( pos.row, compnr_ );
+	    const float trcval = trc.get( pos.row(), compnr_ );
 	    const float diff = tableval - trcval;
    	    if ( !mIsZero(diff,1e-6) )
 	    {
- 	 	trc.set( pos.row, tableval, compnr_ );
-		changed[pos.col] = true;
+ 	 	trc.set( pos.row(), tableval, compnr_ );
+		changed[pos.col()] = true;
 	    }
 	}
     }
@@ -779,11 +774,11 @@ void uiSeisBrowser::valChgReDraw( CallBacker* )
 {
     commitChanges();
     const RowCol rc = tbl_->currentCell();
-    if ( rc.row<0 || rc.col<0 ) return;
+    if ( rc.row()<0 || rc.col()<0 ) return;
 
-    SeisTrc* trace = tbuf_.get( rc.col );
+    SeisTrc* trace = tbuf_.get( rc.col() );
     const float chgdval = tbl_->getfValue( rc );
-    trace->set( rc.row, chgdval, compnr_ );
+    trace->set( rc.row(), chgdval, compnr_ );
     if ( trcbufvwr_ )
 	trcbufvwr_->handleBufChange();
 }
@@ -791,14 +786,9 @@ void uiSeisBrowser::valChgReDraw( CallBacker* )
 
 void uiSeisBrowser::setTrcBufViewTitle()
 {
-    if ( !trcbufvwr_ ) return;
-
-    BufferString title( "Central Trace: " );
-    if ( !Seis::is2D(setup_.geom_) )
-	{ title += curBinID().inl; title += "/"; }
-    title += curBinID().crl;
-
-    trcbufvwr_->setWinTitle( title );
+    if ( trcbufvwr_ )
+	trcbufvwr_->setWinTitle( BufferString( "Central Trace: ",
+		    curBinID().getUsrStr(Seis::is2D(setup_.geom_)) ) );
 
 }
 
@@ -877,7 +867,7 @@ void uiSeisBrowserInfoVwr::setTrace( const SeisTrc& trc )
 	trcnrbinidfld_->setValue( trc.info().binid );
     else
     {
-	trcnrbinidfld_->setValue( trc.info().binid.crl, 0 );
+	trcnrbinidfld_->setValue( trc.info().binid.crl(), 0 );
 	trcnrbinidfld_->setValue( trc.info().refnr, 1 );
     }
 

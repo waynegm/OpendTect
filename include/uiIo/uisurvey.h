@@ -14,18 +14,15 @@ ________________________________________________________________________
 
 #include "uiiomod.h"
 #include "uidialog.h"
-#include "bufstringset.h"
+#include "bufstring.h"
 
-class IOPar;
 class SurveyInfo;
+class BufferStringSet;
 class uiLabel;
-class uiGraphicsScene;
-class uiGraphicsView;
+class uiButton;
 class uiListBox;
 class uiTextEdit;
 class uiSurveyMap;
-class uiPushButton;
-class uiToolButton;
 class uiSurvInfoProvider;
 
 
@@ -38,7 +35,8 @@ public:
 			uiSurvey(uiParent*);
 			~uiSurvey();
 
-    static void		getSurveyList(BufferStringSet&,const char* dataroot=0);
+    static void		getSurveyList(BufferStringSet&,const char* dataroot=0,
+	    			      const char* excludenm=0);
 
     static bool		survTypeOKForUser(bool is2d);
     			//!< checks whether given type has support
@@ -59,28 +57,24 @@ public:
     };
     static void		add(const Util&);
 
-    SurveyInfo*		curSurvInfo()		{ return survinfo_; }
-    const SurveyInfo*	curSurvInfo() const	{ return survinfo_; }
+    SurveyInfo*		curSurvInfo()		{ return cursurvinfo_; }
+    const SurveyInfo*	curSurvInfo() const	{ return cursurvinfo_; }
+
+    const char*		selectedSurveyName() const;
 
 protected:
 
-    SurveyInfo*		survinfo_;
-    BufferStringSet	dirlist_;
+    SurveyInfo*		cursurvinfo_;
     BufferString	initialdatadir_;
     BufferString	initialsurvey_;
     uiSurveyMap*	survmap_;
     IOPar*		impiop_;
     uiSurvInfoProvider*	impsip_;
 
-    uiListBox*		listbox_;
-    uiPushButton*	newbut_;
-    uiPushButton*	editbut_;
-    uiPushButton*	rmbut_;
-    uiPushButton*	datarootbut_;
-    uiPushButton*	copybut_;
-    uiToolButton*	exportbut_;
-    uiToolButton*	importbut_;
-    ObjectSet<uiToolButton> utilbuts_;
+    uiListBox*		dirfld_;
+    uiButton*		editbut_;
+    uiButton*		rmbut_;
+    ObjectSet<uiButton>	utilbuts_;
     uiLabel*		inllbl_;
     uiLabel*		crllbl_; 
     uiLabel*		zlbl_;
@@ -88,31 +82,36 @@ protected:
     uiLabel*		arealbl_;
     uiLabel*		typelbl_;
     uiTextEdit*		notes_;
-    bool		initialsurveyparchanged_;
+    bool		parschanged_; //!< of initial survey only
+    bool		cursurvremoved_;
 
     bool		acceptOK(CallBacker*);  
     bool		rejectOK(CallBacker*);  
     void		newButPushed(CallBacker*);
+    void		rmButPushed(CallBacker*);
     void		editButPushed(CallBacker*);
     void		copyButPushed(CallBacker*);
+    void		importButPushed(CallBacker*);
     void		exportButPushed(CallBacker*);
-     void		importButPushed(CallBacker*);
-    void		rmButPushed(CallBacker*);
     void		dataRootPushed(CallBacker*);
     void		utilButPush(CallBacker*);
-    void 		getSurvInfo();
-    bool		survInfoDialog();
-    void		updateSvyList();
-    void 		updateInfo(CallBacker*);
-    void		mkInfo();
-    void		writeComments();
-    bool		updateSvyFile();
-    bool		writeSurveyName(const char*);
     void		selChange(CallBacker*);
-    void		newSurvey();
-    void		mkDirList();
+    void 		updateInfo( CallBacker* )	{ putToScreen(); }
+
+    void		readSurvInfoFromFile();
+    void		setCurrentSurvInfo(SurveyInfo*,bool updscreen=true);
+    void		updateSurvList();
+    void		putToScreen();
+    bool		writeSettingsSurveyFile();
+    bool		writeSurvInfoFileIfCommentChanged();
+    bool		rootDirWritable() const;
+    bool		doSurvInfoDialog(bool isnew);
+    void		updateDataRootInSettings();
+    void		rollbackNewSurvey(const char*);
 
 };
+
+
 
 #endif
 

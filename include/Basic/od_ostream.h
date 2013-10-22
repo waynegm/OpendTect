@@ -14,11 +14,9 @@ ________________________________________________________________________
 
 #include "basicmod.h"
 #include "od_stream.h"
-class IOPar;
 class SeparString;
 class CompoundKey;
 class FixedString;
-class BufferString;
 
 
 /*!\brief OD class for stream write */
@@ -27,20 +25,20 @@ mExpClass(Basic) od_ostream : public od_stream
 {
 public:
 
-    			od_ostream()			{}
-    			od_ostream( const char* fnm )
-			    : od_stream(fnm,true)	{}
-    			od_ostream( const FilePath& fp )
-			    : od_stream(fp,true)	{}
+    			od_ostream()				{}
+    			od_ostream( const char* fnm, bool useexist=false )
+			    : od_stream(fnm,true,useexist)	{}
+    			od_ostream( const FilePath& fp, bool useexist=false )
+			    : od_stream(fp,true,useexist)	{}
     			od_ostream( std::ostream* s )
-			    : od_stream(s)		{}
+			    : od_stream(s)			{}
     			od_ostream( std::ostream& s )
-			    : od_stream(s)		{}
+			    : od_stream(s)			{}
 			od_ostream( const od_ostream& s )
-			    : od_stream(s)		{ *this = s; }
+			    : od_stream(s)			{ *this = s; }
     od_ostream&		operator =( const od_ostream& s )
     			{ od_stream::operator =(s); return *this; }
-    bool		open(const char*);
+    bool		open(const char*,bool useexist=false);
 
     od_ostream&		add(char);
     od_ostream&		add(unsigned char);
@@ -62,6 +60,7 @@ public:
 
     od_ostream&		add(const void*); //!< produces pErrMsg but works
     od_ostream&		addPtr(const void*);
+    od_ostream&		add( od_ostream& )		{ return *this; }
 
     bool		addBin(const void*,Count nrbytes);
     std::ostream&	stdStream();
@@ -72,14 +71,21 @@ public:
 
 };
 
-
 template <class T>
 inline od_ostream& operator <<( od_ostream& s, const T& t )
 { return s.add( t ); }
 
 
-#define od_tab '\t'
-#define od_newline '\n'
+inline od_ostream& od_endl( od_ostream& strm )
+{
+    strm.add( od_newline ).flush();
+    return strm;
+}
+
+typedef od_ostream& (*od_ostreamFunction)(od_ostream&);
+inline od_ostream& operator <<( od_ostream& s, od_ostreamFunction fn )
+{ return (*fn)( s ); }
+
 
 
 #endif

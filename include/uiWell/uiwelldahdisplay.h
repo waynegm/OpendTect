@@ -29,7 +29,6 @@ class uiLineItem;
 class uiPolyLineItem;
 class uiPolygonItem;
 class uiGraphicsScene;
-class UnitOfMeasure;
 
 #define mDefZPos(zpos)\
 if ( zdata_.zistime_ && zdata_.d2T() )\
@@ -123,7 +122,7 @@ public:
 				    Data()
 				    : zrg_(mUdf(float),mUdf(float))
 				    , zistime_(SI().zIsTime())
-				    , dispzinft_(SI().depthsInFeetByDefault())
+				    , dispzinft_(SI().depthsInFeet())
 				    , wd_(0)
 				    {}
 

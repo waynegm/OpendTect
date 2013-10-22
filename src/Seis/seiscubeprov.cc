@@ -89,15 +89,15 @@ void SeisMSCProvider::setStepout( int i, int c, bool req )
 {
     if ( req )
     { 
-	reqstepout_.row = is2D() ? 0 : i; 
-	reqstepout_.col = c; 
+	reqstepout_.row() = is2D() ? 0 : i; 
+	reqstepout_.col() = c; 
 	delete reqmask_;
 	reqmask_ = 0;
     }
     else
     { 
-	desstepout_.row = is2D() ? 0 : i; 
-	desstepout_.col = c; 
+	desstepout_.row() = is2D() ? 0 : i; 
+	desstepout_.col() = c; 
     }
 }
 
@@ -155,7 +155,7 @@ SeisMSCProvider::AdvanceState SeisMSCProvider::advance()
     if ( is2D() && trc->info().new_packet )
 	addbuf = 0;
     if ( !is2D() && addbuf && 
-	 addbuf->get(0)->info().binid.inl != trc->info().binid.inl )
+	 addbuf->get(0)->info().binid.inl() != trc->info().binid.inl() )
 	addbuf = 0;	
 
     if ( !addbuf )
@@ -189,10 +189,10 @@ int SeisMSCProvider::comparePos( const SeisMSCProvider& mscp ) const
     if ( mybid == mscpsbid )
 	return 0;
 
-    if ( mybid.inl != mscpsbid.inl )
-	return mybid.inl > mscpsbid.inl ? 1 : -1;
+    if ( mybid.inl() != mscpsbid.inl() )
+	return mybid.inl() > mscpsbid.inl() ? 1 : -1;
 
-    return mybid.crl > mscpsbid.crl ? 1 : -1;
+    return mybid.crl() > mscpsbid.crl() ? 1 : -1;
 }
 
 
@@ -218,20 +218,20 @@ bool SeisMSCProvider::startWork()
     const bool is2d = is2D();
     if ( bds )
     {
-	stepoutstep_.row = is2d ? 1 : bds->step( true );
-	stepoutstep_.col = is2d ? bds->step( true ): bds->step( false );
+	stepoutstep_.row() = is2d ? 1 : bds->step( true );
+	stepoutstep_.col() = is2d ? bds->step( true ): bds->step( false );
     }
-    if ( reqstepout_.row > desstepout_.row ) desstepout_.row = reqstepout_.row;
-    if ( reqstepout_.col > desstepout_.col ) desstepout_.col = reqstepout_.col;
+    if ( reqstepout_.row() > desstepout_.row() ) desstepout_.row() = reqstepout_.row();
+    if ( reqstepout_.col() > desstepout_.col() ) desstepout_.col() = reqstepout_.col();
 
     if ( rdr_.selData() && !rdr_.selData()->isAll() )
     {
 	Seis::SelData* newseldata = rdr_.selData()->clone();
-	BinID so( desstepout_.row, desstepout_.col );
-	bool doextend = so.inl > 0 || so.crl > 0;
+	BinID so( desstepout_.row(), desstepout_.col() );
+	bool doextend = so.inl() > 0 || so.crl() > 0;
 	if ( is2d )
 	{
-	    so.inl = 0;
+	    so.inl() = 0;
 	    doextend = doextend && newseldata->type() == Seis::Range;
 	    if ( newseldata->type() == Seis::Table )
 		newseldata->setIsAll( true );
@@ -239,7 +239,7 @@ bool SeisMSCProvider::startWork()
 
 	if ( doextend )
 	{
-	    BinID bid( stepoutstep_.row, stepoutstep_.col );
+	    BinID bid( stepoutstep_.row(), stepoutstep_.col() );
 	    newseldata->extendH( so, &bid );
 	}
 
@@ -290,8 +290,8 @@ int SeisMSCProvider::readTrace( SeisTrc& trc )
 	    if ( is2D() )
 		msg += trc.info().nr;
 	    else
-		trc.info().binid.fill( msg.buf() + 6 );
-	    msg += ": "; msg += rdr_.errMsg();
+		msg += trc.info().binid.getUsrStr();
+	    msg.add( ": " ).add( rdr_.errMsg() );
 	    ErrMsg( msg );
 	}
     }
@@ -316,17 +316,17 @@ SeisTrc* SeisMSCProvider::get( int deltainl, int deltacrl )
 {
     if ( bufidx_==-1 )
 	return 0;
-    if ( abs(deltainl)>desstepout_.row || abs(deltacrl)>desstepout_.col )
+    if ( abs(deltainl)>desstepout_.row() || abs(deltacrl)>desstepout_.col() )
 	return 0;
 
-    BinID bidtofind( deltainl*stepoutstep_.row, deltacrl*stepoutstep_.col );
+    BinID bidtofind( deltainl*stepoutstep_.row(), deltacrl*stepoutstep_.col() );
     bidtofind += !is2D() ? tbufs_[bufidx_]->get(trcidx_)->info().binid :
 		 BinID( bufidx_, tbufs_[bufidx_]->get(trcidx_)->info().nr );
     
     int idx = mMIN( mMAX(0,bufidx_+deltainl), tbufs_.size()-1 ); 
     while ( !is2D() )
     {
-	const int inldif = tbufs_[idx]->get(0)->info().binid.inl-bidtofind.inl;
+	const int inldif = tbufs_[idx]->get(0)->info().binid.inl()-bidtofind.inl();
 	if ( !inldif )
 	    break;
 	if ( deltainl*inldif < 0 )
@@ -341,7 +341,7 @@ SeisTrc* SeisMSCProvider::get( int deltainl, int deltacrl )
 
 SeisTrc* SeisMSCProvider::get( const BinID& bid )
 {
-    if ( bufidx_==-1 || !stepoutstep_.row || !stepoutstep_.col )
+    if ( bufidx_==-1 || !stepoutstep_.row() || !stepoutstep_.col() )
 	return 0;
 
     RowCol biddif( bid ); 
@@ -353,7 +353,7 @@ SeisTrc* SeisMSCProvider::get( const BinID& bid )
     if ( biddif != check )
 	return 0;
     
-    return get( delta.row, delta.col );
+    return get( delta.row(), delta.col() );
 }
 
 
@@ -366,21 +366,21 @@ SeisTrc* SeisMSCProvider::get( const BinID& bid )
 	    BinID( pivotidx_, tbufs_[pivotidx_]->get(pivotidy_)->info().nr ) : \
 	    tbufs_[pivotidx_]->get(pivotidy_)->info().binid; \
     RowCol bidstepout( stepout ); bidstepout *= stepoutstep_; \
-    const int bottomdist mUnusedVar = pivotbid.inl-curbid.inl-bidstepout.row; \
-    const int topdist mUnusedVar = curbid.inl-pivotbid.inl-bidstepout.row; \
-    const int leftdist mUnusedVar = pivotbid.crl-curbid.crl-bidstepout.col; \
-    const int rightdist mUnusedVar = curbid.crl-pivotbid.crl-bidstepout.col;
+    const int bottomdist mUnusedVar = pivotbid.inl()-curbid.inl()-bidstepout.row(); \
+    const int topdist mUnusedVar = curbid.inl()-pivotbid.inl()-bidstepout.row(); \
+    const int leftdist mUnusedVar = pivotbid.crl()-curbid.crl()-bidstepout.col(); \
+    const int rightdist mUnusedVar = curbid.crl()-pivotbid.crl()-bidstepout.col();
    
 
 bool SeisMSCProvider::isReqBoxFilled() const
 {
-    for ( int idy=0; idy<=2*reqstepout_.col; idy++ )
+    for ( int idy=0; idy<=2*reqstepout_.col(); idy++ )
     { 
-	for ( int idx=0; idx<=2*reqstepout_.row; idx++ )
+	for ( int idx=0; idx<=2*reqstepout_.row(); idx++ )
 	{
 	    if ( !reqmask_ || reqmask_->get(idx,idy) )
 	    {
-		if ( !get(idx-reqstepout_.row, idy-reqstepout_.col) )
+		if ( !get(idx-reqstepout_.row(), idy-reqstepout_.col()) )
 		    return false;
 	    }
 	}
@@ -489,8 +489,8 @@ int nextStep()
     else if ( rdr_->get(*trc) )
     {
 	const BinID bid = trc->info().binid;
-	const int inlidx = is2d_ ? 0 : hs_.inlIdx( bid.inl );
-	const int crlidx = hs_.crlIdx( is2d_ ? trc->info().nr : bid.crl );
+	const int inlidx = is2d_ ? 0 : hs_.inlIdx( bid.inl() );
+	const int crlidx = hs_.crlIdx( is2d_ ? trc->info().nr : bid.crl() );
 	arr_.set( inlidx, crlidx, trc );
     }
     else
@@ -587,5 +587,5 @@ const SeisTrc* SeisFixedCubeProvider::getTrace( const BinID& bid ) const
     if ( !data_ || !cs_.hrg.includes(bid) )
 	return 0;
 
-    return data_->get( cs_.inlIdx(bid.inl), cs_.crlIdx(bid.crl) );
+    return data_->get( cs_.inlIdx(bid.inl()), cs_.crlIdx(bid.crl()) );
 }

@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vishorizonsection.h"
 #include "zaxistransform.h"
 #include "cubesampling.h"
+#include "binidvalue.h"
 #include "binidsurface.h"
 #include "datacoldef.h"
 #include "posvecdataset.h"
@@ -144,10 +145,10 @@ void HorizonSectionDataHandler::generatePositionData( DataPointSet& dtpntset,
 	const StepInterval<int> displayrrg = horsection_->displayrrg_;
 	const StepInterval<int> displaycrg = horsection_->displaycrg_;
 	if ( horsection_->userchangedisplayrg_ &&
-	    ( !displayrrg.includes(bid.inl, false) || 
-	      !displaycrg.includes(bid.crl, false) ||
-	    ((bid.inl-displayrrg.start)%displayrrg.step) ||
-	    ((bid.crl-displaycrg.start)%displaycrg.step) ) )
+	    ( !displayrrg.includes(bid.inl(), false) || 
+	      !displaycrg.includes(bid.crl(), false) ||
+	    ((bid.inl()-displayrrg.start)%displayrrg.step) ||
+	    ((bid.crl()-displaycrg.start)%displaycrg.step) ) )
 	    continue;
 
 	const Coord3 pos = horsection_->geometry_->getKnot(RowCol(bid),false);

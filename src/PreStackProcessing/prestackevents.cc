@@ -23,6 +23,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "seistrc.h"
 #include "thread.h"
 #include "randcolor.h"
+#include "binidvalue.h"
 
 namespace PreStack
 {
@@ -392,8 +393,8 @@ bool EventManager::getHorRanges( HorSampling& hrg ) const
 	if ( first )
 	{
 	    first = false;
-	    hrg.start.inl = hrg.stop.inl = bid.inl;
-	    hrg.start.crl = hrg.stop.crl = bid.crl;
+	    hrg.start.inl() = hrg.stop.inl() = bid.inl();
+	    hrg.start.crl() = hrg.stop.crl() = bid.crl();
 	}
 	else
 	{
@@ -417,8 +418,8 @@ bool EventManager::getHorRanges( HorSampling& hrg ) const
 	if ( first )
 	{
 	    first = false;
-	    hrg.start.inl = hrg.stop.inl = inlrg.start;
-	    hrg.start.crl = hrg.stop.crl = crlrg.start;
+	    hrg.start.inl() = hrg.stop.inl() = inlrg.start;
+	    hrg.start.crl() = hrg.stop.crl() = crlrg.start;
 	}
 
 	hrg.include( BinID(inlrg.stop,crlrg.stop) );
@@ -508,7 +509,7 @@ void EventManager::resetChangedFlag( bool horflagonly )
 
 EventSet* EventManager::getEvents( const BinID& bid, bool doload, bool create )
 {
-    if ( mIsUdf(bid.inl) || mIsUdf(bid.crl) )
+    if ( mIsUdf(bid.inl()) || mIsUdf(bid.crl()) )
 	return 0;
 
     int arrpos[2];
@@ -587,7 +588,7 @@ void EventManager::blockChange( bool yn, bool sendnow )
 	change.enable();
 	if ( sendnow )
 	{
-	    BinIDValueSet::Pos pos;
+	    BinIDValueSet::SPos pos;
 	    while ( notificationqueue_->next(pos) )
 		reportChange( notificationqueue_->getBinID( pos ) );
 	}
@@ -673,12 +674,12 @@ bool EventManager::getDip( const BinIDValue& bidv,int horid,
 	const EM::SectionID sid = emhorizons_[horidx]->sectionID( 0 );
 
 	const BinID horstep = emhorizons_[horidx]->geometry().loadedStep();
-	BinID previnl( bidv.binid.inl-horstep.inl, bidv.binid.crl );
-	BinID nextinl( bidv.binid.inl+horstep.inl, bidv.binid.crl );
+	BinID previnl( bidv.inl()-horstep.inl(), bidv.crl() );
+	BinID nextinl( bidv.inl()+horstep.inl(), bidv.crl() );
 	if ( !emhorizons_[horidx]->isDefined(sid,previnl.toInt64() ) )
-	    previnl = bidv.binid;
+	    previnl = bidv;
 	if ( !emhorizons_[horidx]->isDefined(sid,nextinl.toInt64() ) )
-	    nextinl = bidv.binid;
+	    nextinl = bidv;
 
 	if ( previnl==nextinl )
 	    return false;
@@ -687,12 +688,12 @@ bool EventManager::getDip( const BinIDValue& bidv,int horid,
 	    (emhorizons_[horidx]->getPos(sid,nextinl.toInt64() ).z -
 	     emhorizons_[horidx]->getPos(sid,previnl.toInt64() ).z);
 
-	BinID prevcrl( bidv.binid.inl, bidv.binid.crl-horstep.inl );
-	BinID nextcrl( bidv.binid.inl, bidv.binid.crl+horstep.inl );
+	BinID prevcrl( bidv.inl(), bidv.crl()-horstep.inl() );
+	BinID nextcrl( bidv.inl(), bidv.crl()+horstep.inl() );
 	if ( !emhorizons_[horidx]->isDefined(sid,prevcrl.toInt64() ) )
-	    prevcrl = bidv.binid;
+	    prevcrl = bidv;
 	if ( !emhorizons_[horidx]->isDefined(sid,nextcrl.toInt64() ) )
-	    nextcrl = bidv.binid;
+	    nextcrl = bidv;
 
 	if ( prevcrl==nextcrl )
 	    return false;
@@ -701,8 +702,8 @@ bool EventManager::getDip( const BinIDValue& bidv,int horid,
 	    (emhorizons_[horidx]->getPos(sid,nextcrl.toInt64() ).z -
 	     emhorizons_[horidx]->getPos(sid,prevcrl.toInt64() ).z);
 
-	inldip = inldiff/((nextinl.inl-previnl.inl)*SI().inlDistance() );
-	crldip = crldiff/((nextcrl.crl-prevcrl.crl)*SI().crlDistance() );
+	inldip = inldiff/((nextinl.inl()-previnl.inl())*SI().inlDistance() );
+	crldip = crldiff/((nextcrl.crl()-prevcrl.crl())*SI().crlDistance() );
 
 	return true;
     }
@@ -727,15 +728,15 @@ bool EventManager::getDip( const BinIDValue& bidv,int horid,
 	}
 
 	mDynamicCastGet(SeisTrcTranslator*,translator,reader->translator());
-	if ( !translator->supportsGoTo() || translator->goTo(bidv.binid) )
+	if ( !translator->supportsGoTo() || translator->goTo(bidv) )
 	    return false;
 
 	SeisTrc diptrc;
 	if ( !reader->get(diptrc) || diptrc.nrComponents()<2 )
 	    return false;
 
-	float tmpinldip = diptrc.getValue( bidv.value, 0 );
-	float tmpcrldip = diptrc.getValue( bidv.value, 1 );
+	float tmpinldip = diptrc.getValue( bidv.val(), 0 );
+	float tmpcrldip = diptrc.getValue( bidv.val(), 1 );
 
 	if ( mIsUdf(tmpinldip) || mIsUdf(tmpcrldip) ) 
 	    return false;

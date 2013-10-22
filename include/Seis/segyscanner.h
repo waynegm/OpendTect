@@ -16,11 +16,8 @@ ________________________________________________________________________
 #include "executor.h"
 #include "seistype.h"
 #include "bufstringset.h"
-#include "position.h"
 #include "segyfiledef.h"
-class IOPar;
 class SeisTrc;
-class DataPointSet;
 class DataClipSampler;
 class SEGYSeisTrcTranslator;
 namespace PosInfo { class Detector; }

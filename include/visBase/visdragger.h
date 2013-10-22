@@ -17,8 +17,6 @@ ________________________________________________________________________
 #include "position.h"
 #include "visosg.h"
 
-class Color;
-
 namespace osgManipulator { class Dragger; }
 namespace osg 
 { 

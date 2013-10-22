@@ -157,9 +157,9 @@ void FaultAdjuster::prepareCalc( EM::SubID subid )
 
 
 #define mGetNormal( tg ) \
-    const double abs = Math::Sqrt( (double)(tg.inl*tg.inl + tg.crl*tg.crl) ); \
-    BinID normal( fabs(tg.crl/abs) >= M_SQRT1_2 ? 1 : 0, \
-	    	  fabs(tg.inl/abs) >= M_SQRT1_2 ? 1 : 0 );
+    const double abs = Math::Sqrt( (double)(tg.inl()*tg.inl() + tg.crl()*tg.crl()) ); \
+    BinID normal( fabs(tg.crl()/abs) >= M_SQRT1_2 ? 1 : 0, \
+	    	  fabs(tg.inl()/abs) >= M_SQRT1_2 ? 1 : 0 );
 
 
 void FaultAdjuster::getTargetPositions( EM::SubID target, const EM::SubID* src,
@@ -174,18 +174,18 @@ void FaultAdjuster::getTargetPositions( EM::SubID target, const EM::SubID* src,
     
     const RowCol srcrc = RowCol::fromInt64( *src );
 
-    if ( srcrc.col==rc.col ) // tracking up/down
+    if ( srcrc.col()==rc.col() ) // tracking up/down
     {
 	const Geometry::ParametricSurface* psurf = 0;
 	    				//fault_.geometry().sectionGeometry(0);
 	if ( !psurf ) return;
 	Geometry::ParametricCurve* pcurv = 
-				psurf->createRowCurve( mCast(float,rc.row) );
+				psurf->createRowCurve( mCast(float,rc.row()) );
 
 	mDynamicCastGet(Geometry::CubicBezierCurve*,bcurv,pcurv)
 	if ( !bcurv ) return;
 
-	Coord3 tangent = bcurv->getTangent( rc.col, true );
+	Coord3 tangent = bcurv->getTangent( rc.col(), true );
 	BinID bnorm = SI().transform( tangent ) - SI().transform( Coord(0,0) );
 	mGetNormal( bnorm );
 
@@ -199,8 +199,8 @@ void FaultAdjuster::getTargetPositions( EM::SubID target, const EM::SubID* src,
 	const Coord3& srcpos = fault_.getPos( sectionid_, *src );
 	const BinID srcbid = SI().transform( srcpos );
 
-	const BinID step( abs(bid.crl-srcbid.crl) ? SI().inlStep() : 0,
-			  abs(bid.inl-srcbid.inl) ? SI().crlStep() : 0 );
+	const BinID step( abs(bid.crl()-srcbid.crl()) ? SI().inlStep() : 0,
+			  abs(bid.inl()-srcbid.inl()) ? SI().crlStep() : 0 );
 	const int nrsteps = 1;
 	for ( int idx=0; idx<nrsteps; idx++ )
 	{

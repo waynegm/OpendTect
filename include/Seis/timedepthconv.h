@@ -21,11 +21,8 @@ ________________________________________________________________________
 #include "multidimstorage.h"
 #include "veldesc.h"
 
-class BinID;
 class CubeDataPack;
 class IOObj;
-class FlatDataPack;
-class MultiID;
 class SeisTrc;
 class SeisTrcReader;
 template <class T> class Array3D;

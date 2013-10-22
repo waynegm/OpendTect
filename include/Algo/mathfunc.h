@@ -17,11 +17,11 @@ ________________________________________________________________________
 #include "algomod.h"
 #include "mathfunc.h"
 #include "interpol1d.h"
-#include "position.h"
 #include "ptrman.h"
 #include "samplingdata.h"
 #include "varlenarray.h"
 #include "typeset.h"
+#include "math2.h"
 
 #include <math.h>
 
@@ -64,7 +64,7 @@ public:
 
     virtual RT		getNDValue( const PT* pos ) const
 						{ return getValue(*pos); }
-    virtual int		getNrDim() const		{ return 1; }
+    virtual int		getNrDim() const	{ return 1; }
 
     virtual RT		getValue( PT ) const	= 0;
 
@@ -156,7 +156,7 @@ public:
     enum ExtrapolType   { None, EndVal, ExtraPolGradient };
 
     			BendPointBasedMathFunction( InterpolType t=Linear,
-			       			ExtrapolType extr=EndVal )
+						    ExtrapolType extr=EndVal )
 			    : itype_(t)
 			    , extrapol_(extr)	{}
 

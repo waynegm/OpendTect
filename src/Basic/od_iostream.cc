@@ -59,7 +59,7 @@ od_ostream& od_ostream::logStream()
 }
 
 
-#define mMkoStrmData(fnm) StreamProvider(fnm).makeOStream()
+#define mMkoStrmData(fnm,ex) StreamProvider(fnm).makeOStream(true,ex)
 #define mMkiStrmData(fnm) StreamProvider(fnm).makeIStream()
 #define mInitList(ismine) sd_(*new StreamData), mine_(ismine), noclose_(false)
 
@@ -74,18 +74,19 @@ od_stream::od_stream( const od_stream& oth )
     *this = oth;
 }
 
-od_stream::od_stream( const char* fnm, bool forwrite )
+od_stream::od_stream( const char* fnm, bool forwrite, bool useexist )
+
     : mInitList(true)
 {
-    sd_ = forwrite ? mMkoStrmData( fnm ) : mMkiStrmData( fnm );
+    sd_ = forwrite ? mMkoStrmData( fnm, useexist ) : mMkiStrmData( fnm );
 }
 
 
-od_stream::od_stream( const FilePath& fp, bool forwrite )
+od_stream::od_stream( const FilePath& fp, bool forwrite, bool useexist )
     : mInitList(true)
 {
     const BufferString fnm( fp.fullPath() );
-    sd_ = forwrite ? mMkoStrmData( fnm ) : mMkiStrmData( fnm );
+    sd_ = forwrite ? mMkoStrmData( fnm, useexist ) : mMkiStrmData( fnm );
 }
 
 
@@ -291,13 +292,52 @@ bool od_istream::open( const char* fnm )
 }
 
 
-bool od_ostream::open( const char* fnm )
+bool od_ostream::open( const char* fnm, bool useexist )
 {
-    od_ostream strm( fnm );
+    od_ostream strm( fnm, useexist );
     if ( strm.isOK() )
 	{ *this = strm; return true; }
     else
 	{ close(); setFileName(fnm); return false; }
+}
+
+
+od_stream* od_stream::create( const char* fnm, bool forread,
+			      BufferString& errmsg )
+{
+    od_stream* ret = 0;
+    if ( forread )
+    {
+	if ( !fnm || !*fnm )
+	    return &od_istream::nullStream();
+
+	ret = new od_istream( fnm );
+	if ( !ret )
+	    errmsg = "Out of memory";
+	else if ( !ret->isOK() )
+	{
+	    errmsg.set( "Cannot open " ).add( fnm ).add( " for read" );
+	    ret->addErrMsgTo( errmsg );
+	    delete ret; return 0;
+	}
+    }
+    else
+    {
+	if ( !fnm || !*fnm )
+	    return &od_ostream::nullStream();
+
+	ret = new od_ostream( fnm );
+	if ( !ret )
+	    errmsg = "Out of memory";
+	else if ( !ret->isOK() )
+	{
+	    errmsg.set( "Cannot open " ).add( fnm ).add( " for write" );
+	    ret->addErrMsgTo( errmsg );
+	    delete ret; return 0;
+	}
+    }
+
+    return ret;
 }
 
 
@@ -379,9 +419,12 @@ od_istream& od_istream::get( char* str )
     { pErrMsg("Dangerous: od_istream::get(char*)"); return getC( str, 0 ); }
 
 mImplStrmAddFn(const BufferString&,t.buf())
-od_istream& od_istream::get( BufferString& bs )
+od_istream& od_istream::get( BufferString& bs, bool allownl )
 {
-    StrmOper::readWord( stdStream(), &bs );
+    if ( allownl )
+	StrmOper::readWord( stdStream(), &bs );
+    else
+	StrmOper::wordFromLine( stdStream(), bs );
     return *this;
 }
 
@@ -521,12 +564,23 @@ od_istrstream::od_istrstream( const char* str )
 }
 
 
+#define mGetStdStream(clss,stdclss,cnst,var) \
+    clss& self = const_cast<clss&>( *this ); \
+    cnst std::stdclss& var = static_cast<cnst std::stdclss&>( self.stdStream() )
+
+
 const char* od_istrstream::input() const
 {
-    od_istrstream& self = const_cast<od_istrstream&>( *this );
-    const std::istringstream& stdstrstrm
-		= static_cast<const std::istringstream&>( self.stdStream() );
+    mGetStdStream(od_istrstream,istringstream,const,stdstrstrm);
     return stdstrstrm.str().c_str();
+}
+
+
+void od_istrstream::setInput( const char* inp )
+{
+    mGetStdStream(od_istrstream,istringstream,,stdstrstrm);
+    stdstrstrm.str( inp ? inp : "" );
+    stdstrstrm.clear();
 }
 
 
@@ -538,8 +592,14 @@ od_ostrstream::od_ostrstream()
 
 const char* od_ostrstream::result() const
 {
-    od_ostrstream& self = const_cast<od_ostrstream&>( *this );
-    const std::ostringstream& stdstrstrm
-		= static_cast<const std::ostringstream&>( self.stdStream() );
+    mGetStdStream(od_ostrstream,ostringstream,const,stdstrstrm);
     return stdstrstrm.str().c_str();
+}
+
+
+void od_ostrstream::setEmpty()
+{
+    mGetStdStream(od_ostrstream,ostringstream,,stdstrstrm);
+    stdstrstrm.str( "" );
+    stdstrstrm.clear();
 }

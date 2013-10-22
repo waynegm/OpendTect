@@ -55,7 +55,7 @@ uiSimpleMultiWellCreate::uiSimpleMultiWellCreate( uiParent* p )
     : uiDialog( p, Setup("Simple Multi-Well Creation",mNoDlgTitle,"107.0.7")
 	    		.savebutton(true).savetext("Display after creation") )
     , velfld_(0)
-    , zinft_(SI().depthsInFeetByDefault())
+    , zinft_(SI().depthsInFeet())
     , zun_(UnitOfMeasure::surveyDefDepthUnit())
     , overwritepol_(0)
 {
@@ -123,8 +123,8 @@ bool getLine()
     wcd_.nm_ = text( 0 );
     if ( isXY() )
     {
-    wcd_.coord_.x = getdValue( 1 );
-    wcd_.coord_.y = getdValue( 2 );
+	wcd_.coord_.x = getdValue( 1 );
+	wcd_.coord_.y = getdValue( 2 );
     }
     else
     {
@@ -373,18 +373,18 @@ void uiSimpleMultiWellCreate::addRow( const uiSMWCData& wcd, int& prevrow )
 
     prevrow++;
     RowCol rc( prevrow, 0 );
-    if ( rc.row >= tbl_->nrRows() )
+    if ( rc.row() >= tbl_->nrRows() )
 	tbl_->setNrRows( tbl_->nrRows()+10 );
 
-    tbl_->setText( rc, wcd.nm_ ); rc.col++;
-    tbl_->setValue( rc, wcd.coord_.x ); rc.col++;
-    tbl_->setValue( rc, wcd.coord_.y ); rc.col++;
+    tbl_->setText( rc, wcd.nm_ ); rc.col()++;
+    tbl_->setValue( rc, wcd.coord_.x ); rc.col()++;
+    tbl_->setValue( rc, wcd.coord_.y ); rc.col()++;
     float v = wcd.elev_; if ( zinft_ && zun_ ) zun_->userValue( v );
-    tbl_->setValue( rc, v ); rc.col++;
+    tbl_->setValue( rc, v ); rc.col()++;
     v = wcd.td_; if ( zinft_ && zun_ ) zun_->userValue( v );
-    tbl_->setValue( rc, v ); rc.col++;
+    tbl_->setValue( rc, v ); rc.col()++;
     v = wcd.gl_; if ( !mIsUdf(v) && zinft_ && zun_ ) zun_->userValue( v );
-    tbl_->setValue( rc, v ); rc.col++;
+    tbl_->setValue( rc, v ); rc.col()++;
     tbl_->setText( rc, wcd.uwi_ );
 }
 

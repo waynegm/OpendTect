@@ -17,7 +17,7 @@ ________________________________________________________________________
 #include "ranges.h"
 
 class RowCol;
-class MultiID;
+class od_ostream;
 class od_ostream;
 class BinIDValueSet;
 class DataPointSet;

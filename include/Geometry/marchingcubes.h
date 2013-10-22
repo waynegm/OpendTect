@@ -88,9 +88,10 @@ public:
 				      TaskRunner* = 0);
     			/*!<Replaces the surface within the array3d's volume
 			    with an isosurface from the array and its
-			    threshold. */
+			    threshold. Make sure inside body value is less than
+			    the threshold, outside value is bigger than the 
+			    threshold */
 
-    Array3D<float>* 	impvoldata_;
     void		removeAll();
     bool		isEmpty() const;
 

@@ -79,12 +79,12 @@ void Fault3D::apply( const Pos::Filter& pf )
 	if ( rowrg.isUdf() ) continue;
 
 	RowCol rc;
-	for ( rc.row=rowrg.stop; rc.row>=rowrg.start; rc.row-=rowrg.step )
+	for ( rc.row()=rowrg.stop; rc.row()>=rowrg.start; rc.row()-=rowrg.step )
 	{
-	    const StepInterval<int> colrg = fssg->colRange( rc.row );
+	    const StepInterval<int> colrg = fssg->colRange( rc.row() );
 	    if ( colrg.isUdf() ) continue;
 
-	    for ( rc.col=colrg.stop; rc.col>=colrg.start; rc.col-=colrg.step )
+	    for ( rc.col()=colrg.stop; rc.col()>=colrg.start; rc.col()-=colrg.step )
 	    {
 		const Coord3 pos = fssg->getKnot( rc );
 		if ( !pf.includes( (Coord) pos, (float) pos.z) )
@@ -243,7 +243,7 @@ bool Fault3DGeometry::areSticksVertical( const SectionID& sid ) const
 bool Fault3DGeometry::areEditPlanesMostlyCrossline() const
 {
     int nrcrls=0, nrnoncrls=0;
-    const Coord crldir = SI().binID2Coord().colDir().normalize();
+    const Coord crldir = SI().binID2Coord().crlDir().normalize();
     for ( int sidx=0; sidx<nrSections(); sidx++ )
     {	
 	const EM::SectionID sid = sectionID( sidx );
@@ -387,10 +387,10 @@ Coord3 getNormal( bool is2d ) const
 	for ( int idy=idx+1; idy<crds_.size(); idy++ )
 	{
 	    const BinID bid1 = SI().transform( crds_[idy] );
-	    const int inldist = abs( bid0.inl-bid1.inl );
+	    const int inldist = abs( bid0.inl()-bid1.inl() );
 	    if ( inldist < maxdist )
 		oninl += maxdist - inldist;
-	    const int crldist = abs( bid0.crl-bid1.crl );
+	    const int crldist = abs( bid0.crl()-bid1.crl() );
 	    if ( crldist < maxdist )
 		oncrl += maxdist - crldist;
 	    const int zdist = mNINT32( fabs(crds_[idx].z-crds_[idy].z) /
@@ -403,8 +403,8 @@ Coord3 getNormal( bool is2d ) const
     if ( ontms>oncrl && ontms>oninl && !is2d )
 	return Coord3( 0, 0, 1 );
 
-    return oncrl>oninl ? Coord3( SI().binID2Coord().colDir(), 0 )
-		       : Coord3( SI().binID2Coord().rowDir(), 0 );
+    return oncrl>oninl ? Coord3( SI().binID2Coord().crlDir(), 0 )
+		       : Coord3( SI().binID2Coord().inlDir(), 0 );
 }
 
 };
@@ -467,8 +467,8 @@ bool FaultAscIO::get( od_istream& strm, EM::Fault& flt, bool sortsticks,
 	{
 	    const BinID curbid = SI().transform( crd );
 
-	    oninl = oninl && curbid.inl==firstbid.inl;
-	    oncrl = oncrl && curbid.crl==firstbid.crl;
+	    oninl = oninl && curbid.inl()==firstbid.inl();
+	    oncrl = oncrl && curbid.crl()==firstbid.crl();
 	    ontms = ontms && fabs(crd.z-firstz) < fabs(0.5*SI().zStep());
 
 	    if ( !oninl && !oncrl && !ontms )

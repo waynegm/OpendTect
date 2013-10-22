@@ -14,7 +14,6 @@ ________________________________________________________________________
 
 -*/
 
-#include "basicmod.h"
 #include "plfdefs.h"
 #include "rounding.h"
 
@@ -26,6 +25,8 @@ ________________________________________________________________________
 #define mSWAP(x,y,tmp)		{ tmp = x; x = y; y = tmp; }
 #define mMAX(x,y)		( (x)>(y) ? (x) : (y) )
 #define mMIN(x,y)		( (x)<(y) ? (x) : (y) )
+#define mMaxLimited(v,lim)	( (v)<(lim) ? (v) : (lim) )
+#define mMinLimited(v,lim)	( (v)>(lim) ? (v) : (lim) )
 
 #define mIsZero(x,eps)		( (x) < (eps) && (x) > (-eps) )
 #define mIsEqual(x,y,eps)	( (x-y) < (eps) && (x-y) > (-eps) )
@@ -107,6 +108,10 @@ ________________________________________________________________________
 #define mMileToFeetFactor	5280
 #define mToPercent(f)		(mIsUdf(f) ? f : f*100)
 #define mFromPercent(p)		(mIsUdf(p) ? p : p*0.01)
+#define mDeg2RadD		0.017453292519943292
+#define mRad2DegD		57.295779513082323
+#define mDeg2RadF		0.017453292519943292f
+#define mRad2DegF		57.295779513082323f
 
 
 #ifdef __msvc__
@@ -153,6 +158,17 @@ ________________________________________________________________________
 #define mExternC( module)		extern "C" mExp( module )
 
 #define mExportTemplClassInst(mod)	mExportInst(mod,template class)
+
+#ifdef __win__
+#define mDefineStaticLocalObject( type, var, init ) \
+static volatile int static##var##lck__ = 0; \
+Threads::lockSimpleSpinLock(static##var##lck__,Threads::Locker::WaitIfLocked);\
+static type var init; \
+Threads::unlockSimpleSpinLock(static##var##lck__)
+#else
+#define mDefineStaticLocalObject( type, var, init ) \
+static type var init
+#endif
 
 
 //for Qt

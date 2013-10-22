@@ -16,10 +16,9 @@ ________________________________________________________________________
 #include "earthmodelmod.h"
 #include "undo.h"
 #include "emposid.h"
-#include "position.h"
+#include "coord.h"
 #include "color.h"
 
-class IOPar;
 namespace Geometry { class ParametricSurface; };
 template <class T> class Array2D;
 

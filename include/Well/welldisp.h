@@ -20,8 +20,6 @@ ________________________________________________________________________
 
 #include "bufstringset.h"
 
-class IOPar;
-class BufferStringSet;
 
 namespace Well
 {
@@ -41,7 +39,7 @@ public:
 			DisplayProperties(const Well::DisplayProperties& dp)
 			{ *this = dp;}			   
 
-			~DisplayProperties();
+    virtual		~DisplayProperties();
 
     DisplayProperties& 	operator = (const DisplayProperties& dp);
 

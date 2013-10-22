@@ -425,7 +425,7 @@ void uiODSceneMgr::updateStatusBar()
     if ( haspos  )
     {
 	const BinID bid( SI().transform( Coord(xytpos.x,xytpos.y) ) );
-	msg = bid.inl; msg += "/"; msg += bid.crl;
+	msg = bid.getUsrStr();
 	msg += "   (";
 	msg += mNINT32(xytpos.x); msg += ", ";
 	msg += mNINT32(xytpos.y); msg += ", ";
@@ -566,7 +566,7 @@ void uiODSceneMgr::showRotAxis( CallBacker* cb )
     mDoAllScenes(sovwr_,showRotAxis,tb?tb->isOn():false);
     for ( int idx=0; idx<scenes_.size(); idx++ )
     {
-	const Color col = applMgr().visServer()->getSceneAnnotCol( idx );
+	const Color& col = applMgr().visServer()->getSceneAnnotCol( idx );
 	scenes_[idx]->sovwr_->setAxisAnnotColor( col );
     }
 }

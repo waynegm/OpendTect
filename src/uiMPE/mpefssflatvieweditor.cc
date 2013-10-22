@@ -383,6 +383,10 @@ Coord3 FaultStickSetFlatViewEditor::getScaleVector() const
 }
 
 
+#define mGetNormal(var) \
+    Coord3 var( Coord3::udf() ); \
+    if ( !cs_.isEmpty() ) cs_.getDefaultNormal( var )
+
 void FaultStickSetFlatViewEditor::mouseMoveCB( CallBacker* cb )
 {
     if ( seedhasmoved_ )
@@ -413,7 +417,7 @@ void FaultStickSetFlatViewEditor::mouseMoveCB( CallBacker* cb )
 	return;
 
     EM::PosID pid;
-    const Coord3 normal( cs_.isEmpty() ? Coord3::udf() : cs_.defaultNormal() );
+    mGetNormal( normal );
     fsseditor->setScaleVector( getScaleVector() );
     fsseditor->getInteractionInfo( pid, &fsspainter_->getLineSetID(),
 				   fsspainter_->getLineName(), pos, &normal );
@@ -421,7 +425,7 @@ void FaultStickSetFlatViewEditor::mouseMoveCB( CallBacker* cb )
     if ( pid.isUdf() )
 	return; 
 
-    const int sticknr = pid.isUdf() ? mUdf(int) : pid.getRowCol().row;
+    const int sticknr = pid.isUdf() ? mUdf(int) : pid.getRowCol().row();
 
     if ( activestickid_ != sticknr )
 	activestickid_ = sticknr;
@@ -481,9 +485,9 @@ void FaultStickSetFlatViewEditor::mousePressCB( CallBacker* cb )
 		    emfss->sectionGeometry(sid));
 
     RowCol rc;
-    rc.row = stickid;
-    const StepInterval<int> colrg = fss->colRange( rc.row );
-    rc.col = colrg.start + displayedknotid*colrg.step;
+    rc.row() = stickid;
+    const StepInterval<int> colrg = fss->colRange( rc.row() );
+    rc.col() = colrg.start + displayedknotid*colrg.step;
 
     RefMan<MPE::ObjectEditor> editor = MPE::engine().getEditor( emid, false );
     mDynamicCastGet( MPE::FaultStickSetEditor*, fsseditor, editor.ptr() );
@@ -543,7 +547,7 @@ void FaultStickSetFlatViewEditor::mouseReleaseCB( CallBacker* cb )
 
     EM::FaultStickSetGeometry& fssg = emfss->geometry();
     EM::PosID interactpid;
-    const Coord3 normal( cs_.isEmpty() ? Coord3::udf() : cs_.defaultNormal() );
+    mGetNormal( normal );
     fsseditor->setScaleVector( getScaleVector() );
     fsseditor->getInteractionInfo( interactpid, &fsspainter_->getLineSetID() ,
 				   fsspainter_->getLineName(), pos, &normal );
@@ -552,7 +556,7 @@ void FaultStickSetFlatViewEditor::mouseReleaseCB( CallBacker* cb )
 	 && !mouseevent.shiftStatus() )
     {
 	//Remove knot/stick
-	const int rmnr = mousepid_.getRowCol().row;
+	const int rmnr = mousepid_.getRowCol().row();
 	if ( fssg.nrKnots(mousepid_.sectionID(),rmnr) == 1 )
 	{
 	    fssg.removeStick( mousepid_.sectionID(), rmnr, true );
@@ -572,7 +576,7 @@ void FaultStickSetFlatViewEditor::mouseReleaseCB( CallBacker* cb )
 
     if ( mouseevent.shiftStatus() || interactpid.isUdf() )
     {
-	Coord3 editnormal = cs_.defaultNormal();
+	mGetNormal( editnormal );
 
 	const MultiID* lineset = 0;
 	const char* linenm = 0;
@@ -644,12 +648,12 @@ void FaultStickSetFlatViewEditor::removeSelectionCB( CallBacker* cb )
     RowCol rc;
     for ( int ids=0; ids<selectedids.size(); ids++ )
     {
-	rc.row = getStickId( selectedids[ids] );
-	const StepInterval<int> colrg = fss->colRange( rc.row );
-	rc.col = colrg.start + selectedidxs[ids]*colrg.step;
+	rc.row() = getStickId( selectedids[ids] );
+	const StepInterval<int> colrg = fss->colRange( rc.row() );
+	rc.col() = colrg.start + selectedidxs[ids]*colrg.step;
 	emfss->geometry().removeKnot( sid, rc.toInt64(), false );
-	if ( !emfss->geometry().nrKnots(sid,rc.row) )
-	    emfss->geometry().removeStick( sid, rc.row, false );
+	if ( !emfss->geometry().nrKnots(sid,rc.row()) )
+	    emfss->geometry().removeStick( sid, rc.row(), false );
     }
 
     emfss->setBurstAlert( false );

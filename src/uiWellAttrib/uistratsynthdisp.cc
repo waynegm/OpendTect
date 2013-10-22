@@ -196,6 +196,7 @@ uiStratSynthDisp::~uiStratSynthDisp()
 {
     delete stratsynth_;
     delete edstratsynth_;
+    delete d2tmodels_;
 }
 
 
@@ -346,7 +347,7 @@ void uiStratSynthDisp::setZDataRange( const Interval<double>& zrg, bool indpth )
     if ( indpth && d2tmodels_ && !d2tmodels_->isEmpty() )
     {
 	int mdlidx = longestaimdl_;
-	if ( mdlidx >= d2tmodels_->size() )
+	if ( !d2tmodels_->validIdx(mdlidx) )
 	    mdlidx = d2tmodels_->size()-1;
 
 	const TimeDepthModel& d2t = *(*d2tmodels_)[mdlidx];
@@ -436,7 +437,7 @@ void uiStratSynthDisp::drawLevel()
 
 void uiStratSynthDisp::setCurrentWavelet()
 {
-    currentwvasynthetic_ = currentvdsynthetic_ = 0;
+    currentwvasynthetic_ = 0;
     curSS().setWavelet( wvltfld_->getWavelet() );
     SyntheticData* wvasd = curSS().getSynthetic( wvadatalist_->text() );
     SyntheticData* vdsd = curSS().getSynthetic( vddatalist_->text() );
@@ -616,15 +617,11 @@ const uiWorldRect& uiStratSynthDisp::curView( bool indpth ) const
     getCurD2TModel( currentwvasynthetic_, curd2tmodels, offset );
     if ( !curd2tmodels.isEmpty() )
     {
-	const float flattenedshift = centralTrcShift();
 	for ( int idx=0; idx<curd2tmodels.size(); idx++ )
 	{
 	    const TimeDepthModel& d2t = *curd2tmodels[idx];
-	    const double top = d2t.getDepth((float)timewr.top()+flattenedshift)
-			      - d2t.getDepth(flattenedshift)-dispskipz_;
-	    const double bottom =
-		d2t.getDepth((float)timewr.bottom()+flattenedshift)
-		- d2t.getDepth(flattenedshift);
+	    const double top = d2t.getDepth((float)timewr.top());
+	    const double bottom = d2t.getDepth((float)timewr.bottom());
 	    if ( idx==0 || top<depthwr.top() )
 		depthwr.setTop( top );
 	    if ( idx==0 || bottom>depthwr.bottom() )
@@ -668,10 +665,7 @@ void uiStratSynthDisp::getCurD2TModel( const SyntheticData* sd,
 		ObjectSet<const TimeDepthModel>& d2tmodels, float offset ) const
 {
     if ( !sd )
-    {
-	d2tmodels = *d2tmodels_;
 	return;
-    }
 
     mDynamicCastGet(const PreStackSyntheticData*,presd,sd);
     if ( !presd )
@@ -714,6 +708,7 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
     if ( hadpack )
 	vwr_->removePack( vwr_->packID(wva) ); 
     vwr_->removeAllAuxData();
+    delete d2tmodels_;
     d2tmodels_ = 0;
     if ( !sd )
     {
@@ -740,23 +735,27 @@ void uiStratSynthDisp::displayPostStackSynthetic( const SyntheticData* sd,
     tbuf->copyInto( *disptbuf );
     ObjectSet<const TimeDepthModel> curd2tmodels;
     getCurD2TModel( sd, curd2tmodels, offset );
+    ObjectSet<const TimeDepthModel>* zerooffsd2tmodels =
+	new ObjectSet<const TimeDepthModel>();
+    getCurD2TModel( sd, *zerooffsd2tmodels, 0.0f );
+    d2tmodels_ = zerooffsd2tmodels;
+    float lasttime =  -mUdf(float);
+    for ( int idx=0; idx<curd2tmodels.size(); idx++ )
+    {
+	if ( curd2tmodels[idx]->getLastTime() > lasttime )
+	    longestaimdl_ = idx;
+    }
+
     curSS().decimateTraces( *disptbuf, dispeach_ );
     if ( dispflattened_ )
     {
 	curSS().getLevelTimes( *disptbuf, curd2tmodels );
 	curSS().flattenTraces( *disptbuf );
     }
-    curSS().trimTraces( *disptbuf, centralTrcShift(), curd2tmodels,
-	    		    dispskipz_ );
+    else
+        reSampleTraces( *disptbuf );
 
-    for ( int idx=0; idx<curd2tmodels.size(); idx++ )
-    {
-	int maxaimodelsz =  0;
-	if ( curd2tmodels[idx]->size() > maxaimodelsz )
-	    { maxaimodelsz = curd2tmodels[idx]->size(); longestaimdl_ = idx; }
-    }
-
-    reSampleTraces( *disptbuf );
+    curSS().trimTraces( *disptbuf, curd2tmodels, dispskipz_);
     SeisTrcBufDataPack* dp = new SeisTrcBufDataPack( disptbuf, Seis::Line, 
 				    SeisTrcInfo::TrcNr, "Forward Modeling" );
     DPM( DataPackMgr::FlatID() ).add( dp );
@@ -807,18 +806,20 @@ void uiStratSynthDisp::reSampleTraces( SeisTrcBuf& tbuf ) const
     if ( longestaimdl_>=layerModel().size() || longestaimdl_<0 )
 	return;
     Interval<float> depthrg = layerModel().sequence(longestaimdl_).zRange();
-    ObjectSet<const TimeDepthModel> curd2tmodels;
     const float offset =
 	prestackgrp_->sensitive() ? mCast( float, offsetposfld_->getValue() )
 				  : 0.0f;
+    ObjectSet<const TimeDepthModel> curd2tmodels;
     getCurD2TModel( currentwvasynthetic_, curd2tmodels, offset );
+    if ( !curd2tmodels.validIdx(longestaimdl_) )
+	return;
+    const TimeDepthModel& d2t = *curd2tmodels[longestaimdl_];
+    const float reqlastzval = d2t.getLastTime();
     for ( int idx=0; idx<tbuf.size(); idx++ )
     {
-	const TimeDepthModel& d2t = *curd2tmodels[idx];
 	SeisTrc& trc = *tbuf.get( idx );
 
 	const float lastzval = trc.info().sampling.atIndex( trc.size()-1 );
-	const float reqlastzval = d2t.getTime( depthrg.stop );
 	if ( lastzval > reqlastzval )
 	    continue;
 	const int newsz = trc.info().sampling.nearestIndex( reqlastzval );

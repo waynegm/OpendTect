@@ -19,7 +19,6 @@ ________________________________________________________________________
 #include "ranges.h"
 
 class CubeSampling;
-class BinID;
 
 namespace visBase 
 { 
@@ -30,7 +29,6 @@ namespace visBase
     class TexturePanelStrip;
 };
 
-namespace Attrib { class SelSpec; }
 
 namespace visSurvey
 {

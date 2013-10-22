@@ -38,6 +38,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "surv2dgeom.h"
 #include "filepath.h"
+#include <limits.h>
 
 
 namespace EM
@@ -131,14 +132,9 @@ void dgbSurfaceReader::init( const char* fullexpr, const char* objname )
     setName( exnm.buf() );
     setNrDoneText( "Nr done" );
     auxdataexecs_.allowNull(true);
-    if ( !conn_ || !conn_->forRead()  )
-    {
-	msg_ = "Cannot open input surface file";
-	error_ = true;
-	return;
-    }
 
-    createAuxDataReader();
+    if ( conn_ )
+	createAuxDataReader();
 }
 
 
@@ -347,9 +343,14 @@ bool dgbSurfaceReader::readHeaders( const char* filetype )
 {
     StreamConn& sconn( *((StreamConn*)conn_) );
     od_istream& strm = sconn.iStream();
+    if ( !strm.isOK() )
+    {
+	msg_ = "Could not open horizon file"; strm.addErrMsgTo( msg_ );
+	delete conn_; conn_ = 0; return false;
+    }
     ascistream astream( strm );
-    if ( !astream.isOfFileType( filetype ))
-	{ msg_ = "Invalid filetype"; return false; }
+    if ( !astream.isOfFileType(filetype) )
+	{ msg_ = "Horizon file has wrong file type"; return false; }
 
     version_ = 1;
     astream.next();
@@ -531,7 +532,7 @@ BufferString dgbSurfaceReader::lineSet( int idx ) const
 { return linesets_.validIdx( idx ) ? linesets_.get( idx ) : BufferString(""); }
 
 
-TraceID::GeomID dgbSurfaceReader::lineGeomID( int idx ) const
+Pos::GeomID dgbSurfaceReader::lineGeomID( int idx ) const
 { return geomids_.validIdx( idx ) ? geomids_[idx] : -1; }
 
 
@@ -679,14 +680,14 @@ void dgbSurfaceReader::setGeometry()
     {
 	const RowCol filestep = getFileStep();
 
-	if ( readrowrange_->step < abs(filestep.row) )
-	    readrowrange_->step = filestep.row;
-	if ( readcolrange_->step < abs(filestep.col) )
-	    readcolrange_->step = filestep.col;
+	if ( readrowrange_->step < abs(filestep.row()) )
+	    readrowrange_->step = filestep.row();
+	if ( readcolrange_->step < abs(filestep.col()) )
+	    readcolrange_->step = filestep.col();
 
-	if ( filestep.row && readrowrange_->step / filestep.row < 0 )
+	if ( filestep.row() && readrowrange_->step / filestep.row() < 0 )
 	    readrowrange_->step *= -1;
-	if ( filestep.col && readcolrange_->step / filestep.col < 0 )
+	if ( filestep.col() && readcolrange_->step / filestep.col() < 0 )
 	    readcolrange_->step *= -1;
     }
 
@@ -1077,15 +1078,15 @@ bool dgbSurfaceReader::readVersion1Row( od_istream& strm, int firstcol,
 	    return false;
 	}
 
-	if ( readrowrange_ && (!readrowrange_->includes(surfrc.row, false) ||
-		    ((surfrc.row-readrowrange_->start)%readrowrange_->step)))
+	if ( readrowrange_ && (!readrowrange_->includes(surfrc.row(), false) ||
+		    ((surfrc.row()-readrowrange_->start)%readrowrange_->step)))
 	{
 	    fullyread_ = false;
 	    continue;
 	}
 
-	if ( readcolrange_ && (!readcolrange_->includes(surfrc.col, false) ||
-		    ((surfrc.col-readcolrange_->start)%readcolrange_->step)))
+	if ( readcolrange_ && (!readcolrange_->includes(surfrc.col(), false) ||
+		    ((surfrc.col()-readcolrange_->start)%readcolrange_->step)))
 	{
 	    fullyread_ = false;
 	    continue;
@@ -1131,15 +1132,15 @@ bool dgbSurfaceReader::readVersion2Row( od_istream& strm,
 	    return false;
 	}
 
-	if ( readcolrange_ && (!readcolrange_->includes(rowcol.col, false) ||
-		    ((rowcol.col-readcolrange_->start)%readcolrange_->step)))
+	if ( readcolrange_ && (!readcolrange_->includes(rowcol.col(), false) ||
+		    ((rowcol.col()-readcolrange_->start)%readcolrange_->step)))
 	{
 	    fullyread_ = false;
 	    continue;
 	}
 
-	if ( readrowrange_ && (!readrowrange_->includes(rowcol.row, false) ||
-		    ((rowcol.row-readrowrange_->start)%readrowrange_->step)))
+	if ( readrowrange_ && (!readrowrange_->includes(rowcol.row(), false) ||
+		    ((rowcol.row()-readrowrange_->start)%readrowrange_->step)))
 	{
 	    fullyread_ = false;
 	    continue;
@@ -1264,7 +1265,7 @@ bool dgbSurfaceReader::readVersion3Row( od_istream& strm, int firstcol,
 
     for ( ; colindex<nrcols+colstoskip; colindex++ )
     {
-	rc.col = firstcol+colindex*colstep;
+	rc.col() = firstcol+colindex*colstep;
 	Coord3 pos;
 	if ( !readonlyz_ )
 	{
@@ -1290,13 +1291,13 @@ bool dgbSurfaceReader::readVersion3Row( od_istream& strm, int firstcol,
 
 	if ( readcolrange_ )
 	{
-	    if ( rc.col<readcolrange_->start )
+	    if ( rc.col()<readcolrange_->start )
 		continue;
 
-	    if ( rc.col>readcolrange_->stop )
+	    if ( rc.col()>readcolrange_->stop )
 		break;
 
-	    if ( (rc.col-readcolrange_->start)%readcolrange_->step )
+	    if ( (rc.col()-readcolrange_->start)%readcolrange_->step )
 		continue;
 	}
 
@@ -1320,8 +1321,8 @@ bool dgbSurfaceReader::readVersion3Row( od_istream& strm, int firstcol,
 
 	if ( cube_ )
 	{
-	    cube_->set( readrowrange_->nearestIndex(rc.row),
-			readcolrange_->nearestIndex(rc.col),
+	    cube_->set( readrowrange_->nearestIndex(rc.row()),
+			readcolrange_->nearestIndex(rc.col()),
 			cubezidx, (float) pos.z );
 	}
 
@@ -1445,7 +1446,7 @@ RowCol dgbSurfaceReader::convertRowCol( int row, int col ) const
     const Coord coord(conv11*row+conv12*col+conv13,
 		      conv21*row+conv22*col+conv23 );
     const BinID bid = SI().transform(coord);
-    return RowCol(bid.inl, bid.crl );
+    return RowCol(bid.inl(), bid.crl() );
 }
 
 
@@ -1539,51 +1540,50 @@ dgbSurfaceWriter::~dgbSurfaceWriter()
 
 void dgbSurfaceWriter::finishWriting()
 {
-    if ( conn_ )
+    writingfinished_ = true;
+    if ( !conn_ )
+	return;
+
+    od_ostream& strm = conn_->oStream();
+    const od_int64 nrsectionsoffset = strm.position();
+    writeInt32( strm, sectionsel_.size(), sEOL() );
+
+    for ( int idx=0; idx<sectionoffsets_.size(); idx++ )
+	writeInt64( strm, sectionoffsets_[idx], sEOL() );
+
+    for ( int idx=0; idx<sectionsel_.size(); idx++ )
+	writeInt32( strm, sectionsel_[idx], sEOL() );
+
+
+    const od_stream::Pos secondparoffset = strm.position();
+    strm.setPosition( nrsectionsoffsetoffset_ );
+    writeInt64( strm, nrsectionsoffset, sEOL() );
+    strm.setPosition( secondparoffset );
+
+    par_->setYN( dgbSurfaceReader::sKeyDepthOnly(), writeonlyz_ );
+
+    const int rowrgstep = writerowrange_ ? 
+			  writerowrange_->step : rowrange_.step;
+    par_->set( dgbSurfaceReader::sKeyRowRange(),
+	      writtenrowrange_.start, writtenrowrange_.stop, rowrgstep );
+
+    const int colrgstep = writecolrange_ ? 
+			  writecolrange_->step : colrange_.step;
+    par_->set( dgbSurfaceReader::sKeyColRange(),
+	      writtencolrange_.start, writtencolrange_.stop, colrgstep );
+    
+    par_->set( dgbSurfaceReader::sKeyZRange(), zrange_ );
+			  
+    for (int idx=firstrow_; idx<firstrow_+rowrgstep*nrrows_; idx+=rowrgstep)
     {
-	od_ostream& strm = conn_->oStream();
-	const od_int64 nrsectionsoffset = strm.position();
-	writeInt32( strm, sectionsel_.size(), sEOL() );
-
-	for ( int idx=0; idx<sectionoffsets_.size(); idx++ )
-	    writeInt64( strm, sectionoffsets_[idx], sEOL() );
-
-	for ( int idx=0; idx<sectionsel_.size(); idx++ )
-	    writeInt32( strm, sectionsel_[idx], sEOL() );
-
-
-	const od_stream::Pos secondparoffset = strm.position();
-	strm.setPosition( nrsectionsoffsetoffset_ );
-	writeInt64( strm, nrsectionsoffset, sEOL() );
-	strm.setPosition( secondparoffset );
-
-	par_->setYN( dgbSurfaceReader::sKeyDepthOnly(), writeonlyz_ );
-
-	const int rowrgstep = writerowrange_ ? 
-			      writerowrange_->step : rowrange_.step;
-	par_->set( dgbSurfaceReader::sKeyRowRange(),
-		  writtenrowrange_.start, writtenrowrange_.stop, rowrgstep );
-
-	const int colrgstep = writecolrange_ ? 
-			      writecolrange_->step : colrange_.step;
-	par_->set( dgbSurfaceReader::sKeyColRange(),
-		  writtencolrange_.start, writtencolrange_.stop, colrgstep );
-	
-	par_->set( dgbSurfaceReader::sKeyZRange(), zrange_ );
-			      
-	for (int idx=firstrow_; idx<firstrow_+rowrgstep*nrrows_; idx+=rowrgstep)
-	{
-	    const int idxcolstep = geometry_->colRange(idx).step;
-	    if ( idxcolstep && idxcolstep!=colrange_.step )
-		par_->set( dgbSurfaceReader::sColStepKey(idx).buf(),idxcolstep);
-	}
-
-	ascostream astream( strm );
-	astream.newParagraph();
-	par_->putTo( astream );
+	const int idxcolstep = geometry_->colRange(idx).step;
+	if ( idxcolstep && idxcolstep!=colrange_.step )
+	    par_->set( dgbSurfaceReader::sColStepKey(idx).buf(),idxcolstep);
     }
 
-    writingfinished_ = true;
+    ascostream astream( strm );
+    astream.newParagraph();
+    par_->putTo( astream );
 }
 
 
@@ -1719,8 +1719,13 @@ int dgbSurfaceWriter::nextStep()
     {
 	conn_ = fulluserexpr_ ? new StreamConn(fulluserexpr_,Conn::Write) : 0;
 	if ( !conn_ )
+	    { msg_ = "Cannot open output surface file"; return ErrorOccurred();}
+	od_ostream& strm = conn_->oStream();
+	if ( !strm.isOK() )
 	{
 	    msg_ = "Cannot open output surface file";
+	    strm.addErrMsgTo( msg_ );
+	    delete conn_; conn_ = 0;
 	    return ErrorOccurred();
 	}
 
@@ -1735,8 +1740,6 @@ int dgbSurfaceWriter::nextStep()
 	    mSetDc( double, dgbSurfaceReader::sKeyFloatDataChar() );
 	}
 
-
-	od_ostream& strm = conn_->oStream();
 	ascostream astream( strm );
 	astream.putHeader( filetype_.buf() );
 	versionpar.putTo( astream );

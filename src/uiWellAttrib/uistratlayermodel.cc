@@ -99,10 +99,10 @@ void startCB( CallBacker* cb )
     const BufferStringSet& nms =
 			uiLayerSequenceGenDesc::factory().getNames( true );
     mDynamicCastGet(uiToolButton*,tb,cb)
-    if ( Strat::RT().isEmpty() || nms.isEmpty() || !tb )
+    if ( Strat::RT().isEmpty() || nms.isEmpty() )
 	{ pErrMsg("Pre-condition not met"); return; }
 
-    uiParent* par = tb->parent();
+    uiParent* par = tb ? tb->parent() : &StratTreeWin();
     const char* settres = Settings::common().find(
 	    			uiStratLayerModel::sKeyModeler2Use());
     BufferString modnm( settres );
@@ -388,6 +388,7 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp )
 			    mCB(this,uiStratLayerModel,infoChanged));
     moddisp_->sequenceSelected.notify( mCB(this,uiStratLayerModel,seqSel) );
     moddisp_->modelEdited.notify( mCB(this,uiStratLayerModel,modEd) );
+    moddisp_->zskipChanged.notify( mCB(this,uiStratLayerModel,zSkipChanged) );
 
     setWinTitle();
     StratTreeWin().changeLayerModelNumber( true );
@@ -781,6 +782,15 @@ MultiID uiStratLayerModel::genDescID() const
 void uiStratLayerModel::seqSel( CallBacker* )
 {
     synthdisp_->setSelectedTrace( moddisp_->selectedSequence() );
+}
+
+
+void uiStratLayerModel::zSkipChanged( CallBacker* )
+{
+    synthdisp_->setDisplayZSkip( moddisp_->getDisplayZSkip(), true );
+    synthdisp_->modelChanged();
+    mDynamicCastGet(uiMultiFlatViewControl*,mfvc,synthdisp_->control());
+    if ( mfvc ) mfvc->reInitZooms();
 }
 
 

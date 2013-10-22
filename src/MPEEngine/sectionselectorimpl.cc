@@ -41,7 +41,7 @@ void BinIDSurfaceSourceSelector::setTrackPlane( const MPE::TrackPlane& plane )
     BinID currentbid( startbid );
     while ( true )
     {
-	const BinID prevbid = currentbid-plane.motion().binid;
+	const BinID prevbid = currentbid-plane.motion();
 	const EM::SubID curnode = currentbid.toInt64();
 	const EM::SubID prevnode = prevbid.toInt64();
 	const bool curnodedef = surface_.isDefined( sectionid_, curnode );
@@ -59,15 +59,15 @@ void BinIDSurfaceSourceSelector::setTrackPlane( const MPE::TrackPlane& plane )
 		selpos_ += prevnode;
 	}
 
-	if ( startbid.inl==stopbid.inl )
+	if ( startbid.inl()==stopbid.inl() )
 	{
-	    currentbid.crl += step.crl;
-	    if ( currentbid.crl>stopbid.crl ) break;
+	    currentbid.crl() += step.crl();
+	    if ( currentbid.crl()>stopbid.crl() ) break;
 	}
 	else 
 	{
-	    currentbid.inl += step.inl;
-	    if ( currentbid.inl>stopbid.inl ) break;
+	    currentbid.inl() += step.inl();
+	    if ( currentbid.inl()>stopbid.inl() ) break;
 	}
     }
 }
@@ -88,26 +88,26 @@ void SurfaceSourceSelector::setTrackPlane( const MPE::TrackPlane& plane )
     TypeSet<GeomPosID> allnodes;
     surface->getPosIDs( allnodes );
 
-    Interval<int> inlrange( plane.boundingBox().hrg.start.inl,
-	    		    plane.boundingBox().hrg.stop.inl );
-    Interval<int> crlrange( plane.boundingBox().hrg.start.crl,
-	    		    plane.boundingBox().hrg.stop.crl );
+    Interval<int> inlrange( plane.boundingBox().hrg.start.inl(),
+	    		    plane.boundingBox().hrg.stop.inl() );
+    Interval<int> crlrange( plane.boundingBox().hrg.start.crl(),
+	    		    plane.boundingBox().hrg.stop.crl() );
     Interval<float> zrange( plane.boundingBox().zrg.start,
 	    		    plane.boundingBox().zrg.stop );
 
-    inlrange.include( plane.boundingBox().hrg.start.inl-
-	    	      plane.motion().binid.inl );
-    crlrange.include( plane.boundingBox().hrg.start.crl-
-	    	      plane.motion().binid.crl );
-    zrange.include( plane.boundingBox().zrg.start-plane.motion().value );
+    inlrange.include( plane.boundingBox().hrg.start.inl()-
+	    	      plane.motion().inl() );
+    crlrange.include( plane.boundingBox().hrg.start.crl()-
+	    	      plane.motion().crl() );
+    zrange.include( plane.boundingBox().zrg.start-plane.motion().val() );
 
     for ( int idx=0; idx<allnodes.size(); idx++ )
     {
 	const RowCol node = RowCol::fromInt64(allnodes[idx]);
 	const Coord3 pos = surface->getKnot(node);
 	const BinID bid = SI().transform(pos);
-	if ( !inlrange.includes(bid.inl,true) ||
-	     !crlrange.includes(bid.crl,true) ||
+	if ( !inlrange.includes(bid.inl(),true) ||
+	     !crlrange.includes(bid.crl(),true) ||
 	     !zrange.includes(pos.z,true) )
 	    continue;
 

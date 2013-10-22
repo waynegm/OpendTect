@@ -153,12 +153,12 @@ bool ParallelReader::doWork( od_int64 start, od_int64 stop, int threadid )
     }
 
     HorSamplingIterator iter;
-    BinIDValueSet::Pos bidvalpos;
+    BinIDValueSet::SPos bidvalpos;
     BinID curbid;
     if ( bidvals_ )
     {
         bidvalpos = bidvals_->getPos( start );
-        if ( !bidvalpos.valid() )
+        if ( !bidvalpos.isValid() )
             return false;
         
         curbid = bidvals_->getBinID( bidvalpos );
@@ -205,8 +205,8 @@ bool ParallelReader::doWork( od_int64 start, od_int64 stop, int threadid )
             }
             else
             {
-		const int inlidx = cs_.hrg.inlIdx( curbid.inl );
-		const int crlidx = cs_.hrg.crlIdx( curbid.crl );
+		const int inlidx = cs_.hrg.inlIdx( curbid.inl() );
+		const int crlidx = cs_.hrg.crlIdx( curbid.crl() );
 
 		for ( int idz=(*arrays_)[0]->info().getSize(2)-1; idz>=0; idz--)
 		{

@@ -147,14 +147,14 @@ bool HorizonPainter3D::addPolyLine()
 	HorSamplingIterator iter( cs_.hrg );
 	while ( iter.next(bid) )
 	{
-	    int inlfromcs = bid.inl;
+	    int inlfromcs = bid.inl();
 	    const Coord3 crd = hor3d->getPos( sid, bid.toInt64() );
 	    EM::PosID posid( id_, sid, bid.toInt64() );
 	    
 	    if ( !crd.isDefined() )
 	    {
 		coorddefined = false;
-		bid.inl = inlfromcs;
+		bid.inl() = inlfromcs;
 		continue;
 	    }
 	    else if ( !coorddefined )
@@ -216,17 +216,17 @@ void HorizonPainter3D::addDataToMarker( const BinID& bid, const Coord3& crd,
 
     if ( cs_.nrInl() == 1 )
     {
-	marker.marker_->poly_ += FlatView::Point( bid.crl, crd.z );
+	marker.marker_->poly_ += FlatView::Point( bid.crl(), crd.z );
 	if ( hor3d.isPosAttrib(posid,EM::EMObject::sSeedNode()) )
 	    markerseeds_->marker_->poly_ +=
-				FlatView::Point( bid.crl, crd.z );
+				FlatView::Point( bid.crl(), crd.z );
     }
     else if ( cs_.nrCrl() == 1 )
     {
-	marker.marker_->poly_ += FlatView::Point( bid.inl, crd.z );
+	marker.marker_->poly_ += FlatView::Point( bid.inl(), crd.z );
 	if ( hor3d.isPosAttrib(posid,EM::EMObject::sSeedNode()) )
 	    markerseeds_->marker_->poly_ +=
-				FlatView::Point( bid.inl, crd.z );
+				FlatView::Point( bid.inl(), crd.z );
     }
 }
 
@@ -337,7 +337,7 @@ void HorizonPainter3D::changePolyLinePosition( const EM::PosID& pid )
 
 		if ( cs_.nrInl() == 1 )
 		{
-		    if ( binid.crl == auxdata->poly_[posidx].x )
+		    if ( binid.crl() == auxdata->poly_[posidx].x )
 		    {
 			auxdata->poly_[posidx].y = crd.z;
 			return;
@@ -345,7 +345,7 @@ void HorizonPainter3D::changePolyLinePosition( const EM::PosID& pid )
 		}
 		else if ( cs_.nrCrl() == 1 )
 		{
-		    if ( binid.inl == auxdata->poly_[posidx].x )
+		    if ( binid.inl() == auxdata->poly_[posidx].x )
 		    {
 			auxdata->poly_[posidx].y = crd.z;
 			return;
@@ -362,9 +362,9 @@ void HorizonPainter3D::changePolyLinePosition( const EM::PosID& pid )
 		    continue;
 		}
 		if ( cs_.nrInl() == 1 )
-		    auxdata->poly_ += FlatView::Point( binid.crl, crd.z );
+		    auxdata->poly_ += FlatView::Point( binid.crl(), crd.z );
 		else if ( cs_.nrCrl() == 1 )
-		    auxdata->poly_ += FlatView::Point( binid.inl, crd.z );
+		    auxdata->poly_ += FlatView::Point( binid.inl(), crd.z );
 	    }
 	}
     }
@@ -373,15 +373,13 @@ void HorizonPainter3D::changePolyLinePosition( const EM::PosID& pid )
 
 void HorizonPainter3D::removePolyLine()
 {
-    for ( int markidx=markerline_.size()-1;  markidx>=0; markidx-- )
+    for ( int markidx=markerline_.size()-1; markidx>=0; markidx-- )
     {
 	SectionMarker3DLine* markerlines = markerline_[markidx];
 	for ( int idy=markerlines->size()-1; idy>=0; idy-- )
-	{
 	    if ( !viewer_.removeAuxData( (*markerlines)[idy]->marker_ ) )
 		(*markerlines)[idy]->marker_ = 0;
-	    deepErase( markerlines[idy] );
-	}
+	deepErase( *markerlines );
     }
     deepErase( markerline_ );
 

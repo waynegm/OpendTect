@@ -558,9 +558,8 @@ void uiWellMan::mkFileInfo()
     const Well::Info& info = curwds_[0]->info();
     const Well::Track& track = curwds_[0]->track();
 
-    BufferString crdstr; info.surfacecoord.fill( crdstr.buf() );
-    BufferString bidstr; SI().transform(info.surfacecoord).fill( bidstr.buf() );
-    BufferString posstr( bidstr ); posstr += " "; posstr += crdstr;
+    const BufferString posstr( info.surfacecoord.getUsrStr(), " ",
+	    	SI().transform(info.surfacecoord).getUsrStr() );
     mAddWellInfo(Well::Info::sKeycoord(),posstr)
 
     if ( !track.isEmpty() )
@@ -596,7 +595,7 @@ void uiWellMan::mkFileInfo()
 	if ( !mIsUdf(replvel) )
 	{
 	     txt += "Replacement velocity (from KB to SRD)"; txt += ": ";
-	     txt += ( SI().depthsInFeetByDefault() && !SI().zInFeet() ) ?
+	     txt += ( SI().depthsInFeet() && !SI().zInFeet() ) ?
 		    mToFeetFactorF * replvel : replvel;
 	     txt += UnitOfMeasure::zUnitAnnot( false, true, false );
 	     txt += "/s\n";

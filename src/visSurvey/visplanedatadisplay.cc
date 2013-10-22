@@ -14,6 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "attribdatapack.h"
 #include "attribsel.h"
 #include "basemap.h"
+#include "binidvalue.h"
 #include "coltabsequence.h"
 #include "cubesampling.h"
 #include "datapointset.h"
@@ -97,9 +98,9 @@ void PlaneDataDisplayBaseMapObject::getPoints(int,TypeSet<Coord>& res) const
     if ( pdd_->getOrientation()==PlaneDataDisplay::Zslice )
     {
 	res += survinfo->transform(hrg.start);
-	res += survinfo->transform(BinID(hrg.start.inl, hrg.stop.crl) );
+	res += survinfo->transform(BinID(hrg.start.inl(), hrg.stop.crl()) );
 	res += survinfo->transform(hrg.stop);
-	res += survinfo->transform(BinID(hrg.stop.inl, hrg.start.crl) );
+	res += survinfo->transform(BinID(hrg.stop.inl(), hrg.start.crl()) );
     }
     else
     {
@@ -223,15 +224,15 @@ void PlaneDataDisplay::updateRanges( bool resetic, bool resetz )
 	return;
 
     CubeSampling survey = scene_->getCubeSampling();
-    const Interval<float> inlrg( mCast(float,survey.hrg.start.inl), 
-				    mCast(float,survey.hrg.stop.inl) );
-    const Interval<float> crlrg( mCast(float,survey.hrg.start.crl), 
-				    mCast(float,survey.hrg.stop.crl) );
+    const Interval<float> inlrg( mCast(float,survey.hrg.start.inl()), 
+				    mCast(float,survey.hrg.stop.inl()) );
+    const Interval<float> crlrg( mCast(float,survey.hrg.start.crl()), 
+				    mCast(float,survey.hrg.stop.crl()) );
 
     dragger_->setSpaceLimits( inlrg, crlrg, survey.zrg );
     dragger_->setWidthLimits(
-	    Interval<float>( mCast(float,4*survey.hrg.step.inl), mUdf(float) ),
-	    Interval<float>( mCast(float,4*survey.hrg.step.crl), mUdf(float) ),
+	    Interval<float>( mCast(float,4*survey.hrg.step.inl()), mUdf(float) ),
+	    Interval<float>( mCast(float,4*survey.hrg.step.crl()), mUdf(float) ),
 	    Interval<float>( 4*survey.zrg.step, mUdf(float) ) );
 
     CubeSampling newpos = getCubeSampling(false,true);
@@ -265,10 +266,10 @@ void PlaneDataDisplay::updateRanges( bool resetic, bool resetz )
 CubeSampling PlaneDataDisplay::snapPosition( const CubeSampling& cs ) const
 {
     CubeSampling res( cs );
-    const Interval<float> inlrg( mCast(float,res.hrg.start.inl), 
-				    mCast(float,res.hrg.stop.inl) );
-    const Interval<float> crlrg( mCast(float,res.hrg.start.crl), 
-				    mCast(float,res.hrg.stop.crl) );
+    const Interval<float> inlrg( mCast(float,res.hrg.start.inl()), 
+				    mCast(float,res.hrg.stop.inl()) );
+    const Interval<float> crlrg( mCast(float,res.hrg.start.crl()), 
+				    mCast(float,res.hrg.stop.crl()) );
     const Interval<float> zrg( res.zrg );
 
     res.hrg.snapToSurvey();
@@ -284,10 +285,10 @@ CubeSampling PlaneDataDisplay::snapPosition( const CubeSampling& cs ) const
     }
 
     if ( orientation_==Inline )
-	res.hrg.start.inl = res.hrg.stop.inl =
+	res.hrg.start.inl() = res.hrg.stop.inl() =
 	    inlcrlsystem_->inlRange().snap( inlrg.center() );
     else if ( orientation_==Crossline )
-	res.hrg.start.crl = res.hrg.stop.crl =
+	res.hrg.start.crl() = res.hrg.stop.crl() =
 	    inlcrlsystem_->crlRange().snap( crlrg.center() );
 
     return res;
@@ -317,16 +318,16 @@ float PlaneDataDisplay::calcDist( const Coord3& pos ) const
     BinID inlcrldist( 0, 0 );
     float zdiff = 0;
 
-    inlcrldist.inl =
-	binid.inl>=cs.hrg.start.inl && binid.inl<=cs.hrg.stop.inl 
+    inlcrldist.inl() =
+	binid.inl()>=cs.hrg.start.inl() && binid.inl()<=cs.hrg.stop.inl() 
 	     ? 0
-	     : mMIN( abs(binid.inl-cs.hrg.start.inl),
-		     abs( binid.inl-cs.hrg.stop.inl) );
-    inlcrldist.crl =
-	binid.crl>=cs.hrg.start.crl && binid.crl<=cs.hrg.stop.crl 
+	     : mMIN( abs(binid.inl()-cs.hrg.start.inl()),
+		     abs( binid.inl()-cs.hrg.stop.inl()) );
+    inlcrldist.crl() =
+	binid.crl()>=cs.hrg.start.crl() && binid.crl()<=cs.hrg.stop.crl() 
 	     ? 0
-	     : mMIN( abs(binid.crl-cs.hrg.start.crl),
-		     abs( binid.crl-cs.hrg.stop.crl) );
+	     : mMIN( abs(binid.crl()-cs.hrg.start.crl()),
+		     abs( binid.crl()-cs.hrg.stop.crl()) );
     const float zfactor = scene_
     	? scene_->getZScale()
         : inlcrlsystem_->zScale();
@@ -338,8 +339,8 @@ float PlaneDataDisplay::calcDist( const Coord3& pos ) const
 
     const float inldist = inlcrlsystem_->inlDistance();
     const float crldist = inlcrlsystem_->crlDistance();
-    float inldiff = inlcrldist.inl * inldist;
-    float crldiff = inlcrldist.crl * crldist;
+    float inldiff = inlcrldist.inl() * inldist;
+    float crldiff = inlcrldist.crl() * crldist;
 
     return Math::Sqrt( inldiff*inldiff + crldiff*crldiff + zdiff*zdiff );
 }
@@ -419,10 +420,10 @@ void PlaneDataDisplay::draggerMotion( CallBacker* )
     const CubeSampling oldcs = getCubeSampling(false,true);
 
     bool showplane = false;
-    if ( orientation_==Inline && dragcs.hrg.start.inl!=oldcs.hrg.start.inl )
+    if ( orientation_==Inline && dragcs.hrg.start.inl()!=oldcs.hrg.start.inl() )
 	showplane = true;
     else if ( orientation_==Crossline &&
-	      dragcs.hrg.start.crl!=oldcs.hrg.start.crl )
+	      dragcs.hrg.start.crl()!=oldcs.hrg.start.crl() )
 	showplane = true;
     else if ( orientation_==Zslice && dragcs.zrg.start!=oldcs.zrg.start )
 	showplane = true;
@@ -448,11 +449,11 @@ void PlaneDataDisplay::draggerRightClick( CallBacker* cb )
 }
  
 #define mDefineCenterAndWidth( thecs ) \
-    const Coord3 center( (thecs.hrg.start.inl+thecs.hrg.stop.inl)/2.0, \
-		         (thecs.hrg.start.crl+thecs.hrg.stop.crl)/2.0, \
+    const Coord3 center( (thecs.hrg.start.inl()+thecs.hrg.stop.inl())/2.0, \
+		         (thecs.hrg.start.crl()+thecs.hrg.stop.crl())/2.0, \
 		         thecs.zrg.center() ); \
-    Coord3 width( thecs.hrg.stop.inl-thecs.hrg.start.inl, \
-		  thecs.hrg.stop.crl-thecs.hrg.start.crl, thecs.zrg.width() ); \
+    Coord3 width( thecs.hrg.stop.inl()-thecs.hrg.start.inl(), \
+		  thecs.hrg.stop.crl()-thecs.hrg.start.crl(), thecs.zrg.width() ); \
     if ( width.x < 1 ) width.x = 1; \
     if ( width.y < 1 ) width.y = 1; \
     if ( width.z < thecs.zrg.step * 0.5 ) width.z = 1; \
@@ -657,14 +658,14 @@ void PlaneDataDisplay::getRandomPos( DataPointSet& pos, TaskRunner* ) const
 
     HorSamplingIterator iter( cs.hrg );
     BinIDValue curpos;
-    curpos.value = cs.zrg.start;
-    while ( iter.next(curpos.binid) )
+    curpos.val() = cs.zrg.start;
+    while ( iter.next(curpos) )
     {
 	const float depth = datatransform_->transformBack( curpos );
 	if ( mIsUdf(depth) )
 	    continue;
 
-	DataPointSet::Pos newpos( curpos.binid, depth );
+	DataPointSet::Pos newpos( curpos, depth );
 	DataPointSet::DataRow dtrow( newpos );
 	pos.addRow( dtrow );
     }
@@ -1002,13 +1003,13 @@ void PlaneDataDisplay::setRandomPosDataNoCache( int attrib,
     	for ( int idy=0; idy<arr->info().getTotalSz(); idy++ )
     	    (*texturedataptr++) = mUdf(float);
 	
-    	BinIDValueSet::Pos pos;
+    	BinIDValueSet::SPos pos;
     	BinID bid;
     	while ( bivset->next(pos,true) )
     	{
     	    bivset->get( pos, bid );
     	    BinID idxs = (bid-cs.hrg.start)/cs.hrg.step;
-    	    arr->set( idxs.inl, idxs.crl, bivset->getVals(pos)[idx]);
+    	    arr->set( idxs.inl(), idxs.crl(), bivset->getVals(pos)[idx]);
     	}
     }
 
@@ -1131,12 +1132,12 @@ void PlaneDataDisplay::getObjectInfo( BufferString& info ) const
     if ( orientation_==Inline )
     {
 	info = "Inline: ";
-	info += getCubeSampling(true,true).hrg.start.inl;
+	info += getCubeSampling(true,true).hrg.start.inl();
     }
     else if ( orientation_==Crossline )
     {
 	info = "Crossline: ";
-	info += getCubeSampling(true,true).hrg.start.crl;
+	info += getCubeSampling(true,true).hrg.start.crl();
     }
     else
     {
@@ -1168,7 +1169,7 @@ bool PlaneDataDisplay::getCacheValue( int attrib, int version,
     else if ( attrib<rposcache_.size() && rposcache_[attrib] )
     {
 	const BinIDValueSet& set = *rposcache_[attrib];
-	const BinIDValueSet::Pos setpos = set.findFirst( bidv.binid );
+	const BinIDValueSet::SPos setpos = set.find( bidv );
 	if ( setpos.i==-1 || setpos.j==-1 )
 	    return false;
 
@@ -1369,22 +1370,22 @@ void PlaneDataDisplay::setUpdateStageTextureTransform()
     Coord samplingratio( updatestageinfo_.oldimagesize_.x/oldcs.nrZ(),
 			 updatestageinfo_.oldimagesize_.y/oldcs.nrInl() );
     Coord startdif( (newcs.zrg.start-oldcs.zrg.start) / newcs.zrg.step,
-		    newcs.hrg.start.inl-oldcs.hrg.start.inl );
+		    newcs.hrg.start.inl()-oldcs.hrg.start.inl() );
     Coord growth( newcs.nrZ()-oldcs.nrZ(), newcs.nrInl()-oldcs.nrInl() );
-    updatestageinfo_.refreeze_ = newcs.hrg.start.crl==oldcs.hrg.start.crl;
+    updatestageinfo_.refreeze_ = newcs.hrg.start.crl()==oldcs.hrg.start.crl();
 
     if ( orientation_ == Inline )
     {
 	samplingratio.y = updatestageinfo_.oldimagesize_.y / oldcs.nrCrl();
-	startdif.y = newcs.hrg.start.crl - oldcs.hrg.start.crl;
+	startdif.y = newcs.hrg.start.crl() - oldcs.hrg.start.crl();
 	growth.y = newcs.nrCrl() - oldcs.nrCrl();
-	updatestageinfo_.refreeze_ = newcs.hrg.start.inl==oldcs.hrg.start.inl;
+	updatestageinfo_.refreeze_ = newcs.hrg.start.inl()==oldcs.hrg.start.inl();
     }
 
     if ( orientation_ == Zslice )
     {
 	samplingratio.x = updatestageinfo_.oldimagesize_.x / oldcs.nrCrl();
-	startdif.x = newcs.hrg.start.crl - oldcs.hrg.start.crl;
+	startdif.x = newcs.hrg.start.crl() - oldcs.hrg.start.crl();
 	growth.x = newcs.nrCrl() - oldcs.nrCrl();
 	updatestageinfo_.refreeze_ = newcs.zrg.start==oldcs.zrg.start;
     }

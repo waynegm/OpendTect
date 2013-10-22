@@ -332,7 +332,8 @@ void IOPar::fnnm##YN( const char* keyw, bool yn1, bool yn2, bool yn3 ) \
     fms.add( getYesNoString(yn3) ); \
     fnnm( keyw, fms ); \
 } \
-void IOPar::fnnm##YN( const char* keyw, bool yn1, bool yn2, bool yn3, bool yn4 ) \
+void IOPar::fnnm##YN( const char* keyw, bool yn1, bool yn2, \
+		      bool yn3, bool yn4 ) \
 { \
     FileMultiString fms( getYesNoString(yn1) ); \
     fms.add( getYesNoString(yn2) ); \
@@ -509,7 +510,7 @@ bool IOPar::get( const char* s, type& v1, type& v2, type& v3, type& v4 ) const \
     if ( ptr != endptr ) v3 = tmpval; \
 \
     ptr = fms[3]; tmpval = convfunc; \
-    if ( ptr != endptr ) v3 = tmpval; \
+    if ( ptr != endptr ) v4 = tmpval; \
 \
     return true; \
 }
@@ -824,9 +825,27 @@ void IOPar::set( const char* s, const Coord3& crd )
 { set( s, crd.x, crd.y, crd.z ); }
 
 bool IOPar::get( const char* s, BinID& binid ) const
-{ return get( s, binid.inl, binid.crl ); }
+{ return get( s, binid.inl(), binid.crl() ); }
 void IOPar::set( const char* s, const BinID& binid )
-{ set( s, binid.inl, binid.crl ); }
+{ set( s, binid.inl(), binid.crl() ); }
+
+
+bool IOPar::get( const char* s, TrcKey& tk ) const
+{
+    TrcKey::SurvID sid;
+    int trcnr;
+    int linenr;
+
+    if ( !get( s, sid, linenr, trcnr ) )
+	return false;
+
+    tk.setSurvID( sid );
+    tk.trcNr() = trcnr;
+    tk.lineNr() = linenr;
+    return true;
+}
+void IOPar::set( const char* s, const TrcKey& tk )
+{ set( s, tk.survID(), tk.lineNr(), tk.trcNr() ); }
 
 
 bool IOPar::get( const char* s, SeparString& ss ) const
@@ -930,7 +949,7 @@ bool IOPar::get( const char* s, Color& c ) const
 
 void IOPar::set( const char* s, const Color& c )
 {
-    BufferString bs; c.fill( bs.buf() );
+    BufferString bs; c.fill( bs );
     set( s, bs );
 }
 
@@ -1107,8 +1126,7 @@ void IOPar::dumpPretty( od_ostream& strm ) const
 {
     BufferString res;
     dumpPretty( res );
-    strm << res.buf();
-    strm.flush();
+    strm << res.buf() << od_endl;
 }
 
 

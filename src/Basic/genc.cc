@@ -17,6 +17,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "ptrman.h"
 #include "filepath.h"
 #include "staticstring.h"
+#include "threadlock.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -161,7 +162,8 @@ mExternC(Basic) void ForkProcess(void)
 int isProcessAlive( int pid )
 {
 #ifdef __win__
-    HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, GetPID() );
+    HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, 
+				   GetPID() );
     return isBadHandle(hProcess) ? 0 : 1;
 #else
     const int res = kill( pid, 0 );
@@ -182,8 +184,9 @@ int ExitProgram( int ret )
 
     NotifyExitProgram( (PtrAllVoidFn)(-1) );
 
-// On Mac OpendTect crashes when calling the usual exit and shows error message:
-// dyld: odmain bad address of lazy symbol pointer passed to stub_binding_helper
+// On Mac OpendTect crashes when calling the usual exit and shows error message
+// dyld: odmain bad address of lazy symbol pointer passed to 
+// stub_binding_helper
 // _Exit does not call registered exit functions and prevents crash
 #ifdef __mac__
     _Exit( ret );
@@ -268,8 +271,9 @@ mExternC(Basic) const char* GetEnvVar( const char* env )
 	    
 	filesread = 1;
 	loadEntries( GetSettingsFileName("envvars"), &nrentries, entries );
-	loadEntries( GetSetupDataFileName(ODSetupLoc_ApplSetupOnly,"EnvVars",1),
-		     &nrentries, entries );
+	loadEntries( 
+		GetSetupDataFileName(ODSetupLoc_ApplSetupOnly,"EnvVars",1),
+		&nrentries, entries );
 	loadEntries( GetSetupDataFileName(ODSetupLoc_SWDirOnly,"EnvVars",1),
 		     &nrentries, entries );
     }
@@ -437,9 +441,12 @@ static const char* getShortPathName( const char* path )
     return path;
 #else
     char fullpath[1024];
-    GetModuleFileName( NULL, fullpath, (sizeof(fullpath)/sizeof(char)) ); // get the fullpath to the exectuabe including the extension. Do not use argv[0] on Windows
+    GetModuleFileName( NULL, fullpath, (sizeof(fullpath)/sizeof(char)) ); 
+    // get the fullpath to the exectuabe including the extension. 
+    // Do not use argv[0] on Windows
     static char shortpath[1024];
-    GetShortPathName( fullpath, shortpath, sizeof(shortpath) ); //Extract the shortname by removing spaces
+    GetShortPathName( fullpath, shortpath, sizeof(shortpath) ); 
+    //Extract the shortname by removing spaces
     return shortpath;
 #endif
 }
@@ -463,3 +470,4 @@ mExternC(Basic) const char* GetFullExecutablePath( void )
     
     return res;
 }
+

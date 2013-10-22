@@ -122,7 +122,7 @@ static bool prepare( od_ostream& strm, const IOPar& iopar, const char* idstr,
 		     ObjectSet<MultiID>& midset, BufferString& errmsg, 
 		     bool iscubeoutp, MultiID& outpid  )
 {
-    strm << "Preparing processing\n"; strm.flush();
+    strm << "Preparing processing" << od_endl;
     BufferString lpartstr = IOPar::compKey( sKey::Output(), 0 );
     BufferString outstr( IOPar::compKey( lpartstr.buf(), idstr ) );
 
@@ -135,8 +135,7 @@ static bool prepare( od_ostream& strm, const IOPar& iopar, const char* idstr,
 	midset += mid;
 	BufferString newattrnm;
 	iopar.get( sKey::Target(), newattrnm );
-	strm << "Calculating Horizon Data '" << newattrnm << "'.\n";
-	strm.flush();
+	strm << "Calculating Horizon Data '" << newattrnm << "'." << od_endl;
     }
     else
     {
@@ -144,8 +143,7 @@ static bool prepare( od_ostream& strm, const IOPar& iopar, const char* idstr,
 	PtrMan<IOObj> ioobj = IOM().get( outpid ); //check already done
 	if ( !ioobj ) return false;
 
-	strm << "Calculating '" << ioobj->name() << "'.\n";
-	strm.flush();
+	strm << "Calculating '" << ioobj->name() << "'." << od_endl;
 	BufferString basehorstr(
 	    IOPar::compKey(sKey::Geometry(),LocationOutput::surfidkey()) );
 	BufferString hor1str = IOPar::compKey(basehorstr,0);
@@ -266,14 +264,14 @@ static HorSampling getHorSamp( IOPar& geompar )
 {
     HorSampling hsamp;
     if ( !geompar.get( SurveyInfo::sKeyInlRange(),
-			hsamp.start.inl, hsamp.stop.inl )
+			hsamp.start.inl(), hsamp.stop.inl() )
 	 || !geompar.get( SurveyInfo::sKeyCrlRange(),
-			   hsamp.start.crl, hsamp.stop.crl ) )
+			   hsamp.start.crl(), hsamp.stop.crl() ) )
     {
-	hsamp.start.inl = 0;
-	hsamp.stop.inl = mUdf(int);
-	hsamp.start.crl = 0;
-	hsamp.stop.crl = mUdf(int);
+	hsamp.start.inl() = 0;
+	hsamp.stop.inl() = mUdf(int);
+	hsamp.start.crl() = 0;
+	hsamp.stop.crl() = mUdf(int);
     }
 
     return hsamp;
@@ -510,8 +508,8 @@ bool BatchProgram::go( od_ostream& strm )
 	    if ( !lineset ) return false;
 	    const PosInfo::GeomID& geomid =
 		S2DPOS().getGeomID( lineset->name(), linename );
-	    hsamp.start.inl = hsamp.stop.inl = 0;
-	    if ( mIsUdf(hsamp.stop.crl) )
+	    hsamp.start.inl() = hsamp.stop.inl() = 0;
+	    if ( mIsUdf(hsamp.stop.crl()) )
 	    {
 		PosInfo::Line2DData l2dd;
 		S2DPOS().getGeometry( geomid, l2dd );
@@ -527,7 +525,7 @@ bool BatchProgram::go( od_ostream& strm )
 		    						  false );
 	    HorizonUtils::getWantedPositions( strm, midset, bivs,
 				hsamp, extraz, nrinterpsamp, mainhoridx,
-					      extrawidth, provider );
+				extrawidth, provider );
 	}
 
 	if ( !zboundsset && mmprocrange )

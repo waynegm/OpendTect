@@ -17,10 +17,8 @@ ________________________________________________________________________
 #include "uigroup.h"
 #include "bufstringset.h"
 
-class MultiID;
 class IOObj;
 class CtxtIOObj;
-class Coord;
 class uiCheckBox;
 class uiIOObjSel;
 class uiTable;

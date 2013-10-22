@@ -14,8 +14,8 @@ ________________________________________________________________________
 #include "geometrymod.h"
 #include "parametricsurface.h"
 
-template <class T> class TypeSet;
 class Line3;
+template <class T> class Array2D;
 
 namespace Geometry
 {

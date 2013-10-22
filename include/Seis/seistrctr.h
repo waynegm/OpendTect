@@ -23,8 +23,6 @@ Translators for seismic traces.
 #include "seistype.h"
 #include "linekey.h"
 
-class BinID;
-class Coord;
 class SeisTrc;
 class LinScaler;
 class SeisTrcBuf;
@@ -229,8 +227,8 @@ public:
     void		setCurLineKey( const LineKey& lk )
     			{ curlinekey = lk; }
 
-    TraceID::GeomID	curGeomID() const		{ return geomid; }
-    void		setCurGeomID(TraceID::GeomID gid) { geomid = gid; }
+    Pos::GeomID		curGeomID() const		{ return geomid; }
+    void		setCurGeomID(Pos::GeomID gid) { geomid = gid; }
 
     virtual bool	isReadDefault() const		{ return false; }
     virtual int		estimatedNrTraces() const	{ return -1; }
@@ -263,7 +261,7 @@ protected:
     int					outnrsamples;
     Interval<int>			samps;
     LineKey				curlinekey;
-    TraceID::GeomID			geomid;
+    Pos::GeomID				geomid;
 
     void		addComp(const DataCharacteristics&,
 				const char* nm=0,int dtype=0);

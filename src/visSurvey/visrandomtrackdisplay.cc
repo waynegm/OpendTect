@@ -122,16 +122,16 @@ RandomTrackDisplay::RandomTrackDisplay()
 
     const StepInterval<float>& survinterval = SI().zRange(true);
     const StepInterval<float> inlrange( 
-			    mCast(float,SI().sampling(true).hrg.start.inl),
-	    		    mCast(float,SI().sampling(true).hrg.stop.inl),
+			    mCast(float,SI().sampling(true).hrg.start.inl()),
+	    		    mCast(float,SI().sampling(true).hrg.stop.inl()),
 			    mCast(float,SI().inlStep()) );
     const StepInterval<float> crlrange( 
-			    mCast(float,SI().sampling(true).hrg.start.crl),
-	    		    mCast(float,SI().sampling(true).hrg.stop.crl),
+			    mCast(float,SI().sampling(true).hrg.start.crl()),
+	    		    mCast(float,SI().sampling(true).hrg.stop.crl()),
 	    		    mCast(float,SI().crlStep()) );
 
     const BinID start( mNINT32(inlrange.center()), mNINT32(crlrange.start) );
-    const BinID stop(start.inl, mNINT32(crlrange.stop) );
+    const BinID stop(start.inl(), mNINT32(crlrange.stop) );
 
     addKnot( start );
     addKnot( stop );
@@ -336,8 +336,8 @@ static bool decoincideKnots( const TypeSet<BinID>& knots,
     {
 	const BinID prev = uniqueknots[uniqueknots.size()-1];
     	const BinID biddif = prev - knots[idx];
-	const int nrsteps = mMAX( abs(biddif.inl)/SI().inlStep(), 
-				  abs(biddif.crl)/SI().crlStep() );
+	const int nrsteps = mMAX( abs(biddif.inl())/SI().inlStep(), 
+				  abs(biddif.crl())/SI().crlStep() );
 	const Coord dest = SI().transform( knots[idx] );
 	const Coord crddif = SI().transform(prev) - dest;
 	for ( int step=0; step<nrsteps; step++ )
@@ -449,8 +449,8 @@ TypeSet<Coord> RandomTrackDisplay::getTrueCoords() const
     {
 	BinID start = getKnotPos(kidx-1);
 	BinID stop = getKnotPos(kidx);
-	const int nrinl = int(abs(stop.inl-start.inl) / SI().inlStep() + 1);
-	const int nrcrl = int(abs(stop.crl-start.crl) / SI().crlStep() + 1);
+	const int nrinl = int(abs(stop.inl()-start.inl()) / SI().inlStep() + 1);
+	const int nrcrl = int(abs(stop.crl()-start.crl()) / SI().crlStep() + 1);
 	const int nrtraces = nrinl > nrcrl ? nrinl : nrcrl;
 	const Coord startcoord = SI().transform( start );
 	const Coord stopcoord = SI().transform( stop );
@@ -697,7 +697,7 @@ void RandomTrackDisplay::updatePanelStripPath()
     {
 	if ( trcbids[trcidx] == knots_[knotidx] )
 	{
-	    pathcrds += Coord( knots_[knotidx].inl, knots_[knotidx].crl );
+	    pathcrds += Coord( knots_[knotidx].inl(), knots_[knotidx].crl() );
 	    mapping += (float) trcidx;
 	    knotidx++;
 	}
@@ -776,14 +776,14 @@ BinID RandomTrackDisplay::proposeNewPos(int knotnr ) const
     else
     {
 	res = getKnotPos(knotnr)+getKnotPos(knotnr-1);
-	res.inl /= 2;
-	res.crl /= 2;
+	res.inl() /= 2;
+	res.crl() /= 2;
     }
 
-    res.inl = mMIN( SI().inlRange(true).stop, res.inl );
-    res.inl = mMAX( SI().inlRange(true).start, res.inl );
-    res.crl = mMIN( SI().crlRange(true).stop, res.crl );
-    res.crl = mMAX( SI().crlRange(true).start, res.crl );
+    res.inl() = mMIN( SI().inlRange(true).stop, res.inl() );
+    res.inl() = mMAX( SI().inlRange(true).start, res.inl() );
+    res.crl() = mMIN( SI().crlRange(true).stop, res.crl() );
+    res.crl() = mMAX( SI().crlRange(true).start, res.crl() );
 
     SI().snap(res, BinID(0,0) );
 
@@ -861,7 +861,7 @@ BufferString RandomTrackDisplay::getManipulationString() const
 	BinID binid  = getManipKnotPos( knotidx );
 	str = "Node "; str += knotidx;
 	str += " Inl/Crl: ";
-	str += binid.inl; str += "/"; str += binid.crl;
+	str += binid.inl(); str += "/"; str += binid.crl();
     }
 
     return str;
@@ -916,10 +916,10 @@ BinID RandomTrackDisplay::snapPosition( const BinID& binid_ ) const
 {
     BinID binid( binid_ );
     const HorSampling& hs = SI().sampling(true).hrg;
-    if ( binid.inl < hs.start.inl ) binid.inl = hs.start.inl;
-    if ( binid.inl > hs.stop.inl ) binid.inl = hs.stop.inl;
-    if ( binid.crl < hs.start.crl ) binid.crl = hs.start.crl;
-    if ( binid.crl > hs.stop.crl ) binid.crl = hs.stop.crl;
+    if ( binid.inl() < hs.start.inl() ) binid.inl() = hs.start.inl();
+    if ( binid.inl() > hs.stop.inl() ) binid.inl() = hs.stop.inl();
+    if ( binid.crl() < hs.start.crl() ) binid.crl() = hs.start.crl();
+    if ( binid.crl() > hs.stop.crl() ) binid.crl() = hs.stop.crl();
 
     SI().snap( binid, BinID(0,0) );
     return binid;
@@ -933,8 +933,8 @@ SurveyObject::AttribFormat RandomTrackDisplay::getAttributeFormat( int ) const
 #define mFindTrc(inladd,crladd) \
     if ( idx<0 ) \
     { \
-	BinID bid( binid.inl + step.inl * (inladd),\
-		   binid.crl + step.crl * (crladd) );\
+	BinID bid( binid.inl() + step.inl() * (inladd),\
+		   binid.crl() + step.crl() * (crladd) );\
 	idx = bids.indexOf( bid ); \
     }
 Coord3 RandomTrackDisplay::getNormal( const Coord3& pos ) const
@@ -1093,8 +1093,8 @@ void RandomTrackDisplay::getMousePosInfo( const visBase::EventInfo&,
 #define mFindTrc(inladd,crladd) \
     if ( trcidx < 0 ) \
     { \
-	bid.inl = reqbid.inl + step.inl * (inladd); \
-	bid.crl = reqbid.crl + step.crl * (crladd); \
+	bid.inl() = reqbid.inl() + step.inl() * (inladd); \
+	bid.crl() = reqbid.crl() + step.crl() * (crladd); \
 	trcidx = cache_[attrib]->find( bid ); \
     }
 
@@ -1226,7 +1226,7 @@ void RandomTrackDisplay::pickCB( CallBacker* cb )
 	if ( !checkValidPick( eventinfo, pos ) )
 	    return;
 	BinID bid = SI().transform( pos );
-	pos.x = bid.inl; pos.y = bid.crl;
+	pos.x = bid.inl(); pos.y = bid.crl();
 	setPickPos( pos );
 	eventcatcher_->setHandled();
     }

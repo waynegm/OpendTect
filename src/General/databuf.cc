@@ -122,6 +122,20 @@ void DataBuffer::zero()
     }
 }
 
+
+BufferString DataBuffer::getString() const
+{
+    BufferString ret;
+    if ( data_ )
+    {
+	const size_t totsz = (size_t)( nelem_ * bytes_ + 1 );
+	ret.setBufSize( totsz );
+	memcpy( ret.buf(), data_, totsz-1 );
+	(ret.buf())[totsz-1] = '\0';
+    }
+    return ret;
+}
+
  
 TraceData::~TraceData()
 {

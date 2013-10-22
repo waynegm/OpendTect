@@ -17,11 +17,10 @@ ________________________________________________________________________
 #include "callback.h"
 #include "emposid.h"
 #include "factory.h"
-#include "position.h"
+#include "coord.h"
 #include "refcount.h"
 
 class BufferStringSet;
-template <class T> class TypeSet;
 
 namespace EM { class EMObject; class EdgeLineSet; };
 namespace Geometry { class ElementEditor; };

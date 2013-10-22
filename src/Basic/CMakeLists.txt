@@ -12,6 +12,7 @@ set( QT_MOC_HEADERS qfilesystemcomm.h qtimercomm.h i_qptr.h)
 set( OD_TEST_PROGS
 		callback.cc
 		commandlineparser.cc
+		file.cc
 		math2.cc
 		refcount.cc
 		sets.cc
@@ -25,13 +26,13 @@ set( OD_MODULE_SOURCES
 	    arrayndinfo.cc
 	    arrayndslice.cc
 	    ascstream.cc
+	    ascbinstream.cc
 	    bindatadesc.cc
 	    bufstring.cc
 	    callback.cc
 	    color.cc
 	    compoundkey.cc
 	    commandlineparser.cc
-	    conn.cc
 	    cubesampling.cc
 	    dateinfo.cc
 	    datapack.cc
@@ -66,7 +67,6 @@ set( OD_MODULE_SOURCES
 	    position.cc
 	    positionlist.cc
 	    progressmeter.cc
-	    rcol2coord.cc
 	    repos.cc
 	    rowcol.cc
 	    qptr.cc

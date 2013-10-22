@@ -18,7 +18,7 @@ ________________________________________________________________________
 #include "randomlinegeom.h"
 
 class IOObj;
-class IOPar;
+class od_ostream;
 class od_ostream;
 class LineKey;
 class SeisTrcReader;
@@ -49,7 +49,7 @@ protected:
     int			nrdone_;
     int			totnr_;
 
-    BinIDValueSet::Pos	pos_;
+    BinIDValueSet::SPos	pos_;
     Seis::TableSelData&	seldata_;
 
 private:

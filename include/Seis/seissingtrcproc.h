@@ -16,10 +16,8 @@ ________________________________________________________________________
 #include "executor.h"
 #include "cubesampling.h"
 class IOObj;
-class IOPar;
 class Scaler;
 class SeisTrc;
-class MultiID;
 class SeisTrcReader;
 class SeisTrcWriter;
 class SeisResampler;

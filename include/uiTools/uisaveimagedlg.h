@@ -18,13 +18,11 @@ ________________________________________________________________________
 #include "pixmap.h"
 #include "ptrman.h"
 
-class IOPar;
 class Settings;
 class uiCheckBox;
 class uiFileInput;
 class uiGenInput;
 class uiLabel;
-class uiLabeledComboBox;
 class uiLabeledSpinBox;
 
 mExpClass(uiTools) uiSaveImageDlg : public uiDialog

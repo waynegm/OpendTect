@@ -20,7 +20,6 @@ ________________________________________________________________________
 #include "geomelement.h"
 
 class BinIDValueSet;
-class Color;
 class DataPointSet;
 
 class ZAxisTransform;

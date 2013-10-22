@@ -338,6 +338,11 @@ Coord3 Fault3DFlatViewEditor::getScaleVector() const
 }
 
 
+#define mGetNormal(var) \
+    Coord3 var( Coord3::udf() ); \
+    if ( !cs_.isEmpty() ) cs_.getDefaultNormal( var )
+
+
 void Fault3DFlatViewEditor::mouseMoveCB( CallBacker* )
 {
     if ( seedhasmoved_ )
@@ -369,14 +374,14 @@ void Fault3DFlatViewEditor::mouseMoveCB( CallBacker* )
 
     bool shdmakenewstick = false;
     EM::PosID pid;
-    const Coord3 normal( cs_.isEmpty() ? Coord3::udf() : cs_.defaultNormal() );
+    mGetNormal( normal );
     f3deditor->setScaleVector( getScaleVector() );
     f3deditor->getInteractionInfo( shdmakenewstick, pid, pos, &normal );
 
     if ( pid.isUdf() || shdmakenewstick )
 	return; 
 
-    const int sticknr = pid.isUdf() ? mUdf(int) : pid.getRowCol().row;
+    const int sticknr = pid.isUdf() ? mUdf(int) : pid.getRowCol().row();
 
     if ( activestickid_ != sticknr )
 	activestickid_ = sticknr;
@@ -437,10 +442,10 @@ void Fault3DFlatViewEditor::mousePressCB( CallBacker* )
 		     emf3d->sectionGeometry( sid ) );
 
     RowCol rc;
-    rc.row = stickid;
+    rc.row() = stickid;
     int knotid = mUdf(int);
 
-    StepInterval<int> colrg = fss->colRange( rc.row );
+    StepInterval<int> colrg = fss->colRange( rc.row() );
     knotid = colrg.start + displayedknotid*colrg.step;
 
     RefMan<MPE::ObjectEditor> editor = MPE::engine().getEditor( emid, false );
@@ -499,7 +504,7 @@ void Fault3DFlatViewEditor::mouseReleaseCB( CallBacker* )
 
     bool makenewstick = !mouseevent.ctrlStatus() && mouseevent.shiftStatus();
     EM::PosID interactpid;
-    const Coord3 normal( cs_.isEmpty() ? Coord3::udf() : cs_.defaultNormal() );
+    mGetNormal( normal );
     f3deditor->setScaleVector( getScaleVector() );
     f3deditor->getInteractionInfo( makenewstick, interactpid, pos, &normal );
 
@@ -508,7 +513,7 @@ void Fault3DFlatViewEditor::mouseReleaseCB( CallBacker* )
     {
 	//Remove knot/stick
 	bool res;
-	const int rmnr = mousepid_.getRowCol().row;
+	const int rmnr = mousepid_.getRowCol().row();
 	if ( emf3d->geometry().nrKnots(mousepid_.sectionID(),rmnr) == 1 )
 	{
 	    res = emf3d->geometry().removeStick( mousepid_.sectionID(), rmnr,
@@ -530,12 +535,12 @@ void Fault3DFlatViewEditor::mouseReleaseCB( CallBacker* )
 
     if ( makenewstick )
     {
-	Coord3 editnormal = cs_.defaultNormal();
-	if ( cs_.isEmpty() ) return;
+	mGetNormal( editnormal );
+	if ( editnormal.isUdf() ) return;
 
 	const int insertsticknr = interactpid.isUdf()
 	    ? mUdf( int )
-	    : interactpid.getRowCol().row;
+	    : interactpid.getRowCol().row();
 
 	if ( emf3d->geometry().insertStick(interactpid.sectionID(),
 		insertsticknr,0,pos,editnormal,true) )
@@ -636,12 +641,12 @@ void Fault3DFlatViewEditor::removeSelectionCB( CallBacker* cb )
     RowCol rc;
     for ( int ids=0; ids<selectedids.size(); ids++ )
     {
-	rc.row = getStickId( selectedids[ids] );
-	const StepInterval<int> colrg = fss->colRange( rc.row );
-	rc.col = colrg.start + selectedidxs[ids]*colrg.step;
+	rc.row() = getStickId( selectedids[ids] );
+	const StepInterval<int> colrg = fss->colRange( rc.row() );
+	rc.col() = colrg.start + selectedidxs[ids]*colrg.step;
 	emf3d->geometry().removeKnot( sid, rc.toInt64(), false );
-	if ( !emf3d->geometry().nrKnots(sid,rc.row) )
-	    emf3d->geometry().removeStick( sid, rc.row, false );
+	if ( !emf3d->geometry().nrKnots(sid,rc.row()) )
+	    emf3d->geometry().removeStick( sid, rc.row(), false );
     }
 
     emf3d->setBurstAlert( false );

@@ -17,10 +17,8 @@ ________________________________________________________________________
 #include "sets.h"
 #include "factory.h"
 #include "callback.h"
-
+#include <typeinfo>
 namespace osg { class Node; }
-
-class IOPar;
 
 namespace visBase
 {
@@ -28,11 +26,7 @@ class DataObject;
 class SelectionManager;
 class Factory;
 
-
-/*!\brief
-
-
-*/
+/*!\brief */
 
 mExpClass(visBase) DataManager : public CallBacker
 {

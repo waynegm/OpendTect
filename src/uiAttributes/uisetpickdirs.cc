@@ -26,7 +26,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "executor.h"
 #include "mousecursor.h"
 #include "pickset.h"
-#include "rcol2coord.h"
+#include "posidxpair2coord.h"
 #include "seistrctr.h"
 #include "separstr.h"
 #include "survinfo.h"
@@ -182,8 +182,8 @@ bool uiSetPickDirs::acceptOK( CallBacker* )
 	}
 	else
 	{
-	    phi = (float) (dps.value( 0, rid ) * M_PI / 180);
-	    theta = (float) (dps.value( 1, rid ) * M_PI / 180);
+	    phi = Math::toRadians( (float) dps.value( 0, rid ) );
+	    theta = Math::toRadians( (float) dps.value( 1, rid ) );
 	    if ( !mIsUdf(phi) && !mIsUdf(theta) )
 	    {
 		wrapPhi( phi );
@@ -334,7 +334,7 @@ float uiSetPickDirs::calcPhi( float inldip, float crldip )
 {
     const float azi = atan2( inldip, crldip );
 
-    const RCol2Coord& b2c = SI().binID2Coord();
+    const Pos::IdxPair2Coord& b2c = SI().binID2Coord();
     const double xcrl = b2c.getTransform(true).c;
     double ycrl = b2c.getTransform(false).c;
 

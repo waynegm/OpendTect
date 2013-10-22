@@ -16,12 +16,11 @@ ________________________________________________________________________
 #include "callback.h"
 #include "geometry.h"
 #include "keyenum.h"
-#include "rcol2coord.h"
+#include "posidxpair2coord.h"
 
 class MouseEventHandler;
 class MouseEvent;
 class MenuHandler;
-class Color;
 
 namespace FlatView
 {
@@ -82,7 +81,7 @@ protected:
     void		reset();
 
     AuxDataEditor&		editor_;
-    RCol2Coord			transformation_;
+    Pos::IdxPair2Coord		transformation_;
     AuxData*			sowingline_;
     MouseEventHandler&		mouseeventhandler_;
     Geom::PixRectangle<int>	mouserectangle_;

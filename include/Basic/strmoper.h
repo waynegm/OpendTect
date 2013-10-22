@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "basicmod.h"
 #include "gendefs.h"
 #include <iostream>
-class BufferString;
 class StreamData;
 
 /*!\brief Stream operations. operations will be retried on soft errors */
@@ -28,6 +27,7 @@ namespace StrmOper
 
     mGlobal(Basic) bool		getNextChar(std::istream&,char&);
     mGlobal(Basic) bool		wordFromLine(std::istream&,char*,int maxnrchrs);
+    mGlobal(Basic) bool		wordFromLine(std::istream&,BufferString&);
 
     mGlobal(Basic) bool		readWord(std::istream&,BufferString* b=0);
     mGlobal(Basic) bool		readLine(std::istream&,BufferString* b=0);

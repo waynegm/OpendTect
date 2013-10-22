@@ -14,7 +14,6 @@ ________________________________________________________________________
 
 # ifdef do_import_export
 
-#  ifdef __cpp__
 #  include "mathfunc.h"
 
 mExportTemplClassInst(Algo) BendPointBasedMathFunction<float,float>;
@@ -24,7 +23,6 @@ mExportTemplClassInst(Algo) BendPointBasedMathFunction<double,double>;
 
 mExportTemplClassInst(Algo) MathFunction<float,float>;
 
-# endif
 
 # endif
 

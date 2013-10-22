@@ -79,8 +79,8 @@ bool SEGY::FileDataSet::StoredData::getKey( od_int64 pos, Seis::PosKey& pk,
 
     BinID bid;
     int offsetazimuth;
-    if ( !DataInterpreter<int>::get( int32di_, *istrm_, bid.inl ) ||
-	 !DataInterpreter<int>::get( int32di_, *istrm_, bid.crl ) ||
+    if ( !DataInterpreter<int>::get( int32di_, *istrm_, bid.inl() ) ||
+	 !DataInterpreter<int>::get( int32di_, *istrm_, bid.crl() ) ||
 	 !DataInterpreter<int>::get( int32di_, *istrm_, offsetazimuth ) ||
 	 !StrmOper::readBlock( *istrm_, &usable, sizeof(bool) ) )
 	 return false;
@@ -102,9 +102,11 @@ bool SEGY::FileDataSet::StoredData::add( const Seis::PosKey& pk, bool usable )
     if ( !ostrm_->good() )
 	return false;
 
-    const BinID bid = pk.binID();
-    ostrm_->write( (const char*) &bid.inl, sizeof( bid.inl ) );
-    ostrm_->write( (const char*) &bid.crl, sizeof( bid.crl ) );
+    const int inl = pk.binID().inl();
+    const int crl = pk.binID().crl();
+
+    ostrm_->write( (const char*) &inl, sizeof( inl ) );
+    ostrm_->write( (const char*) &crl, sizeof( crl ) );
 
     const OffsetAzimuth oa( pk.offset(), 0 );
     const int oaint = oa.asInt();
@@ -423,14 +425,14 @@ bool SEGY::FileDataSet::readVersion1File( ascistream& astrm )
 	    if ( is2d )
 		pk.setTrcNr( keyw.getIValue(0) );
 	    else
-		pk.binID().use( keyw[0] );
+		pk.binID().parseUsrStr( keyw[0] );
 	    if ( isps )
 		pk.setOffset( keyw.getFValue(1) );
 
 	    const char ch( *val[0] );
 	    const bool usable = ch != 'U';
 	    if ( isrich )
-		crd.use( val[1] );
+		crd.parseUsrStr( val[1] );
 
 	    addTrace( fileidx, pk, crd, usable );
 	}
@@ -568,8 +570,8 @@ void SEGY::FileDataSet::getReport( IOPar& iop ) const
 	iop.add( "Trace number range", nrrg.start, nrrg.stop );
     else
     {
-	iop.add( "Inline range", hs.start.inl, hs.stop.inl );
-	iop.add( "Crossline range", hs.start.crl, hs.stop.crl );
+	iop.add( "Inline range", hs.start.inl(), hs.stop.inl() );
+	iop.add( "Crossline range", hs.start.crl(), hs.stop.crl() );
     }
 
     if ( Seis::isPS(geom_) )

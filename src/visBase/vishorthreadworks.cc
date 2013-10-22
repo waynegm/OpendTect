@@ -155,7 +155,7 @@ bool HorizonSectionTilePosSetup::doWork( od_int64 start, od_int64 stop,
 	positions.setCapacity( (nrcrdspertileside_)*(nrcrdspertileside_) );
 	for ( int rowidx=0; rowidx<nrcrdspertileside_ ; rowidx++ )
 	{
-	    const int row = origin.row + rowidx*rrg_.step;
+	    const int row = origin.row() + rowidx*rrg_.step;
 	    const bool rowok = rrg_.includes(row, false);
 	    const StepInterval<int> colrg( 
 		mMAX(geo_.colRange(row).start, crg_.start),
@@ -163,7 +163,7 @@ bool HorizonSectionTilePosSetup::doWork( od_int64 start, od_int64 stop,
 
 	    for ( int colidx=0; colidx<nrcrdspertileside_ ; colidx++ )
 	    {
-		const int col = origin.col + colidx*colrg.step;
+		const int col = origin.col() + colidx*colrg.step;
 		Coord3 pos = rowok && colrg.includes(col, false)
 		    ? geo_.getKnot(RowCol(row,col),false) 
 		    : Coord3::udf();

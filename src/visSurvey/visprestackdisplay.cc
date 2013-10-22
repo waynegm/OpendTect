@@ -180,9 +180,11 @@ DataPack::ID PreStackDisplay::preProcess()
     const BinID stepout = preprocmgr_->getInputStepout();
 
     BinID relbid;
-    for ( relbid.inl=-stepout.inl; relbid.inl<=stepout.inl; relbid.inl++ )
+    for ( relbid.inl()=-stepout.inl(); relbid.inl()<=stepout.inl();
+	    			       relbid.inl()++ )
     {
-	for ( relbid.crl=-stepout.crl; relbid.crl<=stepout.crl; relbid.crl++ )
+	for ( relbid.crl()=-stepout.crl(); relbid.crl()<=stepout.crl();
+					   relbid.crl()++ )
 	{
 	    if ( !preprocmgr_->wantsInput(relbid) )
 		continue;
@@ -192,7 +194,7 @@ DataPack::ID PreStackDisplay::preProcess()
 			   : BinID(0,trcnr_) + relbid;
 	    PreStack::Gather* gather = new PreStack::Gather;
 	    if ( (is3DSeis() && !gather->readFrom(*ioobj_,*reader_,inputbid)) ||
-		 (!is3DSeis() && !gather->readFrom(ioobj_->key(),inputbid.crl,
+		 (!is3DSeis() && !gather->readFrom(ioobj_->key(),inputbid.crl(),
 						   seis2d_->getLineName(),0)) )
 	    {
 		delete gather;
@@ -236,7 +238,7 @@ bool PreStackDisplay::setPosition( const BinID& nb )
 	if ( resetpos )
 	{
 	    BinID nearbid = getNearBinID( nb );
-	    if ( nearbid.inl==-1 || nearbid.crl==-1 )
+	    if ( nearbid.inl()==-1 || nearbid.crl()==-1 )
 		;
 //		uiMSG().warning("No gather data at the whole section.");
 	    else
@@ -267,7 +269,7 @@ bool PreStackDisplay::setPosition( const BinID& nb )
 
 bool PreStackDisplay::updateData()
 {
-    if ( (is3DSeis() && (bid_.inl==-1 || bid_.crl==-1)) || 
+    if ( (is3DSeis() && (bid_.inl()==-1 || bid_.crl()==-1)) || 
 	 (!is3DSeis() && !seis2d_) || !ioobj_ || !reader_ )
     {
 	turnOn(false);
@@ -324,11 +326,11 @@ const StepInterval<int> PreStackDisplay::getTraceRange( const BinID& bid ) const
 	const PosInfo::CubeData& posinfo = rdr3d->posData();
 	if ( isOrientationInline() )
 	{
-	    const int inlidx = posinfo.indexOf( bid.inl );
+	    const int inlidx = posinfo.indexOf( bid.inl() );
 	    if ( inlidx==-1 )
 		return StepInterval<int>(mUdf(int),mUdf(int),1);
 
-	    const int seg = posinfo[inlidx]->nearestSegment( bid.crl );
+	    const int seg = posinfo[inlidx]->nearestSegment( bid.crl() );
 	    return posinfo[inlidx]->segments_[seg];
 	}
 	else
@@ -371,13 +373,13 @@ BinID PreStackDisplay::getNearBinID( const BinID& bid ) const
     BinID res = bid;
     if ( isOrientationInline() )
     {
-	res.crl = bid.crl<tracerg.start ? tracerg.start : 
-	    ( bid.crl>tracerg.stop ? tracerg.stop : tracerg.snap(bid.crl) );
+	res.crl() = bid.crl()<tracerg.start ? tracerg.start : 
+	    ( bid.crl()>tracerg.stop ? tracerg.stop : tracerg.snap(bid.crl()) );
     }
     else
     {
-	res.inl = bid.inl<tracerg.start ? tracerg.start : 
-	    ( bid.inl>tracerg.stop ? tracerg.stop : tracerg.snap(bid.inl) );
+	res.inl() = bid.inl()<tracerg.start ? tracerg.start : 
+	    ( bid.inl()>tracerg.stop ? tracerg.stop : tracerg.snap(bid.inl()) );
     }
 
     return res;
@@ -453,7 +455,7 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
     if ( (!section_ && !seis2d_) || factor_<0 || width_<0 )
 	return;
 
-    if ( section_ && ( bid_.inl<0 || bid_.crl<0 ) )
+    if ( section_ && ( bid_.inl()<0 || bid_.crl()<0 ) )
 	return;
 	
     const Coord direction = posside_ ? basedirection_ : -basedirection_;
@@ -470,7 +472,7 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
     if ( !offsetrange_.width() )
       	offsetrange_.stop = mDefaultWidth;
 
-    Coord startpos( bid_.inl, bid_.crl );
+    Coord startpos( bid_.inl(), bid_.crl() );
     if ( seis2d_ )
 	startpos = seis2dpos_;
 
@@ -500,9 +502,9 @@ void PreStackDisplay::dataChangedCB( CallBacker* )
 	planedragger_->setDim( isinline ? 1 : 0 );
 
 	const float xwidth = 
-	    isinline ? (float) fabs(stoppos.x-startpos.x) : 1.0f;
+	    isinline ? (float) fabs(stoppos.x-startpos.x) : SI().inlDistance();
 	const float ywidth = 
-	    isinline ? 1.0f : (float) fabs(stoppos.y-startpos.y);
+	    isinline ?  SI().crlDistance() : (float) fabs(stoppos.y-startpos.y);
     
     	planedragger_->setSize( Coord3(xwidth,ywidth,zrg_.width(true)) );
 	
@@ -605,10 +607,10 @@ void PreStackDisplay::sectionMovedCB( CallBacker* )
     else
     {
     	if ( section_->getOrientation() == PlaneDataDisplay::Inline )
-	    newpos.inl = section_->getCubeSampling( -1 ).hrg.start.inl;
+	    newpos.inl() = section_->getCubeSampling( -1 ).hrg.start.inl();
     	else if ( section_->getOrientation() == 
 		PlaneDataDisplay::Crossline )
-	    newpos.crl = section_->getCubeSampling( -1 ).hrg.start.crl;
+	    newpos.crl() = section_->getCubeSampling( -1 ).hrg.start.crl();
     	else
 	    return;
     }
@@ -794,10 +796,10 @@ void PreStackDisplay::draggerMotion( CallBacker* )
     const PlaneDataDisplay::Orientation orientation =
 	    section_->getOrientation();
     bool showplane = false;
-    if ( orientation==PlaneDataDisplay::Inline && newcrl!=bid_.crl )
+    if ( orientation==PlaneDataDisplay::Inline && newcrl!=bid_.crl() )
         showplane = true;
     else if ( orientation==PlaneDataDisplay::Crossline && 
-	      newinl!=bid_.inl )
+	      newinl!=bid_.inl() )
 	showplane = true;
     
     planedragger_->showPlane( showplane );
@@ -816,14 +818,14 @@ void PreStackDisplay::finishedCB( CallBacker* )
     BinID newpos;
     if ( section_->getOrientation() == PlaneDataDisplay::Inline )
     {
-	newpos.inl = section_->getCubeSampling( -1 ).hrg.start.inl;
-	newpos.crl = SI().crlRange(true).snap( planedragger_->center().y );
+	newpos.inl() = section_->getCubeSampling( -1 ).hrg.start.inl();
+	newpos.crl() = SI().crlRange(true).snap( planedragger_->center().y );
     }
     else if ( section_->getOrientation() ==
 	    PlaneDataDisplay::Crossline )
     {
-	newpos.inl = SI().inlRange(true).snap( planedragger_->center().x );
-	newpos.crl = section_->getCubeSampling( -1 ).hrg.start.crl;
+	newpos.inl() = SI().inlRange(true).snap( planedragger_->center().x );
+	newpos.crl() = section_->getCubeSampling( -1 ).hrg.start.crl();
     }
     else
 	return;
@@ -881,13 +883,13 @@ void PreStackDisplay::getMousePosInfo( const visBase::EventInfo& ei,
     }
 
     int offsetsample = 0;
-    double traceoffset;
+    double traceoffset = 0;
     if ( posdata.isIrregular() )
     {
 	float mindist = mUdf(float);
 	for ( int idx=0; idx<posdata.nrPts(true); idx++ )
 	{
-	    const float dist = (float) fabs( posdata.position(true,idx)-offset );
+	    const float dist = (float) fabs( posdata.position(true,idx)-offset);
 	    if ( !idx || dist<mindist )
 	    {
 		offsetsample = idx;
@@ -908,7 +910,13 @@ void PreStackDisplay::getMousePosInfo( const visBase::EventInfo& ei,
     }
 
     info = "Offset: ";
-    info += traceoffset;
+    if ( SI().xyInFeet() )
+    {
+	traceoffset *= mToFeetFactorD;
+    }
+
+    info.add( (float) traceoffset );
+    info.add( " " ).add( SI().getXYUnitString(false) );
 
     const int zsample = posdata.range(false).nearestIndex( pos.z );
     val = fdp->data().get( offsetsample, zsample );

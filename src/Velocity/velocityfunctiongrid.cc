@@ -43,7 +43,7 @@ bool GriddedFunction::moveTo( const BinID& bid )
 
 bool GriddedFunction::fetchSources()
 {
-    if ( mIsUdf(bid_.inl) || mIsUdf(bid_.crl ) )
+    if ( mIsUdf(bid_.inl()) || mIsUdf(bid_.crl() ) )
 	return false;
 
     mDynamicCastGet( GriddedSource&, gvs, source_ );
@@ -52,7 +52,7 @@ bool GriddedFunction::fetchSources()
     TypeSet<int> velfuncsource;
 
     //Search for perfect fit (i.e no gridding)
-    if ( gvs.sourcepos_.valid(bid_) )
+    if ( gvs.sourcepos_.isValid(bid_) )
     {
 	int funcsource;
 	ConstRefMan<Function> velfunc = getInputFunction( bid_, funcsource );
@@ -311,7 +311,7 @@ bool doWork(od_int64 start, od_int64 stop, int )
     const BinID step( SI().inlRange(false).step, SI().crlRange(false).step );
     while ( true )
     {
-	TypeSet<BinIDValueSet::Pos> positions;
+	TypeSet<BinIDValueSet::SPos> positions;
 	Threads::Locker lckr( lock_ );
 	if ( moretodo_ )
 	{
@@ -334,26 +334,26 @@ bool doWork(od_int64 start, od_int64 stop, int )
 	for ( int idx=positions.size()-1; idx>=0; idx-- )
 	{
 	    const BinID bid = bvs_.getBinID(positions[idx]);
-	    BinID neighbor( bid.inl-step.inl, bid.crl-step.crl );
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
-	    neighbor.crl += step.crl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
-	    neighbor.crl += step.crl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
+	    BinID neighbor( bid.inl()-step.inl(), bid.crl()-step.crl() );
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() += step.crl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() += step.crl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
 
-	    neighbor.crl = bid.crl-step.crl;
-	    neighbor.inl += step.inl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
-	    neighbor.crl += 2*step.crl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() = bid.crl()-step.crl();
+	    neighbor.inl() += step.inl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() += 2*step.crl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
 
-	    neighbor.crl = bid.crl-step.crl;
-	    neighbor.inl += step.inl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
-	    neighbor.crl += step.crl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
-	    neighbor.crl += step.crl;
-	    if ( !bvs_.valid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() = bid.crl()-step.crl();
+	    neighbor.inl() += step.inl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() += step.crl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
+	    neighbor.crl() += step.crl();
+	    if ( !bvs_.isValid(neighbor) ) { sourcebids+=bid; continue; }
 	}
     }
 
@@ -371,7 +371,7 @@ bool doWork(od_int64 start, od_int64 stop, int )
 protected:
 
     const BinIDValueSet& bvs_;
-    BinIDValueSet::Pos  pos_;
+    BinIDValueSet::SPos  pos_;
 
     TypeSet<BinID>&     bids_;
     TypeSet<Coord>&     coords_;
@@ -565,7 +565,7 @@ void GriddedSource::sourceChangeCB( CallBacker* cb )
     for ( int idx=functions_.size()-1; idx>=0; idx-- )
     {
 	mDynamicCastGet( GriddedFunction*, func, functions_[idx] );
-	if ( bid.inl!=-1 && bid.crl!=-1 && !func->isInfluencedBy(bid) )
+	if ( bid.inl()!=-1 && bid.crl()!=-1 && !func->isInfluencedBy(bid) )
 	    continue;
 
 	func->removeCache();

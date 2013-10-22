@@ -188,7 +188,7 @@ bool Well::Reader::getInfo( od_istream& strm ) const
 	else if ( astrm.hasKeyword(Well::Info::sKeycounty()) )
 	    wd.info().county = astrm.value();
 	else if ( astrm.hasKeyword(Well::Info::sKeycoord()) )
-	    wd.info().surfacecoord.use( astrm.value() );
+	    wd.info().surfacecoord.parseUsrStr( astrm.value() );
 	else if ( astrm.hasKeyword(Well::Info::sKeyOldelev()) )
 	{
 	    const float readsurfelev = astrm.getFValue(); //needed for old files
@@ -350,8 +350,6 @@ Interval<float> Well::Reader::getLogDahRange( const char* nm ) const
 	    continue;
 
 	readLogData( *log, strm, bintype );
-	if ( log->isEmpty() )
-	    continue;
 	if ( log->isEmpty() )
 	    continue;
 	

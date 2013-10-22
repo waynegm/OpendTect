@@ -53,8 +53,8 @@ Usage::Server::Server( const IOPar* inpars, od_ostream& strm )
     logstrm_ << "\non " << GetLocalHostName();
     if ( port_ > 0 )
 	logstrm_ << " (port: " << port_ << ")";
-    logstrm_ << "\nStarted: " << Time::getDateTimeString() << "\n\n";
-    logstrm_.flush();
+    logstrm_ << "\nStarted: " << Time::getDateTimeString()
+	     << od_newline << od_endl;
 
     Administrator::setLogStream( &logstrm_ );
 }
@@ -118,7 +118,7 @@ bool Usage::Server::go( bool inthr )
 void Usage::Server::addInfo( Usage::Info& inf )
 {
     if ( !thread_ )
-    infos_ += &inf;
+	infos_ += &inf;
     else
     {
 	Threads::Locker lckr( threadlock_ );

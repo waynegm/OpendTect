@@ -23,8 +23,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "filepath.h"
 #include "keystrs.h"
 #include "zdomain.h"
-
-#include <sstream>
+#include "od_strstream.h"
 
 
 struct Seis2DLineSetCache
@@ -198,7 +197,7 @@ void Seis2DLineSet::readFile( bool mklock, BufferString* typestr )
 	return;
     }
 
-    getFrom( sfio.istrm().stdStream(), typestr );
+    getFrom( sfio.istrm(), typestr );
     sfio.closeSuccess( mklock );
 }
 
@@ -217,15 +216,14 @@ bool Seis2DLineSet::getPre( BufferString* typestr )
 	    return false;
     }
 
-    std::string stdstr( preSetContents().get(psidx).buf() );
-    std::istringstream istrstrm( stdstr );
+    od_istrstream istrstrm( preSetContents().get(psidx) );
     getFrom( istrstrm, typestr );
     readonly_ = true;
     return true;
 }
 
 
-void Seis2DLineSet::getFrom( std::istream& strm, BufferString* typestr )
+void Seis2DLineSet::getFrom( od_istream& strm, BufferString* typestr )
 {
     ascistream astrm( strm, true );
     if ( !astrm.isOfFileType(sKeyFileType) )
@@ -264,14 +262,14 @@ void Seis2DLineSet::writeFile() const
 	SafeFileIO sfio( fname_, true );
 	if ( sfio.open(false,true) )
 	{
-	    putTo( sfio.ostrm().stdStream() );
+	    putTo( sfio.ostrm() );
 	    sfio.closeSuccess();
 	}
     }
 }
 
 
-void Seis2DLineSet::putTo( std::ostream& strm ) const
+void Seis2DLineSet::putTo( od_ostream& strm ) const
 {
     Threads::Locker lckr( cache.lock_ );
     if ( cache.fname_==fname_ || cache.name_==name() )
@@ -760,9 +758,9 @@ const char* Seis2DLineSet::getCubeSampling( CubeSampling& cs,
 	    StepInterval<int> trg; StepInterval<float> zrg;
 	    if ( getRanges(iln,trg,zrg) )
 	    {
-		if ( cs.hrg.start.crl > trg.start ) cs.hrg.start.crl =trg.start;
-		if ( cs.hrg.stop.crl < trg.stop ) cs.hrg.stop.crl = trg.stop;
-		if ( cs.hrg.step.crl > trg.step ) cs.hrg.step.crl = trg.step;
+		if ( cs.hrg.start.crl() > trg.start ) cs.hrg.start.crl() =trg.start;
+		if ( cs.hrg.stop.crl() < trg.stop ) cs.hrg.stop.crl() = trg.stop;
+		if ( cs.hrg.step.crl() > trg.step ) cs.hrg.step.crl() = trg.step;
 		if ( cs.zrg.start > zrg.start ) cs.zrg.start = zrg.start;
 		if ( cs.zrg.stop < zrg.stop ) cs.zrg.stop = zrg.stop;
 		if ( cs.zrg.step > zrg.step ) cs.zrg.step = zrg.step;
@@ -776,9 +774,9 @@ const char* Seis2DLineSet::getCubeSampling( CubeSampling& cs,
 
 const char* Seis2DLineSet::getCubeSampling( CubeSampling& cs, int lnr ) const
 {
-    cs.hrg.step.inl = cs.hrg.step.crl = 1;
-    cs.hrg.start.inl = 0; cs.hrg.stop.inl = nrLines()-1;
-    cs.hrg.start.crl = 0; cs.hrg.stop.crl = mUdf(int);
+    cs.hrg.step.inl() = cs.hrg.step.crl() = 1;
+    cs.hrg.start.inl() = 0; cs.hrg.stop.inl() = nrLines()-1;
+    cs.hrg.start.crl() = 0; cs.hrg.stop.crl() = mUdf(int);
     cs.zrg = SI().zRange(false);
     const int nrlines = nrLines();
     if ( nrlines < 1 )
@@ -788,7 +786,7 @@ const char* Seis2DLineSet::getCubeSampling( CubeSampling& cs, int lnr ) const
     if ( !havelinesel )
 	lnr = 0;
     else
-	cs.hrg.start.inl = cs.hrg.stop.inl = lnr;
+	cs.hrg.start.inl() = cs.hrg.stop.inl() = lnr;
 
     StepInterval<int> trg; StepInterval<float> zrg;
     bool foundone = false;
@@ -817,8 +815,8 @@ const char* Seis2DLineSet::getCubeSampling( CubeSampling& cs, int lnr ) const
     if ( !foundone )
 	return "No range info present";
 
-    cs.hrg.start.crl = trg.start; cs.hrg.stop.crl = trg.stop;
-    cs.hrg.step.crl = trg.step;
+    cs.hrg.start.crl() = trg.start; cs.hrg.stop.crl() = trg.stop;
+    cs.hrg.step.crl() = trg.step;
     cs.zrg = zrg;
     return 0;
 }
@@ -860,9 +858,9 @@ void Seis2DLineSet::installPreSet( const IOPar& iop, const char* reallskey,
     if ( !worklsfnm ) return;
 
     Seis2DLineSet ls( worklsfnm );
-    std::ostringstream strstrm;
+    od_ostrstream strstrm;
     ls.putTo( strstrm );
-    addPreSetLS( reallsfnm, strstrm.str().c_str() );
+    addPreSetLS( reallsfnm, strstrm.result() );
 }
 
 
@@ -870,7 +868,7 @@ class Seis2DGeomDumper : public Executor
 {
 public:
 
-Seis2DGeomDumper( const Seis2DLineSet& l, std::ostream& o, bool inr, float z,
+Seis2DGeomDumper( const Seis2DLineSet& l, od_ostream& o, bool inr, float z,
 		  const char* lk )
 	: Executor("Geometry extraction")
 	, ls(l)
@@ -927,7 +925,7 @@ int nextStep()
 {
     if ( curidx < 0 )
 	return ErrorOccurred();
-    if ( !strm.good() )
+    if ( !strm.isOK() )
     {
 	curmsg = "Cannot write to file";
 	return ErrorOccurred();
@@ -978,10 +976,10 @@ int nextStep()
     }
     strm.flush();
 
-    if ( !strm.good() )
+    if ( !strm.isOK() )
     {
 	curmsg = "Error during write to file";
-	return ErrorOccurred();
+	strm.addErrMsgTo( curmsg ); return ErrorOccurred();
     }
 
     lnshandled++;
@@ -990,7 +988,7 @@ int nextStep()
 }
 
     const Seis2DLineSet&	ls;
-    std::ostream&		strm;
+    od_ostream&			strm;
     BufferString		attrnm;
     const bool			incz;
     const float			zval;
@@ -1006,7 +1004,7 @@ int nextStep()
 };
 
 
-Executor* Seis2DLineSet::geometryDumper( std::ostream& strm, bool incnr,
+Executor* Seis2DLineSet::geometryDumper( od_ostream& strm, bool incnr,
 					 float z, const char* lk ) const
 {
     return new Seis2DGeomDumper( *this, strm, incnr, z, lk );

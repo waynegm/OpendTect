@@ -15,13 +15,11 @@ ________________________________________________________________________
 #include "seismod.h"
 #include "executor.h"
 #include "samplingdata.h"
-class MultiID;
 class SeisTrcBuf;
 class SeisIOObjInfo;
 class Seis2DLineSet;
 class BufferStringSet;
 class Seis2DLinePutter;
-template <class T> class TypeSet;
 namespace PosInfo { class Line2DData; }
 
 

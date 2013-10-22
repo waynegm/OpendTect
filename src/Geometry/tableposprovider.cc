@@ -10,11 +10,12 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "keystrs.h"
 #include "pickset.h"
 #include "picksettr.h"
-#include "strmprov.h"
+#include "od_istream.h"
 #include "iopar.h"
 #include "ioman.h"
 #include "ioobj.h"
 #include "survinfo.h"
+#include "survgeom.h"
 #include <math.h>
 
 #define mGetTableKey(k) IOPar::compKey(sKey::Table(),k)
@@ -56,8 +57,8 @@ const char* Pos::TableProvider3D::type() const
 
 bool Pos::TableProvider3D::includes( const BinID& bid, float z ) const
 {
-    BinIDValueSet::Pos pos = bvs_.findFirst( bid );
-    if ( !pos.valid() ) return false;
+    BinIDValueSet::SPos pos = bvs_.find( bid );
+    if ( !pos.isValid() ) return false;
     if ( mIsUdf(z) ) return true;
 
     while ( true )
@@ -101,17 +102,15 @@ void Pos::TableProvider3D::getBVSFromPar( const IOPar& iop, BinIDValueSet& bvs )
 	res = iop.find( mGetTableKey(sKey::FileName()) );
 	if ( res && *res )
 	{
-	    StreamData sd( StreamProvider(res).makeIStream() );
-	    if ( sd.usable() )
-	    {
-		bvs.getFrom( *sd.istrm );
-		sd.close();
-	    }
+	    od_istream strm( res );
+	    if ( strm.isOK() )
+		bvs.getFrom( strm, Survey::GM().default3DSurvID() );
+	    strm.close();
 	    if ( !bvs.isEmpty() )
 	    {
 		float zfac = -1;
 		if ( !SI().zIsTime() )
-		    zfac = SI().depthsInFeetByDefault() ? mFromFeetFactorF : -1;
+		    zfac = SI().depthsInFeet() ? mFromFeetFactorF : -1;
 		else if ( bvs.nrVals() > 0 )
 		{
 		    const Interval<float> zrg( bvs.valRange(0) );
@@ -126,7 +125,7 @@ void Pos::TableProvider3D::getBVSFromPar( const IOPar& iop, BinIDValueSet& bvs )
 		}
 		if ( zfac > 0 )
 		{
-		    BinIDValueSet::Pos p;
+		    BinIDValueSet::SPos p;
 		    while ( bvs.next(p) )
 		    {
 			float* val = bvs.getVals( p );
@@ -163,31 +162,26 @@ void Pos::TableProvider3D::getSummary( BufferString& txt ) const
     txt += sz; txt += " point"; if ( sz > 1 ) txt += "s";
     BinID start, stop;
     getExtent( start, stop );
-    BufferString tmp; start.fill( tmp.buf() );
-    if ( start == stop )
-	{ txt += " at "; txt += tmp; }
-    else
-    {
-	txt += " in "; txt += tmp; txt += "-";
-	stop.fill( tmp.buf() ); txt += tmp;
-    }
+    txt.add( " at " ).add( start.getUsrStr() );
+    if ( start != stop )
+	txt.add( "-" ).add( stop.getUsrStr() );
 }
 
 
 void Pos::TableProvider3D::getExtent( BinID& start, BinID& stop ) const
 {
-    BinIDValueSet::Pos p; bvs_.next(p);
-    if ( !p.valid() )
+    BinIDValueSet::SPos p; bvs_.next(p);
+    if ( !p.isValid() )
 	{ start = stop = BinID(0,0); return; }
 
     start = stop = bvs_.getBinID(p);
     while ( bvs_.next(p) )
     {
 	const BinID bid( bvs_.getBinID(p) );
-	if ( start.inl > bid.inl ) start.inl = bid.inl;
-	if ( stop.inl < bid.inl ) stop.inl = bid.inl;
-	if ( start.crl > bid.crl ) start.crl = bid.crl;
-	if ( stop.crl < bid.crl ) stop.crl = bid.crl;
+	if ( start.inl() > bid.inl() ) start.inl() = bid.inl();
+	if ( stop.inl() < bid.inl() ) stop.inl() = bid.inl();
+	if ( start.crl() > bid.crl() ) start.crl() = bid.crl();
+	if ( stop.crl() < bid.crl() ) stop.crl() = bid.crl();
     }
 }
 
@@ -195,8 +189,8 @@ void Pos::TableProvider3D::getExtent( BinID& start, BinID& stop ) const
 
 void Pos::TableProvider3D::getZRange( Interval<float>& zrg ) const
 {
-    BinIDValueSet::Pos p; bvs_.next(p);
-    if ( !p.valid() )
+    BinIDValueSet::SPos p; bvs_.next(p);
+    if ( !p.isValid() )
 	{ zrg.start = zrg.stop = 0; return; }
 
     const float* val = bvs_.getVals( p );

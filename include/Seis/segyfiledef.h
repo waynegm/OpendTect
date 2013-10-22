@@ -15,11 +15,10 @@ ________________________________________________________________________
 #include "seismod.h"
 #include "ranges.h"
 #include "bufstring.h"
-#include "position.h"
+#include "coord.h"
 #include "samplingdata.h"
 #include "seistype.h"
 #include "segythdef.h"
-class IOPar;
 class IOObj;
 class Scaler;
  

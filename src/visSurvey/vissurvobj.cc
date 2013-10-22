@@ -138,7 +138,7 @@ void SurveyObject::setInlCrlSystem(const InlCrlSystem* ics)
 
 const char* SurveyObject::getInlCrlSystemName() const
 {
-    return inlcrlsystem_ ? inlcrlsystem_->name().str() : survname_.str();
+    return inlcrlsystem_ ? inlcrlsystem_->getName() : survname_.str();
 }
 
 
@@ -155,7 +155,7 @@ int SurveyObject::getUpdateStageNr() const
 void SurveyObject::fillSOPar( IOPar& par ) const
 {
     if ( inlcrlsystem_ )
-	par.set( sKeySurvey(), inlcrlsystem_->name() );
+	par.set( sKeySurvey(), inlcrlsystem_->getName() );
 
     par.setYN( sKeyLocked(), locked_ );
     const int nrattribs = nrAttribs();
@@ -299,7 +299,8 @@ int SurveyObject::useSOPar( const IOPar& par )
 }
     
     
-const visBase::TextureChannel2RGBA* visSurvey::SurveyObject::getChannels2RGBA() const
+const visBase::TextureChannel2RGBA*
+	visSurvey::SurveyObject::getChannels2RGBA() const
 {
     return const_cast<visSurvey::SurveyObject*>(this)->getChannels2RGBA();
 }

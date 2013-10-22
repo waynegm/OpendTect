@@ -10,6 +10,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "threadlock.h"
 #include "atomic.h"
 
+
 // Thread::Lock interface
 
 Threads::Lock::Lock( bool sp )
@@ -156,6 +157,23 @@ bool Threads::Locker::convertToWriteLock()
     return isok;
 }
 
+
+bool Threads::lockSimpleSpinLock( volatile int& lock,
+                                  Threads::Locker::WaitType wt )
+{
+    int curval = 0;
+    if ( wt==Threads::Locker::WaitIfLocked )
+    {
+        while ( !Threads::atomicSetIfValueIs( lock, curval, 1 ) )
+        {
+            curval = 0;
+        }
+
+        return true;
+    }
+
+    return Threads::atomicSetIfValueIs( lock, curval, 1 );
+}
 
 
 // Thread::General interface
@@ -312,7 +330,7 @@ void Threads::SpinLock::lock()
     }
 
     mPrepareIttNotify( lockingthread_ );
-    while ( !lockingthread_.setIfEqual( currentthread, 0 ) )
+    while ( !lockingthread_.setIfEqual( 0, currentthread ) )
 	;
 
     mIttNotifyAcquired( lockingthread_ );
@@ -349,7 +367,7 @@ bool Threads::SpinLock::tryLock()
     }
 
     mPrepareIttNotify( lockingthread_ );
-    if ( lockingthread_.setIfEqual( currentthread, 0 ) )
+    if ( lockingthread_.setIfEqual(0, currentthread) )
     {
 	mIttNotifyAcquired( lockingthread_ );
 	count_ ++;
@@ -777,7 +795,7 @@ int Threads::getSystemNrProcessors()
 
 int Threads::getNrProcessors()
 {
-    static int nrproc = -1;
+    mDefineStaticLocalObject( int, nrproc, (-1) );
     if ( nrproc > 0 ) return nrproc;
 
     nrproc = 0;

@@ -14,10 +14,10 @@ ________________________________________________________________________
 
 #include "seismod.h"
 #include "executor.h"
-#include "position.h"
+#include "binid.h"
 #include "samplingdata.h"
 
-class IOPar;
+class Scaler;
 class Scaler;
 class SeisTrc;
 class SeisTrcBuf;

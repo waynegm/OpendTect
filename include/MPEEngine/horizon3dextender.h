@@ -15,7 +15,7 @@ ________________________________________________________________________
 
 #include "mpeenginemod.h"
 #include "sectionextender.h"
-#include "position.h"
+#include "binidvalue.h"
 
 namespace EM { class Horizon3D; };
 

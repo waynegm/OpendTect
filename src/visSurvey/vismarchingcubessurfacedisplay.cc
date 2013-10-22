@@ -268,13 +268,13 @@ void MarchingCubesDisplay::setIsoPatch( int attrib )
     const int crlsz = impbody_->cs_.nrCrl();
     const int zsz = impbody_->cs_.nrZ();
 
-    BinIDValueSet::Pos pos;
+    BinIDValueSet::SPos pos;
     while ( bivs.next(pos) )
     {
 	BinID bid = bivs.getBinID(pos);
 	float* vals = bivs.getVals(pos);
-	const int inlidx = impbody_->cs_.hrg.inlRange().nearestIndex(bid.inl);
-	const int crlidx = impbody_->cs_.hrg.crlRange().nearestIndex(bid.crl);
+	const int inlidx = impbody_->cs_.hrg.inlRange().nearestIndex(bid.inl());
+	const int crlidx = impbody_->cs_.hrg.crlRange().nearestIndex(bid.crl());
 	if ( inlidx<0 || inlidx>=inlsz || crlidx<0 || crlidx>=crlsz )
 	{
 	    vals[valcol] = 0;
@@ -319,7 +319,7 @@ void MarchingCubesDisplay::setIsoPatch( int attrib )
 void MarchingCubesDisplay::setDepthAsAttrib( int attrib )
 {
     mSetDataPointSet("Depth");
-    BinIDValueSet::Pos pos;
+    BinIDValueSet::SPos pos;
     while ( bivs.next(pos) )
     {
 	float* vals = bivs.getVals(pos);
@@ -426,10 +426,10 @@ void MarchingCubesDisplay::getMousePosInfo(const visBase::EventInfo&,
     TypeSet<float> zdist;
     TypeSet<float> vals;
 
-    BinIDValueSet::Pos pos = bivset.findFirst( bid );
+    BinIDValueSet::SPos pos = bivset.find( bid );
     const int validx = bivset.nrVals()-1;
 
-    while ( pos.valid() )
+    while ( pos.isValid() )
     {
 	const float* posvals = bivset.getVals(pos);
 	const float depth = posvals[0];
@@ -796,7 +796,7 @@ void MarchingCubesDisplay::otherObjectsMoved(
 	CubeSampling cs = activeplanes[idx]->getCubeSampling(true,true,-1);
 	PlaneDataDisplay::Orientation ori = activeplanes[idx]->getOrientation();
 	const float pos = ori==PlaneDataDisplay::Zslice ? cs.zrg.start :
-	    ori==PlaneDataDisplay::Inline ? cs.hrg.start.inl : cs.hrg.start.crl;
+	    ori==PlaneDataDisplay::Inline ? cs.hrg.start.inl() : cs.hrg.start.crl();
 
 	pi->planeorientation_ = (char)ori;
 	pi->planepos_ = pos;

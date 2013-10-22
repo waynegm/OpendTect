@@ -415,7 +415,7 @@ void PSEventDisplay::updateDisplay( ParentAttachedObject* pao )
 		const PreStack::Event* psevent = eventset->events_[idx];
 		if ( !psevent->sz_ )
 		    continue;
-		Coord3 pos( bid.inl, bid.crl, psevent->pick_[0] );
+		Coord3 pos( bid.inl(), bid.crl(), psevent->pick_[0] );
 		eventmarkerset_->getCoordinates()->addPos( pos );
 
 		TypeSet<float> offsets;
@@ -479,8 +479,8 @@ void PSEventDisplay::updateDisplay( ParentAttachedObject* pao )
 
 	const BinID bid = gather->is3DSeis() ? gather->getPosition()
 					     : BinID(-1,-1);
-	cs.hrg.setInlRange( Interval<int>(bid.inl, bid.inl) );
-	cs.hrg.setCrlRange( Interval<int>(bid.crl, bid.crl) );
+	cs.hrg.setInlRange( Interval<int>(bid.inl(), bid.inl()) );
+	cs.hrg.setCrlRange( Interval<int>(bid.crl(), bid.crl()) );
 
 	const bool isinl = gather->isOrientationInline();
 	dir.x = (isinl ? offsetscale_ : 0) / SI().inlDistance();
@@ -577,7 +577,7 @@ void PSEventDisplay::updateDisplay( ParentAttachedObject* pao )
 	    const bool doline = pickrg.start!=pickrg.stop;
 	    for ( int idy=pickrg.start; idy<=pickrg.stop; idy++ )
 	    {
-		Coord3 pos( bid.inl, bid.crl,  picks[idy] );
+		Coord3 pos( bid.inl(), bid.crl(),  picks[idy] );
 		if ( fullevent )
 		{
 		    const Coord offset = dir*offsets[idy];
@@ -681,7 +681,7 @@ const mVisTrans* PSEventDisplay::getDisplayTransformation() const
 void PSEventDisplay::eventChangeCB(CallBacker*)
 {
     const BinID bid = eventman_ ? eventman_->changeBid() : BinID(-1,-1);
-    if ( bid.inl<0 || bid.crl<0 )
+    if ( bid.inl()<0 || bid.crl()<0 )
     {
 	if ( eventman_ )
  	    getMaterial()->setColor( eventman_->getColor() );

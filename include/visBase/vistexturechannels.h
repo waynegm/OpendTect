@@ -19,19 +19,15 @@ ________________________________________________________________________
 
 class SbImagei32;
 class TaskRunner;
-
-template <class T> class Array2D;
-
 namespace osgGeo { class LayeredTexture; }
-
 namespace ColTab { class Mapper; class MapperSetup; };
 
 namespace visBase
 {
-
 class MappedTextureDataSet;
 class TextureChannel2RGBA;
 class ChannelInfo;
+
 
 mExpClass(visBase) TextureChannels : public DataObject
 {

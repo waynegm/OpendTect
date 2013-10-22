@@ -19,8 +19,6 @@ ________________________________________________________________________
 #include "threadlock.h"
 #include "viscoord.h"
 
-class Coord3;
-class Coord;
 
 
 namespace visBase

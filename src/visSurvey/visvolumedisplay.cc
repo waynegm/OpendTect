@@ -28,6 +28,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "attribdatacubes.h"
 #include "attribdatapack.h"
 #include "attribsel.h"
+#include "binidvalue.h"
 #include "coltabsequence.h"
 #include "coltabmapper.h"
 #include "cubesampling.h"
@@ -36,6 +37,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "marchingcubes.h"
 #include "picksettr.h"
 #include "pickset.h"
+#include "od_ostream.h"
 #include "sorting.h"
 #include "survinfo.h"
 #include "zaxistransform.h"
@@ -74,10 +76,10 @@ const char* VolumeDisplay::sKeySeedsAboveIsov()	{ return "Above IsoVal"; }
 static CubeSampling getInitCubeSampling( const CubeSampling& csin )
 {
     CubeSampling cs(false);
-    cs.hrg.start.inl = (5*csin.hrg.start.inl+3*csin.hrg.stop.inl)/8;
-    cs.hrg.start.crl = (5*csin.hrg.start.crl+3*csin.hrg.stop.crl)/8;
-    cs.hrg.stop.inl = (3*csin.hrg.start.inl+5*csin.hrg.stop.inl)/8;
-    cs.hrg.stop.crl = (3*csin.hrg.start.crl+5*csin.hrg.stop.crl)/8;
+    cs.hrg.start.inl() = (5*csin.hrg.start.inl()+3*csin.hrg.stop.inl())/8;
+    cs.hrg.start.crl() = (5*csin.hrg.start.crl()+3*csin.hrg.stop.crl())/8;
+    cs.hrg.stop.inl() = (3*csin.hrg.start.inl()+5*csin.hrg.stop.inl())/8;
+    cs.hrg.stop.crl() = (3*csin.hrg.start.crl()+5*csin.hrg.stop.crl())/8;
     cs.zrg.start = ( 5*csin.zrg.start + 3*csin.zrg.stop ) / 8.f;
     cs.zrg.stop = ( 3*csin.zrg.start + 5*csin.zrg.stop ) / 8.f;
     SI().snap( cs.hrg.start, BinID(0,0) );
@@ -272,15 +274,15 @@ void VolumeDisplay::updateRanges( bool updateic, bool updatez )
     const CubeSampling& csin = scene_ ? scene_->getCubeSampling()
 				      : getCubeSampling( 0 );
 
-    const Interval<float> inlrg( float(csin.hrg.start.inl),
-				 float(csin.hrg.stop.inl) );
-    const Interval<float> crlrg( float(csin.hrg.start.crl),
-				 float(csin.hrg.stop.crl) );
+    const Interval<float> inlrg( float(csin.hrg.start.inl()),
+				 float(csin.hrg.stop.inl()) );
+    const Interval<float> crlrg( float(csin.hrg.start.crl()),
+				 float(csin.hrg.stop.crl()) );
 
     boxdragger_->setSpaceLimits( inlrg, crlrg, csin.zrg );
     boxdragger_->setWidthLimits(
-		    Interval<float>( float(4*csin.hrg.step.inl), mUdf(float) ),
-		    Interval<float>( float(4*csin.hrg.step.crl), mUdf(float) ),
+		    Interval<float>( float(4*csin.hrg.step.inl()), mUdf(float) ),
+		    Interval<float>( float(4*csin.hrg.step.crl()), mUdf(float) ),
 		    Interval<float>( 4*csin.zrg.step, mUdf(float) ) );
 
     if ( !datatransform_ ) return;
@@ -466,10 +468,10 @@ int VolumeDisplay::volRenID() const
     
 void VolumeDisplay::setCubeSampling( const CubeSampling& cs )
 {
-    const Interval<float> xintv( mCast(float,cs.hrg.start.inl), 
-				    mCast(float,cs.hrg.stop.inl) );
-    const Interval<float> yintv( mCast(float,cs.hrg.start.crl), 
-				    mCast(float,cs.hrg.stop.crl) );
+    const Interval<float> xintv( mCast(float,cs.hrg.start.inl()), 
+				    mCast(float,cs.hrg.stop.inl()) );
+    const Interval<float> yintv( mCast(float,cs.hrg.start.crl()), 
+				    mCast(float,cs.hrg.stop.crl()) );
     const Interval<float> zintv( cs.zrg.start, cs.zrg.stop );
 
     Coord3 trans( xintv.center(), yintv.center(), zintv.center() );
@@ -634,8 +636,8 @@ bool VolumeDisplay::updateSeedBasedSurface( int idx, TaskRunner* tr )
     {
 	const Coord3 pos =  seeds[seedidx].pos_;
 	const BinID bid = SI().transform( pos );
-	const int i = cs.inlIdx( bid.inl );
-	const int j = cs.crlIdx( bid.crl );
+	const int i = cs.inlIdx( bid.inl() );
+	const int j = cs.crlIdx( bid.crl() );
 	const int k = cs.zIdx( (float) pos.z );
 	ff.addSeed( i, j, k );
     }
@@ -1325,8 +1327,8 @@ bool VolumeDisplay::writeVolume( const char* filename ) const
     if ( !scalarfield_ )
 	return false;
 
-    std::ofstream strm( filename );
-    if ( !strm )
+    od_ostream strm( filename );
+    if ( !strm.isOK() )
     {
 	errmsg_ = "Cannot open file";
 	return false;

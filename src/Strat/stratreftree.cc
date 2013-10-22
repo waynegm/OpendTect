@@ -277,7 +277,6 @@ Strat::RefTree* Strat::RefTree::createStd( const char* nm )
 	if ( strm.isOK() )
 	    ret->read( strm );
     }
-    
     return ret;
 }
 

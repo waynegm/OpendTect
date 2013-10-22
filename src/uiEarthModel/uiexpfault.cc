@@ -66,7 +66,7 @@ uiExportFault::uiExportFault( uiParent* p, const char* typ )
     else
     {
 	zbox_ = new uiCheckBox( this, "Z in feet" );
-	setchk = SI().depthsInFeetByDefault();
+	setchk = SI().depthsInFeet();
     }
     zbox_->setChecked( setchk );
     zbox_->attach( rightTo, coordfld_ );
@@ -182,7 +182,7 @@ bool uiExportFault::writeAscii()
 	    if ( !doxy )
 	    {
 		const BinID bid = SI().transform( crd );
-		*sdo.ostrm << bid.inl << '\t' << bid.crl;
+		*sdo.ostrm << bid.inl() << '\t' << bid.crl();
 	    }
 	    else
 	    {
@@ -232,7 +232,7 @@ bool uiExportFault::acceptOK( CallBacker* )
 	mErrRet( "Please select output file" );
 
     if ( File::exists(outfld_->fileName()) && 
-			!uiMSG().askOverwrite("Output file exists. Overwrite?") )
+			!uiMSG().askOverwrite("Output file exists. Overwrite?"))
 	return false;
 
     return writeAscii();

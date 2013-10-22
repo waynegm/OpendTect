@@ -51,6 +51,7 @@ uiViewer3DMgr::uiViewer3DMgr()
     : selectpsdatamenuitem_( "D&isplay pre-stack data" )
     , positionmenuitem_( "&Show position window ..." )  
     , proptymenuitem_( "&Properties ..." )				 
+    , resolutionmenuitem_( "&Resolution ..." )				 
     , viewermenuitem_( "View in &2D panel" )
     , amplspectrumitem_( "&Amplitude spectrum ..." )
     , removemenuitem_( "&Remove" ) 
@@ -120,13 +121,30 @@ void uiViewer3DMgr::createMenuCB( CallBacker* cb )
 
 
     mDynamicCastGet( visSurvey::PreStackDisplay*, psv, dataobj.ptr() );
+    resolutionmenuitem_.id = -1;
+    resolutionmenuitem_.removeItems();
+
+    if ( psv && psv->flatViewer() )
+    {
+ 	/*const int nrres = psv->flatViewer()->nrResolutions();
+ 	BufferStringSet resolutions;
+ 	for ( int idx=0; idx<nrres; idx++ )
+  	    resolutions.add( psv->flatViewer()->getResolutionName(idx) );
+       
+    	resolutionmenuitem_.createItems( resolutions );
+ 	for ( int idx=0; idx<resolutionmenuitem_.nrItems(); idx++ )
+  	    resolutionmenuitem_.getItem(idx)->checkable = true;
+ 
+	resolutionmenuitem_.getItem(
+	  	psv->flatViewer()->getResolution() )->checked = true;*/
+    }
     viewermenuitem_.removeItems();
 
     const int idxof = psv ? viewers3d_.indexOf(psv) : -1;
-
     if ( idxof < 0  )
     {
 	mResetMenuItem( &proptymenuitem_ );
+	mResetMenuItem( &resolutionmenuitem_ );
 	mResetMenuItem( &viewermenuitem_ );
 	mResetMenuItem( &amplspectrumitem_ );
 	mResetMenuItem( &positionmenuitem_ );
@@ -135,6 +153,7 @@ void uiViewer3DMgr::createMenuCB( CallBacker* cb )
     else
     {
 	mAddMenuItem( menu, &proptymenuitem_, true, false );
+	mAddMenuItem( menu, &resolutionmenuitem_, true, false )
     	mAddMenuItem( menu, &viewermenuitem_, true, false ); 
     	mAddMenuItem( menu, &amplspectrumitem_, true, false ); 
 	if ( !posdialogs_[idxof] || posdialogs_[idxof]->isHidden() )
@@ -211,6 +230,14 @@ void uiViewer3DMgr::handleMenuCB( CallBacker* cb )
 		dlg->show();
 	}
     }
+    else if ( resolutionmenuitem_.id!=-1 && 
+	    resolutionmenuitem_.itemIndex(mnuid)!=-1 )
+    {
+ 	menu->setIsHandled( true );
+  	/*if ( psv->flatViewer() )
+   	    psv->flatViewer()->setResolution( 
+		    resolutionmenuitem_.itemIndex(mnuid) );*/
+    }
     else if ( mnuid == viewermenuitem_.id )
     {
 	menu->setIsHandled( true );
@@ -226,8 +253,8 @@ void uiViewer3DMgr::handleMenuCB( CallBacker* cb )
 	capt += psv->getObjectName();
 	capt += " at ";
 	if ( psv->is3DSeis() )
-	    { capt += psv->getPosition().inl; capt += "/"; }
-	capt += psv->getPosition().crl;
+	    { capt += psv->getPosition().inl(); capt += "/"; }
+	capt += psv->getPosition().crl();
 	asd->setCaption( capt );
 	asd->show();
     }
@@ -316,16 +343,20 @@ bool uiViewer3DMgr::add3DViewer( const uiMenuHandler* menu,
 	return false;
     }
 
+    const int res = pdd ? pdd->getResolution() : s2d->getResolution();
+   /* if ( viewer->flatViewer() )
+   	viewer->flatViewer()->setResolution( res );*/
+
     //set viewer angle.
     const ui3DViewer*  sovwr = ODMainWin()->sceneMgr().getSoViewer( sceneid );
     Coord3 campos = sovwr->getCameraPosition();
 	viewer->getScene()->getUTM2DisplayTransform()->transformBack( campos );
     const BinID dir0 = SI().transform(campos)-SI().transform(pickedpos);
-    const Coord dir( dir0.inl, dir0.crl );
+    const Coord dir( dir0.inl(), dir0.crl() );
     viewer->displaysOnPositiveSide( viewer->getBaseDirection().dot(dir)>0 );
     
     //Read defaults 
-    const Settings& settings = Settings::fetch(uiViewer3DMgr::sSettings3DKey()); 
+    const Settings& settings = Settings::fetch(uiViewer3DMgr::sSettings3DKey());
     bool autoview;
     if ( settings.getYN(visSurvey::PreStackDisplay::sKeyAutoWidth(), autoview) )
 	viewer->displaysAutoWidth( autoview );
@@ -449,14 +480,7 @@ uiStoredViewer2DMainWin* uiViewer3DMgr::createMultiGather2DViewer(
 		   is2d ? true : psv.isOrientationInline(),
 	    	   trcrg, is2d ? psv.lineName() : 0 );
     viewwin->setDarkBG( false );
-    for ( int idx=0; idx<viewwin->nrViewers(); idx++ )
-    {
-	uiFlatViewer& vwr = viewwin->viewer( idx );
-	IOPar par;
-	psv.flatViewer()->fillAppearancePar( par );
-	vwr.useAppearancePar( par );
-    }
-
+    viewwin->setAppearance( psv.flatViewer()->appearance() );
     viewwin->seldatacalled_.notify( mCB(this,uiViewer3DMgr,viewer2DSelDataCB) );
     viewwin->windowClosed.notify( mCB(this,uiViewer3DMgr,viewer2DClosedCB) );
     return viewwin;
@@ -682,12 +706,8 @@ void uiViewer3DMgr::getSeis2DTitle( int tracenr, const char* nm,
 void uiViewer3DMgr::getSeis3DTitle( const BinID& bid, const char* name,
 				    BufferString& title )
 {
-    title = "Gather from [";
-    title += name;
-    title += "] at ";
-    title += bid.inl;
-    title += "/";
-    title += bid.crl;
+    title.set( "Gather from [" ).add( name ).add( "] at " )
+	 .add( bid.getUsrStr() );
 }
 
 

@@ -17,9 +17,7 @@ ________________________________________________________________________
 #include "surv2dgeom.h"
 
 namespace EM { class Horizon3D; class Horizon2D; }
-class BufferString;
 class BufferStringSet;
-class MultiID;
 
 /*!
 \brief ExecutorGroup to create EM::Horizon2D from EM::Horizon3D.
@@ -60,7 +58,7 @@ protected:
     int				nrdone_;
     int				totalnr_;
     PosInfo::GeomID		oldgeomid_;
-    TraceID::GeomID             geomid_;
+    Pos::GeomID			geomid_;
     
     PosInfo::Line2DData		posdata_;
 };

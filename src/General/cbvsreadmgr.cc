@@ -15,7 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "datachar.h"
 #include "cubesampling.h"
 #include "strmprov.h"
-#include <iostream>
+#include "od_istream.h"
 
 static inline void mkErrMsg( BufferString& errmsg, const char* fname,
 			     const char* msg )
@@ -36,7 +36,8 @@ CBVSReadMgr::CBVSReadMgr( const char* fnm, const CubeSampling* cs,
 
     if ( !fnm || FixedString(fnm)==StreamProvider::sStdIO() )
     {
-	addReader( &std::cin, cs, glob_info_only, forceusecbvsinfo );
+	addReader( new od_istream( std::cin ), cs, glob_info_only,
+                   forceusecbvsinfo );
 	if ( readers_.isEmpty() )
 	    errmsg_ = "Standard input contains no relevant data";
 	else
@@ -99,19 +100,20 @@ const char* CBVSReadMgr::errMsg_() const
 bool CBVSReadMgr::addReader( const char* fname, const CubeSampling* cs,
 				bool info_only, bool forceusecbvsinfo )
 {
-    StreamData sd = StreamProvider(fname).makeIStream();
-    if ( !sd.usable() )
+    od_istream* istream = new od_istream( fname );
+
+    if ( !istream || !istream->isOK() )
     {
 	mkErrMsg( errmsg_, fname, "cannot be opened" );
-	sd.close();
+	delete istream;
 	return false;
     }
 
-    return addReader( sd.istrm, cs, info_only, forceusecbvsinfo );
+    return addReader( istream, cs, info_only, forceusecbvsinfo );
 }
 
 
-bool CBVSReadMgr::addReader( std::istream* strm, const CubeSampling* cs,
+bool CBVSReadMgr::addReader( od_istream* strm, const CubeSampling* cs,
 				bool info_only, bool usecbvsinfo )
 {
     CBVSReader* newrdr = new CBVSReader( strm, info_only, usecbvsinfo );
@@ -171,19 +173,20 @@ void CBVSReadMgr::createInfo()
     const int sz = readers_.size();
     if ( sz == 0 ) return;
     info_ = readers_[0]->info();
-    if ( !info_.geom_.step.inl ) // unknown, get from other source
+    if ( !info_.geom_.step.inl() ) // unknown, get from other source
     {
 	int rdrnr = 1;
 	while ( rdrnr < sz )
 	{
-	    if ( readers_[rdrnr]->info().geom_.step.inl )
+	    if ( readers_[rdrnr]->info().geom_.step.inl() )
 	    {
-		info_.geom_.step.inl = readers_[rdrnr]->info().geom_.step.inl;
+		info_.geom_.step.inl() =
+                	readers_[rdrnr]->info().geom_.step.inl();
 	        break;
 	    }
 	}
-	if ( !info_.geom_.step.inl )
-	    info_.geom_.step.inl = SI().inlStep();
+	if ( !info_.geom_.step.inl() )
+	    info_.geom_.step.inl() = SI().inlStep();
     }
 
     for ( int idx=1; idx<sz; idx++ )
@@ -210,10 +213,12 @@ bool CBVSReadMgr::handleInfo( CBVSReader* rdr, int ireader )
     if ( rdrinfo.nrtrcsperposn_ != info_.nrtrcsperposn_ )
 	mErrRet("Number of traces per position")
     if ( !rdrinfo.geom_.fullyrectandreg )
-	const_cast<CBVSInfo&>(rdrinfo).geom_.step.inl = info_.geom_.step.inl;
-    else if ( rdrinfo.geom_.step.inl != info_.geom_.step.inl )
+    {
+	const_cast<CBVSInfo&>(rdrinfo).geom_.step.inl() =info_.geom_.step.inl();
+    }
+    else if ( rdrinfo.geom_.step.inl() != info_.geom_.step.inl() )
 	mErrRet("In-line number step")
-    if ( rdrinfo.geom_.step.crl != info_.geom_.step.crl )
+    if ( rdrinfo.geom_.step.crl() != info_.geom_.step.crl() )
 	mErrRet("Cross-line number step")
     if ( !mIsEqual(rdrinfo.sd_.step,info_.sd_.step,mDefEps) )
 	mErrRet("Sample interval")
@@ -351,8 +356,8 @@ bool CBVSReadMgr::toStart()
 
 void CBVSReadMgr::getIsRev( bool& inl, bool& crl ) const
 {
-    inl = info_.geom_.step.inl < 0;
-    crl = info_.geom_.step.crl < 0;
+    inl = info_.geom_.step.inl() < 0;
+    crl = info_.geom_.step.crl() < 0;
 }
 
 
@@ -368,13 +373,13 @@ void CBVSReadMgr::getPositions( TypeSet<BinID>& posns ) const
     BinID bid;
     if ( info_.geom_.fullyrectandreg )
     {
-	for ( bid.inl=info_.geom_.start.inl;
-	      bid.inl!=info_.geom_.stop.inl+info_.geom_.step.inl;
-	      bid.inl += info_.geom_.step.inl )
+	for ( bid.inl()=info_.geom_.start.inl();
+	      bid.inl()!=info_.geom_.stop.inl()+info_.geom_.step.inl();
+	      bid.inl() += info_.geom_.step.inl() )
 	{
-	    for ( bid.crl=info_.geom_.start.crl;
-		  bid.crl!=info_.geom_.stop.crl+info_.geom_.step.crl;
-		  bid.crl += info_.geom_.step.crl )
+	    for ( bid.crl()=info_.geom_.start.crl();
+		  bid.crl()!=info_.geom_.stop.crl()+info_.geom_.step.crl();
+		  bid.crl() += info_.geom_.step.crl() )
 		posns += bid;
 	}
     }
@@ -383,21 +388,21 @@ void CBVSReadMgr::getPositions( TypeSet<BinID>& posns ) const
 	for ( int iinl=0; iinl<info_.geom_.cubedata.size(); iinl++ )
 	{
 	    const PosInfo::LineData& inlinf = *info_.geom_.cubedata[iinl];
-	    bid.inl = inlinf.linenr_;
+	    bid.inl() = inlinf.linenr_;
 	    for ( int iseg=0; iseg<inlinf.segments_.size(); iseg++ )
 	    {
 		const PosInfo::LineData::Segment seg = inlinf.segments_[iseg];
 		if ( seg.step > 0 )
-		    for ( bid.crl=seg.start; bid.crl<=seg.stop;
-			  bid.crl+=seg.step )
+		    for ( bid.crl()=seg.start; bid.crl()<=seg.stop;
+			  bid.crl()+=seg.step )
 			posns += bid;
 		else
 		{
 		    StepInterval<int> lseg( seg );
 		    if ( lseg.start < lseg.stop ) 
 			Swap( lseg.start, lseg.stop );
-		    for ( bid.crl=lseg.stop; bid.crl<=seg.start;
-			  bid.crl-=seg.step )
+		    for ( bid.crl()=lseg.stop; bid.crl()<=seg.start;
+			  bid.crl()-=seg.step )
 			posns += bid;
 		}
 	    }
@@ -514,8 +519,9 @@ const char* CBVSReadMgr::check( const char* basefname )
 	BufferString fname = getFileName( basefname, curnr );
 	if ( !File::exists((const char*)fname) ) break;
 
-	StreamData sd = StreamProvider(fname).makeIStream();
-	const char* res = CBVSReader::check( *sd.istrm );
+        od_istream istream( fname );
+
+	const char* res = CBVSReader::check( istream );
 
 	if ( res && *res )
 	{
@@ -560,8 +566,8 @@ static void handleInlGap( std::ostream& strm, Interval<int>& inlgap )
 
 void CBVSReadMgr::dumpInfo( std::ostream& strm, bool inclcompinfo ) const
 {
-    const int singinl = info().geom_.start.inl == info().geom_.stop.inl
-			? info().geom_.start.inl : -999;
+    const int singinl = info().geom_.start.inl() == info().geom_.stop.inl()
+			? info().geom_.start.inl() : -999;
     const char* Datastr = singinl == -999 ? "Cube" : "Data";
     const char* datastr = singinl == -999 ? "cube" : "data";
     if ( nrReaders() > 1 )
@@ -591,13 +597,13 @@ void CBVSReadMgr::dumpInfo( std::ostream& strm, bool inclcompinfo ) const
     }
     else
     {
-	strm << "In-line range: " << info().geom_.start.inl << " - "
-	     << info().geom_.stop.inl
-	     << " (step " << info().geom_.step.inl << ").\n";
+	strm << "In-line range: " << info().geom_.start.inl() << " - "
+	     << info().geom_.stop.inl()
+	     << " (step " << info().geom_.step.inl() << ").\n";
 	strm << "X-line range: ";
     }
-    strm << info().geom_.start.crl << " - " << info().geom_.stop.crl
-	 << " (step " << info().geom_.step.crl << ").\n";
+    strm << info().geom_.start.crl() << " - " << info().geom_.stop.crl()
+	 << " (step " << info().geom_.step.crl() << ").\n";
     strm << "\nZ start: " << info().sd_.start
 	 << " step: " << info().sd_.step << '\n';
     strm << "Number of samples: " << info().nrsamples_ << "\n\n";
@@ -608,11 +614,11 @@ void CBVSReadMgr::dumpInfo( std::ostream& strm, bool inclcompinfo ) const
     {
 	strm << "Gaps: "; strm.flush();
 	bool inlgaps = false; bool crlgaps = false;
-	int inlstep = info().geom_.step.inl;
+	int inlstep = info().geom_.step.inl();
 	if ( inlstep < 0 ) inlstep = -inlstep;
 	Interval<int> inlgap;
 	inlgap.start = mUdf(int);
-	for ( int inl=info().geom_.start.inl; inl<=info().geom_.stop.inl;
+	for ( int inl=info().geom_.start.inl(); inl<=info().geom_.stop.inl();
 		inl += inlstep )
 	{
 	    const int inlinfidx = info().geom_.cubedata.indexOf( inl );

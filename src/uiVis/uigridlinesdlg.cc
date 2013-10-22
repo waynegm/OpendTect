@@ -19,7 +19,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uisellinest.h"
 #include "visgridlines.h"
 #include "visplanedatadisplay.h"
-#include "callback.h"
 #include <math.h>
 
 
@@ -32,13 +31,7 @@ static const char* rcsID mUsedVar = "$Id$";
 	    				IntInpIntervalSpec(true) ); \
     name##spacingfld_->attach( leftAlignedBelow, name##fld_ );
 
-#define mSetChangedCallBack( obj, notifier ) \
-{\
-    if ( obj )\
-	mAttachCB( obj->notifier, uiGridLinesDlg::settingChangedCB );\
-}
-
-
+    
 uiGridLinesDlg::uiGridLinesDlg( uiParent* p, visSurvey::PlaneDataDisplay* pdd )
     : uiDialog(p,uiDialog::Setup("GridLines","Set gridlines options","50.0.3"))
     , pdd_( pdd )
@@ -86,17 +79,6 @@ uiGridLinesDlg::uiGridLinesDlg( uiParent* p, visSurvey::PlaneDataDisplay* pdd )
     applyallfld_->attach( alignedBelow, lsfld_ );
     
     setParameters();
-
-    mSetChangedCallBack( inlspacingfld_, valuechanged );
-    mSetChangedCallBack( crlspacingfld_, valuechanged );
-    mSetChangedCallBack( zspacingfld_, valuechanged );
-    mSetChangedCallBack( lsfld_, changed );
-}
-
-
-uiGridLinesDlg::~uiGridLinesDlg()
-{ 
-    detachAllNotifiers(); 
 }
 
 
@@ -114,8 +96,6 @@ void uiGridLinesDlg::showGridLineCB( CallBacker* cb )
     lsfld_->display( (inlfld_ && inlfld_->isChecked()) ||
 	    	     (crlfld_ && crlfld_->isChecked()) ||
 		     (zfld_ && zfld_->isChecked()) );
-    
-    updateGridLines();
 }
 
 
@@ -164,10 +144,10 @@ void uiGridLinesDlg::setParameters()
     }
     else
     {
-	getDefaultHorSampling( cs.hrg.start.inl, cs.hrg.stop.inl, 
-			       cs.hrg.step.inl );
-	getDefaultHorSampling( cs.hrg.start.crl, cs.hrg.stop.crl, 
-			       cs.hrg.step.crl );
+	getDefaultHorSampling( cs.hrg.start.inl(), cs.hrg.stop.inl(), 
+			       cs.hrg.step.inl() );
+	getDefaultHorSampling( cs.hrg.start.crl(), cs.hrg.stop.crl(), 
+			       cs.hrg.step.crl() );
 	getDefaultZSampling( cs.zrg );
     }
     
@@ -197,24 +177,12 @@ void uiGridLinesDlg::setParameters()
 
 #define mGetHrgSampling(dir)\
     StepInterval<int> dir##intv = dir##spacingfld_->getIStepInterval();\
-    cs.hrg.start.dir = dir##intv.start;\
-    cs.hrg.stop.dir = dir##intv.stop;\
-    cs.hrg.step.dir = dir##intv.step;\
+    cs.hrg.start.dir() = dir##intv.start;\
+    cs.hrg.stop.dir() = dir##intv.stop;\
+    cs.hrg.step.dir() = dir##intv.step;\
 
 
 bool uiGridLinesDlg::acceptOK( CallBacker* )
-{
-    return updateGridLines();
-}
-
-
-void uiGridLinesDlg::settingChangedCB(CallBacker*)
-{
-    updateGridLines();
-}
-
-
-bool uiGridLinesDlg::updateGridLines()
 {
     CubeSampling cs;
     if ( inlfld_ ) { mGetHrgSampling(inl) };
@@ -225,9 +193,9 @@ bool uiGridLinesDlg::updateGridLines()
 	cs.zrg.scale( 1.f/SI().zDomain().userFactor() );
     }
 
-    if ( (inlfld_ && inlfld_->isChecked() && cs.hrg.step.inl==0) ||
-	(crlfld_ && crlfld_->isChecked() && cs.hrg.step.crl==0) ||
-	(zfld_ && zfld_->isChecked() && mIsZero(cs.zrg.step,mDefEps)) )
+    if ( (inlfld_ && inlfld_->isChecked() && cs.hrg.step.inl()==0) ||
+	 (crlfld_ && crlfld_->isChecked() && cs.hrg.step.crl()==0) ||
+	 (zfld_ && zfld_->isChecked() && mIsZero(cs.zrg.step,mDefEps)) )
     {
 	uiMSG().error( "Please make sure all steps are non-zero" );
 	return false;
@@ -241,8 +209,8 @@ bool uiGridLinesDlg::updateGridLines()
 	mDynamicCastGet(visBase::VisualObject*,so,scene->getObject(idx));
 	mDynamicCastGet(visSurvey::PlaneDataDisplay*,pdd,so);
 	if ( !pdd || pdd->getOrientation()!=pdd_->getOrientation() )
-	    continue;
-
+	   continue;
+	
 	if ( !applyall && pdd!=pdd_ )
 	    continue;
 
@@ -254,17 +222,8 @@ bool uiGridLinesDlg::updateGridLines()
 	gl.showZlines( zfld_ ? zfld_->isChecked(): false );
 	gl.setLineStyle( lsfld_->getStyle() );
     }
-    
+
     return true;
 }
 
 
-bool uiGridLinesDlg::rejectOK(CallBacker*)
-{
-    if ( inlspacingfld_)  inlfld_->setChecked( false );
-    if ( crlspacingfld_ ) crlfld_->setChecked( false );
-    if ( zspacingfld_ ) zfld_->setChecked( false );
-
-    updateGridLines();
-    return true;
-}

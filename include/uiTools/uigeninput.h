@@ -17,11 +17,11 @@ ________________________________________________________________________
 #include "datainpspec.h"
 #include "position.h"
 
+class BinIDValue;
 class uiLineEdit;
 class uiLabel;
 class uiCheckBox;
 class uiPushButton;
-
 class uiGenInputInputFld;
 class uiGenInputFieldIdx;
 class DataInpSpec;
@@ -181,9 +181,8 @@ Returns true, if changes are accepted.
     inline void		setValue( const Coord& c )
 			{ setValue(c.x,0); setValue(c.y,1); }
     inline void		setValue( const BinID& b )
-			{ setValue(b.inl,0); setValue(b.crl,1); }
-    inline void		setValue( const BinIDValue& b )
-			{ setValue(b.binid); setValue(b.value,2); }
+			{ setValue(b.inl(),0); setValue(b.crl(),1); }
+    inline void		setValue(const BinIDValue&);
     void		setValue(const Interval<int>&); //!< and StepIntv
     void		setValue(const Interval<float>&); //!< and StepIntv
     void		setValue(const Interval<double>&); //!< and StepIntv

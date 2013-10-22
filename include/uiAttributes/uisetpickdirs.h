@@ -17,9 +17,8 @@ ________________________________________________________________________
 #include "uidialog.h"
 #include "attribdescid.h"
 
-namespace Attrib { class DescSet; class SelInfo; };
+namespace Attrib { class DescSet; };
 
-class Coord3;
 class NLAModel;
 class CtxtIOObj;
 class uiAttrSel;

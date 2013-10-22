@@ -15,17 +15,15 @@ ________________________________________________________________________
 #include "basicmod.h"
 #include "namedobj.h"
 #include "ranges.h"
-#include "rcol2coord.h"
 #include "enums.h"
 #include "zdomain.h"
 #include "refcount.h"
 #include "atomic.h"
 #include "cubesampling.h"
 #include "survgeom.h"
+#include "posidxpair2coord.h"
 
 class ascostream;
-class IOPar;
-class CubeSampling;
 class LatLong2Coord;
 
 
@@ -43,25 +41,25 @@ public:
     			    , zdomain_( zd )
 			{}
     bool		is2D() const		{ return false; }
-    const BufferString&	name() const		{ return name_; }
+    const char*		getName() const		{ return name_.buf(); }
     			    
     float		zScale() const 		{ return zscale_; }
 
     StepInterval<int>	inlRange() const	{ return cs_.hrg.inlRange(); }
     StepInterval<int>	crlRange() const	{ return cs_.hrg.crlRange(); }
     StepInterval<float>	zRange() const		{ return cs_.zrg; }
-    int			inlStep() const 	{ return cs_.hrg.step.inl; }
-    int			crlStep() const 	{ return cs_.hrg.step.crl; }
+    int			inlStep() const 	{ return cs_.hrg.step.inl(); }
+    int			crlStep() const 	{ return cs_.hrg.step.crl(); }
     
     float		zStep() const 		{ return cs_.zrg.step; }
     
     Coord		toCoord(int line,int tracenr) const;
-    TraceID		nearestTrace(const Coord&,float* distance) const;
+    TrcKey		nearestTrace(const Coord&,float* distance) const;
     bool		includes(int line,int tracenr) const;
 
     Coord		transform(const BinID&) const;
     BinID		transform(const Coord&) const;
-    const RCol2Coord&	binID2Coord() const	{ return b2c_; }
+    const Pos::IdxPair2Coord& binID2Coord() const	{ return b2c_; }
 
     float		inlDistance() const;
     float		crlDistance() const;
@@ -80,7 +78,7 @@ public:
 protected:
     
     BufferString	name_;
-    RCol2Coord		b2c_;
+    Pos::IdxPair2Coord	b2c_;
     
     CubeSampling	cs_; 
     ZDomain::Def	zdomain_;
@@ -91,8 +89,8 @@ protected:
 /*!
 \brief Holds survey general information.
 
-  Surveyinfo is the primary source for ranges and steps. It also provides the
-  transformation between inline/xline <-> coordinates and lat/long estimates.
+  The surveyinfo is the primary source for ranges and steps.It also provides
+  the transformation between inline/xline <-> coordinates and lat/long estimates
   
   Note: the Z range step is only a default. It should not be used further
   because different cubes/lines have different sample rates.
@@ -112,7 +110,6 @@ mExpClass(Basic) SurveyInfo : public NamedObject
 
 public:
 			~SurveyInfo();
-    bool		isValid() const		{ return valid_; }
     bool		has2D() const;
     bool		has3D() const;
     
@@ -138,8 +135,7 @@ public:
     const CubeSampling&	sampling( bool work ) const
     			{ return work ? wcs_ : cs_; }
 
-    Coord		transform( const BinID& b ) const
-			{ return b2c_.transform(b); }
+    Coord		transform( const BinID& b ) const;
     BinID		transform(const Coord&) const;
     			/*!<\note BinID will be snapped using work step. */
 
@@ -211,7 +207,6 @@ public:
 protected:
 
 			SurveyInfo();
-    bool		valid_;
 
     BufferString	datadir_;
     BufferString	dirname_;
@@ -235,20 +230,21 @@ protected:
     
     Survey::GeometryManager geometryman_;
 
-    RCol2Coord		b2c_;
+    Pos::IdxPair2Coord	b2c_;
     LatLong2Coord&	ll2c_;
     BinID		set3binids_[3];
     Coord		set3coords_[3];
 
     Pol2D		survdatatype_;
     bool		survdatatypeknown_;
+    BufferString	sipnm_;
  
     void		handleLineRead(const BufferString&,const char*);
     bool		wrapUpRead();
     void		writeSpecLines(ascostream&) const;
 
-    void		setTr(RCol2Coord::RCTransform&,const char*);
-    void		putTr(const RCol2Coord::RCTransform&,
+    void		setTr(Pos::IdxPair2Coord::DirTransform&,const char*);
+    void		putTr(const Pos::IdxPair2Coord::DirTransform&,
 	    			ascostream&,const char*) const;
 
 private:
@@ -258,8 +254,13 @@ private:
     friend class		uiSurvey;
     friend class		uiSurveyInfoEditor;
 
-    RCol2Coord::RCTransform	rdxtr_;
-    RCol2Coord::RCTransform	rdytr_;
+    Pos::IdxPair2Coord::DirTransform rdxtr_;
+    Pos::IdxPair2Coord::DirTransform rdytr_;
+
+    				// For IOMan only
+    static void			setSurveyName(const char*);
+    				// friends only
+    static const char*		surveyFileName();
 
 public:
 
@@ -268,7 +269,7 @@ public:
     void		setWorkRange(const CubeSampling&);
     Notifier<SurveyInfo> workRangeChg;
 
-    const RCol2Coord&	binID2Coord() const	{ return b2c_; }
+    const Pos::IdxPair2Coord&	binID2Coord() const	{ return b2c_; }
     void		get3Pts(Coord c[3],BinID b[2],int& xline) const;
     const LatLong2Coord& latlong2Coord() const	{ return ll2c_; }
     bool		isClockWise() const;
@@ -297,12 +298,18 @@ public:
     static const char*	sKeyDpthInFt(); //!< Not used by SI, just a UI default
     static const char*	sKeySurvDataType();
     static const char*  sKeySeismicRefDatum();
+    static const char*	sKeySetupFileName()		{ return ".survey"; }
+    static const char*	sKeyBasicSurveyName()		{ return "BasicSurvey";}
 
     BufferString	getDirName() const	{ return dirname_; }
+    void		updateDirName(); //!< May be used after setName()
 
     			DeclareEnumUtils(Pol2D);
     Pol2D		survDataType() const	{ return survdatatype_; }
-    void		setSurvDataType( Pol2D typ )	{ survdatatype_ = typ; }
+    void		setSurvDataType( Pol2D typ )
+    			{ survdatatype_ = typ; survdatatypeknown_ = true; }
+    BufferString	sipName() const		{ return sipnm_; }
+    void		setSipName( BufferString sipnm )     { sipnm_ = sipnm; }
 
     const char*		comment() const		{ return comment_.buf(); }
 
@@ -315,7 +322,7 @@ public:
     			SurveyInfo(const SurveyInfo&);
     SurveyInfo&		operator =(const SurveyInfo&);
 
-    RCol2Coord&		getBinID2Coord() const
+    Pos::IdxPair2Coord&	getBinID2Coord() const
     			{ return const_cast<SurveyInfo*>(this)->b2c_; }
     LatLong2Coord&	getLatlong2Coord() const
     			{ return const_cast<SurveyInfo*>(this)->ll2c_; }
@@ -331,12 +338,13 @@ public:
     const char*		set3Pts(const Coord c[3],const BinID b[2],int xline);
     void		gen3Pts();
     void		setComment( const char* s )	{ comment_ = s; }
-    void		setInvalid() const;
 
     void		setWSProjName( const char* nm ) const
 			{ const_cast<SurveyInfo*>(this)->wsprojnm_ = nm; }
     void		setWSPwd( const char* nm ) const
 			{ const_cast<SurveyInfo*>(this)->wspwd_ = nm; }
+
+    static const char*	curSurveyName();
 
     			// No, you really don't need these!
     static void		pushSI(SurveyInfo*);
@@ -350,10 +358,6 @@ mGlobal(Basic) const SurveyInfo& SI();
 mGlobal(Basic) inline SurveyInfo& eSI()
 			{ return const_cast<SurveyInfo&>(SI()); }
 
-mExternC( Basic ) const char* GetSurveyFileName(void);
-mExternC( Basic ) int SurveyNameDirty(void);
-mExternC( Basic ) void SetSurveyNameDirty(void);
-mExternC( Basic ) void SetSurveyName(const char*);
 mExternC( Basic ) const char* GetSurveyName(void);
 
 

@@ -14,7 +14,7 @@ ________________________________________________________________________
 
 #include "algomod.h"
 #include "ranges.h"
-template <class T> class TypeSet;
+template <class T> class LargeValVec;
 template <class T> class LargeValVec;
 
 

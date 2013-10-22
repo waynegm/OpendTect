@@ -74,7 +74,7 @@ const char* Seis2DDataSet::lineName( int idx ) const
 }
 
 
-TraceID::GeomID Seis2DDataSet::geomID( int idx ) const
+Pos::GeomID Seis2DDataSet::geomID( int idx ) const
 {
     if ( !pars_.validIdx(idx) )
 	return -1;
@@ -92,7 +92,7 @@ int Seis2DDataSet::indexOf( const char* linename ) const
 }
 
 
-int Seis2DDataSet::indexOf( TraceID::GeomID geomid ) const
+int Seis2DDataSet::indexOf( Pos::GeomID geomid ) const
 {
     for ( int idx=0; idx<pars_.size(); idx++ )
 	if ( geomID(idx) == geomid )
@@ -285,7 +285,7 @@ bool Seis2DDataSet::isEmpty( int ipar ) const
 }
 
 
-bool Seis2DDataSet::remove( TraceID::GeomID geomid )
+bool Seis2DDataSet::remove( Pos::GeomID geomid )
 {
     if ( readonly_ ) return false;
 
@@ -374,9 +374,9 @@ bool Seis2DDataSet::getRanges( int ipar, StepInterval<int>& sii,
 
 const char* Seis2DDataSet::getCubeSampling( CubeSampling& cs, int lnr ) const
 {
-    cs.hrg.step.inl = cs.hrg.step.crl = 1;
-    cs.hrg.start.inl = 0; cs.hrg.stop.inl = nrLines()-1;
-    cs.hrg.start.crl = 0; cs.hrg.stop.crl = mUdf(int);
+    cs.hrg.step.inl() = cs.hrg.step.crl() = 1;
+    cs.hrg.start.inl() = 0; cs.hrg.stop.inl() = nrLines()-1;
+    cs.hrg.start.crl() = 0; cs.hrg.stop.crl() = mUdf(int);
     cs.zrg = SI().zRange(false);
     const int nrlines = nrLines();
     if ( nrlines < 1 )
@@ -386,7 +386,7 @@ const char* Seis2DDataSet::getCubeSampling( CubeSampling& cs, int lnr ) const
     if ( !havelinesel )
 	lnr = 0;
     else
-	cs.hrg.start.inl = cs.hrg.stop.inl = lnr;
+	cs.hrg.start.inl() = cs.hrg.stop.inl() = lnr;
 
     StepInterval<int> trg; StepInterval<float> zrg;
     bool foundone = false;
@@ -415,8 +415,8 @@ const char* Seis2DDataSet::getCubeSampling( CubeSampling& cs, int lnr ) const
     if ( !foundone )
 	return "No range info present";
 
-    cs.hrg.start.crl = trg.start; cs.hrg.stop.crl = trg.stop;
-    cs.hrg.step.crl = trg.step;
+    cs.hrg.start.crl() = trg.start; cs.hrg.stop.crl() = trg.stop;
+    cs.hrg.step.crl() = trg.step;
     cs.zrg = zrg;
     return 0;
 }

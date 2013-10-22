@@ -58,7 +58,7 @@ SeisRandLineTo2D::SeisRandLineTo2D( const IOObj& inobj, const IOObj& outobj,
     vals[0] = zrg.start;
     vals[1] = (float) startpos.x; vals[2] = (float) startpos.y;
     vals[3] = (float)trcnr;
-    seldata_.binidValueSet().allowDuplicateBids( true );
+    seldata_.binidValueSet().allowDuplicateBinIDs( true );
     seldata_.binidValueSet().setNrVals( 4 );
     seldata_.binidValueSet().add( startbid, vals );
     trcnr += 1;
@@ -67,8 +67,8 @@ SeisRandLineTo2D::SeisRandLineTo2D( const IOObj& inobj, const IOObj& outobj,
 	const BinID& stopbid = rln.nodePosition( idx );
 	Coord stoppos = SI().transform( stopbid );
 	const double dist = startpos.distTo( stoppos );
-	const double unitdist = mMAX( inpstep.inl * SI().inlDistance(),
-				      inpstep.crl * SI().crlDistance() );
+	const double unitdist = mMAX( inpstep.inl() * SI().inlDistance(),
+				      inpstep.crl() * SI().crlDistance() );
 	const int nrsegs = mNINT32( dist / unitdist );
 	const double unitx = ( stoppos.x - startpos.x ) / nrsegs;
 	const double unity = ( stoppos.y - startpos.y ) / nrsegs;
@@ -213,7 +213,7 @@ od_int64 SeisRandLineTo2D::totalNr() const
 
 
 #define mNotOKRet(s) \
-	{ isok_ = false; strm_ << s << od_newline; strm_.flush(); return; }
+	{ isok_ = false; strm_ << s << od_endl; return; }
 
 SeisRandLineTo2DGrid::SeisRandLineTo2DGrid( const IOPar& par, od_ostream& s )
     : isok_(true),strm_(s)
@@ -260,7 +260,7 @@ SeisRandLineTo2DGrid::SeisRandLineTo2DGrid( const IOPar& par, od_ostream& s )
 
 
 #undef mNotOKRet
-#define mFalseRet(s) { strm_ << s << od_newline; strm_.flush(); return false; }
+#define mFalseRet(s) { strm_ << s << od_endl; return false; }
 
 bool SeisRandLineTo2DGrid::createGrid()
 {
@@ -298,17 +298,16 @@ bool SeisRandLineTo2DGrid::mk2DLines( const Geometry::RandomLineSet& rlset,
 	linenm += strsuffix;
 	LineKey lk( linenm, outpattrib_.buf() );
 	SeisRandLineTo2D exec( *inpobj_, *outpobj_, lk, 1, *rln );
-	strm_ << "Creating 2D line " << linenm << ":" << od_newline;
-	strm_.flush();
+	strm_ << "Creating 2D line " << linenm << ":" << od_endl;
 	if ( !exec.go(strm_) )
-	    strm_ << "Failedto create line " << linenm << od_newline;
+	    strm_ << "Failedto create line " << linenm << od_endl;
     }
 
-    strm_ << "Finished processing." << od_newline;
+    strm_ << "Finished processing." << od_endl;
     if ( !SI().has2D() )
     {
-	strm_ << "PLEASE NOTE THAT YOU NEED TO CHANGE SURVEY TYPE\n"
-		<< " TO 'Both 2D and 3D' TO DISPLAY THE 2D LINES";
+	strm_ << "Please note that you need to change SURVEY TYPE\n"
+		<< " to 'Both 2D and 3D' to display the 2D lines";
 	strm_.flush();
     }
 

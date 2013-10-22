@@ -546,16 +546,16 @@ void uiEMPartServer::selectSurfaces( ObjectSet<EM::EMObject>& objs,
     PtrMan<Executor> exec = em_.objectLoader(surfaceids,hor3d ? &sel : &orisel,
 					     &idstobeloaded);
 
-	for ( int idx=0; idx<surfaceids.size(); idx++ )
-	{
+    for ( int idx=0; idx<surfaceids.size(); idx++ )
+    {
 	EM::EMObject* obj = em_.getObject( em_.getObjectID(surfaceids[idx]) );
 	if ( !obj ) continue;
 	obj->ref();
 	objs += obj;
-	    }
+    }
 
     if ( objs.isEmpty() )
-	    return;
+	return;
 
     ObjectSet<EM::EMObject> objstobeloaded;
     for ( int idx=0; idx<idstobeloaded.size(); idx++ )
@@ -833,29 +833,29 @@ bool uiEMPartServer::storeAuxData( const EM::ObjectID& id,
 	return false;
     
     uiTaskRunner exdlg( parent() );
-	int dataidx = -1;
-	bool overwrite = false;
-	if ( storeas )
+    int dataidx = -1;
+    bool overwrite = false;
+    if ( storeas )
+    {
+	if ( hor3d )
 	{
-	    if ( hor3d )
-	    {
-		uiStoreAuxData dlg( parent(), *hor3d );
-		if ( !dlg.go() ) return false;
+	    uiStoreAuxData dlg( parent(), *hor3d );
+	    if ( !dlg.go() ) return false;
 
-		dataidx = 0;
-		overwrite = dlg.doOverWrite();
-		auxdatanm = dlg.auxdataName();
-	    }
+	    dataidx = 0;
+	    overwrite = dlg.doOverWrite();
+	    auxdatanm = dlg.auxdataName();
 	}
+    }
 
-	PtrMan<Executor> saver = hor3d->auxdata.auxDataSaver(dataidx,overwrite);
-	if ( !saver )
-	{
-	    uiMSG().error( "Cannot save attribute" );
-	    return false;
-	}
+    PtrMan<Executor> saver = hor3d->auxdata.auxDataSaver(dataidx,overwrite);
+    if ( !saver )
+    {
+	uiMSG().error( "Cannot save attribute" );
+	return false;
+    }
 
-	return TaskRunner::execute( &exdlg, *saver );
+    return TaskRunner::execute( &exdlg, *saver );
 }
 
 
@@ -886,7 +886,7 @@ int uiEMPartServer::setAuxData( const EM::ObjectID& id, DataPointSet& data,
     hor3d->auxdata.setAuxDataShift( auxdataidx, shift );
 
     BinID bid;
-    BinIDValueSet::Pos pos;
+    BinIDValueSet::SPos pos;
     const EM::SectionID sectionid = hor3d->sectionID( 0 );
 
     EM::PosID posid( id, sectionid );
@@ -895,7 +895,7 @@ int uiEMPartServer::setAuxData( const EM::ObjectID& id, DataPointSet& data,
 	bid = bivs.getBinID( pos );
 	const float* vals = bivs.getVals( pos );
 
-	RowCol rc( bid.inl, bid.crl );
+	RowCol rc( bid.inl(), bid.crl() );
 	EM::SubID subid = rc.toInt64();
 	posid.setSubID( subid );
 	hor3d->auxdata.setAuxDataVal( auxdataidx, posid, vals[idx] );
@@ -968,7 +968,7 @@ bool uiEMPartServer::getAllAuxData( const EM::ObjectID& oid,
 	}
     }
 
-    data.bivSet().allowDuplicateBids(false);
+    data.bivSet().allowDuplicateBinIDs(false);
     mAllocVarLenArr( float, auxvals, nms.size()+2 );
     for ( int sidx=0; sidx<hor3d->nrSections(); sidx++ )
     {
@@ -992,8 +992,8 @@ bool uiEMPartServer::getAllAuxData( const EM::ObjectID& oid,
     		    continue;
     
 		BinID diff = bid - cs->hrg.start;
-		if ( diff.inl % cs->hrg.step.inl ||
-		     diff.crl % cs->hrg.step.crl )	
+		if ( diff.inl() % cs->hrg.step.inl() ||
+		     diff.crl() % cs->hrg.step.crl() )	
     		    continue;
 	    }
 
@@ -1331,9 +1331,9 @@ void uiEMPartServer::getSurfaceDef3D( const TypeSet<EM::ObjectID>& selhorids,
     }
 
     BinID bid;
-    for ( bid.inl=hs.start.inl; bid.inl<=hs.stop.inl; bid.inl+=hs.step.inl )
+    for ( bid.inl()=hs.start.inl(); bid.inl()<=hs.stop.inl(); bid.inl()+=hs.step.inl() )
     {
-	for ( bid.crl=hs.start.crl; bid.crl<=hs.stop.crl; bid.crl+=hs.step.crl )
+	for ( bid.crl()=hs.start.crl(); bid.crl()<=hs.stop.crl(); bid.crl()+=hs.step.crl() )
 	{
 	    const EM::SubID subid = bid.toInt64();
 	    TypeSet<Coord3> z1pos, z2pos;
@@ -1482,7 +1482,7 @@ void uiEMPartServer::fillPickSet( Pick::Set& ps, MultiID horid )
 	    const Geometry::BinIDSurface* geom = 
 		hor->geometry().sectionGeometry( hor->sectionID(0) );
 	    if ( geom )
-		zval = geom->computePosition( Coord(bid.inl,bid.crl) ).z;
+		zval = geom->computePosition( Coord(bid.inl(),bid.crl()) ).z;
 	    if ( mIsUdf(zval) )
 	    {
 		ps.removeSingle(idx);

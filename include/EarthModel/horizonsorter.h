@@ -17,14 +17,13 @@ ________________________________________________________________________
 
 #include "cubesampling.h"
 #include "multiid.h"
-#include "position.h"
+#include "binid.h"
 #include "surv2dgeom.h"
 
 
 namespace EM { class Horizon; }
 template <class T> class Array3D;
 class HorSamplingIterator;
-class BufferStringSet;
 
 /*!
 \brief Executor to sort horizons.

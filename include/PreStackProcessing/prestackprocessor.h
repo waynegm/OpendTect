@@ -22,7 +22,6 @@ ________________________________________________________________________
 #include "sets.h"
 #include "task.h"
 
-class IOPar;
 
 namespace PreStack
 {
@@ -107,9 +106,9 @@ protected:
 
   const BinID stepout = processmanager.getInputStepout();
   BinID relbid;
-  for ( relbid.inl=-stepout.inl; relbid.inl<=stepout.inl; relbid.inl++ )
+  for ( relbid.inl()=-stepout.inl(); relbid.inl()<=stepout.inl(); relbid.inl()++ )
   {
-      for ( relbid.crl=-stepout.crl; relbid.crl<=stepout.crl; relbid.crl++ )
+      for ( relbid.crl()=-stepout.crl(); relbid.crl()<=stepout.crl(); relbid.crl()++ )
       {
           if ( !processor.wantsInput(relbid) )
 	      continue;
@@ -194,14 +193,14 @@ protected:
     arrtype arrcopy( array ); \
     array.erase(); \
 \
-    for ( int idx=-newstepout.inl; idx<=newstepout.inl; idx++ ) \
+    for ( int idx=-newstepout.inl(); idx<=newstepout.inl(); idx++ ) \
     { \
-	for ( int idy=-newstepout.crl; idy<=newstepout.crl; idy++ ) \
+	for ( int idy=-newstepout.crl(); idy<=newstepout.crl(); idy++ ) \
 	{ \
 	    const BinID curpos( idx, idy ); \
 \
-	    if ( idy<-oldstepout.crl || idy>oldstepout.crl || \
-		idx<-oldstepout.inl || idx>oldstepout.inl ) \
+	    if ( idy<-oldstepout.crl() || idy>oldstepout.crl() || \
+		idx<-oldstepout.inl() || idx>oldstepout.inl() ) \
 	    { \
 		array += 0; \
 	    } \

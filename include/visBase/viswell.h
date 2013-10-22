@@ -20,15 +20,12 @@ ________________________________________________________________________
 #include "scaler.h"
 #include "visobject.h"
 
-class Coord3;
 class Coord3Value;
-class IOPar;
 class LineStyle;
 class TaskRunner;
 class VisColorTab;
 class ZAxisTransform;
 
-template <class T> class Interval;
 
 namespace osgGeo
 {

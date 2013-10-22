@@ -17,13 +17,7 @@ ________________________________________________________________________
 #include "emposid.h"
 #include "emobject.h"
 #include "sets.h"
-#include "position.h"
-
-class BinID;
-class RowCol;
-class CubeSampling;
-template <class T> class Interval;
-template <class T> class StepInterval;
+#include "coord.h"
 
 
 namespace EM

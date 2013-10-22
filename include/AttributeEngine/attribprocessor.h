@@ -14,12 +14,11 @@ ________________________________________________________________________
 
 #include "attributeenginemod.h"
 #include "executor.h"
-#include "position.h"
+#include "binid.h"
 
 class CubeSampling;
 class SeisTrcInfo;
 namespace Seis { class SelData; }
-template <class T> class Interval;
 
 namespace Attrib
 {

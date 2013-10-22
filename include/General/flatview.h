@@ -20,7 +20,6 @@ ________________________________________________________________________
 #include "draw.h"
 #include "samplingdata.h"
 
-class IOPar;
 class FlatView_CB_Rcvr;
 
 
@@ -238,6 +237,7 @@ public:
     static const char*	sKeyShow();
     static const char*	sKeyDispRg();
     static const char*	sKeyColTab();
+    static const char*  sKeyFlipSequence();
     static const char*	sKeyLinearInter();
     static const char*	sKeyBlocky();
     static const char*  sKeyAutoScale();
@@ -264,6 +264,8 @@ public:
 			    , annot_(drkbg)
 			    , secondsetaxes_(drkbg)
 			    , anglewithset1_(0)		{}
+
+    virtual		~Appearance()			{}
 
     virtual void	fillPar(IOPar&) const;
     virtual void	usePar(const IOPar&);

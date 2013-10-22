@@ -286,13 +286,13 @@ void FaultStickSetDisplay::updateEditPids()
 
 	RowCol rc;
 	const StepInterval<int> rowrg = fss->rowRange();
-	for ( rc.row=rowrg.start; rc.row<=rowrg.stop; rc.row+=rowrg.step )
+	for ( rc.row()=rowrg.start; rc.row()<=rowrg.stop; rc.row()+=rowrg.step )
 	{
-	    if ( fss->isStickHidden(rc.row) )
+	    if ( fss->isStickHidden(rc.row()) )
 		continue;
 
-	    const StepInterval<int> colrg = fss->colRange( rc.row );
-	    for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col+=colrg.step )
+	    const StepInterval<int> colrg = fss->colRange( rc.row() );
+	    for ( rc.col()=colrg.start; rc.col()<=colrg.stop; rc.col()+=colrg.step )
 	    {
 		editpids_ += EM::PosID( emfss_->id(), sid, rc.toInt64() );
 	    }
@@ -328,28 +328,28 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 
 	RowCol rc;
 	const StepInterval<int> rowrg = fss->rowRange();
-	for ( rc.row=rowrg.start; rc.row<=rowrg.stop; rc.row+=rowrg.step )
+	for ( rc.row()=rowrg.start; rc.row()<=rowrg.stop; rc.row()+=rowrg.step )
 	{
-	    if ( activeonly && rc.row!=activesticknr_ )
+	    if ( activeonly && rc.row()!=activesticknr_ )
 		continue;
 
-	    if ( fss->isStickHidden(rc.row) )
+	    if ( fss->isStickHidden(rc.row()) )
 		continue;
 
 	    Seis2DDisplay* s2dd = 0;
-	    if ( emfss_->geometry().pickedOn2DLine(sid, rc.row) )
+	    if ( emfss_->geometry().pickedOn2DLine(sid, rc.row()) )
 	    { 
-		const char* lnm = emfss_->geometry().pickedName( sid, rc.row );
+		const char* lnm = emfss_->geometry().pickedName( sid, rc.row() );
 		const MultiID* lset =
-			    emfss_->geometry().pickedMultiID( sid, rc.row );
+			    emfss_->geometry().pickedMultiID( sid, rc.row() );
 		if ( lset )
 		    s2dd = Seis2DDisplay::getSeis2DDisplay( *lset, lnm );
 	    }
 
-	      const StepInterval<int> colrg = fss->colRange( rc.row );
+	      const StepInterval<int> colrg = fss->colRange( rc.row() );
 	    if ( !colrg.width() )
 	    {
-		rc.col = colrg.start;
+		rc.col() = colrg.start;
 		for ( int dir=-1; dir<=1; dir+=2 )
 		{
 		    Coord3 pos = fss->getKnot( rc );
@@ -382,18 +382,18 @@ void FaultStickSetDisplay::updateSticks( bool activeonly )
 	    }
 
 	    
-	    for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col+=colrg.step )
+	    for ( rc.col()=colrg.start; rc.col()<=colrg.stop; rc.col()+=colrg.step )
 	    {
 		const Coord3 pos1 = fss->getKnot( rc );
 		int ci = poly->getCoordinates()->addPos( pos1 );
 		crdidx += ci;
-		crdidx += rc.col < colrg.stop ? ci+1 : ci;
+		crdidx += rc.col() < colrg.stop ? ci+1 : ci;
 		
-		if ( !s2dd || rc.col==colrg.stop )
+		if ( !s2dd || rc.col()==colrg.stop )
 		    continue;
 
 		RowCol nextrc = rc;
-		nextrc.col += colrg.step;
+		nextrc.col() += colrg.step;
 		const Coord3 pos2 = fss->getKnot( nextrc );
 		int trc11, trc12, trc21, trc22;
 		float dummy;
@@ -553,7 +553,7 @@ void FaultStickSetDisplay::mouseCB( CallBacker* cb )
 
     if ( !mousepid.isUdf() )
     {
-	const int sticknr = mousepid.getRowCol().row;
+	const int sticknr = mousepid.getRowCol().row();
 	pos = emfss_->getPos( mousepid );
 	pickedmid = fssg.pickedMultiID( mousepid.sectionID(), sticknr );
 	pickednm = fssg.pickedName( mousepid.sectionID(), sticknr );
@@ -633,7 +633,7 @@ void FaultStickSetDisplay::mouseCB( CallBacker* cb )
 	    return;
 
 	editpids_.erase();
-	const int rmnr = mousepid.getRowCol().row;
+	const int rmnr = mousepid.getRowCol().row();
 	if ( fssg.nrKnots(mousepid.sectionID(), rmnr) == 1 )
 	    fssg.removeStick( mousepid.sectionID(), rmnr, true );
 	else
@@ -755,7 +755,7 @@ void FaultStickSetDisplay::stickSelectCB( CallBacker* cb )
 		const EM::PosID pid = iter->next();
 		if ( pid.objectID() == -1 )
 		    return;
-		const int sticknr = pid.getRowCol().row;
+		const int sticknr = pid.getRowCol().row();
 		mMatchMarker( pid.sectionID(), sticknr,
 			      markerpos, emfss_->getPos(pid),eps );
 	    }
@@ -766,7 +766,7 @@ void FaultStickSetDisplay::stickSelectCB( CallBacker* cb )
 
 void FaultStickSetDisplay::setActiveStick( const EM::PosID& pid )
 {
-    const int sticknr = pid.isUdf() ? mUdf(int) : pid.getRowCol().row;
+    const int sticknr = pid.isUdf() ? mUdf(int) : pid.getRowCol().row();
     if ( activesticknr_ != sticknr )
     {
 	activesticknr_ = sticknr;
@@ -789,10 +789,10 @@ void FaultStickSetDisplay::emChangeCB( CallBacker* cber )
 	EM::SectionID sid = cbdata.pid0.sectionID();
 	RowCol rc = cbdata.pid0.getRowCol();
 
-	const MultiID* mid = emfss_->geometry().pickedMultiID( sid, rc.row );
-	if ( mid && !emfss_->geometry().pickedOnPlane(sid, rc.row) )
+	const MultiID* mid = emfss_->geometry().pickedMultiID( sid, rc.row() );
+	if ( mid && !emfss_->geometry().pickedOnPlane(sid, rc.row()) )
 	{
-	    const char* nm = emfss_->geometry().pickedName( sid, rc.row );
+	    const char* nm = emfss_->geometry().pickedName( sid, rc.row() );
 	    const Coord3 dragpos = emfss_->getPos( cbdata.pid0 );
 	    Coord3 pos = dragpos;
 
@@ -895,8 +895,8 @@ bool FaultStickSetDisplay::coincidesWith2DLine(
 	const double onestepdist = Coord3(1,1,mZScale()).dot(
 		inlcrlsystem_->oneStepTranslation(Coord3(0,0,1)) );
 
-	const StepInterval<int> colrg = fss.colRange( rc.row );
-	for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col+=colrg.step )
+	const StepInterval<int> colrg = fss.colRange( rc.row() );
+	for ( rc.col()=colrg.start; rc.col()<=colrg.stop; rc.col()+=colrg.step )
 	{
 	    Coord3 pos = fss.getKnot(rc);
 	    if ( displaytransform_ )
@@ -939,8 +939,8 @@ bool FaultStickSetDisplay::coincidesWithPlane(
 	float prevdist = -1;
 	Coord3 prevpos;
 
-	const StepInterval<int> colrg = fss.colRange( rc.row );
-	for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col+=colrg.step )
+	const StepInterval<int> colrg = fss.colRange( rc.row() );
+	for ( rc.col()=colrg.start; rc.col()<=colrg.stop; rc.col()+=colrg.step )
 	{
 	    Coord3 curpos = fss.getKnot(rc);
 	    if ( displaytransform_ )
@@ -952,7 +952,7 @@ bool FaultStickSetDisplay::coincidesWithPlane(
 		res = res || coincidemode;
 		intersectpoints += curpos;
 	    }
-	    else if ( rc.col != colrg.start )
+	    else if ( rc.col() != colrg.start )
 	    {
 		const float frac = prevdist / (prevdist+curdist);
 		Coord3 interpos = (1-frac)*prevpos + frac*curpos;
@@ -993,30 +993,30 @@ void FaultStickSetDisplay::displayOnlyAtSectionsUpdate()
 
 	RowCol rc;
 	const StepInterval<int> rowrg = fss->rowRange();
-	for ( rc.row=rowrg.start; rc.row<=rowrg.stop; rc.row+=rowrg.step )
+	for ( rc.row()=rowrg.start; rc.row()<=rowrg.stop; rc.row()+=rowrg.step )
 	{
 	    TypeSet<Coord3> intersectpoints;
-	    fss->hideStick( rc.row, displayonlyatsections_ );
+	    fss->hideStick( rc.row(), displayonlyatsections_ );
 	    if ( !displayonlyatsections_ )
 		continue;
 
-	    if ( emfss_->geometry().pickedOn2DLine(sid,rc.row) )
+	    if ( emfss_->geometry().pickedOn2DLine(sid,rc.row()) )
 	    { 
-		const char* lnm = emfss_->geometry().pickedName( sid, rc.row );
+		const char* lnm = emfss_->geometry().pickedName( sid, rc.row() );
 		const MultiID* lset =
-			    emfss_->geometry().pickedMultiID( sid, rc.row );
-		if ( lset && coincidesWith2DLine(*fss, rc.row, *lset, lnm) )
+			    emfss_->geometry().pickedMultiID( sid, rc.row() );
+		if ( lset && coincidesWith2DLine(*fss, rc.row(), *lset, lnm) )
 		{
-		    fss->hideStick( rc.row, false );
+		    fss->hideStick( rc.row(), false );
 		    continue;
 		}
 	    }
 
-	    if ( coincidesWithPlane(*fss, rc.row, intersectpoints) )
+	    if ( coincidesWithPlane(*fss, rc.row(), intersectpoints) )
 	    {
-		if ( emfss_->geometry().pickedOnPlane(sid,rc.row) )
+		if ( emfss_->geometry().pickedOnPlane(sid,rc.row()) )
 		{
-		    fss->hideStick( rc.row, false );
+		    fss->hideStick( rc.row(), false );
 		    continue;
 		}
 	    }
@@ -1025,7 +1025,7 @@ void FaultStickSetDisplay::displayOnlyAtSectionsUpdate()
 	    {
 		StickIntersectPoint* sip = new StickIntersectPoint();
 		sip->sid_ = sid;
-		sip->sticknr_ = rc.row;
+		sip->sticknr_ = rc.row();
 		sip->pos_ = intersectpoints[idx];
 		if ( displaytransform_ )
 		    displaytransform_->transformBack( sip->pos_ ); 
@@ -1140,7 +1140,7 @@ void FaultStickSetDisplay::polygonFinishedCB( CallBacker* cb )
 	if ( pid.objectID() == -1 )
 	    break;
 
-	const int sticknr = pid.getRowCol().row;
+	const int sticknr = pid.getRowCol().row();
 	const EM::SectionID sid = pid.sectionID();
 	Geometry::FaultStickSet* fss = emfss_->geometry().sectionGeometry(sid);
 
@@ -1203,7 +1203,7 @@ void FaultStickSetDisplay::updateKnotMarkers()
 	    break;
 
 	const EM::SectionID sid = pid.sectionID();
-	const int sticknr = pid.getRowCol().row;
+	const int sticknr = pid.getRowCol().row();
 	Geometry::FaultStickSet* fss = emfss_->geometry().sectionGeometry(sid);
 	if ( !fss || fss->isStickHidden(sticknr) )
 	    continue;

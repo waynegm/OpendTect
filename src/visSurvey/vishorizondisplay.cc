@@ -703,7 +703,7 @@ void HorizonDisplay::setDepthAsAttrib( int channel )
     if ( depthcol==-1 )
 	depthcol = 1;
 
-    BinIDValueSet::Pos pos;
+    BinIDValueSet::SPos pos;
     while ( bivs.next(pos,true) )
     {
 	float* vals = bivs.getVals(pos);
@@ -768,7 +768,7 @@ void HorizonDisplay::createAndDispDataPack( int channel,
 
 void HorizonDisplay::getRandomPos( DataPointSet& data, TaskRunner* tr ) const
 {
-    data.bivSet().allowDuplicateBids(false);
+    //data.bivSet().allowDuplicateBids(false);
     for ( int idx=0; idx<sections_.size(); idx++ )
 	sections_[idx]->getDataPositions( data, getTranslation().z, 
 					  sids_[idx], tr );
@@ -1295,8 +1295,8 @@ void HorizonDisplay::getMousePosInfo( const visBase::EventInfo& eventinfo,
 	const BinIDValueSet* bidvalset = sections_[sectionidx]->getCache( idx );
 	if ( !bidvalset || bidvalset->nrVals()<2 ) continue;
 
-	const BinIDValueSet::Pos setpos = bidvalset->findFirst( bid );
-	if ( !setpos.valid() )
+	const BinIDValueSet::SPos setpos = bidvalset->find( bid );
+	if ( !setpos.isValid() )
 	    continue;
 
 	const float* vals = bidvalset->getVals( setpos );
@@ -1426,14 +1426,14 @@ void HorizonDisplay::traverseLine( bool oninline, const CubeSampling& cs,
     int faststop, faststep, slowdim, fastdim;
     if ( oninline )
     {
-	rg = inlrg; targetline = cs.hrg.start.inl;
+	rg = inlrg; targetline = cs.hrg.start.inl();
 	startbid = BinID( targetline, crlrg.start );
 	faststop = crlrg.stop; faststep = crlrg.step;
 	slowdim = 0; fastdim = 1;
     }
     else
     {
-	rg = crlrg; targetline = cs.hrg.start.crl;
+	rg = crlrg; targetline = cs.hrg.start.crl();
 	startbid = BinID( inlrg.start, targetline );
 	faststop = inlrg.stop; faststep = inlrg.step;
 	slowdim = 1; fastdim = 0;
@@ -1481,7 +1481,7 @@ void HorizonDisplay::traverseLine( bool oninline, const CubeSampling& cs,
 	    {
 		const BinID curlinebid = SI().transform( curline[0].coord() );
 		bool hasseed = false;
-		for ( int idx=0; idx<seedposids->size(); idx++ )
+		for ( int idx=0; seedposids && idx<seedposids->size(); idx++ )
 		{
 		    const BinID seedbid = BinID::fromInt64( 
 						(*seedposids)[idx].subID() );
@@ -1745,7 +1745,7 @@ void HorizonDisplay::updateIntersectionLines(
 	    for ( int bidx=0; bidx<tracebids.size(); bidx++ )
 	    {
 		cs.hrg.include( tracebids[bidx] );
-		trclist += Coord( tracebids[bidx].inl, tracebids[bidx].crl );
+		trclist += Coord( tracebids[bidx].inl(), tracebids[bidx].crl() );
 	    }
 	}
 
@@ -1844,11 +1844,11 @@ void HorizonDisplay::updateIntersectionLines(
 		drawHorizonOnRandomTrack( trclist, cs.zrg, sid, 
 		    line, cii, pointgroup );
 	    }
-	    else if ( cs.hrg.start.inl==cs.hrg.stop.inl )
+	    else if ( cs.hrg.start.inl()==cs.hrg.stop.inl() )
 	    {
 		traverseLine( true, cs, sid, line, cii, pointgroup );
 	    }
-	    else if ( cs.hrg.start.crl==cs.hrg.stop.crl )
+	    else if ( cs.hrg.start.crl()==cs.hrg.stop.crl() )
 	    {
 		traverseLine( false, cs, sid, line, cii, pointgroup );
 	    }

@@ -161,7 +161,7 @@ bool uiDPSDemo::getRandPositions( const EM::Horizon3D& hor, int nrpts,
 	// Checking whether position is already in set. Here, we have to use
 	// the BinIDValueSet, because we don't want to call
 	// DataPointSet::dataChanged() after every addRow().
-	if ( needrandsel && dps.bivSet().valid(bid) )
+	if ( needrandsel && dps.bivSet().isValid(bid) )
 	    mNextTry()
 
 	const float z = (float) (mSectGeom(selsect).getKnot(bid,false).z);

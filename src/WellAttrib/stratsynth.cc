@@ -446,7 +446,7 @@ const BinID bid0( SI().inlRange(false).stop + SI().inlStep(), \
 for ( int trcidx=0; trcidx<dptrcbufs->size(); trcidx++ ) \
 { \
     const BinID bid = dptrcbufs->get( trcidx )->info().binid; \
-    dptrcbufs->get( trcidx )->info().nr =(bid.crl-bid0.crl)/crlstep; \
+    dptrcbufs->get( trcidx )->info().nr =(bid.crl()-bid0.crl())/crlstep; \
 } \
 SeisTrcBufDataPack* angledp = \
     new SeisTrcBufDataPack( dptrcbufs, Seis::Line, \
@@ -474,8 +474,8 @@ SyntheticData* StratSynth::createAVOGradient( SyntheticData* sd,
     for ( int idx=0; idx<rts.size(); idx++ )
     {
 	const PreStack::Gather* gather = gathers[idx];
-	const TraceID trcid( gather->getBinID() );
-	anglecomp->setRayTracer( rts[idx], trcid );
+	const TrcKey trckey( gather->getBinID() );
+	anglecomp->setRayTracer( rts[idx], trckey );
     }
 
     psattr->setAngleComp( anglecomp );
@@ -663,7 +663,7 @@ SyntheticData* StratSynth::generateSD( const SynthGenParams& synthgenpar )
 	for ( int idx=0; idx<trcs.size(); idx++ )
 	{
 	    SeisTrc* trc = trcs[idx];
-	    trc->info().binid = BinID( bid0.inl, bid0.crl + imdl * crlstep );
+	    trc->info().binid = BinID( bid0.inl(), bid0.crl() + imdl*crlstep );
 	    trc->info().nr = imdl+1;
 	    cs.hrg.include( trc->info().binid );
 	    if ( !trc->isEmpty() )
@@ -1203,21 +1203,28 @@ void StratSynth::setLevel( const StratSynthLevel* lvl )
 
 
 
-void StratSynth::trimTraces( SeisTrcBuf& tbuf, float flatshift,
+void StratSynth::trimTraces( SeisTrcBuf& tbuf,
 			     const ObjectSet<const TimeDepthModel>& d2ts,
 			     float zskip ) const
 {
     if ( mIsZero(zskip,mDefEps) )
 	return;
 
+    float highetszkip = mUdf(float);
+    for ( int idx=0; idx<d2ts.size(); idx++ )
+    {
+	const TimeDepthModel& d2tmodel = *d2ts[idx];
+	if ( d2tmodel.getTime(zskip)<highetszkip )
+	    highetszkip = d2tmodel.getTime(zskip);
+    }
+
     for ( int idx=0; idx<tbuf.size(); idx++ )
     {
 	SeisTrc* trc = tbuf.get( idx );
 	SeisTrc* newtrc = new SeisTrc( *trc );
 	newtrc->info() = trc->info();
-	const TimeDepthModel& d2tmodel = *d2ts[idx];
 	const int startidx =
-	    trc->nearestSample( d2tmodel.getTime(zskip)-flatshift );
+	    trc->nearestSample( trc->info().sampling.start + highetszkip );
 	newtrc->reSize( trc->size()-startidx, false );
 	newtrc->setStartPos( trc->samplePos(startidx) );
 	for ( int sampidx=startidx; sampidx<trc->size(); sampidx++ )
@@ -1425,9 +1432,9 @@ void PreStackSyntheticData::createAngleData( const ObjectSet<RayTracer1D>& rts,
 	    continue;
 	const PreStack::Gather* gather = gathers[idx];
 	anglecomp.setOutputSampling( gather->posData() );
-	const TraceID trcid( gather->getBinID() );
-	anglecomp.setRayTracer( rts[idx], trcid );
-	anglecomp.setTraceID( trcid );
+	const TrcKey trckey( gather->getBinID() );
+	anglecomp.setRayTracer( rts[idx], trckey );
+	anglecomp.setTrcKey( trckey );
 	PreStack::Gather* anglegather = anglecomp.computeAngles();
 	convertAngleDataToDegrees( anglegather );
 	TypeSet<float> azimuths;

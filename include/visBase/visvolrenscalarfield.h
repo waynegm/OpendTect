@@ -21,7 +21,6 @@ ________________________________________________________________________
 #include "visosg.h"
 
 class TaskRunner;
-class IOPar;
 template <class T> class Array3D;
 template <class T> class ValueSeries;
 
@@ -60,7 +59,7 @@ public:
 //    const Color&		getBlendColor() const;
     const TypeSet<float>&	getHistogram() const;
 
-    const char*			writeVolumeFile(std::ostream&) const;
+    const char* 		writeVolumeFile(od_ostream&) const;
 				//!<\returns 0 on success, otherwise errmsg
 
 protected:

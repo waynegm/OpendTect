@@ -15,7 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include <math.h>
 
 const double cAvgEarthRadius = 6367450;
-const double cDeg2Rad = M_PI / 180;
+
 
 
 Coord LatLong::transform( const LatLong& ll )
@@ -30,18 +30,15 @@ LatLong LatLong::transform( const Coord& c )
 }
 
 
-void LatLong::fill( char* str ) const
+const char* LatLong::getUsrStr() const
 {
-    if ( !str ) return;
-    strcpy( str, "[" );
-    getStringFromDouble(0,lat_,str+1);
-    strcat( str, "," );
-    getStringFromDouble( 0, lng_, str+strlen(str) );
-    strcat( str, "]" );
+    mDeclStaticString( ret );
+    ret.set( "[" ).add( lat_ ).add( "," ).add( lng_ ).add( "]" );
+    return ret.buf();
 }
 
 
-bool LatLong::use( const char* s )
+bool LatLong::parseUsrStr( const char* s )
 {
     if ( !s || !*s ) return false;
 
@@ -83,14 +80,14 @@ void LatLong::setDMS( bool lat, int d, int m, float s )
 
 LatLong2Coord::LatLong2Coord()
     : lngdist_(mUdf(float))
-    , latdist_(cAvgEarthRadius*cDeg2Rad)
+    , latdist_(cAvgEarthRadius*mDeg2RadD)
     , scalefac_(-1)
 {
 }
 
 
 LatLong2Coord::LatLong2Coord( const Coord& c, const LatLong& l )
-    : latdist_(cAvgEarthRadius*cDeg2Rad)
+    : latdist_(cAvgEarthRadius*mDeg2RadD)
     , scalefac_(-1)
 {
     set( c, l );
@@ -100,7 +97,7 @@ LatLong2Coord::LatLong2Coord( const Coord& c, const LatLong& l )
 void LatLong2Coord::set( const LatLong& ll, const Coord& c )
 {
     refcoord_ = c; reflatlng_ = ll;
-    lngdist_ = cDeg2Rad * cos( ll.lat_ * cDeg2Rad ) * cAvgEarthRadius;
+    lngdist_ = mDeg2RadD * cos( ll.lat_ * mDeg2RadD ) * cAvgEarthRadius;
 }
 
 
@@ -142,19 +139,15 @@ Coord LatLong2Coord::transform( const LatLong& ll ) const
 }
 
 
-void LatLong2Coord::fill( char* s ) const
+const char* LatLong2Coord::getUsrStr() const
 {
-    if ( !s ) return;
-
-    BufferString str;
-    refcoord_.fill( str.buf() );
-    str += "=";
-    reflatlng_.fill( str.buf() + str.size() );
-    strcpy( s, str );
+    mDeclStaticString( ret );
+    ret.set( refcoord_.getUsrStr() ).add( "=" ).add( reflatlng_.getUsrStr() );
+    return ret.buf();
 }
 
 
-bool LatLong2Coord::use( const char* s )
+bool LatLong2Coord::parseUsrStr( const char* s )
 {
     lngdist_ = mUdf(float);
     if ( !s || !*s ) return false;
@@ -164,7 +157,7 @@ bool LatLong2Coord::use( const char* s )
     if ( !ptr ) return false;
     *ptr++ = '\0';
     Coord c; LatLong l;
-    if ( !c.use(str) || !l.use(ptr) )
+    if ( !c.parseUsrStr(str) || !l.parseUsrStr(ptr) )
 	return false;
     else if ( mIsZero(c.x,1e-3) && mIsZero(c.y,1e-3) )
 	return false;

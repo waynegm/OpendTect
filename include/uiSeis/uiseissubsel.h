@@ -19,20 +19,15 @@ ________________________________________________________________________
 #include "uigroup.h"
 #include "ranges.h"
 #include "sets.h"
-class IOPar;
 class IOObj;
-class MultiID;
-class CtxtIOObj;
 class HorSampling;
 class CubeSampling;
 
 class uiCompoundParSel;
 class uiCheckBox;
 class uiLineSel;
-class uiListBox;
 class uiPosSubSel;
 class uiSeis2DSubSel;
-class uiSeisSel;
 class uiSelSubline;
 class uiSeis2DLineNameSel;
 

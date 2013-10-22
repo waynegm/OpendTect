@@ -11,6 +11,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "iopar.h"
 #include "keystrs.h"
 #include "survinfo.h"
+#include "binidvalue.h"
 #include "zdomain.h"
 
 
@@ -59,11 +60,12 @@ int ZAxisTransform::addVolumeOfInterest( const CubeSampling&, bool )
 void ZAxisTransform::setVolumeOfInterest( int, const CubeSampling&, bool )
 {}
 
-int ZAxisTransform::addVolumeOfInterest2D( const char*, const CubeSampling&, bool)
+int ZAxisTransform::addVolumeOfInterest2D( const char*, const CubeSampling&,
+					   bool )
 { return -1; }
 
-void ZAxisTransform::setVolumeOfInterest2D( int, const char*, const CubeSampling&,
-					    bool )
+void ZAxisTransform::setVolumeOfInterest2D( int, const char*,
+					    const CubeSampling&, bool )
 {}
 
 
@@ -81,7 +83,7 @@ float ZAxisTransform::transform( const Coord3& pos ) const
 float ZAxisTransform::transform( const BinIDValue& pos ) const
 {
     float res = mUdf(float);
-    transform( pos.binid, SamplingData<float>(pos.value,1), 1, &res );
+    transform( pos, SamplingData<float>(pos.val(),1), 1, &res );
     return res;
 }
 
@@ -93,7 +95,7 @@ float ZAxisTransform::transformBack( const Coord3& pos ) const
 float ZAxisTransform::transformBack( const BinIDValue& pos ) const
 {
     float res = mUdf(float);
-    transformBack( pos.binid, SamplingData<float>(pos.value,1), 1, &res );
+    transformBack( pos, SamplingData<float>(pos.val(),1), 1, &res );
     return res;
 }
 
@@ -105,7 +107,8 @@ void ZAxisTransform::transform2D( const char* linenm, int trcnr,
 }
 
 
-float ZAxisTransform::transform2D( const char* linenm, int trcnr, float z ) const
+float ZAxisTransform::transform2D( const char* linenm, int trcnr,
+				   float z ) const
 {
     float res = mUdf(float);
     transform2D( linenm, trcnr, SamplingData<float>(z,1), 1, &res );
@@ -215,12 +218,12 @@ void ZAxisTransformSampler::setLineName( const char* lnm )
 {
     if ( !is2d_ )
 	return;
-    bid_.inl = transform_.lineIndex(lnm);
+    bid_.inl() = transform_.lineIndex(lnm);
     curlinenm_ = lnm;
 }
 
 void ZAxisTransformSampler::setTrcNr( int trcnr )
-{ bid_.crl = trcnr; }
+{ bid_.crl() = trcnr; }
 
 
 float ZAxisTransformSampler::operator[](int idx) const
@@ -233,12 +236,12 @@ float ZAxisTransformSampler::operator[](int idx) const
 	    return cache_[cacheidx];
     }
 
-    const BinIDValue bidval( BinIDValue(bid_,(float) sd_.atIndex(idx)) );
-    return back_ ? ( is2d_ ? transform_.transformBack2D(curlinenm_,bid_.crl,
-						      bidval.value)
+    const BinIDValue bidval( bid_, (float)sd_.atIndex(idx) );
+    return back_ ? ( is2d_ ? transform_.transformBack2D(curlinenm_,bid_.crl(),
+						      bidval.val())
 			   : transform_.transformBack(bidval) )
-	         : ( is2d_ ? transform_.transform2D(curlinenm_,bid_.crl,
-			     			  bidval.value)
+	         : ( is2d_ ? transform_.transform2D(curlinenm_,bid_.crl(),
+			     			  bidval.val())
 			   : transform_.transform(bidval) );
 }
 
@@ -252,7 +255,7 @@ void ZAxisTransformSampler::computeCache( const Interval<int>& range )
     if ( back_ )
     {
 	if ( is2d_ )
-	    transform_.transformBack2D( curlinenm_, bid_.crl, cachesd,
+	    transform_.transformBack2D( curlinenm_, bid_.crl(), cachesd,
 				      sz, cache_.arr() );
 	else
 	    transform_.transformBack( bid_, cachesd, sz, cache_.arr() );
@@ -260,7 +263,7 @@ void ZAxisTransformSampler::computeCache( const Interval<int>& range )
     else
     {
 	if ( is2d_ )
-	    transform_.transform2D( curlinenm_, bid_.crl, cachesd,
+	    transform_.transform2D( curlinenm_, bid_.crl(), cachesd,
 				  sz, cache_.arr() );
 	else
 	    transform_.transform( bid_, cachesd, sz, cache_.arr() );

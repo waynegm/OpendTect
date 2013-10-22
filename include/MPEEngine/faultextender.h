@@ -14,8 +14,8 @@ ________________________________________________________________________
 
 #include "mpeenginemod.h"
 #include "sectionextender.h"
-
-#include "position.h"
+#include "binidvalue.h"
+#include "coord.h"
 
 namespace EM { class Fault3D; };
 
@@ -40,6 +40,7 @@ public:
     int			nextStep();
 
 protected:
+
     BinIDValue		direction;
     EM::Fault3D&	fault;
 

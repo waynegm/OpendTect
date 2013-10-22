@@ -20,12 +20,11 @@ ________________________________________________________________________
 #include "draw.h"
 #include "emposid.h"
 #include "flatview.h"
-#include "position.h"
+#include "coord.h"
 
 namespace FlatView { class Viewer; }
 
 class FlatPosData;
-class MultiID;
 
 namespace EM
 {

@@ -12,6 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "vissurvscene.h"
 
 #include "basemapimpl.h"
+#include "binidvalue.h"
 #include "cubesampling.h"
 #include "envvars.h"
 #include "fontdata.h"
@@ -558,8 +559,8 @@ Coord3 Scene::getMousePos( bool xyt ) const
    
    Coord3 res = xytmousepos_;
    BinID binid = SI().transform( Coord(res.x,res.y) );
-   res.x = binid.inl;
-   res.y = binid.crl;
+   res.x = binid.inl();
+   res.y = binid.crl();
    return res;
 }
 

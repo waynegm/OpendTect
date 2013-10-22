@@ -73,30 +73,31 @@ int main( int argc, char** argv )
     const CBVSReadMgr& mgr = *tri->readMgr();
     mgr.dumpInfo( std::cerr, true );
     const CBVSInfo& info = mgr.info();
-    const int singinl = info.geom_.start.inl == info.geom_.stop.inl
-			? info.geom_.start.inl : -999;
+    const int singinl = info.geom_.start.inl() == info.geom_.stop.inl()
+			? info.geom_.start.inl() : -999;
 
     SeisTrc trc; BinID bid( singinl, 0 );
-    BinID step( abs(info.geom_.step.inl), abs(info.geom_.step.crl) );
+    BinID step( abs(info.geom_.step.inl()), abs(info.geom_.step.crl()) );
     StepInterval<int> samps;
     const int nrcomps = info.compinfo_.size();
     while ( true )
     {
 	if ( singinl == -999 )
 	{
-	    std::cerr << "\nExamine In-line (" << info.geom_.start.inl
-		<< "-" << info.geom_.stop.inl;
-	    if ( step.inl > 1 )
-		std::cerr << " [" << step.inl << "]";
-	    int stopinl = info.geom_.start.inl == 0 ? -1 : 0;
+	    std::cerr << "\nExamine In-line (" << info.geom_.start.inl()
+		<< "-" << info.geom_.stop.inl();
+	    if ( step.inl() > 1 )
+		std::cerr << " [" << step.inl() << "]";
+	    int stopinl = info.geom_.start.inl() == 0 ? -1 : 0;
 	    std::cerr << ", " << stopinl << " to stop): ";
-	    getInt( bid.inl );
-	    if ( bid.inl == stopinl ) break;
+	    getInt( bid.inl() );
+	    if ( bid.inl() == stopinl ) break;
 	}
 
 	if ( info.geom_.fullyrectandreg )
 	{
-	    if ( bid.inl < info.geom_.start.inl || bid.inl > info.geom_.stop.inl )
+	    if ( bid.inl()<info.geom_.start.inl() ||
+		 bid.inl()>info.geom_.stop.inl() )
 	    {
 		std::cerr << "Invalid inline" << std::endl;
 		continue;
@@ -104,7 +105,7 @@ int main( int argc, char** argv )
 	}
 	else
 	{
-	    const int ldidx = info.geom_.cubedata.indexOf( bid.inl );
+	    const int ldidx = info.geom_.cubedata.indexOf( bid.inl() );
 	    if ( ldidx < 0 )
 	    {
 		std::cerr << "This inline is not present in the cube"
@@ -127,8 +128,8 @@ int main( int argc, char** argv )
 	    std::cerr << "X-line (0 for new in-line): ";
 	else
 	    std::cerr << "X-line or trace number (0 to stop): ";
-	getInt( bid.crl );
-	if ( bid.crl == 0 )
+	getInt( bid.crl() );
+	if ( bid.crl() == 0 )
 	{
 	    if ( singinl == -999 )
 		continue;
@@ -153,18 +154,14 @@ int main( int argc, char** argv )
 	    std::cerr << "Offset: " << trc.info().offset << std::endl;
 	if ( !mIsZero(trc.info().azimuth,mDefEps)
 		&& !mIsUdf(trc.info().azimuth) )
-	    std::cerr << "Azimuth: " << (trc.info().azimuth*57.29577951308232)
+	    std::cerr << "Azimuth: " << (Math::toDegrees(trc.info().azimuth))
 		      << std::endl;
 	if ( !mIsZero(trc.info().coord.x,0.1) )
 	{
-	    BufferString str; trc.info().coord.fill(str.buf());
-	    std::cerr << "Coordinate: " << str;
+	    std::cerr << "Coordinate: " << trc.info().coord.getUsrStr();
 	    BinID b = info.geom_.b2c.transformBack( trc.info().coord );
 	    if ( b != trc.info().binid )
-	    {
-		b.fill( str.buf() );
-		std::cerr << " --> " << str;
-	    }
+		std::cerr << " --> " << b.getUsrStr();
 	    std::cerr << std::endl;
 	}
 

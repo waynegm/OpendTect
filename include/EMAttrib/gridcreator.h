@@ -19,9 +19,6 @@ ________________________________________________________________________
 
 class CubeSampling;
 class IOObj;
-class IOPar;
-class SeisTrcReader;
-class SeisTrcWriter;
 class TaskRunner;
 namespace EM { class Horizon2D; }
 

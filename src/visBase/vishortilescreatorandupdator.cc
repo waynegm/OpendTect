@@ -36,16 +36,16 @@ HorTilesCreatorAndUpdator::~HorTilesCreatorAndUpdator()
 
 #define mGetRowColIdx()\
 {\
-    rc.row /= rrg.step; rc.col /= crg.step;\
-    tilerowidx = rc.row/tilesidesize;\
-    tilerow = rc.row%tilesidesize;\
+    rc.row() /= rrg.step; rc.col() /= crg.step;\
+    tilerowidx = rc.row()/tilesidesize;\
+    tilerow = rc.row()%tilesidesize;\
     if ( tilerowidx==nrrowsz && !tilerow )\
     {\
 	tilerowidx--;\
 	tilerow = tilesidesize;\
     }\
-    tilecolidx = rc.col/tilesidesize;\
-    tilecol = rc.col%tilesidesize;\
+    tilecolidx = rc.col()/tilesidesize;\
+    tilecol = rc.col()%tilesidesize;\
     if ( tilecolidx==nrcolsz && !tilecol )\
     {\
 	tilecolidx--;\
@@ -151,24 +151,24 @@ void HorTilesCreatorAndUpdator::updateTileArray( const StepInterval<int>& rrg,
     int nrnewrowsbefore = 0;
     int nrnewcolsbefore = 0;
 
-    int diff = horsection_->origin_.row - rrg.start;
+    int diff = horsection_->origin_.row() - rrg.start;
     if ( diff>0 ) 
     {
 	nrnewrowsbefore = diff/rowsteps + ( diff%rowsteps ? 1 : 0 );
 	newrowsize += nrnewrowsbefore;
     }
 
-    diff = rrg.stop - ( horsection_->origin_.row+oldrowsize*rowsteps );
+    diff = rrg.stop - ( horsection_->origin_.row()+oldrowsize*rowsteps );
     if ( diff>0 ) newrowsize += diff/rowsteps + ( diff%rowsteps ? 1 : 0 );
 
-    diff = horsection_->origin_.col - crg.start;
+    diff = horsection_->origin_.col() - crg.start;
     if ( diff>0 ) 
     {
 	nrnewcolsbefore = diff/colsteps + ( diff%colsteps ? 1 : 0 );
 	newcolsize += nrnewcolsbefore;
     }
 
-    diff = crg.stop - ( horsection_->origin_.col+oldcolsize*colsteps );
+    diff = crg.stop - ( horsection_->origin_.col()+oldcolsize*colsteps );
     if ( diff>0 ) newcolsize += diff/colsteps + ( diff%colsteps ? 1 : 0 );
 
     if ( newrowsize==oldrowsize && newcolsize==oldcolsize )
@@ -190,8 +190,8 @@ void HorTilesCreatorAndUpdator::updateTileArray( const StepInterval<int>& rrg,
 
     horsection_->writeLock();
     horsection_->tiles_.copyFrom( newtiles );
-    horsection_->origin_.row -= nrnewrowsbefore*rowsteps;
-    horsection_->origin_.col -= nrnewcolsbefore*colsteps;
+    horsection_->origin_.row() -= nrnewrowsbefore*rowsteps;
+    horsection_->origin_.col() -= nrnewcolsbefore*colsteps;
     horsection_->writeUnLock();
 }
 
@@ -202,10 +202,10 @@ HorizonSectionTile* HorTilesCreatorAndUpdator::createOneTile( int tilerowidx,
     mDefineRCRange( horsection_,-> );
 
     const RowCol step( rrg.step, crg.step );
-    const RowCol tileorigin( horsection_->origin_.row +  
-		 tilerowidx*horsection_->tilesidesize_*step.row,
-		 horsection_->origin_.col +
-		 tilecolidx*horsection_->tilesidesize_*step.col );
+    const RowCol tileorigin( horsection_->origin_.row() +  
+		 tilerowidx*horsection_->tilesidesize_*step.row(),
+		 horsection_->origin_.col() +
+		 tilecolidx*horsection_->tilesidesize_*step.col() );
 
     HorizonSectionTile* tile = new HorizonSectionTile(*horsection_, tileorigin);
 

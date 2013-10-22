@@ -17,9 +17,8 @@ ________________________________________________________________________
 #include "typeset.h"
 #include "cubesampling.h"
 #include "indexinfo.h"
-#include "position.h"
+#include "binid.h"
 #include "od_iosfwd.h"
-class BinID;
 
 
 /*!\brief Position info, often segmented

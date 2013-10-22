@@ -290,7 +290,7 @@ void uiObjectItemViewWin::fitToScreen( CallBacker* )
 {
     mDynamicCastGet(uiGraphicsObjectScene*,sc,&mainviewer_->scene())
     const uiSize screensz( mainviewer_->width(), mainviewer_->height() );
-    if ( screensz.width()<=0 || screensz.height()<=0 ) 
+    if ( screensz.width()<=0 || screensz.height()<=0 )
 	return;
 
     const uiSize layoutsz(sc->layoutSize().width(),sc->layoutSize().height());
@@ -368,8 +368,6 @@ void uiObjectItemViewWin::rubBandCB( CallBacker* )
     mainviewer_->setViewArea( selrect->left()*xfac, selrect->top()*yfac, 
 			      selrect->width()*xfac, selrect->height()*yfac );
 }
-
-
 
 
 

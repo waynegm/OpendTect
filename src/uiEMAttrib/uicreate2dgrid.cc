@@ -279,14 +279,14 @@ void ui2DGridLinesFromInlCrl::getLineNames( BufferStringSet& linenames ) const
     for ( int inlidx=0; inlidx < grid_->size(true); inlidx++ )
     {
 	BufferString linename( inlprefixfld_->text() );
-	linename += grid_->getLine( inlidx, true )->start_.inl;
+	linename += grid_->getLine( inlidx, true )->start_.inl();
 	linenames.add( linename );
     }
 
     for ( int crlidx=0; crlidx < grid_->size(false); crlidx++ )
     {
 	BufferString linename( crlprefixfld_->text() );
-	linename += grid_->getLine( crlidx, false )->start_.crl;
+	linename += grid_->getLine( crlidx, false )->start_.crl();
 	linenames.add( linename );
     }
 }
@@ -637,7 +637,7 @@ void uiCreate2DGrid::updatePreview( CallBacker* )
     const Grid2D* grid = grp->getGridLines();
     preview_->setGrid( grid );
     preview_->setBaseLine( grp->getBaseLine() );
-    previewmap_->drawMap( &SI() );
+    previewmap_->setSurveyInfo( &SI() );
     BufferString nrinlstxt, nrcrlstxt;
     grp->getNrLinesLabelTexts( nrinlstxt, nrcrlstxt );
     nrinlinesfld_->setText( nrinlstxt.buf() );

@@ -39,8 +39,8 @@ protected:
 
     od_int64		nrIterations() const;
     bool		doWork(od_int64 start,od_int64 stop,int threadid);
+    const char*		message() const { return "Computing volume nr units"; }
 
-    const CubeSampling&	cs_;
     const Array3D<float>& arr_;
     float		threshold_;
     float		unitvol_;

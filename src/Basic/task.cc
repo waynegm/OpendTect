@@ -13,7 +13,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "varlenarray.h"
 #include "progressmeter.h"
 #include "ptrman.h"
-#include "errh.h"
 
 #include <limits.h>
 
@@ -307,7 +306,8 @@ void ParallelTask::setProgressMeter( ProgressMeter* pm )
 
 void ParallelTask::addToNrDone( int nr )
 {
-    if ( !nrdone_.strongSetIfEqual( nr, -1 ) )
+    od_int64 notset = -1;
+    if ( nrdone_.get()!=-1 || !nrdone_.setIfValueIs( notset,  nr ) )
 	nrdone_ += nr;
 
     if ( progressmeter_ )

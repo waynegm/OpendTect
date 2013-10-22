@@ -16,10 +16,9 @@ ________________________________________________________________________
 #include "algomod.h"
 #include "array2dinterpol.h"
 #include "rowcol.h"
-#include "position.h"
+#include "threadlock.h"
 #include "threadlock.h"
 
-template <class T> class Array2DImpl;
 class RowCol;
 class DAGTriangleTree;
 class Triangle2DInterpolator;

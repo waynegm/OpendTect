@@ -60,7 +60,7 @@ public:
 			uiObjectItemViewWin(uiParent*,const Setup&);
 
 
-    int 		nrItems() const { return mainviewer_->nrItems(); } 
+    int 		nrItems() const { return mainviewer_->nrItems(); }
     uiObjectItemView*	mainViewer() 	{ return mainviewer_; }
 
     void 		addObject(uiObject* grp,uiObject* infogrp=0);

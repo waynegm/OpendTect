@@ -18,7 +18,6 @@ ________________________________________________________________________
 #include "thread.h"
 #include "visosg.h"
 
-class Coord3;
 
 namespace osg { class Group; }
 

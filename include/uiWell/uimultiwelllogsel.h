@@ -18,9 +18,7 @@ ________________________________________________________________________
 #include "wellextractdata.h"
 
 class IOObj;
-class MultiID;
 class uiCheckBox;
-class uiComboBox;
 class uiGenInput;
 class uiLabel;
 class uiListBox;
@@ -48,7 +46,7 @@ public:
     };
 
 			uiWellZRangeSelector(uiParent*,const Setup&);
-			~uiWellZRangeSelector();
+    virtual		~uiWellZRangeSelector();
 
     virtual void	clear();
 

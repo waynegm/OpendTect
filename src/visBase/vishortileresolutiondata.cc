@@ -594,9 +594,9 @@ void TileResolutionData::computeNormal( int nmidx,osg::Vec3& normal )
     const int normalcol = ( nmidx-section.normalstartidx_[resolution_] )%
 	section.normalsidesize_[resolution_];
 
-    const int row = origin_.row + step.row * normalrow*
+    const int row = origin_.row() + step.row() * normalrow*
 	section.spacing_[resolution_];
-    const int col = origin_.col + step.col * normalcol*
+    const int col = origin_.col() + step.col() * normalcol*
 	section.spacing_[resolution_];
 
     const double drow=calcGradient(row,col,section.geometry_->rowRange(),true );

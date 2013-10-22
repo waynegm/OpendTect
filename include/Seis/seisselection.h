@@ -15,9 +15,7 @@ ________________________________________________________________________
 #include "seismod.h"
 #include "seistype.h"
 #include "ranges.h"
-#include "position.h"
-class IOPar;
-class BinID;
+#include "binid.h"
 class LineKey;
 namespace Pos { class Provider; }
 
@@ -120,7 +118,7 @@ public:
     			// Interesting in some 2D situations:
     inline LineKey&	lineKey()		{ return linekey_; }
     inline const LineKey& lineKey() const	{ return linekey_; }
-    inline TraceID::GeomID  geomID() const	{ return geomid_; }
+    inline Pos::GeomID  geomID() const	{ return geomid_; }
 
 protected:
 
@@ -128,7 +126,7 @@ protected:
 
     bool		isall_;
     LineKey&		linekey_;	//!< 2D only
-    TraceID::GeomID	geomid_;
+    Pos::GeomID		geomid_;
 
     int			tracesInSI() const;
     virtual void 	doExtendH(BinID stepout,BinID stepoutstep) = 0;

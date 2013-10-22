@@ -22,7 +22,6 @@ namespace osgManipulator { class TabBoxDragger; }
 namespace osg { class ShapeDrawable; }
 
 
-template <class T> class Interval;
 
 namespace visBase
 {

@@ -17,7 +17,6 @@ ________________________________________________________________________
 #include "bufstringset.h"
 #include "emposid.h"
 #include "emobject.h"
-#include "position.h"
 #include "mathfunc.h"
 #include "rowcolsurface.h"
 
@@ -25,8 +24,6 @@ template <class T, class AT> class TopList;
 
 
 class RowCol;
-template <class T> class Interval;
-template <class T> class StepInterval;
 
 
 namespace Geometry { class RowColSurface; };

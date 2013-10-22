@@ -41,7 +41,7 @@ AngleComputer::AngleComputer()
     : thresholdparam_(0.01)
     , needsraytracing_(true)
     , raytracer_(0)
-    , trcid_(trcid_.std3DGeomID(),0,0)
+    , trckey_(TrcKey::std3DSurvID(),0,0)
 {
     maxthickness_ = SI().depthsInFeet() ? 165.0f : 50.0f;
 }
@@ -146,6 +146,12 @@ void AngleComputer::fftDepthSmooth(::FFTFilter& filter,
 					  PointBasedMathFunction::EndVal );
 
 	rt->getTDModel( ofsidx, td );
+	if ( !td.isOK() )
+	{
+	    arr1doutput = arr1doutput + zsize;
+	    continue;
+	}
+
 	float layertwt = 0, prevlayertwt = mUdf(float);
 	for ( int zidx=0; zidx<zsize; zidx++ )
 	{
@@ -158,13 +164,19 @@ void AngleComputer::fftDepthSmooth(::FFTFilter& filter,
 	    prevlayertwt = layertwt;
 	}
 
+	if ( mIsUdf(layertwt) )
+	{
+	    arr1doutput = arr1doutput + zsize;
+	    continue;
+	}
+
 	const int zsizeintime = mCast( int, layertwt/deftimestep );
 	Array1DImpl<float> angles( zsizeintime );
 	for ( int zidx=0; zidx<zsizeintime; zidx++ )
 	    angles.set( zidx, anglevals.getValue( zidx*deftimestep ) );
 	
 	filter.apply( angles );
-	PointBasedMathFunction anglevalsindepth( PointBasedMathFunction::Linear,
+	PointBasedMathFunction anglevalsindepth(PointBasedMathFunction::Linear,
 					    PointBasedMathFunction::EndVal );
 
 	float layerdepth = 0, prevlayerdepth = mUdf(float);
@@ -464,20 +476,17 @@ bool VelocityBasedAngleComputer::createElasticModel(
 Gather* VelocityBasedAngleComputer::computeAngles()
 {
     ConstRefMan<Survey::Geometry> geom =
-	SI().geomManager().getGeometry( trcid_.geomid_ );
+	Survey::GM().getGeometry( Survey::GM().getGeomID(trckey_) );
     
-    if ( geom->is2D() )
-    {
-	pErrMsg( "Only 3D is supported at this time" );
-	return 0;
-    }
+    if ( geom && geom->is2D() )
+	{ pErrMsg( "Only 3D is supported at this time" ); return 0; }
     
     RefMan<Vel::FunctionSource> source = velsource_;
     if ( !source )
 	return 0;
 
     ConstRefMan<Vel::Function> func =
-	source->getFunction( BinID(trcid_.lineNr(),trcid_.trcNr()) );
+	source->getFunction( BinID(trckey_.lineNr(),trckey_.trcNr()) );
     if ( !func )
 	return 0;
     
@@ -498,7 +507,7 @@ Gather* VelocityBasedAngleComputer::computeAngles()
     if ( veldesc.type_ != VelocityDesc::Interval )
     {
 	mAllocVarLenArr( float, velocityvalues, zsize );
-	if ( !checkAndConvertVelocity(vel.arr(),veldesc,zrange,velocityvalues) )
+	if (!checkAndConvertVelocity(vel.arr(),veldesc,zrange,velocityvalues))
 	    return 0;
 
 	if ( !createElasticModel(zrange,velocityvalues) )
@@ -522,7 +531,7 @@ ModelBasedAngleComputer::ModelBasedAngleComputer()
 }
 
 
-void ModelBasedAngleComputer::setElasticModel( const TraceID& trcid,
+void ModelBasedAngleComputer::setElasticModel( const TrcKey& tk,
 					       bool block, bool pvelonly,
        					       ElasticModel& em	)
 {
@@ -533,7 +542,7 @@ void ModelBasedAngleComputer::setElasticModel( const TraceID& trcid,
 	em.setMaxThickness( maxthickness_ );
     }
 
-    ModelTool* tool = new ModelTool( em, trcid );
+    ModelTool* tool = new ModelTool( em, tk );
     const int toolidx = tools_.indexOf( tool );
     if ( toolidx<0 )
 	tools_ += tool;
@@ -543,9 +552,9 @@ void ModelBasedAngleComputer::setElasticModel( const TraceID& trcid,
 
 
 void ModelBasedAngleComputer::setRayTracer( const RayTracer1D* rt,
-					    const TraceID& trcid )
+					    const TrcKey& tk )
 {
-    ModelTool* tool = new ModelTool( rt, trcid );
+    ModelTool* tool = new ModelTool( rt, tk );
     const int toolidx = tools_.indexOf( tool );
     if ( toolidx<0 )
 	tools_ += tool;
@@ -558,7 +567,7 @@ void ModelBasedAngleComputer::setRayTracer( const RayTracer1D* rt,
 const ElasticModel& ModelBasedAngleComputer::curElasticModel() const
 {
     for ( int idx=0; idx<tools_.size(); idx++ )
-	if ( tools_[idx]->trcID() == trcid_ )
+	if ( tools_[idx]->trcKey() == trckey_ )
 	    return tools_[idx]->elasticModel();
     return elasticmodel_;
 }
@@ -568,7 +577,7 @@ const RayTracer1D* ModelBasedAngleComputer::curRayTracer() const
 {
     if ( raytracer_ ) return raytracer_;
     for ( int idx=0; idx<tools_.size(); idx++ )
-	if ( tools_[idx]->trcID() == trcid_ )
+	if ( tools_[idx]->trcKey() == trckey_ )
 	    return tools_[idx]->rayTracer();
     return 0;
 }

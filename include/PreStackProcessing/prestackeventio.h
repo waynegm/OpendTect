@@ -22,9 +22,7 @@ ________________________________________________________________________
 #include "valseriesevent.h"
 
 class IOObj;
-class Conn;
 class BinIDValueSet;
-class BinID;
 class HorSampling;
 template <class T> class DataInterpreter;
 

@@ -8,7 +8,6 @@
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "strmoper.h"
-#include "strmio.h"
 #include "strmdata.h"
 #include "staticstring.h"
 
@@ -123,29 +122,47 @@ bool StrmOper::getNextChar( std::istream& strm, char& ch )
 
     ch = (char)strm.peek();
     strm.ignore( 1 );
-    return true;
+    return strm.good();
 }
 
 
 bool StrmOper::wordFromLine( std::istream& strm, char* ptr, int maxnrchars )
 {
-    if ( !ptr ) return false;
+    BufferString bs;
+    if ( wordFromLine( strm, bs ) )
+	strncpy( ptr, bs.buf(), maxnrchars );
+
     *ptr = '\0';
+    return false;
+}
+
+
+bool StrmOper::wordFromLine( std::istream& strm, BufferString& bs )
+{
+    bs.setEmpty();
 
     char ch;
-    char* start = ptr;
+    char* ptr = bs.buf();
     while ( getNextChar(strm,ch) && ch != '\n' )
     {
-	if ( !isspace(ch) )
-	    *ptr++ = ch;
-	else if ( ch == '\n' || *start )
+	if ( isspace(ch) )
+	{
+	    if ( ptr == bs.buf() )
+		continue; // 'skip leading blanks'
 	    break;
+	}
 
-	maxnrchars--; if ( maxnrchars == 0 ) break;
+	*ptr++ = ch;
+	const od_int64 nrchar = ptr - bs.buf();
+	if ( nrchar >= bs.bufSize() )
+	{
+	    bs.setBufSize( (unsigned int)(nrchar + 256) );
+	    ptr = bs.buf() + nrchar;
+	}
     }
 
     *ptr = '\0';
-    return ptr != start;
+    return ptr != bs.buf();
 }
 
 
@@ -219,7 +236,8 @@ bool StrmOper::readLine( std::istream& strm, BufferString* bs )
 	    }
 	}
 	getres = getNextChar(strm,ch);
-	if ( !getres ) return false;
+	if ( !getres )
+	    break;
     }
 
     if ( bs && bsidx )
@@ -244,7 +262,7 @@ bool StrmOper::readFile( std::istream& strm, BufferString& bs )
     if ( sz > 0 && bs[sz-1] == '\n' )
 	{ bs[sz-1] = '\0'; sz--; }
 
-    return sz > 0;
+    return !strm.bad();
 }
 
 
@@ -407,83 +425,6 @@ const char* StrmOper::getErrorMessage( const StreamData& sd )
 	ret.add( getErrorMessage(*sd.streamPtr()) );
 
     return ret.buf();
-}
-
-
-
-#define mWriteImpl(fn,typ) \
-bool StreamIO::fn( const typ& val, const char* post ) \
-{ \
-    if ( binary_ ) \
-	ostrm_->write( (const char*)&val, sizeof(val) ); \
-    else \
-	(*ostrm_) << val << post; \
-    return ostrm_; \
-}
-
-mWriteImpl( writeInt16, od_int16 )
-mWriteImpl( writeInt32, od_int32 )
-mWriteImpl( writeInt64, od_int64 )
-mWriteImpl( writeFloat, float )
-
-
-//---- StreamIO ----
-
-
-bool StreamIO::writeBlock( void* ptr, od_uint64 nrbytes ) 
-{
-    return ostrm_ ? StrmOper::writeBlock( *ostrm_, ptr, nrbytes ) : false;
-}
-
-
-#define mReadImpl(fn,typ) \
-typ StreamIO::fn() const \
-{ \
-    typ val; \
-    if ( binary_ ) \
-	istrm_->read( (char*)(&val), sizeof(val) ); \
-    else \
-	(*istrm_) >> val; \
-    return val; \
-}
-
-mReadImpl( readInt16, od_int16 )
-mReadImpl( readInt32, od_int32 )
-mReadImpl( readInt64, od_int64 )
-mReadImpl( readFloat, float )
-
-
-bool StreamIO::readBlock( void* ptr, od_uint64 nrbytes ) const
-{
-    return istrm_ ? StrmOper::readBlock( *istrm_, ptr, nrbytes ) : false;
-}
-
-
-od_int64 StreamIO::tellg() const
-{
-    return istrm_ ? StrmOper::tell( *istrm_ ) : -1;
-}
-
-
-od_int64 StreamIO::tellp() const
-{
-    return ostrm_ ? StrmOper::tell( *ostrm_ ) : -1;
-}
-
-
-bool StreamIO::seekg( od_int64 pos, std::ios_base::seekdir dir )
-{
-    if ( !istrm_ ) return false;
-    StrmOper::seek( *istrm_, pos, dir );
-    return !istrm_->fail();
-}
-
-
-bool StreamIO::seekp( od_int64 pos, std::ios_base::seekdir dir )
-{
-    if ( !ostrm_ ) return false;
-    StrmOper::seek( *ostrm_, pos, dir ); 
-    return !ostrm_->fail();
 }
 
 

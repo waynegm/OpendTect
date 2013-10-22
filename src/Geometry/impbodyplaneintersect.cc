@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "indexedshape.h"
 #include "positionlist.h"
 #include "trigonometry.h"
+#include "cubesampling.h"
 
 
 namespace Geometry
@@ -65,14 +66,14 @@ bool ImplicitBodyPlaneIntersector::compute()
     for ( int idx=0; idx<sz0; idx++ )
     {
 	if ( !dim_ )
-	    bid.crl = cs_.hrg.crlRange().atIndex(idx);
+	    bid.crl() = cs_.hrg.crlRange().atIndex(idx);
 	else
-	    bid.inl = cs_.hrg.inlRange().atIndex(idx);
+	    bid.inl() = cs_.hrg.inlRange().atIndex(idx);
 
 	for ( int idy=0; idy<sz1; idy++ )
 	{
 	    if ( dim_==2 )
-		bid.crl = cs_.hrg.crlRange().atIndex(idy);
+		bid.crl() = cs_.hrg.crlRange().atIndex(idy);
 	    else
 		z = cs_.zrg.atIndex(idy);
 
@@ -84,7 +85,7 @@ bool ImplicitBodyPlaneIntersector::compute()
 	    else
 		val  = arr_.get( idx, idy, pidx );
 
-	    crdlist.add( Coord3(bid.inl,bid.crl,z) ); //Coord isInlCrl
+	    crdlist.add( Coord3(bid.inl(),bid.crl(),z) ); //Coord isInlCrl
 	    if ( val<threshold_ )
     		data->set( idx, idy, val );
 	}

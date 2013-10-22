@@ -20,11 +20,9 @@ ________________________________________________________________________
 #include "seistype.h"
 #include "typeset.h"
 
-class BinID;
 class BinIDValueSet;
 class DataPointSet;
 class LineKey;
-class MultiID;
 class SeisTrc;
 class SeisTrcInfo;
 class SeisTrcBuf;

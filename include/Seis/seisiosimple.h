@@ -13,14 +13,10 @@
 #include "position.h"
 #include "executor.h"
 #include "seistype.h"
-class IOPar;
+#include "od_iosfwd.h"
 class Scaler;
 class SeisTrc;
 class LineKey;
-class StreamData;
-class uiGenInput;
-class uiIOObjSel;
-class uiFileInput;
 class SeisImporter;
 class SeisTrcReader;
 class SeisTrcWriter;
@@ -102,8 +98,8 @@ protected:
     bool		isimp_;
     bool		isps_;
 
-    StreamData&		sd_;
     SeisTrc&		trc_;
+    od_stream*		strm_;
     SeisTrcReader*	rdr_;
     SeisTrcWriter*	wrr_;
     SeisImporter*	importer_;
@@ -113,12 +109,14 @@ protected:
     int			prevnr_;
     BinID		prevbid_;
     BufferString	errmsg_;
-    bool		zistm_;
+    const bool		zistm_;
 
     void		startImpRead();
     int			readImpTrc(SeisTrc&);
     int			readExpTrc();
     int			writeExpTrc();
+    od_istream&		iStream();
+    od_ostream&		oStream();
 
     friend class	SeisIOSimpleImportReader;
 

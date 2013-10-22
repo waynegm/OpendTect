@@ -73,14 +73,15 @@ CurvGrad::CurvGrad( Desc& desc )
     mGetBinID( stepout_, stepoutStr() );
     mGetBool( dosteer_, sKey::Steering() );
 
-    const float maxso = mMAX( stepout_.inl*inlDist(), stepout_.crl*crlDist() );
+    const float maxso = mMAX( stepout_.inl()*inlDist(),
+			      stepout_.crl()*crlDist() );
     const float maxsecdip = maxSecureDip() * 1000;
     const int boudary = mCast( int, floor(maxso*maxsecdip) + 1 );
     sampgate_ = Interval<int>(-boudary, boudary );
 
-    for( int inl=-stepout_.inl; inl<=stepout_.inl; inl++ )
+    for( int inl=-stepout_.inl(); inl<=stepout_.inl(); inl++ )
     {
-        for( int crl=-stepout_.crl; crl<=stepout_.crl; crl++ )
+        for( int crl=-stepout_.crl(); crl<=stepout_.crl(); crl++ )
         {
             const BinID bid( inl, crl );
             const int steeridx = getSteeringIndex( bid );
@@ -120,7 +121,7 @@ bool CurvGrad::getInputData( const BinID& relpos, int zintv )
 
     steeringdata_ = inputs_[1] ? inputs_[1]->getData(relpos, zintv) : 0;
 
-    const int maxlength = mMAX(stepout_.inl, stepout_.crl)*2+1;
+    const int maxlength = mMAX(stepout_.inl(), stepout_.crl())*2+1;
     while( inputdata_.size()<maxlength*maxlength )
 	inputdata_ += 0;
 
@@ -152,8 +153,8 @@ bool CurvGrad::computeData( const DataHolder& output,
 
     for (int idx=0; idx<nrsamples; idx++ )
     {
-	const int inlsize = 2 * stepout_.inl + 1;
-	const int crlsize = 2 * stepout_.crl + 1;
+	const int inlsize = 2 * stepout_.inl() + 1;
+	const int crlsize = 2 * stepout_.crl() + 1;
 
 	float* inpvolume_ = new float [inlsize*crlsize*sizeof(float)];
 	for( int iter=0; iter<inlsize*crlsize; iter++ )
@@ -190,8 +191,8 @@ bool CurvGrad::computeData( const DataHolder& output,
 
 float CurvGrad::calCurvGrad( float *inpvolume_ ) const
 {
-    const int inlsteo = mMAX(stepout_.inl, stepout_.crl);
-    const int crlstep = mMAX(stepout_.inl, stepout_.crl);
+    const int inlsteo = mMAX(stepout_.inl(), stepout_.crl());
+    const int crlstep = mMAX(stepout_.inl(), stepout_.crl());
     const int crlsize = 2 * crlstep + 1;
     
     int centralpos = inlsteo*crlsize;
@@ -207,7 +208,7 @@ float CurvGrad::calCurvGrad( float *inpvolume_ ) const
 
     float crlcg = (float)(0.5 * (data_xf - data_xb) / crlstep);
     float inlcg = (float)(0.5 * (data_yf - data_yb) / inlsteo);
-    float cgazim = Angle::rad2deg( atan2(crlcg, inlcg) );
+    float cgazim = Math::toDegrees( atan2(crlcg, inlcg) );
 
     //adjust the sign
     const int sign = data_xf*data_xb<=0 || data_yf*data_yb<=0 ? -1 : 1;

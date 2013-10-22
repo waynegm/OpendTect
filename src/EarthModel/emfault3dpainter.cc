@@ -140,13 +140,13 @@ bool Fault3DPainter::paintSticks(EM::Fault3D& f3d, const EM::SectionID& sid,
 
     RowCol rc;
     const StepInterval<int> rowrg = fss->rowRange();
-    for ( rc.row=rowrg.start; rc.row<=rowrg.stop; rc.row+=rowrg.step )
+    for ( rc.row()=rowrg.start; rc.row()<=rowrg.stop; rc.row()+=rowrg.step )
     {
-	StepInterval<int> colrg = fss->colRange( rc.row );
+	StepInterval<int> colrg = fss->colRange( rc.row() );
 	FlatView::AuxData* stickauxdata = viewer_.createAuxData( 0 );
 	stickauxdata->poly_.erase();
 	stickauxdata->linestyle_ = markerlinestyle_;
-	if ( rc.row == activestickid_ )
+	if ( rc.row() == activestickid_ )
 	    stickauxdata->linestyle_.width_ *= 2;
 
 	stickauxdata->linestyle_.color_ = f3d.preferredColor();
@@ -155,7 +155,7 @@ bool Fault3DPainter::paintSticks(EM::Fault3D& f3d, const EM::SectionID& sid,
 	    stickauxdata->markerstyles_.erase();
 	stickauxdata->enabled_ = linenabled_;
 
-	const Coord3 stkednor = f3d.geometry().getEditPlaneNormal(sid,rc.row);
+	const Coord3 stkednor = f3d.geometry().getEditPlaneNormal(sid,rc.row());
 
 	if ( !path_ )
 	{
@@ -174,7 +174,7 @@ bool Fault3DPainter::paintSticks(EM::Fault3D& f3d, const EM::SectionID& sid,
 	    {
 		StkMarkerInfo* stkmkrinfo = new StkMarkerInfo;
 		stkmkrinfo->marker_ = stickauxdata;
-		stkmkrinfo->stickid_ = rc.row;
+		stkmkrinfo->stickid_ = rc.row();
 		f3dmaker->stickmarker_ += stkmkrinfo;
 		viewer_.addAuxData( stickauxdata );
 	    }
@@ -192,9 +192,9 @@ bool Fault3DPainter::paintStickOnPlane( const Geometry::FaultStickSurface& fss,
     Coord3 editnormal( 0, 0, 1 );
 
     if ( cs_.defaultDir() == CubeSampling::Inl )
-	editnormal = Coord3( SI().binID2Coord().rowDir(), 0 );
+	editnormal = Coord3( SI().binID2Coord().inlDir(), 0 );
     else if ( cs_.defaultDir() == CubeSampling::Crl )
-	editnormal = Coord3( SI().binID2Coord().colDir(), 0 );
+	editnormal = Coord3( SI().binID2Coord().crlDir(), 0 );
 
     const Coord3 nzednor = editnormal.normalize();
 
@@ -210,51 +210,51 @@ bool Fault3DPainter::paintStickOnPlane( const Geometry::FaultStickSurface& fss,
 	BinID extrbid1, extrbid2;
 	if ( cs_.defaultDir() == CubeSampling::Inl )
 	{
-	    extrbid1.inl = extrbid2.inl = cs_.hrg.inlRange().start;
-	    extrbid1.crl = cs_.hrg.crlRange().start;
-	    extrbid2.crl = cs_.hrg.crlRange().stop;
+	    extrbid1.inl() = extrbid2.inl() = cs_.hrg.inlRange().start;
+	    extrbid1.crl() = cs_.hrg.crlRange().start;
+	    extrbid2.crl() = cs_.hrg.crlRange().stop;
 	}
 	else if ( cs_.defaultDir() == CubeSampling::Crl )
 	{
-	    extrbid1.inl = cs_.hrg.inlRange().start;
-	    extrbid2.inl = cs_.hrg.inlRange().stop;
-	    extrbid1.crl = extrbid2.crl = cs_.hrg.crlRange().start;
+	    extrbid1.inl() = cs_.hrg.inlRange().start;
+	    extrbid2.inl() = cs_.hrg.inlRange().stop;
+	    extrbid1.crl() = extrbid2.crl() = cs_.hrg.crlRange().start;
 	}
 
 	Coord extrcoord1, extrcoord2;
 	extrcoord1 = SI().transform( extrbid1 );
 	extrcoord2 = SI().transform( extrbid2 );
 
-	for ( rc.col=crg.start; rc.col<=crg.stop; rc.col+=crg.step )
+	for ( rc.col()=crg.start; rc.col()<=crg.stop; rc.col()+=crg.step )
 	{
 	    const Coord3& pos = fss.getKnot( rc );
 	    BinID knotbinid = SI().transform( pos );
 
 	    if ( pointOnEdge2D(pos.coord(),extrcoord1,extrcoord2,.5)
 		 || (cs_.defaultDir()==CubeSampling::Inl
-		     && knotbinid.inl==extrbid1.inl)
+		     && knotbinid.inl()==extrbid1.inl())
 		 || (cs_.defaultDir()==CubeSampling::Crl
-		     && knotbinid.crl==extrbid1.crl) )
+		     && knotbinid.crl()==extrbid1.crl()) )
 	    {
 		if ( cs_.defaultDir() == CubeSampling::Inl )
 		    stickauxdata.poly_ += FlatView::Point(
-			    		SI().transform(pos.coord()).crl, pos.z);
+			    		SI().transform(pos.coord()).crl(), pos.z);
 		else if ( cs_.defaultDir() == CubeSampling::Crl )
 		    stickauxdata.poly_ += FlatView::Point(
-			    		SI().transform(pos.coord()).inl, pos.z);
+			    		SI().transform(pos.coord()).inl(), pos.z);
 	    }
 	}
     }
     else
     {
-	for ( rc.col=crg.start; rc.col<=crg.stop; rc.col+=crg.step )
+	for ( rc.col()=crg.start; rc.col()<=crg.stop; rc.col()+=crg.step )
 	{
 	    const Coord3 pos = fss.getKnot( rc );
 	    if ( !mIsEqual(pos.z,cs_.zrg.start,.0001) )
 		break;
 
 	    BinID binid = SI().transform(pos.coord());
-	    stickauxdata.poly_ += FlatView::Point( binid.inl, binid.crl );
+	    stickauxdata.poly_ += FlatView::Point( binid.inl(), binid.crl() );
 	}
     }
 
@@ -268,7 +268,7 @@ bool Fault3DPainter::paintStickOnRLine( const Geometry::FaultStickSurface& fss,
 				   FlatView::AuxData& stickauxdata )
 {
     BinID bid;
-    for ( rc.col=crg.start;rc.col<=crg.stop;rc.col+=crg.step )
+    for ( rc.col()=crg.start;rc.col()<=crg.stop;rc.col()+=crg.step )
     {
 	const Coord3 pos = fss.getKnot( rc );
 	bid = SI().transform( pos.coord() );
@@ -339,8 +339,8 @@ bool Fault3DPainter::paintIntersection( EM::Fault3D& f3d,
     }
     else
     {
-	BinID start( cs_.hrg.start.inl, cs_.hrg.start.crl );
-	BinID stop(cs_.hrg.stop.inl, cs_.hrg.stop.crl );
+	BinID start( cs_.hrg.start.inl(), cs_.hrg.start.crl() );
+	BinID stop(cs_.hrg.stop.inl(), cs_.hrg.stop.crl() );
 
 	Coord3 p0( SI().transform(start), cs_.zrg.start );
 	Coord3 p1( SI().transform(start), cs_.zrg.stop );
@@ -455,11 +455,11 @@ void Fault3DPainter::genIntersectionAuxData( EM::Fault3D& f3d,
 	}
 
 	if ( cs_.nrZ() == 1 )
-	    intsecauxdat->poly_ += FlatView::Point( posbid.inl, posbid.crl );
+	    intsecauxdat->poly_ += FlatView::Point( posbid.inl(), posbid.crl() );
 	else if ( cs_.nrCrl() == 1 )
-	    intsecauxdat->poly_ += FlatView::Point( posbid.inl, pos.z );
+	    intsecauxdat->poly_ += FlatView::Point( posbid.inl(), pos.z );
 	else if ( cs_.nrInl() == 1 )
-	    intsecauxdat->poly_ += FlatView::Point( posbid.crl, pos.z );
+	    intsecauxdat->poly_ += FlatView::Point( posbid.crl(), pos.z );
     }
 
     viewer_.addAuxData( intsecauxdat );
@@ -520,7 +520,7 @@ void Fault3DPainter::setActiveStick( EM::PosID& pid )
 {
     if ( pid.objectID() != emid_ ) return;
 
-    if ( pid.getRowCol().row == activestickid_ ) return;
+    if ( pid.getRowCol().row() == activestickid_ ) return;
 
     for ( int auxdid=0; auxdid<f3dmarkers_[0]->stickmarker_.size(); auxdid++ )
     {
@@ -529,11 +529,11 @@ void Fault3DPainter::setActiveStick( EM::PosID& pid )
 	if ( f3dmarkers_[0]->stickmarker_[auxdid]->stickid_== activestickid_ )
 	    linestyle.width_ = markerlinestyle_.width_;
 	else if ( f3dmarkers_[0]->stickmarker_[auxdid]->stickid_ ==
-		  pid.getRowCol().row )
+		  pid.getRowCol().row() )
 	    linestyle.width_ = markerlinestyle_.width_ * 2;
     }
 
-    activestickid_ = pid.getRowCol().row;
+    activestickid_ = pid.getRowCol().row();
     viewer_.handleChange( FlatView::Viewer::Auxdata );
 }
 
@@ -541,7 +541,7 @@ void Fault3DPainter::setActiveStick( EM::PosID& pid )
 bool Fault3DPainter::hasDiffActiveStick( const EM::PosID* pid ) const
 {
     if ( pid->objectID() != emid_ ||
-	 pid->getRowCol().row != activestickid_ )
+	 pid->getRowCol().row() != activestickid_ )
 	return true;
     else
 	return false;
@@ -675,10 +675,10 @@ Coord Fault3DPainter::getNormalInRandLine( int idx ) const
     else if ( idx-1 > 0 )
 	nextbid = (*path_)[idx-1];
 
-    if ( pivotbid.inl == nextbid.inl )
-	return  SI().binID2Coord().rowDir();
-    else if ( pivotbid.crl == nextbid.crl )
-	return SI().binID2Coord().colDir();
+    if ( pivotbid.inl() == nextbid.inl() )
+	return  SI().binID2Coord().inlDir();
+    else if ( pivotbid.crl() == nextbid.crl() )
+	return SI().binID2Coord().crlDir();
 
     return Coord(mUdf(float), mUdf(float));
 }

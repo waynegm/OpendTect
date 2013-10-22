@@ -24,16 +24,15 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "file.h"
 #include "filepath.h"
 #include "keystrs.h"
-#include "strmprov.h"
 #include "ptrman.h"
+#include "od_iostream.h"
+#include "strmdata.h"
 #include "survinfo.h"
 #include "surv2dgeom.h"
 #include "cubesampling.h"
 #include "separstr.h"
-#include <iostream>
-#include <sstream>
 
-const char* SeisJobExecProv::sKeySeisOutIDKey()	    { return "Output Seismics Key"; }
+const char* SeisJobExecProv::sKeySeisOutIDKey()	{ return "Output Seismics Key";}
 const char* SeisJobExecProv::sKeyOutputLS()	    { return "Output Line Set"; }
 const char* SeisJobExecProv::sKeyWorkLS()	    { return "Work Line Set"; }
 
@@ -187,12 +186,11 @@ bool SeisJobExecProv::emitLSFile( const char* fnm ) const
 {
     if ( !outls_ ) return false;
 
-    StreamData sd = StreamProvider(fnm).makeOStream();
-    if ( !sd.usable() )
+    od_ostream strm( fnm );
+    if ( !strm.isOK() )
 	return false;
 
-    outls_->putTo( *sd.ostrm );
-    sd.close();
+    outls_->putTo( strm );
     return !File::isEmpty( fnm );
 }
 
@@ -306,15 +304,21 @@ void SeisJobExecProv::getMissingLines( TypeSet<int>& inlnrs ) const
 	BufferString fnm( "i." ); fnm += inl;
 	FilePath fp( basefp, fnm );
 	fnm = fp.fullPath();
-	StreamData sd = StreamProvider( fnm ).makeIStream();
-	bool isok = sd.usable();
+	od_istream* strm = new od_istream( fnm );
+	bool isok = strm->isOK();
 	if ( isok )
 	{
-	    CBVSReader rdr( sd.istrm, false ); // stream closed by reader
+	    CBVSReader rdr( strm, false ); // stream closed by reader
 	    isok = !rdr.errMsg();
 	    if ( isok )
-		isok = rdr.info().geom_.start.crl || rdr.info().geom_.start.crl;
+		isok = rdr.info().geom_.start.crl() ||
+                       rdr.info().geom_.start.crl();
 	}
+        else
+        {
+            delete strm;
+        }
+
 	if ( !isok )
 	    inlnrs += inl;
     }
@@ -359,9 +363,9 @@ MultiID SeisJobExecProv::tempStorID() const
 	{
 	    // That cannot be right.
 	    StepInterval<int> fnrs;
-	    fnrs.start = SI().sampling(false).hrg.start.inl;
-	    fnrs.stop = SI().sampling(false).hrg.stop.inl;
-	    fnrs.step = SI().sampling(false).hrg.step.inl;
+	    fnrs.start = SI().sampling(false).hrg.start.inl();
+	    fnrs.stop = SI().sampling(false).hrg.stop.inl();
+	    fnrs.step = SI().sampling(false).hrg.step.inl();
 	    iostrm->fileNumbers() = fnrs;
 	}
 	iostrm->setFileName( fp.fullPath() );

@@ -106,8 +106,8 @@ int nextStep()
 	const BinID bid( inl_, crl );
 	if ( !hs_.includes(bid) ) continue;
 
-	BinIDValueSet::Pos pos = bvs.findFirst( bid );
-	if ( !pos.valid() ) continue;
+	BinIDValueSet::SPos pos = bvs.find( bid );
+	if ( !pos.isValid() ) continue;
 
 	const float* vals = bvs.getVals( pos );
 	if ( !vals ) continue;
@@ -170,7 +170,7 @@ HorizonImporter( Horizon3D& hor, const ObjectSet<BinIDValueSet>& sects,
 {
     if ( bvss_.isEmpty() ) return;
     nrvals_ = bvss_[0]->nrVals();
-    const RowCol step( hs_.step.inl, hs_.step.crl );
+    const RowCol step( hs_.step.inl(), hs_.step.crl() );
     horizon_.geometry().setStep( step, step );
 
     for ( int idx=0; idx<bvss_.size(); idx++ )
@@ -245,7 +245,7 @@ protected:
 
     const ObjectSet<BinIDValueSet>&	bvss_;
     Horizon3D&		horizon_;
-    BinIDValueSet::Pos	pos_;
+    BinIDValueSet::SPos	pos_;
     HorSampling		hs_;
     BufferString	msg_;
     int			nrvals_;
@@ -500,15 +500,15 @@ RowCol Horizon3DGeometry::step() const
 
 void Horizon3DGeometry::setStep( const RowCol& ns, const RowCol& loadedstep )
 {
-    if ( ns.row && ns.col )
+    if ( ns.row() && ns.col() )
     {
-	step_.row = abs( ns.row ); step_.col = abs( ns.col );
+	step_.row() = abs( ns.row() ); step_.col() = abs( ns.col() );
     }
 
-    if ( loadedstep.row && loadedstep.col )
+    if ( loadedstep.row() && loadedstep.col() )
     {
-	loadedstep_.row = abs( loadedstep.row );
-	loadedstep_.col = abs( loadedstep.col );
+	loadedstep_.row() = abs( loadedstep.row() );
+	loadedstep_.col() = abs( loadedstep.col() );
     }
 
     if ( nrSections() )
@@ -586,14 +586,14 @@ PosID Horizon3DGeometry::getNeighbor( const PosID& posid,
     const SectionID sid = posid.sectionID();
 
     const StepInterval<int> rowrg = rowRange( sid );
-    const StepInterval<int> colrg = colRange( sid, rc.row );
+    const StepInterval<int> colrg = colRange( sid, rc.row() );
 
     RowCol diff(0,0);
-    if ( dir.row>0 ) diff.row = rowrg.step;
-    else if ( dir.row<0 ) diff.row = -rowrg.step;
+    if ( dir.row()>0 ) diff.row() = rowrg.step;
+    else if ( dir.row()<0 ) diff.row() = -rowrg.step;
 
-    if ( dir.col>0 ) diff.col = colrg.step;
-    else if ( dir.col<0 ) diff.col = -colrg.step;
+    if ( dir.col()>0 ) diff.col() = colrg.step;
+    else if ( dir.col()<0 ) diff.col() = -colrg.step;
 
     TypeSet<PosID> aliases;
     getLinkedPos( posid, aliases );

@@ -97,30 +97,30 @@ void uiPositionTable::posChgCB( CallBacker* )
     NotifyStopper ns( table_->valueChanged );
     const RowCol& rc = table_->notifiedCell();
     BinID bid;
-    if ( rc.col==0 || rc.col==1 )
+    if ( rc.col()==0 || rc.col()==1 )
     {
-	Coord coord( table_->getdValue(RowCol(rc.row,0)),
-		     table_->getdValue(RowCol(rc.row,1)) );
+	Coord coord( table_->getdValue(RowCol(rc.row(),0)),
+		     table_->getdValue(RowCol(rc.row(),1)) );
 	bid = SI().transform( coord );
 	if ( withic_ )
 	{
-	    table_->setValue( RowCol(rc.row,2), bid.inl );
-	    table_->setValue( RowCol(rc.row,3), bid.crl );
+	    table_->setValue( RowCol(rc.row(),2), bid.inl() );
+	    table_->setValue( RowCol(rc.row(),3), bid.crl() );
 	}
     }
-    else if ( rc.col==2 || rc.col==3 )
+    else if ( rc.col()==2 || rc.col()==3 )
     {
-	bid = BinID( table_->getIntValue(RowCol(rc.row,2)),
-		     table_->getIntValue(RowCol(rc.row,3)) );
+	bid = BinID( table_->getIntValue(RowCol(rc.row(),2)),
+		     table_->getIntValue(RowCol(rc.row(),3)) );
 	Coord coord = SI().transform( bid );
 	if ( withxy_ )
 	{
-	    table_->setValue( RowCol(rc.row,0), coord.x );
-	    table_->setValue( RowCol(rc.row,1), coord.y );
+	    table_->setValue( RowCol(rc.row(),0), coord.x );
+	    table_->setValue( RowCol(rc.row(),1), coord.y );
 	}
     }
 
-    setRowColor( rc.row, SI().includes(bid,SI().zRange(true).start,true) );
+    setRowColor( rc.row(), SI().includes(bid,SI().zRange(true).start,true) );
 }
 
 
@@ -141,8 +141,8 @@ void uiPositionTable::setCoords( const TypeSet<Coord>& coords )
 
 	if ( withic_ )
 	{
-	    table_->setValue( RowCol(idx,getICol()), bid.inl );
-	    table_->setValue( RowCol(idx,getCCol()), bid.crl );
+	    table_->setValue( RowCol(idx,getICol()), bid.inl() );
+	    table_->setValue( RowCol(idx,getCCol()), bid.crl() );
 	}
 
 	setRowColor( idx, SI().includes(bid,SI().zRange(true).start,true) );
@@ -171,8 +171,8 @@ void uiPositionTable::setBinIDs( const TypeSet<BinID>& binids )
 
 	if ( withic_ )
 	{
-	    table_->setValue( RowCol(idx,getICol()), bid.inl );
-	    table_->setValue( RowCol(idx,getCCol()), bid.crl );
+	    table_->setValue( RowCol(idx,getICol()), bid.inl() );
+	    table_->setValue( RowCol(idx,getCCol()), bid.crl() );
 	}
 
 	setRowColor( idx, SI().includes(bid,SI().zRange(true).start,true) );

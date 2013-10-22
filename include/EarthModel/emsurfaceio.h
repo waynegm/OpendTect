@@ -17,7 +17,6 @@ ________________________________________________________________________
 #include "bufstringset.h"
 #include "emposid.h"
 #include "executor.h"
-#include "position.h"
 #include "ranges.h"
 #include "rowcol.h"
 #include "od_iosfwd.h"
@@ -94,7 +93,7 @@ public:
     int			nrLines() const;
     BufferString	lineName(int) const;
     BufferString	lineSet(int) const;
-    TraceID::GeomID	lineGeomID(int) const;
+    Pos::GeomID		lineGeomID(int) const;
     StepInterval<int>	lineTrcRanges( int idx ) const;
     int			stratLevelID() const;
     const IOPar*	pars() const;
@@ -160,7 +159,7 @@ protected:
     BufferStringSet	sectionnames_;
     BufferStringSet	linenames_;
     BufferStringSet	linesets_;
-    TypeSet<TraceID::GeomID>	geomids_;
+    TypeSet<Pos::GeomID>	geomids_;
     TypeSet<EM::SectionID> sectionids_;
     TypeSet<EM::SectionID> sectionsel_;
     bool		fullyread_;

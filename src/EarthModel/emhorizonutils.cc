@@ -12,6 +12,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "emhorizonutils.h"
 
 #include "binidvalset.h"
+#include "binidvalue.h"
 #include "cubesampling.h"
 #include "datapointset.h"
 
@@ -67,25 +68,25 @@ float HorizonUtils::getMissingZ( const RowCol& rc, const Surface* surface,
     {
 	if ( firstinlz == -mUdf(float) )
 	{
-	    RowCol rowcol(rc.row-dist, rc.col );
+	    RowCol rowcol(rc.row()-dist, rc.col() );
 	    firstinlz = getZ( rowcol, surface );
 	    if ( firstinlz > -mUdf(float) ) distfirstinlz = dist;
 	}
 	if ( secondinlz == -mUdf(float) )
 	{
-	    RowCol rowcol( rc.row+dist, rc.col );
+	    RowCol rowcol( rc.row()+dist, rc.col() );
 	    secondinlz = getZ( rowcol, surface );
 	    if ( secondinlz > -mUdf(float) ) distsecondinlz = dist;
 	}
 	if ( firstcrlz == -mUdf(float) )
 	{
-	    RowCol rowcol( rc.row, rc.col-dist );
+	    RowCol rowcol( rc.row(), rc.col()-dist );
 	    firstcrlz = getZ( rowcol, surface );
 	    if ( firstcrlz > -mUdf(float) ) distfirstcrlz = dist;
 	}
 	if ( secondcrlz == -mUdf(float) )
 	{
-	    RowCol rowcol( rc.row, rc.col+dist );
+	    RowCol rowcol( rc.row(), rc.col()+dist );
 	    secondcrlz = getZ( rowcol, surface );
 	    if ( secondcrlz > -mUdf(float) ) distsecondcrlz = dist;
 	}
@@ -155,7 +156,7 @@ void HorizonUtils::getPositions( od_ostream& strm, const MultiID& id,
     }
 
     pm.setFinished();
-    strm.add( "Done!\n" ).flush();
+    strm << "Done!" << od_endl;
 }
 
 
@@ -181,7 +182,7 @@ void HorizonUtils::getExactCoords( od_ostream& strm, const MultiID& id,
 	res = new DataPointSet( pts, nms, true );
 	data += res;
 	SectionID sid = 0; 		//multiple sections not used here
-	for ( int idx=hsamp.start.crl; idx<=hsamp.stop.crl; idx++ )
+	for ( int idx=hsamp.start.crl(); idx<=hsamp.stop.crl(); idx++ )
 	{
 	    Coord3 coords = hor2d->getPos( sid, geomid, idx);
 	    DataPointSet::Pos newpos( coords );
@@ -220,7 +221,7 @@ void HorizonUtils::getExactCoords( od_ostream& strm, const MultiID& id,
     if ( res ) res->dataChanged();
     
     pm.setFinished();
-    strm.add( "Done!\n" ).flush();
+    strm << "Done!" << od_endl;
 }
 
 
@@ -251,9 +252,9 @@ void HorizonUtils::getWantedPositions( od_ostream& strm,
     float meanzinter = 0;
     int nrpos;
     float topz, botz, lastzinter;
-    for ( int idi=hs.start.inl; idi<=hs.stop.inl; idi+=SI().inlStep() )
+    for ( int idi=hs.start.inl(); idi<=hs.stop.inl(); idi+=SI().inlStep() )
     {
-	for ( int idc=hs.start.crl; idc<=hs.stop.crl; idc+=SI().crlStep() )
+	for ( int idc=hs.start.crl(); idc<=hs.stop.crl(); idc+=SI().crlStep() )
 	{
 	    lastzinter = meanzinter;
 	    if ( !getZInterval( idi, idc, surface1, surface2, topz, botz, 
@@ -369,12 +370,12 @@ void HorizonUtils::addSurfaceData( const MultiID& id,
 	const BinIDValueSet& bivs = *data[sectionidx];
 
 	PosID posid( objid, sectionid );
-	BinIDValueSet::Pos pos;
+	BinIDValueSet::SPos pos;
 	BinID bid; TypeSet<float> vals;
 	while ( bivs.next(pos) )
 	{
 	    bivs.get( pos, bid, vals );
-	    const SubID subid = RowCol(bid.inl,bid.crl).toInt64();
+	    const SubID subid = RowCol(bid.inl(),bid.crl()).toInt64();
 	    posid.setSubID( subid );
 	    for ( int validx=1; validx<vals.size(); validx++ )
 		horizon->auxdata.setAuxDataVal( validx-1, posid, vals[validx] );

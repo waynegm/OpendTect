@@ -10,6 +10,8 @@ ________________________________________________________________________
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "vistexturerect.h"
+#include "coord.h"
+#include "coord.h"
 #include "vistexturechannels.h"
 
 

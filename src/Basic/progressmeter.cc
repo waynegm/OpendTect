@@ -14,7 +14,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "task.h"
 
 
-static const char dispchars_[] = ".:=|*#>}ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const char progress_symbols[] = ".:=|*#>}].:=|*#>}].:=|*#>}].:=|*#>}]";
 
 
 TextStreamProgressMeter::TextStreamProgressMeter( od_ostream& out,
@@ -31,17 +31,6 @@ TextStreamProgressMeter::~TextStreamProgressMeter()
     if ( !finished_ ) setFinished();
 }
 
-/*
-void TextStreamProgressMeter::setTask( const Task& task )
-{
-    strm_ <<  "Process: '" << task.name() << "'\n";
-    strm_ << "Started: " << Time::getDateTimeString() << "\n\n";
-    strm_ << '\t' << task.message() << '\n';
-    reset();
-}
-
-*/
-
 
 void TextStreamProgressMeter::setFinished()
 {
@@ -52,8 +41,7 @@ void TextStreamProgressMeter::setFinished()
     annotate(false);
     finished_ = true;
 
-    strm_ << "\nFinished: "  << Time::getDateTimeString() << od_newline;
-    strm_.flush();
+    strm_ << "\nFinished: "  << Time::getDateTimeString() << od_endl;
     lock.unlockNow();
     reset();
 }
@@ -77,9 +65,8 @@ void TextStreamProgressMeter::setStarted()
     {
 	if ( !name_.isEmpty() ) strm_ <<  "Process: '" << name_.buf() << "'\n";
 	strm_ << "Started: " << Time::getDateTimeString() << "\n\n";
-	if ( !message_.isEmpty() ) strm_ << '\t' << message_.buf() << '\n';
+	if ( !message_.isEmpty() ) strm_ << '\t' << message_.buf() << od_endl;
         oldtime_ = Time::getMilliSeconds();
-	strm_.flush();
 	finished_ = false;
 	inited_ = true;
     }
@@ -98,8 +85,8 @@ void TextStreamProgressMeter::addProgress( int nr )
 	if ( !(relprogress % nrdoneperchar_) )
 	{
 	    strm_ << (relprogress%(10*nrdoneperchar_)
-		    ? dispchars_[distcharidx_]
-		    : dispchars_[distcharidx_+1]);
+		    ? progress_symbols[distcharidx_]
+		    : progress_symbols[distcharidx_+1]);
 	    strm_.flush();
 	    nrdotsonline_++;
 	}
@@ -192,8 +179,7 @@ void TextStreamProgressMeter::annotate( bool withrate )
 
 	strm_ << " (" << eta << ")";
     }
-
-    strm_ << od_newline; strm_.flush();
+    strm_ << od_endl;
 
     lastannotatednrdone_ = nrdone_;
     oldtime_ = newtime; 

@@ -20,8 +20,6 @@ ________________________________________________________________________
 #include "visobject.h"
 
 
-class Color;
-class Coord;
 class HorSampling;
 
 namespace visBase { class PolyLine; };

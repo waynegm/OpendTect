@@ -83,17 +83,17 @@ void Horizon2DDisplay::getMousePosInfo(const visBase::EventInfo& eventinfo,
 
     const StepInterval<int> rowrg = rcs->rowRange();
     RowCol rc;
-    for ( rc.row=rowrg.start; rc.row<=rowrg.stop; rc.row+=rowrg.step )
+    for ( rc.row()=rowrg.start; rc.row()<=rowrg.stop; rc.row()+=rowrg.step )
     {
-	const StepInterval<int> colrg = rcs->colRange( rc.row );
-	for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col+=colrg.step )
+	const StepInterval<int> colrg = rcs->colRange( rc.row() );
+	for ( rc.col()=colrg.start; rc.col()<=colrg.stop; rc.col()+=colrg.step )
 	{
 	    const Coord3 pos = emobject_->getPos( sid, rc.toInt64() );
 	    if ( pos.sqDistTo(mousepos) < mDefEps )
 	    {
 		mDynamicCastGet( const EM::Horizon2D*, h2d, emobject_ );
 		info += ", Linename: ";
-		info += h2d->geometry().lineName( rc.row );
+		info += h2d->geometry().lineName( rc.row() );
 		return;
 	    }
 
@@ -186,13 +186,13 @@ void Horizon2DDisplay::removeSectionDisplay( const EM::SectionID& sid )
 bool Horizon2DDisplay::withinRanges( const RowCol& rc, float z, 
 				     const LineRanges& linergs )
 {
-    if ( rc.row<linergs.trcrgs.size() && rc.row<linergs.zrgs.size() )
+    if ( rc.row()<linergs.trcrgs.size() && rc.row()<linergs.zrgs.size() )
     {
-	for ( int idx=0; idx<linergs.trcrgs[rc.row].size(); idx++ )
+	for ( int idx=0; idx<linergs.trcrgs[rc.row()].size(); idx++ )
 	{
-	    if ( idx<linergs.zrgs[rc.row].size() &&
-		 linergs.zrgs[rc.row][idx].includes(z,true) && 
-		 linergs.trcrgs[rc.row][idx].includes(rc.col,true) )
+	    if ( idx<linergs.zrgs[rc.row()].size() &&
+		 linergs.zrgs[rc.row()][idx].includes(z,true) && 
+		 linergs.trcrgs[rc.row()][idx].includes(rc.col(),true) )
 		return true;
 	}
     }
@@ -259,17 +259,17 @@ bool doWork( od_int64 start, od_int64 stop, int )
     RowCol rc;
     while ( true )
     {
-	rc.row = getNextRow();
-	if ( mIsUdf(rc.row) )
+	rc.row() = getNextRow();
+	if ( mIsUdf(rc.row()) )
 	    break;
 
-	const int rowidx = rowrg_.getIndex( rc.row );
+	const int rowidx = rowrg_.getIndex( rc.row() );
 	const char* linenm =
 	    linenames_.validIdx(rowidx) ? linenames_.get( rowidx ) : 0;
 	TypeSet<Coord3> positions;
-	const StepInterval<int> colrg = surf_->colRange( rc.row );
+	const StepInterval<int> colrg = surf_->colRange( rc.row() );
 
-	for ( rc.col=colrg.start; rc.col<=colrg.stop; rc.col+=colrg.step )
+	for ( rc.col()=colrg.start; rc.col()<=colrg.stop; rc.col()+=colrg.step )
 	{
 	    Coord3 pos = surf_->getKnot( rc );
 	    const float zval = mCast(float,pos.z);
@@ -283,7 +283,7 @@ bool doWork( od_int64 start, od_int64 stop, int )
 	    else 
 	    {
     		if ( zaxt_ )
-    		    pos.z = zaxt_->transform2D( linenm, rc.col, zval ); 
+    		    pos.z = zaxt_->transform2D( linenm, rc.col(), zval ); 
 		if ( !mIsUdf(pos.z) )
 		positions += pos;
 		else if ( positions.size() )

@@ -332,8 +332,8 @@ void Flat3DDataPack::getAuxInfo( int i0, int i1, IOPar& iop ) const
     BinID bid = SI().transform( c );
     iop.set( mKeyX, c.x );
     iop.set( mKeyY, c.y );
-    iop.set( "Inline", bid.inl );
-    iop.set( "Crossline", bid.crl );
+    iop.set( "Inline", bid.inl() );
+    iop.set( "Crossline", bid.crl() );
     iop.set( "Z", c.z*SI().zDomain().userFactor() );
 
     if ( usemultcubes_ )
@@ -592,12 +592,12 @@ FlatRdmTrcsDataPack::FlatRdmTrcsDataPack( DescID did, const SeisTrcBuf& sb,
     seisbuf_ = new SeisTrcBuf( true );
     sb.copyInto(*seisbuf_);
 
-    setPosData( path );
     const int nrtrcs = seisbuf_->size();
-    const int arrsz0 = posData().nrPts( true );
+    const int arrsz0 = path ? path->size() : nrtrcs; 
     const int nrsamp = nrtrcs ? seisbuf_->get(0)->size() : 0; 
     arr2d_ = new Array2DImpl<float>( arrsz0, nrsamp );
     fill2DArray( path );
+    setPosData( path );
 }
 
 

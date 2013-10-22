@@ -30,9 +30,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include <stdlib.h>
 
-IOMan*	IOMan::theinst_	= 0;
-
-static bool survchg_triggers = false;
+IOMan* IOMan::theinst_	= 0;
 static const MultiID emptykey( "" );
 
 
@@ -46,7 +44,7 @@ IOMan& IOM()
 IOMan::IOMan( const char* rd )
 	: NamedObject("IO Manager")
 	, dirptr_(0)
-	, canchangesurvey_(true)
+	, survchgblocked_(false)
 	, state_(IOMan::NeedInit)
     	, newIODir(this)
     	, entryRemoved(this)
@@ -75,7 +73,8 @@ void IOMan::init()
 	    return;
         }
 
-        FilePath basicfp( mGetSetupFileName("BasicSurvey"), ".omf" );
+        FilePath basicfp( mGetSetupFileName(SurveyInfo::sKeyBasicSurveyName()),
+	       		  ".omf" );
         File::copy( basicfp.fullPath(),surveyfp.fullPath() );
         if ( !to( emptykey, true ) ) 
         {
@@ -93,7 +92,7 @@ void IOMan::init()
 
     int nrstddirdds = IOObjContext::totalNrStdDirs();
     const IOObjContext::StdDirData* prevdd = 0;
-    const bool needsurvtype = SI().isValid() && !SI().survdatatypeknown_;
+    const bool needsurvtype = !SI().survdatatypeknown_;
     bool needwrite = false;
     FilePath rootfp( rootdir_, "X" );
     for ( int idx=0; idx<nrstddirdds; idx++ )
@@ -135,12 +134,13 @@ void IOMan::init()
 	}
 
 	// Oops, a data directory required is missing
-	// We'll try to recover by using the 'BasicSurvey' in the app
-	FilePath basicfp( mGetSetupFileName("BasicSurvey"), "X" );
+	// We'll try to recover by using the 'Basic Survey' in the app
+	FilePath basicfp( mGetSetupFileName(SurveyInfo::sKeyBasicSurveyName()),
+	       		  "X" );
 	basicfp.setFileName( dd->dirnm );
 	BufferString basicdirnm = basicfp.fullPath();
 	if ( !File::exists(basicdirnm) )
-	    // Oh? So this is removed from the BasicSurvey
+	    // Oh? So this is removed from the Basic Survey
 	    // Let's hope they know what they're doing
 	    { prevdd = dd; continue; }
 
@@ -152,7 +152,7 @@ void IOMan::init()
 	{
 	    // This directory should have been in the survey.
 	    // It is not. If it is the seismic directory, we do not want to
-	    // continue. Otherwise, we want to copy the BasicSurvey directory.
+	    // continue. Otherwise, we want to copy the Basic Survey directory.
 	    if ( stdseltyp == IOObjContext::Seis )
 	    {
 		BufferString msg( "Corrupt survey: missing directory: " );
@@ -201,11 +201,11 @@ bool IOMan::isReady() const
 
 
 #define mDestroyInst(dotrigger) \
-    if ( dotrigger && !IOM().bad() && survchg_triggers ) \
+    if ( dotrigger && !IOM().bad() ) \
 	IOM().surveyToBeChanged.trigger(); \
-    if ( !IOM().canChangeSurvey() ) \
+    if ( IOM().changeSurveyBlocked() ) \
     { \
-	IOM().allowSurveyChange(); \
+	IOM().setChangeSurveyBlocked(false); \
 	return false; \
     } \
     StreamProvider::unLoadAll(); \
@@ -226,10 +226,10 @@ bool IOMan::isReady() const
     IOM().entryRemoved.cbs_ = rmcbs; \
     IOM().newIODir.cbs_ = dccbs; \
     IOM().applicationClosing.cbs_ = apccbs; \
-    if ( dotrigger  && !IOM().bad() ) \
+    if ( dotrigger && !IOM().bad() ) \
     { \
 	setupCustomDataDirs(-1); \
-	if ( dotrigger && survchg_triggers ) \
+	if ( dotrigger ) \
 	{ \
 	    IOM().surveyChanged.trigger(); \
 	    IOM().afterSurveyChange.trigger(); \
@@ -245,11 +245,19 @@ static void clearSelHists()
 }
 
 
-bool IOMan::newSurvey()
+bool IOMan::newSurvey( SurveyInfo* newsi )
 {
     mDestroyInst( true );
 
-    SetSurveyNameDirty();
+    SurveyInfo::deleteInstance();
+    if ( !newsi )
+	SurveyInfo::setSurveyName( "" );
+    else
+    {
+	SurveyInfo::setSurveyName( newsi->getDirName() );
+	SurveyInfo::pushSI( newsi );
+    }
+
     mFinishNewInst( true );
     return !IOM().bad();
 }
@@ -260,9 +268,20 @@ bool IOMan::setSurvey( const char* survname )
     mDestroyInst( true );
 
     SurveyInfo::deleteInstance();
-    SetSurveyName( survname );
+    SurveyInfo::setSurveyName( survname );
+
     mFinishNewInst( true );
     return !IOM().bad();
+}
+
+
+void IOMan::surveyParsChanged()
+{
+    IOM().surveyToBeChanged.trigger();
+    if ( IOM().changeSurveyBlocked() )
+	{ IOM().setChangeSurveyBlocked(false); return; }
+    IOM().surveyChanged.trigger();
+    IOM().afterSurveyChange.trigger();
 }
 
 
@@ -315,9 +334,9 @@ bool IOMan::validSurveySetup( BufferString& errmsg )
     if ( projdir != basedatadir && File::isDirectory(projdir) )
     {
 	const bool noomf = !validOmf( projdir );
-	const bool nosurv = File::isEmpty(
-				FilePath(projdir).add(".survey").fullPath() );
-
+	const bool nosurv = File::isEmpty( FilePath(projdir).
+					   add(SurveyInfo::sKeySetupFileName()).
+					   fullPath() );
 	if ( !noomf && !nosurv )
 	{
 	    if ( !IOM().bad() )
@@ -332,7 +351,11 @@ bool IOMan::validSurveySetup( BufferString& errmsg )
 	    if ( nosurv && noomf )
 		msg = "Warning: Essential data files not found in ";
 	    else if ( nosurv )
-		msg = "Warning: Invalid or no '.survey' found in ";
+	    {
+		msg = BufferString( "Warning: Invalid or no '",
+				    SurveyInfo::sKeySetupFileName(),
+				    "' found in " );
+	    }
 	    else if ( noomf )
 		msg = "Warning: Invalid or no '.omf' found in ";
 	    msg += projdir; msg += ".\nThis survey is corrupt.";
@@ -340,17 +363,16 @@ bool IOMan::validSurveySetup( BufferString& errmsg )
 	}
     }
 
-    // Survey in ~/.od/survey[.$DTECT_USER] is invalid. Remove it if necessary
-    BufferString survfname = GetSurveyFileName();
+    // Survey name in ~/.od/survey is invalid or absent. If there, lose it ...
+    const BufferString survfname = SurveyInfo::surveyFileName();
     if ( File::exists(survfname) && !File::remove(survfname) )
     {
-	errmsg = "The file "; errmsg += survfname;
-	errmsg += " contains an invalid survey.\n";
-	errmsg += "Please remove this file";
+	errmsg.set( "The file:\n" ).add( survfname )
+	    .add( "\ncontains an invalid survey.\n\nPlease remove this file" );
 	return false;
     }
-    else
-        SetSurveyNameDirty();
+
+    SurveyInfo::setSurveyName( "" ); // force user-set of survey
 
     mDestroyInst( false );
     mFinishNewInst( false );
@@ -932,13 +954,12 @@ IOSubDir* IOMan::getIOSubDir( const IOMan::CustomDirData& cdd )
 bool OD_isValidRootDataDir( const char* d )
 {
     FilePath fp( d ? d : GetBaseDataDir() );
-    if ( !File::isDirectory( fp.fullPath() ) ) return false;
+    const BufferString dirnm( fp.fullPath() );
+    if ( !File::isDirectory(dirnm) || !File::isWritable(dirnm) )
+	return false;
 
     fp.add( ".omf" );
-    if ( !File::exists( fp.fullPath() ) ) return false;
-
-    fp.setFileName( ".survey" );
-    if ( File::exists( fp.fullPath() ) )
+    if ( !File::exists(fp.fullPath()) )
 	return false;
 
     return true;
@@ -978,10 +999,4 @@ const char* OD_SetRootDataDir( const char* inpdatadir )
 
     IOMan::newSurvey();
     return 0;
-}
-
-
-void IOMan::enableSurveyChangeTriggers( bool yn )
-{
-    survchg_triggers = yn;
 }

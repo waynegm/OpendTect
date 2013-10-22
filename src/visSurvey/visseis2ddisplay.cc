@@ -431,12 +431,12 @@ void Seis2DDisplay::setData( int attrib,
 	else
 	{
 	    CubeSampling cs;
-	    cs.hrg.start.inl = cs.hrg.stop.inl = 0;
-	    cs.hrg.start.crl =
+	    cs.hrg.start.inl() = cs.hrg.stop.inl() = 0;
+	    cs.hrg.start.crl() =
 		    trcdisplayinfo_.alltrcnrs_[trcdisplayinfo_.rg_.start];
-	    cs.hrg.stop.crl =
+	    cs.hrg.stop.crl() =
 		    trcdisplayinfo_.alltrcnrs_[trcdisplayinfo_.rg_.stop];
-	    cs.hrg.step.crl = 1;
+	    cs.hrg.step.crl() = 1;
 	    assign( cs.zrg, trcdisplayinfo_.zrg_ );
 	    // use survey step here?
 	    if ( voiidx_ < 0 )

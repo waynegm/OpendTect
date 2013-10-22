@@ -26,7 +26,6 @@ ________________________________________________________________________
 class RayTracer1D;
 class SeisTrc;
 class TimeDepthModel;
-class TaskRunner;
 class RayTracerRunner;
 class Wavelet;
 
@@ -82,7 +81,7 @@ public:
 
 protected:
     				SynthGenBase();
-    				~SynthGenBase();
+    virtual			~SynthGenBase();
 
     bool			isfourier_;
     bool			applynmo_;
@@ -154,7 +153,8 @@ protected:
 };
 
 
-mExpClass(Seis) MultiTraceSynthGenerator : public ParallelTask, public SynthGenBase
+mExpClass(Seis) MultiTraceSynthGenerator : public ParallelTask,
+    					   public SynthGenBase
 {
 public:
     				MultiTraceSynthGenerator();

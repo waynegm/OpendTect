@@ -11,6 +11,7 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "mousecursor.h"
 #include "pickset.h"
+#include "visemobjdisplay.h"
 #include "vismarkerset.h"
 #include "vismaterial.h"
 #include "vispolyline.h"
@@ -57,11 +58,10 @@ PickSetDisplay::~PickSetDisplay()
 
 void PickSetDisplay::setSet( Pick::Set* newset )
 {
-    LocationDisplay::setSet( newset );
-    
     if ( !newset )
 	return;
 
+    LocationDisplay::setSet( newset );
     MarkerStyle3D markerstyle;
     markerstyle.size_ = set_->disp_.pixsize_;
     markerstyle.type_ = (MarkerStyle3D::Type) set_->disp_.markertype_;
@@ -416,8 +416,12 @@ void PickSetDisplay::otherObjectsMoved(
 	    newstatus = false;
 	    for ( int idy=0; idy<objs.size(); idy++ )
 	    {
-		const float dist = objs[idy]->calcDist(pos);
-		if ( dist<objs[idy]->maxDist() )
+		mDynamicCastGet(const EMObjectDisplay*,emobj,objs[idy])
+		if ( emobj && emobj->getOnlyAtSectionsDisplay() )
+		    continue;
+
+		const float dist = objs[idy]->calcDist( pos );
+		if ( dist < objs[idy]->maxDist() )
 		{
 		    newstatus = true;
 		    break;

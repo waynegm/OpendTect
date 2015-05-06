@@ -422,7 +422,7 @@ void createSelFields( DataType type )
     {
 	SeisIOObjInfo objinfo( mid_ );
 	BufferStringSet linenames;
-	objinfo.getLineNamesWithAttrib( attribnm_, linenames );
+	objinfo.getLineNames( linenames );
 	linesfld_ = new uiLabeledComboBox( this, "Gain Analyisis on line:" );
 	for ( int idx=0; idx<linenames.size(); idx++ )
 	    linesfld_->box()->addItem( linenames.get(idx) );

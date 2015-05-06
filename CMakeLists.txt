@@ -40,6 +40,7 @@ set( OD_DGB_DIR "" CACHE PATH "Place where closed source part is found" )
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules" )
 
 set( OD_SUBSYSTEM "od" )
+include( ODSubversion ) #Quick fix to get it in before OD_SetupOD
 include( OD_SetupOD )
 include( ODInternal )
 

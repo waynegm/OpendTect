@@ -13,6 +13,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "oddirs.h"
 #include "svnversion.h"
 #include "bufstring.h"
+#include "buildinfo.h"
 #include "ptrman.h"
 #include "filepath.h"
 #include "perthreadrepos.h"
@@ -444,7 +445,7 @@ mExternC(Basic) void SetProgramArgs( int newargc, char** newargv )
     SetEnvVar( "DTECT_APPL", GetSoftwareDir(true) );
 #endif
 
-    
+
 }
 
 

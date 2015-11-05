@@ -1512,6 +1512,34 @@ static void convD2T( TypeSet<float>& zvals,
 }
 
 
+bool StratSynth::setLevelTimes( const char* sdnm, const Strat::Level& toplvl,
+				const Strat::Level& botlvl )
+{
+    SyntheticData* sd = getSynthetic( sdnm );
+    if ( !sd ) return false;
+
+    mDynamicCastGet(PostStackSyntheticData*,postsd,sd);
+    if ( !postsd ) return false;
+    SeisTrcBuf& trcs = postsd->postStackPack().trcBuf();
+    TypeSet<float> toptimes, bottimes;
+    layMod().getLevelDepths( toplvl, toptimes );
+    layMod().getLevelDepths( botlvl, bottimes );
+    convD2T( toptimes, sd->zerooffsd2tmodels_ );
+    convD2T( bottimes, sd->zerooffsd2tmodels_ );
+
+    for ( int idx=0; idx<trcs.size(); idx++ )
+    {
+	SeisTrc& trc = *trcs.get( idx );
+	float topz = toptimes.validIdx( idx ) ? toptimes[idx] : mUdf( float );
+	float botz = bottimes.validIdx( idx ) ? bottimes[idx] : mUdf( float );
+	trc.info().zref = topz;
+	trc.info().refnr = botz;
+    }
+
+    return true;
+}
+
+
 bool StratSynth::setLevelTimes( const char* sdnm )
 {
     SyntheticData* sd = getSynthetic( sdnm );
@@ -1523,6 +1551,24 @@ bool StratSynth::setLevelTimes( const char* sdnm )
     getLevelTimes( tb, sd->zerooffsd2tmodels_ );
     return true;
 }
+
+
+void StratSynth::clearLevelTimes( const char* sdnm )
+{
+    SyntheticData* sd = getSynthetic( sdnm );
+    if ( !sd ) return;
+
+    mDynamicCastGet(PostStackSyntheticData*,postsd,sd);
+    if ( !postsd ) return;
+    SeisTrcBuf& trcs = postsd->postStackPack().trcBuf();
+    for ( int idx=0; idx<trcs.size(); idx++ )
+    {
+	SeisTrc& trc = *trcs.get( idx );
+	trc.info().zref = mUdf(float);
+	trc.info().refnr = mUdf(float);
+    }
+}
+
 
 
 void StratSynth::getLevelTimes( const Strat::Level& lvl,

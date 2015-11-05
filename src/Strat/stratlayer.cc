@@ -635,6 +635,16 @@ Interval<float> Strat::LayerModel::zRange() const
 }
 
 
+void Strat::LayerModel::getLevelDepths( const Strat::Level& lvl,
+					TypeSet<float>& lvldepths ) const
+{
+    lvldepths.erase();
+    lvldepths.setSize( size(), mUdf(float) );
+    for ( int iseq=0; iseq<size(); iseq++ )
+	lvldepths[iseq] = seqs_[iseq]->positionOf( lvl );
+}
+
+
 void Strat::LayerModel::setEmpty()
 {
     deepErase( seqs_ );

@@ -26,6 +26,7 @@ namespace Strat
 class Layer;
 class UnitRef;
 class RefTree;
+class Level;
 
 /*!\brief A model consisting of layer sequences.
 
@@ -49,6 +50,8 @@ public:
     LayerSequence&		sequence( int idx )	  { return *seqs_[idx];}
     const LayerSequence& 	sequence( int idx ) const { return *seqs_[idx];}
     Interval<float>		zRange() const;
+    void			getLevelDepths(const Strat::Level&,
+					       TypeSet<float>& lvls) const;
 
     void			setEmpty();
     LayerSequence&		addSequence();

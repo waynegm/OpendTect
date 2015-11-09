@@ -641,7 +641,7 @@ void Strat::LayerModel::getLevelDepths( const Strat::Level& lvl,
     lvldepths.erase();
     lvldepths.setSize( size(), mUdf(float) );
     for ( int iseq=0; iseq<size(); iseq++ )
-	lvldepths[iseq] = seqs_[iseq]->positionOf( lvl );
+	lvldepths[iseq] =(float) seqs_[iseq]->positionOf( lvl );
 }
 
 

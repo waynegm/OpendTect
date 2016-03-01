@@ -4,9 +4,14 @@
 # 	July 1995	A.H. Bril
 #_______________________________________________________________________________
 
+option( REWORKED_UIBASE "Reworked uiBase" OFF )
+
+if ( REWORKED_UIBASE )
+    add_definitions( -DREWORKEDLAYOUT )
+endif()
+
 set(OD_MODULE_DEPS Network )
 set(OD_USEQT Widgets PrintSupport)
-set(OD_TEST_PROGS  )
 set(QT_MOC_HEADERS
 	i_qaction.h
 	i_qbutton.h

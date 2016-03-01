@@ -39,13 +39,15 @@ public:
 
     virtual uiMainWin*	mainwin()		{ return 0; }
 
-    uiObject*		mainObject()		{ return mainobject(); }
+    uiObject*	mainObject()		{ return mainobject(); }
     const uiObject*	mainObject() const
 			    { return const_cast<uiParent*>(this)->mainobject();}
 
     uiParentBody*	pbody();
     const uiParentBody*	pbody() const
 			{ return const_cast<uiParent*>(this)->pbody(); }
+    
+    virtual const uiLayoutMgr*	getLayoutMgr() const		{ return 0; }
 
 
 #define mIfMO()		if ( mainObject() ) mainObject()
@@ -119,7 +121,7 @@ protected:
 #undef mIfMO
 #undef mRetMO
 
-    virtual uiObject*	mainobject()	{ return 0; }
+    virtual uiObject* mainobject()	{ return 0; }
 };
 
 #endif

@@ -31,7 +31,7 @@ public:
     virtual			~uiBaseObject();
 
 				// implementation: uiobj.cc
-    void			finalise();
+    virtual void		finalise();
     bool			finalised() const;
     void			clear();
 
@@ -68,6 +68,8 @@ public:
     int				getNrRows() const;
     int				getNrCols() const;
 
+    virtual RowCol              layoutSpan() const      { return RowCol(1,1); }
+    
 protected:
 
     void			setBody( uiBody* b )	{ body_ = b; }

@@ -1481,6 +1481,7 @@ public:
     HelpKey		helpKey() const	{ return setup_.helpkey_; }
 
     void		setDlgGrp( uiGroup* cw )	{ dlggrp_=cw; }
+    uiGroup*		getDlgGrp() 			{ return dlggrp_; }
 
     void		setHSpacing( int spc )	{ dlggrp_->setHSpacing(spc); }
     void		setVSpacing( int spc )	{ dlggrp_->setVSpacing(spc); }
@@ -2098,6 +2099,11 @@ bool uiDialog::saveButtonChecked() const
     { return mBody->saveButtonChecked(); }
 bool uiDialog::hasSaveButton() const
     { return mBody->hasSaveButton(); }
+
+const uiLayoutMgr* uiDialog::getLayoutMgr() const
+{
+    return const_cast<const uiGroup*>(mBody->getDlgGrp())->getLayoutMgr();
+}
 
 int uiDialog::titlepos_ = 0; // default is centered.
 int uiDialog::titlePos()			{ return titlepos_; }

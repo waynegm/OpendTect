@@ -103,47 +103,54 @@ public:
     virtual		~uiGroupParentBody()
 			{
 			    handle_.body_ = 0;
-			    if( loMngr )
-				{ delete loMngr; loMngr=0; }
+                            deleteAndZeroPtr( loMngr_ );
 			}
 
     void		setHSpacing( int space )
-			    { loMngr->setHSpacing( space ); }
+			    { if ( loMngr_ ) loMngr_->setHSpacing( space ); }
     void		setVSpacing( int space )
-			    { loMngr->setVSpacing( space ); }
+			    { if ( loMngr_ ) loMngr_->setVSpacing( space ); }
     void		setBorder( int b )
-			    { loMngr->setMargin( b ); }
+			    { if ( loMngr_ ) loMngr_->setMargin( b ); }
 
-    uiObject*		hAlignObj()			{ return halignobj; }
+    uiObject*		hAlignObj()			{ return halignobj_; }
     void		setHAlignObj( uiObject* o );
-    uiObject*		hCenterObj()			{ return hcentreobj; }
+    uiObject*		hCenterObj()			{ return hcentreobj_; }
     void		setHCenterObj( uiObject* o );
 
 
     void		setIsMain( bool yn )
-			    { if( loMngr ) loMngr->setIsMain( yn ); }
+			    { if( loMngr_ ) loMngr_->setIsMain( yn ); }
 
     void		updatedAlignment(LayoutMode m )
-			    { if( loMngr ) loMngr->updatedAlignment(m); }
+			    { if( loMngr_ ) loMngr_->updatedAlignment(m); }
 
 
     void		layoutChildren(LayoutMode m )
-			    { if( loMngr ) loMngr->layoutChildren(m); }
+			    { if( loMngr_ ) loMngr_->layoutChildren(m); }
 
     uiGroup&		handle_;
 
 protected:
 
-    i_LayoutMngr*	loMngr;
+    i_LayoutMngr* 	loMngr_;
+    uiLayoutMgr*        getLayoutMgr() { return handle_.getLayoutMgr(); }
 
-    uiObject*		hcentreobj;
-    uiObject*		halignobj;
+    uiObject*		hcentreobj_;
+    uiObject*		halignobj_;
 
     virtual void	finalise()		{ finalise( false ); }
     virtual void	finalise(bool trigger_finalise_start_stop);
 
     virtual void        manageChld_( uiBaseObject& o, uiObjectBody& b )
-			    { loMngr->addItem( b.mkLayoutItem( *loMngr ) ); }
+                        {
+                            if ( getLayoutMgr() )
+                                getLayoutMgr()->addObject( &o );
+                            else
+                            {
+                                loMngr_->addItem(b.mkLayoutItem( *loMngr_ ));
+                            }
+                        }
 
     virtual void	attachChild ( constraintType tp,
 				      uiObject* child,
@@ -152,9 +159,12 @@ protected:
 			{
 			    if ( !child  ) return;
 
-			    loMngr->attach( tp, *child->body()->qwidget(),
-				other ? other->body()->qwidget() : 0, margin,
-				reciprocal );
+                            if ( getLayoutMgr() )
+                                getLayoutMgr()->attach( child, tp, other );
+                            else
+                                loMngr_->attach( tp, *child->body()->qwidget(),
+				 other ? other->body()->qwidget() : 0, margin,
+				 reciprocal );
 			}
 
     virtual const QWidget* qwidget_() const
@@ -164,8 +174,8 @@ protected:
 
     void		mngrDel( CallBacker* cb )
 			{
-			    if( cb == loMngr )
-				loMngr = 0;
+			    if( cb == loMngr_ )
+				loMngr_ = 0;
 			    else
 				{ pErrMsg("huh?"); }
 			}
@@ -182,65 +192,74 @@ uiGroupParentBody::uiGroupParentBody( uiGroup& hndle, uiGroupObjBody& objbdy,
 				      uiParent* parnt=0, const char* nm )
     : uiParentBody( nm )
     , handle_( hndle )
-    , loMngr( 0 ) , halignobj( 0 ), hcentreobj( 0 )
+    , loMngr_( 0 ) , halignobj_( 0 ), hcentreobj_( 0 )
     , objbody_( objbdy )
 {
-    loMngr = new i_LayoutMngr( objbdy.qwidget(), nm, objbdy );
-    mAttachCB( loMngr->objectToBeDeleted(), uiGroupParentBody::mngrDel );
+    if ( !handle_.getLayoutMgr() )
+    {
+        loMngr_ = new i_LayoutMngr( objbdy.qwidget(), nm, objbdy );
+	mAttachCB( loMngr_->objectToBeDeleted(), uiGroupParentBody::mngrDel );
+    }
 }
 
 
 void uiGroupParentBody::setHCenterObj( uiObject* obj )
 {
-    if( !obj ||( loMngr && loMngr->isChild(obj)) ) { hcentreobj = obj; return; }
+    if ( handle_.getLayoutMgr() )
+        handle_.getLayoutMgr()->setHCenterObj( obj );
+    else
+    {
+        if( !obj ||( loMngr_ && loMngr_->isChild(obj)) )
+        { hcentreobj_ = obj; return; }
 
 #ifdef __debug__
-    if( objbody_.layoutItem() && objbody_.layoutItem()->isAligned() )
-    {
-	BufferString msg;
-	msg = "Set ";
-	msg += obj->name();
-	msg += "\nas hcentre for ";
-	msg += handle_.name();
-	msg += ", but attachments were already made!";
+        if( objbody_.layoutItem() && objbody_.layoutItem()->isAligned() )
+        {
+            BufferString msg;
+            msg = "Set ";
+            msg += obj->name();
+            msg += "\nas hcentre for ";
+            msg += handle_.name();
+            msg += ", but attachments were already made!";
 
-	pErrMsg(msg);
-    }
+            pErrMsg(msg);
+        }
 #endif
 
-/*
-    Ok. So, someone is trying to set an object as HCenterObj, which is not
-    a child of this group.
-    Let's try to see if the parent of the object is a child and solve the
-    problem.
-*/
+    /*
+        Ok. So, someone is trying to set an object as HCenterObj, which is not
+        a child of this group.
+        Let's try to see if the parent of the object is a child and solve the
+        problem.
+    */
 
-    uiGroup* objpar = dynamic_cast<uiGroup*>(obj->parent());
-    if( objpar && loMngr && loMngr->isChild(objpar->mainObject()) )
-    { // good. the object's parent is a child of this group ;-))
-	if( !objpar->hCenterObj() )
-	    objpar->setHCenterObj(obj);
+        uiGroup* objpar = dynamic_cast<uiGroup*>(obj->parent());
+        if( objpar && loMngr_ && loMngr_->isChild(objpar->mainObject()) )
+        { // good. the object's parent is a child of this group ;-))
+            if( !objpar->hCenterObj() )
+                objpar->setHCenterObj(obj);
 
-	if( obj == objpar->hCenterObj() )
-	{
-	    hcentreobj = objpar->mainObject();
-	    return;
-	}
+            if( obj == objpar->hCenterObj() )
+            {
+                hcentreobj_ = objpar->mainObject();
+                return;
+            }
+        }
+
+        BufferString msg;
+        msg = "Cannot set ";
+        msg += obj->name();
+        msg += " as hcentre for ";
+        msg += handle_.name();
+        msg += ". Must be child or child-of-child.";
+
+        pErrMsg(msg);
     }
-
-    BufferString msg;
-    msg = "Cannot set ";
-    msg += obj->name();
-    msg += " as hcentre for ";
-    msg += handle_.name();
-    msg += ". Must be child or child-of-child.";
-
-    pErrMsg(msg);
 }
 
 void uiGroupParentBody::setHAlignObj( uiObject* obj )
 {
-    if( !obj || (loMngr && loMngr->isChild(obj)) ) { halignobj = obj; return; }
+    if( !obj || (loMngr_ && loMngr_->isChild(obj)) ) { halignobj_ = obj; return; }
 
 #ifdef __debug__
     if( objbody_.layoutItem() && objbody_.layoutItem()->isAligned() )
@@ -257,16 +276,32 @@ void uiGroupParentBody::setHAlignObj( uiObject* obj )
 #endif
 
     uiGroup* objpar = dynamic_cast<uiGroup*>(obj->parent());
-    if( objpar && loMngr && loMngr->isChild(objpar->mainObject()) )
-    { // good. the object's parent is a child of this group ;-))
-	if( !objpar->hAlignObj() )
-	    objpar->setHAlignObj(obj);
+    if( objpar )
+    {
+        if ( loMngr_ && loMngr_->isChild(objpar->mainObject()) )
+        { // good. the object's parent is a child of this group ;-))
+            if( !objpar->hAlignObj() )
+                objpar->setHAlignObj(obj);
 
-	if( obj == objpar->hAlignObj() )
-	{
-	    halignobj = objpar->mainObject();
-	    return;
-	}
+            if( obj == objpar->hAlignObj() )
+            {
+                halignobj_ = objpar->mainObject();
+                return;
+            }
+        }
+        
+        uiLayoutMgr* lomgr = handle_.getLayoutMgr();
+        if ( lomgr && lomgr->isAdded(objpar->mainObject()) )
+        { // good. the object's parent is a child of this group ;-))
+            if( !objpar->hAlignObj() )
+                objpar->setHAlignObj(obj);
+            
+            if( obj == objpar->hAlignObj() )
+            {
+                halignobj_ = objpar->mainObject();
+                return;
+            }
+        }
     }
 
     BufferString msg;
@@ -305,7 +340,7 @@ uiGroupObjBody::uiGroupObjBody( uiGroupObj& hndle, uiParent* parnt,
 void uiGroupObjBody::reDraw( bool deep )
 {
     prntbody_->handle_.reDraw_(deep);
-    prntbody_->loMngr->forceChildrenRedraw( this, deep );
+    prntbody_->loMngr_->forceChildrenRedraw( this, deep );
     uiObjectBody::reDraw( deep ); // calls qWidget().update()
 }
 
@@ -315,9 +350,9 @@ int uiGroupObjBody::stretch( bool hor, bool ) const
     int s = uiObjectBody::stretch( hor, true ); // true: can be undefined
     if( !mIsUdf(s) ) return s;
 
-    if( prntbody_->loMngr )
+    if( prntbody_->loMngr_ )
     {
-	s = prntbody_->loMngr->childStretch( hor );
+	s = prntbody_->loMngr_->childStretch( hor );
 	if( s>=0 && s<=2  )
 	{
 	    if( hor )	const_cast<uiGroupObjBody*>(this)->hStretch = s;
@@ -376,16 +411,16 @@ void i_uiGroupLayoutItem::initChildLayout( LayoutMode m )
 
 
 i_LayoutMngr* i_uiGroupLayoutItem::loMngr()
-    { return grpprntbody.loMngr; }
+    { return grpprntbody.loMngr_; }
 
 int i_uiGroupLayoutItem::horAlign( LayoutMode m ) const
 {
     int myleft = curpos(m).left();
 
-    if( grpprntbody.halignobj )
+    if( grpprntbody.halignobj_ )
     {
 	const i_LayoutItem* halignitm = 0;
-	mDynamicCastGet(uiObjectBody*,halobjbody,grpprntbody.halignobj->body());
+	mDynamicCastGet(uiObjectBody*,halobjbody,grpprntbody.halignobj_->body());
 
 	if( halobjbody ) halignitm = halobjbody->layoutItem();
 
@@ -412,10 +447,10 @@ int i_uiGroupLayoutItem::centre(LayoutMode m, bool hor) const
 {
     if( !hor ) return ( curpos(m).top() + curpos(m).bottom() ) / 2;
 
-    if( grpprntbody.hcentreobj )
+    if( grpprntbody.hcentreobj_ )
     {
 	const i_LayoutItem* hcentreitm = 0;
-	mDynamicCastGet(uiObjectBody*,hcobjbody,grpprntbody.hcentreobj->body());
+	mDynamicCastGet(uiObjectBody*,hcobjbody,grpprntbody.hcentreobj_->body());
 
 	if( hcobjbody ) hcentreitm = hcobjbody->layoutItem();
 
@@ -430,6 +465,11 @@ uiGroup::uiGroup( uiParent* parnt, const char* nm, bool manage )
     : uiParent( nm, 0 )
     , grpobj_( 0 )
     , body_( 0 )
+#ifdef REWORKEDLAYOUT
+    , layoutmgr_( new uiLayoutMgr(this) )
+#else
+    , layoutmgr_( 0 )
+#endif
 {
     grpobj_ =  new uiGroupObj( this, parnt, nm, manage );
     uiGroupObjBody* grpbdy = dynamic_cast<uiGroupObjBody*>( grpobj_->body() );
@@ -469,6 +509,8 @@ uiGroup::~uiGroup()
 	body_ = 0;
 	delete bd;
     }
+    
+    delete layoutmgr_;
 }
 
 
@@ -563,6 +605,23 @@ void uiGroup::setHCenterObj( uiObject* obj )
 
 void uiGroup::setNoBackGround()
     { grpobj_->body_->setAttribute( Qt::WA_NoSystemBackground ); }
+
+
+void uiGroup::finalise()
+{
+    if ( !getLayoutMgr() )
+        uiParent::finalise();
+    else
+    {
+        preFinalise().trigger();
+        
+        body_->finaliseChildren();
+        
+        getLayoutMgr()->populateGrid();
+        
+        postFinalise().trigger();
+    }
+}
 
 
 void uiGroup::setChildrenSensitive( bool yn )

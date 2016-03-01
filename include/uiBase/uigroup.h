@@ -23,6 +23,7 @@ class uiParentBody;
 class uiGroup;
 class uiGroupObjBody;
 class uiGroupParentBody;
+class uiLayoutMgr;
 
 mFDQtclass(QWidget)
 
@@ -103,6 +104,10 @@ public:
 				{ return mainObject()->preFinalise(); }
     virtual Notifier<uiBaseObject>& postFinalise()
 				{ return mainObject()->postFinalise(); }
+    
+    void		finalise();
+    
+    const uiLayoutMgr*	getLayoutMgr() const		{ return layoutmgr_; }
 
     int			getNrWidgets() const
 				{ return mainObject()->getNrWidgets(); }
@@ -113,6 +118,9 @@ protected:
 
     uiGroupObj*		grpobj_;
     uiGroupParentBody*	body_;
+    uiLayoutMgr*        layoutmgr_;
+    
+    uiLayoutMgr*        getLayoutMgr()                  { return layoutmgr_; }
 
     virtual uiObject*	mainobject()			{ return grpobj_; }
     virtual void	attach_( constraintType, uiObject *oth, int margin=-1,

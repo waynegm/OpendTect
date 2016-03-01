@@ -157,6 +157,8 @@ public:
 
     Notifier<uiDialog>	applyPushed;
 
+    const uiLayoutMgr*	getLayoutMgr() const;
+
 protected:
 
     virtual bool        rejectOK(CallBacker*){ return true;}//!< confirm reject

@@ -98,6 +98,9 @@ set( OD_MODULE_SOURCES
 	uipolardiagram.cc
 )
 
+
+set(OD_TEST_PROGS uilayout.cc )
+
 set( OD_MODULE_GUI_PROGS
 	od_FileBrowser.cc
 	od_ImageViewer.cc

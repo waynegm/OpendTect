@@ -49,7 +49,7 @@ int uiObjectStack::addObject( uiObject* obj )
 int uiObjectStack::addGroup( uiGroup* grp )
 {
     if ( !grp ) return -1;
-    return addObject( grp->attachObj() );
+    return addObject( grp );
 }
 
 

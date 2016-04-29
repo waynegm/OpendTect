@@ -73,7 +73,7 @@ bool selectColor( Color& col, uiParent* parnt,
 bool uiColorInput::selectColor( Color& col, uiParent* parnt,
                                 uiString txt, bool withtransp )
 {
-    QWidget* qparent = parnt ? parnt->pbody()->qwidget() : 0;
+    QWidget* qparent = parnt ? parnt->getParentWidget() : 0;
     if ( txt.isEmpty() ) txt = uiColorInput::sSelColor();
 
     BufferString addendum;

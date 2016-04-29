@@ -20,8 +20,6 @@ ________________________________________________________________________
 
 #include "color.h"
 
-class i_LayoutItem;
-class i_LayoutMngr;
 class uiPixmap;
 class Timer;
 
@@ -33,10 +31,6 @@ mFDQtclass(QWidget)
 
 mExpClass(uiBase) uiObjectBody : public uiBody, public NamedMonitorable
 {
-friend class		i_uiLayoutItem;
-
-protected:
-			uiObjectBody(uiParent*,const char* nm);
 public:
 
     virtual		~uiObjectBody();
@@ -79,9 +73,6 @@ public:
 
     void		attach(constraintType,uiObject* other=0,
 			       int margin=-1,bool reciprocal=true);
-    void		attach(constraintType t,uiParent* other=0,
-			       int m=-1,bool r=true)
-			{ attach(t,other->mainObject(),m,r ); }
 
     void		uisetFont(const uiFont&);
     const uiFont*	uifont() const;
@@ -98,9 +89,6 @@ public:
     virtual void	reDraw(bool);
 
     virtual uiObject&	uiObjHandle()		=0;
-
-    const i_LayoutItem*	layoutItem()		{ return layoutItem_; }
-    i_LayoutItem*	mkLayoutItem(i_LayoutMngr&);
 
     virtual void	finalise();
     virtual bool	finalised() const	{ return finalised_; }
@@ -127,23 +115,19 @@ public:
 			{ if ( pb ) parent_ = pb; }
 
 protected:
+			uiObjectBody(uiParent*,const char* nm);
 
     int			hStretch;
     int			vStretch;
 
     virtual const mQtclass(QWidget*) managewidg_() const { return qwidget_(); }
 
-    virtual i_LayoutItem* mkLayoutItem_(i_LayoutMngr& mngr);
-
     virtual void	finalise_()             {}
 
     void		doDisplay(CallBacker*);
 
-    void		loitemDeleted()		{ layoutItem_ = 0; }
-
 private:
 
-    i_LayoutItem*	layoutItem_;
     uiParentBody*	parent_;
     const uiFont*	font_;
 
@@ -233,8 +217,8 @@ public:
 			uiObjBodyImpl( C& hndle, uiParent* parnt,
 				       const char* nm )
 			    : uiObjectBody( parnt, nm )
-			    , T( parnt && parnt->pbody() ?
-				     parnt->pbody()->managewidg() : 0 )
+			    , T( parnt ?
+				     parnt->getParentWidget() : 0 )
 			    , handle_( hndle )
 			    {
 				this->setObjectName( nm );

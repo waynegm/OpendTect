@@ -304,7 +304,7 @@ uiMdiAreaWindow::uiMdiAreaWindow( uiMdiArea& mdiarea, const uiString& title )
     , changed(this)
 {
     qmdisubwindow_ = new ODMdiSubWindow( *this );
-    qmdisubwindow_->setWidget( attachObj()->body()->qwidget() );
+    qmdisubwindow_->setWidget( getWidget(0) );
     setTitle( title );
 }
 

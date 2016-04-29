@@ -75,7 +75,7 @@ void uiObjectItem::setGroup( uiGroup* grp )
     grp_ = grp;
     if ( !grp_ ) return;
 
-    setObject( grp->attachObj() );
+    setObject( grp );
 }
 
 

@@ -61,7 +61,7 @@ void uiDockWinBody::construct()
     centralwidget_ = new uiGroup( &handle(), "uiDockWin central widget" );
     setWidget( centralwidget_->body()->qwidget() );
 
-    centralwidget_->setIsMain(true);
+    //centralwidget_->setIsMain(true);
     centralwidget_->setBorder(0);
     centralwidget_->setStretch(2,2);
 
@@ -86,7 +86,7 @@ void uiDockWinBody::finalise()
 
 // ----- uiDockWin -----
 uiDockWin::uiDockWin( uiParent* parnt, const uiString& nm )
-    : uiParent(nm.getFullString(),0)
+    : uiParent(nm.getFullString())
     , body_(0)
     , parent_(parnt)
 {
@@ -112,7 +112,7 @@ void uiDockWin::setObject( uiObject* obj )
 void uiDockWin::setGroup( uiGroup* grp )
 {
     if ( !grp ) return;
-    setObject( grp->attachObj() );
+    setObject( grp );
 }
 
 
@@ -138,7 +138,7 @@ uiMainWin* uiDockWin::mainwin()
 
 
 uiObject* uiDockWin::mainobject()
-{ return body_->uiCentralWidg()->mainObject(); }
+{ return body_->uiCentralWidg(); }
 
 void uiDockWin::setFloating( bool yn )
 { body_->setFloating( yn ); }
@@ -155,5 +155,5 @@ QWidget* uiDockWin::getWidget(int)
 { return getDockWidget(); }
 
 
-void uiDockWin::setMinimumWidth( int width )
-{ if ( body_ ) body_->setMinimumWidth( width ); }
+void uiDockWin::setMinimumWidth( int wdth )
+{ if ( body_ ) body_->setMinimumWidth( wdth ); }

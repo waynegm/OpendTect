@@ -103,7 +103,7 @@ public:
 
 uiButtonTemplBody( uiButton& uibut, uiParent* p, const uiString& txt )
     : uiButtonBody( uibut, p, txt, *this )
-    , ButT( p && p->pbody() ? p->pbody()->managewidg() : 0 )
+    , ButT( p ? p->getParentWidget() : 0 )
     , handle_(uibut)
 {
 }

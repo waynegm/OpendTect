@@ -10,12 +10,10 @@ ________________________________________________________________________
 
 #include "uimenu.h"
 
+#include "uiparent.h"
 #include "uiaction.h"
-#include "uibody.h"
 #include "uiicon.h"
 #include "uimain.h"
-#include "uiobjbody.h"
-#include "uiparentbody.h"
 #include "uistring.h"
 
 #include "keystrs.h"
@@ -36,7 +34,7 @@ mUseQtnamespace
 
 uiMenuBar::uiMenuBar( uiParent* parnt, const char* nm )
     : uiBaseObject( nm )
-    , qmenubar_( new mQtclass(QMenuBar)(parnt->body()->qwidget()) )
+    , qmenubar_( new mQtclass(QMenuBar)(parnt->getParentWidget()) )
 {
     qmenubar_->setObjectName( nm );
 }
@@ -109,7 +107,7 @@ uiMenu::uiMenu( uiParent* p, const uiString& txt, const char* pmnm )
     : uiBaseObject( txt.getFullString() )
     , submenuaction_( 0 )
     , qmenu_( new mQtclass(QMenu)(txt.getQString(),
-	      p && p->getNrWidgets() ? p->getWidget(0) : 0))
+	      p ? p->getParentWidget() : 0))
     , text_(txt)
 {
     setIcon( pmnm );

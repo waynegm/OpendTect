@@ -22,7 +22,7 @@ mFDQtclass(QWidget);
 
 
 class i_LayoutItem;
-class uiBaseObject;
+class uiObject;
 class uiGroup;
 
 enum constraintType 
@@ -69,14 +69,16 @@ protected:
 mExpClass(uiBase) uiLayoutMgr : public CallBacker
 {
 public:
-                        uiLayoutMgr(uiGroup*);
+			uiLayoutMgr(uiGroup*);
 			~uiLayoutMgr();
-    void                addObject(uiBaseObject*);
-    bool                attach(uiBaseObject*,constraintType,uiBaseObject*);
-    bool		isAdded(const uiBaseObject*) const;
+    void                addObject(uiObject*);
+    bool                attach(const uiObject*,constraintType,const uiObject*);
+    bool		isAdded(const uiObject*) const;
     
-    void                setHCenterObj(const uiBaseObject*);
-    void                setHAlignObj(const uiBaseObject*);
+    void                setHCenterObj(const uiObject*);
+    const uiObject*	getHCenterObj() const { return hcenterobj_; }
+    void                setHAlignObj(const uiObject*);
+    const uiObject*	getHAlignObj() const { return halignobj_; }
     
     void		enableOwnGrid();
     bool		hasOwnGrid() const { return qLayout(); }
@@ -86,7 +88,7 @@ public:
     mQtclass(QLayout)*          qLayout();
     const mQtclass(QLayout)*    qLayout() const;
 
-    bool                        computeLayout(const uiBaseObject*,RowCol& orig,
+    bool                        computeLayout(const uiObject*,RowCol& orig,
                                               RowCol& span ) const;
 private:
     
@@ -98,27 +100,27 @@ private:
     
     struct Relationship
     {
-                                Relationship(uiBaseObject* a,uiBaseObject* b,
+                                Relationship(const uiObject* a,const uiObject* b,
                                              constraintType rel)
                                     : obj0_( a ), obj1_( b ), type_( rel ) {}
         
-        const uiBaseObject*     getOther(const uiBaseObject* a) const
+        const uiObject*     	getOther(const uiObject* a) const
                                 { return a==obj0_ ? obj1_ : obj0_; }
-        bool                    contains(const uiBaseObject* o) const
+        bool                    contains(const uiObject* o) const
                                 { return o==obj0_ || o==obj1_; }
         
         bool                    operator==(const Relationship&) const;
         
-        uiBaseObject*           obj0_;
-        uiBaseObject*           obj1_;
+        const uiObject*         obj0_;
+        const uiObject*         obj1_;
         constraintType          type_;
     };
     
     bool			layoutonparent_;
     TypeSet<Relationship>       relationships_;
-    ObjectSet<uiBaseObject>     objects_;
-    const uiBaseObject*         hcenterobj_;
-    const uiBaseObject*         halignobj_;
+    ObjectSet<uiObject>     	objects_;
+    const uiObject*         	hcenterobj_;
+    const uiObject*         	halignobj_;
     uiGroup*                    group_;
     
     mQtclass(QGridLayout)*      layout_;

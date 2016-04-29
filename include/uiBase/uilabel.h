@@ -16,8 +16,8 @@ ________________________________________________________________________
 #include "draw.h"
 #include "uistring.h"
 
+mFDQtclass(QLabel);
 class uiGroup;
-class uiLabelBody;
 class uiPixmap;
 
 mExpClass(uiBase) uiLabel : public uiObject
@@ -26,7 +26,6 @@ public:
 
 			uiLabel(uiParent*,const uiString&);
 			uiLabel(uiParent*,const uiString&,uiObject*);
-			uiLabel(uiParent*,const uiString&,uiGroup*);
 
 /*! \brief set text on label
 
@@ -55,9 +54,7 @@ private:
     void		init(const uiString& txt,uiObject* buddy);
     void		updateWidth();
 
-    uiLabelBody*	body_;
-    uiLabelBody&	mkbody(uiParent*,const uiString&);
-
+    QLabel*		qlabel_;
     uiString		text_;
 
     bool		isrequired_;

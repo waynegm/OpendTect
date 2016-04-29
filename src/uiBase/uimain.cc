@@ -13,7 +13,6 @@ ________________________________________________________________________
 #include "uifont.h"
 #include "uimainwin.h"
 #include "uimsg.h"
-#include "uiobjbody.h"
 #include "uiaction.h"
 #include "uitreeview.h"
 #ifdef __mac__
@@ -466,7 +465,7 @@ void uiMain::setTopLevel( uiMainWin* obj )
     obj->setExitAppOnClose( true );
 
     mainobj_ = obj;
-    init( mainobj_->body()->qwidget() ); // inits SoQt if uicMain
+    init( mainobj_->getParentWidget() ); // inits SoQt if uicMain
 }
 
 

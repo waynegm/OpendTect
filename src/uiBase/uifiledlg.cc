@@ -155,8 +155,8 @@ int uiFileDialog::go()
     }
 
     QWidget* qparent = 0;
-    if ( parnt_ && parnt_->pbody() )
-	qparent = parnt_->pbody()->managewidg();
+    if ( parnt_ )
+	qparent = parnt_->getParentWidget();
 
     BufferString flt( filter_ );
     if ( filter_.size() )

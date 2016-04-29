@@ -9,10 +9,9 @@ ________________________________________________________________________
 -*/
 
 #include "uiobj.h"
-#include "uiobjbody.h"
+#include "uiparent.h"
 #include "uicursor.h"
 #include "uimainwin.h"
-#include "i_layoutitem.h"
 #include "uimain.h"
 #include "uigroup.h"
 #include "uitreeview.h"
@@ -23,120 +22,12 @@ ________________________________________________________________________
 #include "perthreadrepos.h"
 
 #include <QEvent>
+#include <QObject>
 
 mUseQtnamespace
 
 
 mDefineEnumUtils(uiRect,Side,"Side") { "Left", "Right", "Top", "Bottom", 0 };
-
-#define mBody_( imp_ )	dynamic_cast<uiObjectBody*>( imp_ )
-#define mBody()		mBody_( body() )
-#define mConstBody()	mBody_(const_cast<uiObject*>(this)->body())
-
-uiParent::uiParent( const char* nm, uiParentBody* b )
-    : uiBaseObject( nm, b )
-{}
-
-
-void uiParent::addChild( uiBaseObject& child )
-{
-    mDynamicCastGet(uiBaseObject*,thisuiobj,this);
-    if ( thisuiobj && &child == thisuiobj )
-	return;
-    if ( !body() )
-	{ pErrMsg("uiParent has no body!"); return; }
-
-    uiParentBody* b = dynamic_cast<uiParentBody*>( body() );
-    if ( !b )
-	{ pErrMsg("uiParent has a body, but it's no uiParentBody"); return; }
-
-    b->addChild( child );
-}
-
-
-void uiParent::manageChld( uiBaseObject& child, uiObjectBody& bdy )
-{
-    if ( &child == static_cast<uiBaseObject*>(this) ) return;
-
-    uiParentBody* b = dynamic_cast<uiParentBody*>( body() );
-    if ( !b )	return;
-
-    b->manageChld( child, bdy );
-}
-
-
-void uiParent::attachChild ( constraintType tp, uiObject* child,
-			     uiObject* other, int margin, bool reciprocal )
-{
-    if ( child == static_cast<uiBaseObject*>(this) ) return;
-    if ( !body() )		{ pErrMsg("uiParent has no body!"); return; }
-
-    uiParentBody* b = dynamic_cast<uiParentBody*>( body() );
-    if ( !b )
-	{ pErrMsg("uiParent has a body, but it's no uiParentBody"); return; }
-
-    b->attachChild ( tp, child, other, margin, reciprocal );
-}
-
-
-const ObjectSet<uiBaseObject>* uiParent::childList() const
-{
-    uiParentBody* uipb =
-	    dynamic_cast<uiParentBody*>( const_cast<uiParent*>(this)->body() );
-    return uipb ? uipb->childList(): 0;
-}
-
-
-Color uiObject::roBackgroundColor() const
-{
-    return backgroundColor().lighter( 2.5f );
-}
-
-
-Color uiParent::backgroundColor() const
-{
-    return mainObject() ? mainObject()->backgroundColor()
-			: uiMain::theMain().windowColor();
-}
-
-
-void uiParent::translateText()
-{
-    uiBaseObject::translateText();
-
-    if ( !childList() )
-	return;
-
-    for ( int idx=0; idx<childList()->size(); idx++ )
-    {
-	uiBaseObject* child = const_cast<uiBaseObject*>((*childList())[idx]);
-	child->translateText();
-    }
-}
-
-
-uiParentBody* uiParent::pbody()
-{
-    return dynamic_cast<uiParentBody*>( body() );
-}
-
-
-void uiParentBody::finaliseChildren()
-{
-    if ( !finalised_ )
-    {
-	finalised_= true;
-	for ( int idx=0; idx<children_.size(); idx++ )
-	    children_[idx]->finalise();
-    }
-}
-
-
-void uiParentBody::clearChildren()
-{
-    for ( int idx=0; idx<children_.size(); idx++ )
-	children_[idx]->clear();
-}
 
 
 class uiObjEventFilter : public QObject
@@ -173,8 +64,6 @@ static BufferString getCleanName( const char* nm )
     return BufferString( qstr );
 }
 
-
-
 static int iconsz_ = -1;
 static int fldsz_ = -1;
 
@@ -183,6 +72,7 @@ uiObject::uiObject( uiParent* p, const char* nm )
     , setGeometry(this)
     , closed(this)
     , parent_( p )
+    , singlewidget_( 0 )
 {
     if ( p ) p->addChild( *this );
     uiobjectlist_ += this;
@@ -194,28 +84,27 @@ uiObject::uiObject( uiParent* p, const char* nm )
 }
 
 
-uiObject::uiObject( uiParent* p, const char* nm, uiObjectBody& b )
-    : uiBaseObject( getCleanName(nm), &b )
-    , setGeometry(this)
-    , closed(this)
-    , parent_( p )
-{
-    if ( p ) p->manageChld( *this, b );
-    uiobjectlist_ += this;
-    updateToolTip();
-
-    uiobjeventfilter_ = new uiObjEventFilter( *this );
-    if ( body() && body()->qwidget() )
-	body()->qwidget()->installEventFilter( uiobjeventfilter_ );
-}
-
-
 uiObject::~uiObject()
 {
+    if ( singlewidget_ )
+	singlewidget_->removeEventFilter( uiobjeventfilter_ );
+
     delete uiobjeventfilter_;
 
     closed.trigger();
     uiobjectlist_ -= this;
+}
+
+
+void uiObject::setSingleWidget( QWidget* w )
+{
+    if ( singlewidget_ )
+	singlewidget_->removeEventFilter( uiobjeventfilter_ );
+
+    singlewidget_ = w;
+
+    if ( singlewidget_ )
+	singlewidget_->installEventFilter( uiobjeventfilter_ );
 }
 
 
@@ -391,9 +280,6 @@ void uiObject::attach ( constraintType tp, uiObject* other, int margin,
 			bool reciprocal )
     { mBody()->attach(tp, other, margin, reciprocal); }
 
-void uiObject::attach ( constraintType tp, uiParent* other, int margin,
-			bool reciprocal )
-    { mBody()->attach(tp, other, margin, reciprocal); }
 
 /*!
     Moves the \a second widget around the ring of focus widgets so
@@ -426,30 +312,17 @@ void uiObject::setTabOrder( uiObject* first, uiObject* second )
 }
 
 
-
 void uiObject::setFont( const uiFont& f )
     { mBody()->uisetFont(f); }
-
 
 const uiFont* uiObject::font() const
     { return mConstBody()->uifont(); }
 
-
 uiSize uiObject::actualsize( bool include_border ) const
     { return mConstBody()->actualsize( include_border ); }
 
-
 void uiObject::setCaption( const uiString& c )
     { mBody()->uisetCaption(c); }
-
-
-
-void uiObject::triggerSetGeometry( const i_LayoutItem* mylayout, uiRect& geom )
-{
-    if ( mBody() && mylayout == mBody()->layoutItem() )
-	setGeometry.trigger(geom);
-}
-
 
 void uiObject::reDraw( bool deep )
     { mBody()->reDraw( deep ); }
@@ -526,19 +399,19 @@ void uiObject::updateToolTips()
 
 void uiObject::reParent( uiParent* p )
 {
-    if ( !p || !p->pbody() ) return;
-    getWidget(0)->setParent( p->pbody()->managewidg() );
-    uiParentBody* b = dynamic_cast<uiParentBody*>( p->body() );
-    if ( !b ) return;
-    mBody()->reParent( b );
-    p->manageChld( *this, *mBody() );
+    if ( !p ) return;
+
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+	getWidget(idx)->setParent( p->getParentWidget() );
+    }
 }
 
 
 bool uiObject::handleLongTabletPress()
 {
-    if ( !parent() || !parent()->mainObject() || parent()->mainObject()==this )
+    if ( !parent() || !parent()->getMainObject() || parent()->getMainObject()==this )
 	return false;
 
-    return parent()->mainObject()->handleLongTabletPress();
+    return parent()->getMainObject()->handleLongTabletPress();
 }

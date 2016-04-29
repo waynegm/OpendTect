@@ -25,38 +25,11 @@ class uiGroupObjBody;
 class uiGroupParentBody;
 class uiLayoutMgr;
 
-mFDQtclass(QWidget)
+mFDQtclass(QFrame);
 
 
-mClass(uiBase) uiGroupObj : public uiObject
+mExpClass(uiBase) uiGroup : public uiParent, public uiObject
 {
-friend class uiGroup;
-protected:
-			uiGroupObj(uiGroup*,uiParent*,const char*,bool);
-public:
-
-    virtual		~uiGroupObj();
-
-    uiGroup*		group() const		{ return uigrp_; }
-
-    const ObjectSet<uiBaseObject>* childList() const;
-
-protected:
-    void		translateText();
-
-    uiGroupObjBody*	body_;
-    uiGroup*		uigrp_;
-
-    void		bodyDel( CallBacker* );
-    void		grpDel( CallBacker* );
-};
-
-
-mExpClass(uiBase) uiGroup : public uiParent
-{
-friend class		uiGroupObjBody;
-friend class		uiGroupParentBody;
-friend class		uiGroupObj;
 friend class		uiMainWin;
 friend class		uiTabStack;
 public:
@@ -64,83 +37,70 @@ public:
 				 bool manage=true );
     virtual		~uiGroup();
 
-    inline operator	const uiGroupObj*() const { return grpobj_; }
-    inline operator	uiGroupObj*()		{ return grpobj_; }
-    inline operator	const uiObject&() const	{ return *grpobj_; }
-    inline operator	uiObject&()		{ return *grpobj_; }
-    inline uiObject*	attachObj()		{ return grpobj_; }
-    inline const uiObject* attachObj() const	{ return grpobj_; }
-    inline uiParent*	parent()		{ return grpobj_->parent(); }
-    inline const uiParent* parent() const	{ return grpobj_->parent(); }
-
-    void		setHSpacing( int );
-    void		setVSpacing( int );
+    virtual void	setSize(const uiSize&);
+    void		setHSpacing( int )	{}
+    void		setVSpacing( int )	{}
     void		setSpacing( int s=0 )
 			{ setHSpacing(s); setVSpacing(s); }
-    void		setBorder( int );
-
-    void		setFrame( bool yn=true );
-    void		setNoBackGround();
-
-    uiObject*		hAlignObj();
-    void		setHAlignObj( uiObject* o );
-    void		setHAlignObj( uiGroup* o )
-			    { setHAlignObj(o->mainObject()); }
-    uiObject*		hCenterObj();
-    void		setHCenterObj( uiObject* o );
-    void		setHCenterObj( uiGroup* o )
-			    { setHCenterObj(o->mainObject()); }
-
-    //! internal use only. Tells the layout manager it's a toplevel mngr.
-    void		setIsMain( bool );
-    virtual uiMainWin*	mainwin()
-			    { return mainObject() ? mainObject()->mainwin() :0;}
+    void		setBorder( int )	{}
 
     static uiGroup*	gtDynamicCastToGrp( mQtclass(QWidget*) );
 
     void		setChildrenSensitive(bool);
 
-    virtual Notifier<uiBaseObject>& preFinalise()
-				{ return mainObject()->preFinalise(); }
-    virtual Notifier<uiBaseObject>& postFinalise()
-				{ return mainObject()->postFinalise(); }
-    
     void		finalise();
     
     const uiLayoutMgr*	getLayoutMgr() const		{ return layoutmgr_; }
 
-    int			getNrWidgets() const
-				{ return mainObject()->getNrWidgets(); }
-    mQtclass(QWidget*)	getWidget(int idx)
-				{ return mainObject()->getWidget(idx); }
+    virtual int			getNrWidgets() const;
+    virtual mQtclass(QWidget*)	getWidget(int idx);
+
+    mDeprecated const uiObject*	hAlignObj() { return getHAlignObj(); } 
+    mDeprecated const uiObject*	hCenterObj() { return getHCenterObj(); } 
 
 protected:
 
-    uiGroupObj*		grpobj_;
-    uiGroupParentBody*	body_;
     uiLayoutMgr*        layoutmgr_;
     
     uiLayoutMgr*        getLayoutMgr()                  { return layoutmgr_; }
 
-    virtual uiObject*	mainobject()			{ return grpobj_; }
-    virtual void	attach_( constraintType, uiObject *oth, int margin=-1,
-				bool reciprocal=true);
-
-    virtual void	reDraw_( bool deep )		{}
-
-    void		setShrinkAllowed(bool);
-    bool		shrinkAllowed();
-
-    void		bodyDel( CallBacker* );
-    void		uiobjDel( CallBacker* );
-
-    void		setFrameStyle(int);
+    virtual const uiObject*	getHAlignObj() const;
+    virtual const uiObject*	getHCenterObj() const;
+    virtual void		setHAlignObj(const uiObject*);
+    virtual void		setHCenterObj(const uiObject*);
 
     void		reSizeChildren(const uiObject*,float,float);
 
-public:
-    virtual void	setSize(const uiSize&);
+};
 
+
+mExpClass(uiBase) uiLayoutGroup : public uiGroup
+{
+public:
+				uiLayoutGroup(uiParent*,
+					      const char* nm="uiLayoutGroup");
+    virtual int			getNrWidgets() const	{ return 1; }
+    virtual mQtclass(QWidget*)	getWidget(int idx);
+    void			setFrame( bool yn=true );
+    void			setNoBackGround();
+
+    mQtclass(QWidget*)		getParentWidget() 		{ return getWidget(0); }
+
+
+
+protected:
+    virtual const uiObject*	getHAlignObj() const		{ return 0; }
+    virtual const uiObject*	getHCenterObj() const		{ return 0; }
+    virtual void		setHAlignObj(const uiObject*);
+    virtual void		setHCenterObj(const uiObject*);
+    void			setFrameStyle(int);
+
+    void			setShrinkAllowed(bool);
+    bool			shrinkAllowed();
+
+
+
+    mQtclass(QFrame*)		widget_;
 };
 
 

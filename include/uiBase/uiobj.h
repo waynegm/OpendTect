@@ -24,7 +24,6 @@ class uiFont;
 class uiObjectBody;
 class uiParent;
 class uiMainWin;
-class i_LayoutItem;
 class uiPixmap;
 class uiObjEventFilter;
 
@@ -35,12 +34,8 @@ class uiObjEventFilter;
 
 mExpClass(uiBase) uiObject : public uiBaseObject
 {
-    friend class	uiObjectBody;
-    friend class	i_LayoutItem;
-
 public:
 			uiObject(uiParent*,const char* nm);
-			uiObject(uiParent*,const char* nm,uiObjectBody&);
 			~uiObject();
 
 /*! \brief How should the object's size behave?
@@ -119,8 +114,6 @@ public:
     void		attach(constraintType,int margin=-1);
     void		attach(constraintType,uiObject*,int margin=-1,
 				bool reciprocal=true);
-    void		attach(constraintType,uiParent*,int margin=-1,
-				bool reciprocal=true);
 
     static void		setTabOrder(uiObject* first, uiObject* second);
 
@@ -142,12 +135,10 @@ public:
 
     uiMainWin*		mainwin();
 
-    int			getNrWidgets() const	{ return 1; }
+    int			getNrWidgets() const;
     mQtclass(QWidget*)	getWidget(int);
 
     virtual bool	handleLongTabletPress();
-
-    virtual const ObjectSet<uiBaseObject>* childList() const	{ return 0; }
 
     Notifier<uiObject>	closed;
 			//!< Triggered when object closes.
@@ -167,9 +158,7 @@ public:
 protected:
 			//! hook. Accepts/denies closing of window.
     virtual bool	closeOK()	{ closed.trigger(); return true; }
-
-			//! setGeometry should be triggered by this's layoutItem
-    void		triggerSetGeometry(const i_LayoutItem*, uiRect&);
+    void		setSingleWidget(mQtclass(QWidget*));
 
     void		updateToolTip(CallBacker* = 0);
 
@@ -180,6 +169,7 @@ protected:
 private:
 
     uiParent*		parent_;
+    mQtclass(QWidget*)	singlewidget_;
 };
 
 

@@ -141,7 +141,6 @@ public:
 			/*!<\note The uiObject should be given a NULL pointer
 			     as uiParent* at construction. */
     uiGroup*		getCellGroup(const RowCol&) const;
-    RowCol		getCell(uiGroup*);
 
     int			nrRows() const;
     int			nrCols() const;

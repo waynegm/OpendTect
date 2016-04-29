@@ -22,106 +22,32 @@ class uiMainWin;
 class uiParentBody;
 
 
-mExpClass(uiBase) uiParent : public uiBaseObject
+mExpClass(uiBase) uiParent 
 {
-friend class uiParentBody;
-friend class uiObjectBody;
 public:
-			uiParent(const char* nm,uiParentBody*);
+				uiParent(const char* nm);
 
-    void		addChild(uiBaseObject&);
-    void		manageChld(uiBaseObject&,uiObjectBody&);
-    void                attachChild(constraintType tp,uiObject* child,
-				    uiObject* other,int margin,
-				    bool reciprocal);
+    void			addChild(uiObject&);
+    const ObjectSet<uiObject>*	childList() const;
+    void			attachChildren(const uiObject*,constraintType,
+					       const uiObject*);
 
-    const ObjectSet<uiBaseObject>* childList() const;
+    virtual uiObject*		getUiObject()			{ return 0; }
+    virtual mQtclass(QWidget)*	getParentWidget()		{ return 0; }
 
-    virtual uiMainWin*	mainwin()		{ return 0; }
 
-    uiObject*	mainObject()		{ return mainobject(); }
-    const uiObject*	mainObject() const
-			    { return const_cast<uiParent*>(this)->mainobject();}
+    virtual uiMainWin*	mainwin()				{ return 0; }
 
-    uiParentBody*	pbody();
-    const uiParentBody*	pbody() const
-			{ return const_cast<uiParent*>(this)->pbody(); }
-    
     virtual const uiLayoutMgr*	getLayoutMgr() const		{ return 0; }
 
+    //Temporary, not sure what to do with these.
+    int	 /* refnr */		beginCmdRecEvent(const char* msg=0){ return 0; }
+    void			endCmdRecEvent(int refnr,const char* msg=0) {}
 
-#define mIfMO()		if ( mainObject() ) mainObject()
-#define mRetMO(fn,val)	return mainObject() ? mainObject()->fn() : val;
-
-    void                attach( constraintType t, int margin=-1 )
-                            { mIfMO()->attach(t,margin); }
-    void                attach( constraintType t, uiParent* oth, int margin=-1,
-                                bool reciprocal=true)
-                            { attach(t,oth->mainObject(),margin,reciprocal); }
-    void		attach( constraintType t, uiObject* oth, int margin=-1,
-                                bool reciprocal=true)
-                            { attach_(t,oth,margin,reciprocal); }
-
-
-    virtual void	display( bool yn, bool shrk=false,
-				 bool maximize=false )
-			    { finalise(); mIfMO()->display(yn,shrk,maximize); }
-    bool		isDisplayed() const	  { mRetMO(isDisplayed,false); }
-
-    void		setFocus()                { mIfMO()->setFocus(); }
-    bool		hasFocus() const	  { mRetMO(hasFocus,false); }
-
-    void		setSensitive(bool yn=true){ mIfMO()->setSensitive(yn); }
-    bool		sensitive() const	  { mRetMO(sensitive,false); }
-
-    const uiFont*	font() const		  { mRetMO(font,0); }
-    void		setFont( const uiFont& f) { mIfMO()->setFont(f); }
-    void		setCaption(const uiString& c) { mIfMO()->setCaption(c);}
-    void		setCursor(const MouseCursor& c) {mIfMO()->setCursor(c);}
-
-    uiSize		actualsize( bool include_border) const
-			{
-			    if ( mainObject() )
-				return mainObject()->actualsize(include_border);
-			    return uiSize();
-			}
-
-    int			prefHNrPics() const	  { mRetMO(prefHNrPics, -1 ); }
-    int			prefVNrPics() const	  { mRetMO(prefVNrPics,-1); }
-    void		setPrefHeight( int h )    { mIfMO()->setPrefHeight(h); }
-    void		setPrefWidth( int w )     { mIfMO()->setPrefWidth(w); }
-    void		setPrefHeightInChar( int h )
-			    { mIfMO()->setPrefWidthInChar(h); }
-    void		setPrefHeightInChar( float h )
-			    { mIfMO()->setPrefHeightInChar(h); }
-    void		setPrefWidthInChar( float w )
-			    { mIfMO()->setPrefWidthInChar(w); }
-    void		setPrefWidthInChar( int w )
-			    { mIfMO()->setPrefWidthInChar(w); }
-
-    virtual void	reDraw( bool deep )	  { mIfMO()->reDraw( deep ); }
-    void		shallowRedraw( CallBacker* =0 )         {reDraw(false);}
-    void		deepRedraw( CallBacker* =0 )            {reDraw(true); }
-
-    void		setStretch( int h, int v ){ mIfMO()->setStretch(h,v); }
-
-    Color		backgroundColor() const;
-    Color		roBackgroundColor() const;
-    void		setBackgroundColor( const Color& c )
-			    { mIfMO()->setBackgroundColor(c); }
-
-    void		translateText();
-
-protected:
-
-    virtual void        attach_( constraintType t, uiObject* oth, int margin=-1,
-                                bool reciprocal=true)
-                            { mIfMO()->attach(t,oth,margin,reciprocal); }
-
-#undef mIfMO
-#undef mRetMO
-
-    virtual uiObject* mainobject()	{ return 0; }
+    int	 /* refnr */		beginCmdRecEvent(od_uint64 id,
+						 const char* msg=0) { return 0; }
+    void			endCmdRecEvent(od_uint64 id,int refnr,
+					       const char* msg=0)	{}
 };
 
 #endif

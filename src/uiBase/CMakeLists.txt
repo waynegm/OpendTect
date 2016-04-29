@@ -33,66 +33,64 @@ set(QT_MOC_HEADERS
 )
 
 set(OD_MODULE_SOURCES
-	i_layout.cc
-	i_layoutitem.cc
 	inituibase.cc
-	odgraphicsitem.cc
+#	odgraphicsitem.cc
 	qptr.cc
 	uiaction.cc
 	uibaseobject.cc
-	uibutton.cc
-	uibuttongroup.cc
-	uiclipboard.cc
-	uicolor.cc
-	uicombobox.cc
-	uicursor.cc
-	uidate.cc
-	uidesktopservices.cc
-	uidial.cc
-	uidockwin.cc
+#	uibutton.cc
+#	uibuttongroup.cc
+#	uiclipboard.cc
+#	uicolor.cc
+#	uicombobox.cc
+#	uicursor.cc
+#	uidate.cc
+#	uidesktopservices.cc
+#	uidial.cc
+#	uidockwin.cc
 	uieventfilter.cc
-	uifiledlg.cc
-	uifont.cc
-	uigraphicscoltab.cc
-	uigraphicsitem.cc
-	uigraphicsitemimpl.cc
-	uigraphicsscene.cc
-	uigraphicsviewbase.cc
+#	uifiledlg.cc
+#	uifont.cc
+#	uigraphicscoltab.cc
+#	uigraphicsitem.cc
+#	uigraphicsitemimpl.cc
+#	uigraphicsscene.cc
+#	uigraphicsviewbase.cc
 	uigroup.cc
-	uihelpview.cc
-	uiicon.cc
+#	uihelpview.cc
+#	uiicon.cc
 	uilabel.cc
 	uilayout.cc
-	uilineedit.cc
-	uilistbox.cc
+#	uilineedit.cc
+#	uilistbox.cc
 	uimain.cc
 	uimainwin.cc
-	uimdiarea.cc
+#	uimdiarea.cc
 	uimenu.cc
-	uimouseeventblockerbygesture.cc
-	uimsg.cc
+#	uimouseeventblockerbygesture.cc
+#	uimsg.cc
 	uiobj.cc
-	uiobjbody.cc
-	uiobjectstack.cc
+#	uiobjectstack.cc
+	uiparent.cc
 	uipixmap.cc
-	uiprogressbar.cc
+#	uiprogressbar.cc
 	uirgbarray.cc
 	uirubberband.cc
 	uiseparator.cc
-	uishortcutsmgr.cc
-	uislider.cc
-	uispinbox.cc
-	uisplashscreen.cc
-	uisplitter.cc
+#	uishortcutsmgr.cc
+#	uislider.cc
+#	uispinbox.cc
+#	uisplashscreen.cc
+#	uisplitter.cc
 	uistatusbar.cc
-	uisystemtrayicon.cc
-	uitabbar.cc
-	uitable.cc
-	uitabstack.cc
-	uitextedit.cc
+#	uisystemtrayicon.cc
+#	uitabbar.cc
+#	uitable.cc
+#	uitabstack.cc
+#	uitextedit.cc
 	uitoolbar.cc
-	uitreeview.cc
-	uivirtualkeyboard.cc
+#	uitreeview.cc
+#	uivirtualkeyboard.cc
 )
 
 if ( APPLE )

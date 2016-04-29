@@ -23,7 +23,7 @@ mFDQtclass(QDockWidget)
 mExpClass(uiBase) uiDockWin : public uiParent
 { mODTextTranslationClass(uiDockWin);
 public:
-			uiDockWin(uiParent* parnt=0,
+			uiDockWin(uiParent* p=0,
                               const uiString& caption=uiString::emptyString() );
     
     virtual		~uiDockWin();

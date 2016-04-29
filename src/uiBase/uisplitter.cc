@@ -47,6 +47,6 @@ uiSplitterBody& uiSplitter::mkbody( uiParent* p, const char* nm )
 
 void uiSplitter::addGroup( uiGroup* grp )
 {
-    if ( grp && grp->attachObj() )
-	body_->addWidget( grp->attachObj()->getWidget(0) );
+    if ( grp )
+	body_->addWidget( grp->getWidget(0) );
 }

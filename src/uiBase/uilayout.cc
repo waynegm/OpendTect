@@ -11,7 +11,7 @@ ________________________________________________________________________
 
 #include "uilayout.h"
 
-#include "uibaseobject.h"
+#include "uiobj.h"
 
 #include <QGridLayout>
 
@@ -55,7 +55,7 @@ uiLayoutMgr::~uiLayoutMgr()
 }
 
 
-void uiLayoutMgr::addObject( uiBaseObject* itm )
+void uiLayoutMgr::addObject( uiObject* itm )
 {
     if ( !itm ) return;
 
@@ -64,7 +64,7 @@ void uiLayoutMgr::addObject( uiBaseObject* itm )
 }
 
 
-bool uiLayoutMgr::isAdded( const uiBaseObject* obj ) const
+bool uiLayoutMgr::isAdded( const uiObject* obj ) const
 {
     return objects_.isPresent( obj );
 }
@@ -76,8 +76,8 @@ void uiLayoutMgr::enableOwnGrid()
 }
 
 
-bool uiLayoutMgr::attach(uiBaseObject* a, constraintType rel,
-                         uiBaseObject* b)
+bool uiLayoutMgr::attach(const uiObject* a, constraintType rel,
+                         const uiObject* b)
 {
     const int prevrelsize = relationships_.size();
     if ( rel==alignedAbove || rel==alignedBelow )
@@ -105,7 +105,7 @@ bool uiLayoutMgr::hasCircularRelationships() const
 { return false; }
 
 
-void uiLayoutMgr::setHCenterObj( const uiBaseObject* obj )
+void uiLayoutMgr::setHCenterObj( const uiObject* obj )
 {
     if ( !isAdded( obj ) )
     {
@@ -121,7 +121,7 @@ void uiLayoutMgr::setHCenterObj( const uiBaseObject* obj )
 }
 
 
-void uiLayoutMgr::setHAlignObj( const uiBaseObject* obj )
+void uiLayoutMgr::setHAlignObj( const uiObject* obj )
 {
     if ( !isAdded( obj ) )
     {
@@ -162,7 +162,7 @@ void uiLayoutMgr::populateGrid()
 }
 
 
-bool uiLayoutMgr::computeLayout( const uiBaseObject* obj, RowCol& origin,
+bool uiLayoutMgr::computeLayout( const uiObject* obj, RowCol& origin,
                                 RowCol& span ) const
 {
     const int idx = objects_.indexOf( obj );
@@ -175,7 +175,7 @@ bool uiLayoutMgr::computeLayout( const uiBaseObject* obj, RowCol& origin,
 bool uiLayoutMgr::computeLayout( int objectidx, RowCol& origin,
                                  RowCol& span ) const
 {
-    const uiBaseObject* obj = objects_.validIdx( objectidx )
+    const uiObject* obj = objects_.validIdx( objectidx )
         ? objects_[objectidx]
         : 0;
     
@@ -199,7 +199,7 @@ bool uiLayoutMgr::computeLayout( int objectidx, RowCol& origin,
         
         for ( int idx=0; idx<relationships.size(); idx++ )
         {
-            const uiBaseObject* sibling = relationships[idx].getOther( obj );
+            const uiObject* sibling = relationships[idx].getOther( obj );
             const int siblingidx = objects_.indexOf( sibling );
             RowCol siblingorigin, siblingspan;
             if ( !computeLayout( siblingidx, siblingorigin, siblingspan ))
@@ -250,7 +250,7 @@ bool uiLayoutMgr::computeLayout( int objectidx, RowCol& origin,
 
 void uiLayoutMgr::objectDeletedCB(CallBacker* o)
 {
-    uiBaseObject* obj = (uiBaseObject*) o;
+    uiObject* obj = (uiObject*) o;
     objects_ -= obj;
     
     for ( int idx=relationships_.size()-1; idx>=0; idx-- )

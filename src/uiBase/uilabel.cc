@@ -12,9 +12,9 @@ ________________________________________________________________________
 #include "uilabel.h"
 
 #include "bufstringset.h"
-#include "uiobjbody.h"
 #include "uipixmap.h"
 #include "uistring.h"
+#include "uifont.h"
 
 #include "perthreadrepos.h"
 
@@ -22,46 +22,18 @@ ________________________________________________________________________
 
 mUseQtnamespace
 
-class uiLabelBody : public uiObjBodyImpl<uiLabel,QLabel>
-{
-public:
-
-uiLabelBody( uiLabel& hndle, uiParent* parnt, const uiString& txt )
-    : uiObjBodyImpl<uiLabel,QLabel>(hndle,parnt,txt.getOriginalString())
-{}
-
-virtual int nrTxtLines() const
-{
-    int nrl = 1;
-    BufferString str = text();
-    const char* txt = str.buf();
-    while ( txt && *txt )
-	{ if ( *txt == '\n' ) nrl++; txt++; }
-
-    return nrl;
-}
-
-};
-
-
 uiLabel::uiLabel( uiParent* p, const uiString& txt )
-    : uiObject(p,txt.getOriginalString(),mkbody(p,txt))
+    : uiObject(p,txt.getOriginalString())
+    , qlabel_(new QLabel)
     , isrequired_(false)
 {
     init( txt, 0 );
 }
 
 
-uiLabel::uiLabel( uiParent* p, const uiString& txt, uiGroup* grp )
-    : uiObject(p,txt.getOriginalString(),mkbody(p,txt))
-    , isrequired_(false)
-{
-    init( txt, grp ? grp->attachObj() : 0 );
-}
-
-
 uiLabel::uiLabel( uiParent* p, const uiString& txt, uiObject* buddy )
-    : uiObject(p,txt.getOriginalString(),mkbody(p,txt))
+    : uiObject(p,txt.getOriginalString())
+    , qlabel_(new QLabel)
     , isrequired_(false)
 {
     init( txt, buddy );
@@ -86,18 +58,17 @@ void uiLabel::init( const uiString& txt, uiObject* buddy )
 
     if ( buddy )
     {
-	body_->setBuddy( buddy->body()->qwidget() );
+	if ( buddy->getNrWidgets()!=1 )
+	{
+	    pErrMsg("Cannot buddy an object with more than one widget");
+
+	    qlabel_->setBuddy( buddy->getWidget(0) );
+	}
+
 	buddy->attach( rightOf, this );
     }
 
     setStretch( 0, 0 );
-}
-
-
-uiLabelBody& uiLabel::mkbody( uiParent* p, const uiString& txt )
-{
-    body_= new uiLabelBody( *this, p, txt );
-    return *body_;
 }
 
 
@@ -113,15 +84,12 @@ void uiLabel::updateWidth()
     if ( strs.size() != 1 )
 	return;
 
-    int lblwidth = body_->fontWidthFor( text_ ) + 1;
+    int lblwidth = qlabel_->fontMetrics().width( text_.getQString() ) + 1;
     if ( isrequired_ )
 	lblwidth++;
 
-    if ( !body_ || !body_->itemInited() )
-    {
-	const int prefwidth = prefHNrPics();
-	setPrefWidth( mMAX(lblwidth,prefwidth) );
-    }
+    const int prefwidth = prefHNrPics();
+    setPrefWidth( mMAX(lblwidth,prefwidth) );
 }
 
 
@@ -130,7 +98,7 @@ void uiLabel::setText( const uiString& txt )
     text_ = txt;
     QString qstr = text_.getQString();
     if ( isrequired_ ) addRequiredChar( qstr );
-    body_->setText( qstr );
+    qlabel_->setText( qstr );
     updateWidth();
     setName( text_.getOriginalString() );
 }
@@ -143,7 +111,7 @@ void uiLabel::makeRequired( bool yn )
     if ( qstr.isEmpty() ) return;
 
     if ( isrequired_ ) addRequiredChar( qstr );
-    body_->setText( qstr );
+    qlabel_->setText( qstr );
     updateWidth();
 }
 
@@ -153,7 +121,7 @@ void uiLabel::translateText()
     uiObject::translateText();
     QString qstr = text_.getQString();
     if ( isrequired_ ) addRequiredChar( qstr );
-    body_->setText( qstr );
+    qlabel_->setText( qstr );
     updateWidth();
 }
 
@@ -166,7 +134,7 @@ const uiString& uiLabel::text() const
 
 void uiLabel::setTextSelectable( bool yn )
 {
-    body_->setTextInteractionFlags( yn ? Qt::TextSelectableByMouse :
+    qlabel_->setTextInteractionFlags( yn ? Qt::TextSelectableByMouse :
 					 Qt::NoTextInteraction );
 }
 
@@ -178,21 +146,21 @@ void uiLabel::setPixmap( const uiPixmap& pixmap )
     const uiFont& ft =
 	uiFontList::getInst().get( FontData::key(FontData::Control) );
     const QPixmap pm = pixmap.qpixmap()->scaledToHeight( ft.height() );
-    body_->setPixmap( pm );
-    body_->setAlignment( Qt::AlignCenter );
+    qlabel_->setPixmap( pm );
+    qlabel_->setAlignment( Qt::AlignCenter );
 }
 
 
 void uiLabel::setAlignment( OD::Alignment::HPos hal )
 {
     OD::Alignment al( hal, OD::Alignment::VCenter );
-    body_->setAlignment( (Qt::AlignmentFlag)al.uiValue() );
+    qlabel_->setAlignment( (Qt::AlignmentFlag)al.uiValue() );
 }
 
 
 OD::Alignment::HPos uiLabel::alignment() const
 {
     OD::Alignment al;
-    al.setUiValue( (int)body_->alignment() );
+    al.setUiValue( (int)qlabel_->alignment() );
     return al.hPos();
 }

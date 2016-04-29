@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "notify.h"
 #include "rowcol.h"
 
-class uiBody;
 mFDQtclass(QWidget)
 
 /*! The main class for all UI-objects in OpendTect. Normally,
@@ -27,7 +26,7 @@ mFDQtclass(QWidget)
 mExpClass(uiBase) uiBaseObject : public NamedMonitorable
 {
 public:
-				uiBaseObject(const char* nm, uiBody* = 0);
+				uiBaseObject(const char* nm);
     virtual			~uiBaseObject();
 
 				// implementation: uiobj.cc
@@ -38,9 +37,6 @@ public:
     virtual void		translateText()		{}
 				/*!<Triggers translation of object and all
 				    members to current language. */
-
-    inline const uiBody*	body() const		{ return body_; }
-    inline uiBody*		body()			{ return body_; }
 
     static void			addCmdRecorder(const CallBack&);
     static void			removeCmdRecorder(const CallBack&);
@@ -72,8 +68,6 @@ public:
     
 protected:
 
-    void			setBody( uiBody* b )	{ body_ = b; }
-
     Notifier<uiBaseObject>	finaliseStart_;
 				//!< triggered when about to start finalising
     Notifier<uiBaseObject>	finaliseDone_;
@@ -82,7 +76,6 @@ protected:
 private:
     int				getNrRowCols( bool row ) const;
     int				cmdrecrefnr_;
-    uiBody*			body_;
 };
 
 

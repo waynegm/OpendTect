@@ -16,8 +16,6 @@ ________________________________________________________________________
 #include "color.h"
 #include "timer.h"
 
-#include "i_layout.h"
-#include "i_layoutitem.h"
 #include <QPixmap>
 
 mUseQtnamespace
@@ -140,16 +138,6 @@ bool uiObjectBody::uivisible() const
 void uiObjectBody::reDraw( bool deep )
 {
     qwidget()->update();
-}
-
-
-i_LayoutItem* uiObjectBody::mkLayoutItem( i_LayoutMngr& mngr )
-{
-    if( layoutItem_ )
-	{ pErrMsg("Already have layout itm"); return layoutItem_ ; }
-
-    layoutItem_ = mkLayoutItem_( mngr );
-    return layoutItem_;
 }
 
 

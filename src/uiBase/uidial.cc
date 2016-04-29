@@ -11,15 +11,12 @@ ________________________________________________________________________
 #include "uidial.h"
 #include "i_qdial.h"
 #include "uiobjbody.h"
-#include "i_layout.h"
 
 #include "ranges.h"
 #include "uilabel.h"
 #include "uilineedit.h"
 
 mUseQtnamespace
-
-// TODO: Combine with uiSlider
 
 class uiDialBody : public uiObjBodyImpl<uiDial,QDial>
 {
@@ -56,7 +53,7 @@ uiDial::uiDial( uiParent* p, const char* nm )
     , sliderMoved(this)
     , sliderPressed(this)
     , sliderReleased(this)
-    , startAtTop_( true )
+    , startAtTop_(true)
 {
 }
 

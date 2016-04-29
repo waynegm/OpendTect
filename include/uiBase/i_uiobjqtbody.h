@@ -59,7 +59,7 @@ public:
     uiGroup*		uiCentralWidg()		{ return centralwidget_; }
 
 
-    virtual void        addChild( uiBaseObject& child )
+    virtual void        addChild( uiObject& child )
 			{
 			    if ( !initing_ && centralwidget_ )
 				centralwidget_->addChild( child );

@@ -32,7 +32,7 @@ public:
     virtual		~uiParentBody()
 			{ sendDelNotif(); deleteAllChildren(); }
 
-    virtual void	addChild( uiBaseObject& child )
+    virtual void	addChild( uiObject& child )
 			{
 			    if ( children_.isPresent(&child ) )	return;
 			    children_ += &child;

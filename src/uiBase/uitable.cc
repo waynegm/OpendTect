@@ -25,7 +25,6 @@ ________________________________________________________________________
 #include "bufstringset.h"
 #include "convert.h"
 #include "perthreadrepos.h"
-#include "i_layoutitem.h"
 #include "i_qtable.h"
 
 #include <QApplication>
@@ -1702,7 +1701,7 @@ void uiTable::setCellGroup( const RowCol& rc, uiGroup* grp )
 {
     mBlockCmdRec;
     clearCellObject( rc );
-    body_->setCellObject( rc, grp ? grp->attachObj() : 0 );
+    body_->setCellObject( rc, grp );
 }
 
 
@@ -1711,10 +1710,6 @@ uiGroup* uiTable::getCellGroup( const RowCol& rc ) const
     mDynamicCastGet(uiGroupObj*,grpobj,getCellObject(rc));
     return grpobj ? grpobj->group() : 0;
 }
-
-
-RowCol uiTable::getCell( uiGroup* grp )
-{ return grp ? getCell( grp->attachObj() ) : RowCol(-1,-1); }
 
 
 void uiTable::setCellObject( const RowCol& rc, uiObject* obj )

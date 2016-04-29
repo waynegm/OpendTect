@@ -14,9 +14,7 @@ ________________________________________________________________________
 #include "uibasemod.h"
 #include "uiobj.h"
 
-//class QFrame;
-
-class uiSeparatorBody;
+class QFrame;
 
 mExpClass(uiBase) uiSeparator : public uiObject
 {
@@ -31,8 +29,7 @@ public:
 
 private:
 
-    uiSeparatorBody*	body_;
-    uiSeparatorBody&	mkbody(uiParent*, const char*, bool, bool);
+    QFrame*		qframe_;
 
 };
 

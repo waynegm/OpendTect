@@ -46,12 +46,11 @@ bool CmdRecStopper::isInStopperList( const uiBaseObject* obj )
 { return cmdrecstopperlist_.isPresent(obj); }
 
 
-uiBaseObject::uiBaseObject( const char* nm, uiBody* b )
+uiBaseObject::uiBaseObject( const char* nm )
     : NamedMonitorable(nm)
     , finaliseStart_(this)
     , finaliseDone_(this)
     , cmdrecrefnr_(0)
-    , body_(b)
 {
 }
 
@@ -63,13 +62,13 @@ uiBaseObject::~uiBaseObject()
 
 
 void uiBaseObject::finalise()
-{ if ( body() ) body()->finalise(); }
+{  }
 
 void uiBaseObject::clear()
-{ if ( body() ) body()->clear(); }
+{  }
 
 bool uiBaseObject::finalised() const
-{ return body() ? body()->finalised() : false; }
+{ return false; }
 
 
 int uiBaseObject::beginCmdRecEvent( const char* msg )

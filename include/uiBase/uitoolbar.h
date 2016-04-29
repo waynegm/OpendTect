@@ -27,7 +27,7 @@ class uiObject;
 class i_ToolBarMessenger;
 
 
-mExpClass(uiBase) uiToolBar : public uiActionContainer, public uiParent
+mExpClass(uiBase) uiToolBar : public uiActionContainer, public uiParent, public uiObject
 {
 friend class i_ToolBarMessenger;
 public:
@@ -48,8 +48,6 @@ public:
 			uiToolBar(uiParent*,const uiString& nm,
 				  ToolBarArea d=Top,bool newline=false);
 			~uiToolBar();
-
-    uiParent*		parent()			{ return parent_; }
 
     int			addButton(const uiToolButtonSetup&);
     int			addButton(const char* fnm,const uiString& tooltip,
@@ -128,8 +126,6 @@ protected:
 
     uiString			label_;
     int				getButtonID(mQtclass(QAction*));
-
-    uiParent*			parent_;
 
 public:
 			//!CmdDriver functionality, not for casual use

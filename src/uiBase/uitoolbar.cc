@@ -37,14 +37,14 @@ ObjectSet<uiToolBar>& uiToolBar::toolBars()
 
 uiToolBar::uiToolBar( uiParent* parnt, const uiString& nm, ToolBarArea tba,
 		      bool newline )
-    : uiParent(nm.getFullString(),0)
-    , parent_(parnt)
+    : uiParent(nm.getFullString())
+    , uiObject( parnt, nm.getFullString() )
     , tbarea_(tba)
     , buttonClicked(this)
     , orientationChanged(this)
     , toolbarmenuaction_(0)
     , qtoolbar_(new QToolBar(nm.getQString(),
-		parnt && parnt->getNrWidgets() ? parnt->getWidget(0) : 0))
+		parnt ? parnt->getParentWidget() : 0))
 {
     qtoolbar_->setObjectName( nm.getQString() );
     msgr_ = new i_ToolBarMessenger( qtoolbar_, this );
@@ -112,7 +112,7 @@ void uiToolBar::addButton( uiButton* button )
 
 void uiToolBar::addObject( uiObject* obj )
 {
-    QWidget* qw = obj && obj->body() ? obj->body()->qwidget() : 0;
+    QWidget* qw = obj && obj->getNrWidgets()==1 ? obj->getWidget(0) : 0;
     if ( qw )
     {
 	qtoolbar_->addWidget( qw );
@@ -133,6 +133,7 @@ void uiToolBar::setLabel( const uiString& lbl )
     qtoolbar_->setWindowTitle( lbl.getQString() );
     setName( lbl.getFullString() );
 }
+
 
 #define mGetAction( conststatement, erraction ) \
     conststatement uiAction* action = \

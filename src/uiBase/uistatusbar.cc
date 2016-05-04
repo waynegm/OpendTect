@@ -11,7 +11,6 @@ ________________________________________________________________________
 #include "uistatusbar.h"
 #include "uimainwin.h"
 #include "uimain.h"
-#include "uiparentbody.h"
 #include "uistrings.h"
 
 #include "uibody.h"

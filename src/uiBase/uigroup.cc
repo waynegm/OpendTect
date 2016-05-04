@@ -59,7 +59,12 @@ void uiGroup::finalise()
 {
     preFinalise().trigger();
     
-    finalise();
+    for ( int idx=0; idx<layoutmgr_->nrChildren(); idx++ )
+    {
+        layoutmgr_->getChild(idx)->finalise();
+    }
+    
+    uiObject::finalise();
     
     getLayoutMgr()->populateGrid();
     
@@ -67,7 +72,20 @@ void uiGroup::finalise()
 }
 
 
-void uiGroup::setChildrenSensitive( bool yn )
+void uiGroup::translateText()
+{
+    if ( !childList() )
+        return;
+    
+    for ( int idx=0; idx<childList()->size(); idx++ )
+    {
+        uiObject* child = const_cast<uiObject*>((*childList())[idx]);
+        child->translateText();
+    }
+}
+
+
+void uiGroup::setSensitive( bool yn )
 {
     const ObjectSet<uiObject>* childlist = childList();
     if ( !childlist ) return;

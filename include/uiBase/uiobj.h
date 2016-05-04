@@ -111,9 +111,8 @@ public:
     margin=-2 stretches the object to fill the parent's border. This looks nice
     with separators.
 */
-    void		attach(constraintType,int margin=-1);
-    void		attach(constraintType,uiObject*,int margin=-1,
-				bool reciprocal=true);
+
+    void		attach(constraintType,uiObject*);
 
     static void		setTabOrder(uiObject* first, uiObject* second);
 
@@ -124,7 +123,7 @@ public:
 
     void		shallowRedraw(CallBacker* =0)	{ reDraw( false ); }
     void		deepRedraw(CallBacker* =0)	{ reDraw( true ); }
-    void		reDraw(bool deep);
+    void		reDraw(bool);
 
     uiSize		actualsize(bool include_border=true) const;
 

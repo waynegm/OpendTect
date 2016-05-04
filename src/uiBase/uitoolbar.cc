@@ -12,7 +12,6 @@ ________________________________________________________________________
 
 #include "uiaction.h"
 #include "uimainwin.h"
-#include "uiparentbody.h"
 #include "uistrings.h"
 #include "uitoolbutton.h"
 

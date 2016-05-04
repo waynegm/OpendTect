@@ -62,7 +62,7 @@ uiBaseObject::~uiBaseObject()
 
 
 void uiBaseObject::finalise()
-{  }
+{}
 
 void uiBaseObject::clear()
 {  }

@@ -75,6 +75,10 @@ public:
     bool                attach(const uiObject*,constraintType,const uiObject*);
     bool		isAdded(const uiObject*) const;
     
+    int			nrChildren() const	{ return objects_.size(); }
+    uiObject*		getChild(int idx)	{ return objects_[idx]; }
+    const ObjectSet<uiObject>& childList() const { return objects_; }
+    
     void                setHCenterObj(const uiObject*);
     const uiObject*	getHCenterObj() const { return hcenterobj_; }
     void                setHAlignObj(const uiObject*);

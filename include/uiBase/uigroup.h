@@ -46,9 +46,10 @@ public:
 
     static uiGroup*	gtDynamicCastToGrp( mQtclass(QWidget*) );
 
-    void		setChildrenSensitive(bool);
+    void		setSensitive(bool);
 
     void		finalise();
+    void		translateText();
     
     const uiLayoutMgr*	getLayoutMgr() const		{ return layoutmgr_; }
 

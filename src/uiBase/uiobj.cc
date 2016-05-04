@@ -11,10 +11,13 @@ ________________________________________________________________________
 #include "uiobj.h"
 #include "uiparent.h"
 #include "uicursor.h"
+#include "uifont.h"
 #include "uimainwin.h"
 #include "uimain.h"
 #include "uigroup.h"
+#include "uilayout.h"
 #include "uitreeview.h"
+#include "pixmap.h"
 
 #include "color.h"
 #include "settingsaccess.h"
@@ -22,7 +25,7 @@ ________________________________________________________________________
 #include "perthreadrepos.h"
 
 #include <QEvent>
-#include <QObject>
+#include <QWidget>
 
 mUseQtnamespace
 
@@ -68,7 +71,7 @@ static int iconsz_ = -1;
 static int fldsz_ = -1;
 
 uiObject::uiObject( uiParent* p, const char* nm )
-    : uiBaseObject( getCleanName(nm), 0 )
+    : uiBaseObject( getCleanName(nm) )
     , setGeometry(this)
     , closed(this)
     , parent_( p )
@@ -79,8 +82,6 @@ uiObject::uiObject( uiParent* p, const char* nm )
     updateToolTip();
 
     uiobjeventfilter_ = new uiObjEventFilter( *this );
-    if ( body() && body()->qwidget() )
-	body()->qwidget()->installEventFilter( uiobjeventfilter_ );
 }
 
 
@@ -109,13 +110,13 @@ void uiObject::setSingleWidget( QWidget* w )
 
 
 void uiObject::setHSzPol( SzPolicy p )
-    { mBody()->setHSzPol(p); }
+    {  }
 
 void uiObject::setVSzPol( SzPolicy p )
-    { mBody()->setVSzPol(p); }
+    {  }
 
 uiObject::SzPolicy uiObject::szPol(bool hor) const
-    { return mConstBody()->szPol(hor); }
+{ return Undef; }
 
 
 void uiObject::setName( const char* nm )
@@ -164,19 +165,32 @@ void uiObject::translateText()
 void uiObject::display( bool yn, bool shrink, bool maximize )
 {
     finalise();
-    mBody()->display(yn,shrink,maximize);
+    if ( shrink || maximize )
+    {
+        pErrMsg("Shrink and maximize not implemented");
+    }
+    
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget(idx)->setShown( yn );
+    }
 }
 
 void uiObject::setFocus()
-{ mBody()->uisetFocus(); }
+{
+    if ( singlewidget_ ) singlewidget_->setFocus();
+    else pErrMsg("multiwidget not supported");
+}
 
 bool uiObject::hasFocus() const
-{ return mConstBody()->uihasFocus(); }
+{ return singlewidget_ ? singlewidget_->hasFocus() : false; }
 
 void uiObject::disabFocus()
 {
-    if ( getWidget(0) )
-	getWidget(0)->setFocusPolicy( Qt::NoFocus );
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget( idx )->setFocusPolicy( Qt::NoFocus );
+    }
 }
 
 
@@ -184,102 +198,155 @@ void uiObject::setCursor( const MouseCursor& cursor )
 {
     QCursor qcursor;
     uiCursorManager::fillQCursor( cursor, qcursor );
-    body()->qwidget()->setCursor( qcursor );
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget( idx )->setCursor( qcursor );
+    }
 }
 
 
 bool uiObject::isCursorInside() const
 {
     const uiPoint cursorpos = uiCursorManager::cursorPos();
-    const QPoint objpos = mConstBody()->qwidget()->mapToGlobal( QPoint(0,0) );
-    return cursorpos.x>=objpos.x() && cursorpos.x<objpos.x()+width() &&
-	   cursorpos.y>=objpos.y() && cursorpos.y<objpos.y()+height();
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        const QWidget* widget = getConstWidget( idx );
+        const QPoint objpos = widget->mapToGlobal( QPoint(0,0) );
+        if ( cursorpos.x>=objpos.x() &&
+             cursorpos.x<objpos.x()+widget->width() &&
+             cursorpos.y>=objpos.y() &&
+             cursorpos.y<objpos.y()+widget->height() )
+        {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 
 void uiObject::setStyleSheet( const char* qss )
 {
-    body()->qwidget()->setStyleSheet( qss );
+    if ( singlewidget_ )
+        singlewidget_->setStyleSheet( qss );
 }
 
 
 Color uiObject::backgroundColor() const
-    { return mConstBody()->uibackgroundColor(); }
+{
+    return singlewidget_
+    	? Color(singlewidget_->palette().brush(
+                singlewidget_->backgroundRole() ).color().rgb() )
+    : Color(0,0,0,0);
+}
 
 
 void uiObject::setBackgroundColor(const Color& col)
-    { mBody()->uisetBackgroundColor(col); }
+{
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        QPalette qpal( getWidget(idx)->palette() );
+        qpal.setColor( QPalette::Base,
+                      QColor(col.r(),col.g(),col.b(),255-col.t()) );
+        getWidget(idx)->setPalette( qpal );
+    }
+}
 
 
 void uiObject::setBackgroundPixmap( const uiPixmap& pm )
-    { mBody()->uisetBackgroundPixmap( pm ); }
+{
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        QPalette qpal( getWidget(idx)->palette() );
+
+        qpal.setBrush( getWidget(idx)->backgroundRole(), QBrush(*pm.qpixmap()) );
+        getWidget(idx)->setPalette( qpal );
+    }
+}
 
 
 void uiObject::setTextColor(const Color& col)
-    { mBody()->uisetTextColor(col); }
+{
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        QPalette qpal( getWidget( idx )->palette() );
+        qpal.setColor( QPalette::WindowText,
+                      QColor(col.r(),col.g(),col.b(),255-col.t()) );
+
+        getWidget( idx )->setPalette( qpal );
+    }
+}
 
 
 void uiObject::setSensitive(bool yn)
-    { mBody()->uisetSensitive(yn); }
+{
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget( idx )->setEnabled( yn );
+    }
+}
+
 
 bool uiObject::sensitive() const
-    { return mConstBody()->uisensitive(); }
+{ return getNrWidgets() && getConstWidget(0)->isEnabled(); }
 
 
 bool uiObject::visible() const
-    { return mConstBody()->uivisible(); }
+    { return getNrWidgets() && getConstWidget(0)->isVisible(); }
 
 bool uiObject::isDisplayed() const
-    { return mConstBody()->isDisplayed(); }
+{
+    return getNrWidgets() && getConstWidget(0)->isVisible();
+}
 
 int uiObject::prefHNrPics() const
-    { return mConstBody()->prefHNrPics(); }
+{ return mUdf(int); }
 
 
 void uiObject::setPrefWidth( int w )
-    { mBody()->setPrefWidth(w); }
+    { /* mBody()->setPrefWidth(w); */ }
 
 
 void uiObject::setPrefWidthInChar( int w )
-    { mBody()->setPrefWidthInChar( (float)w ); }
+    { /* mBody()->setPrefWidthInChar( (float)w ); */ }
 
 void uiObject::setPrefWidthInChar( float w )
-     { mBody()->setPrefWidthInChar(w); }
+     { /* mBody()->setPrefWidthInChar(w); */ }
 
 void uiObject::setMinimumWidth( int w )
-    { mBody()->setMinimumWidth(w); }
+    { /* mBody()->setMinimumWidth(w);  */}
 
 void uiObject::setMinimumHeight( int h )
-    { mBody()->setMinimumHeight(h); }
+    { /* mBody()->setMinimumHeight(h);  */}
 
 void uiObject::setMaximumWidth( int w )
-    { mBody()->setMaximumWidth(w); }
+    { /* mBody()->setMaximumWidth(w);  */}
 
 void uiObject::setMaximumHeight( int h )
-    { mBody()->setMaximumHeight(h); }
+    { /* mBody()->setMaximumHeight(h);  */}
 
 int uiObject::prefVNrPics() const
-    { return mConstBody()->prefVNrPics(); }
+{ return mUdf(int); /* return mConstBody()->prefVNrPics();  */ }
 
 void uiObject::setPrefHeight( int h )
-    { mBody()->setPrefHeight(h); }
+    { /* mBody()->setPrefHeight(h); */ }
 
 void uiObject::setPrefHeightInChar( int h )
-    { mBody()->setPrefHeightInChar( (float)h ); }
+    { /* mBody()->setPrefHeightInChar( (float)h ); */ }
 
 void uiObject::setPrefHeightInChar( float h )
-     {mBody()->setPrefHeightInChar(h);}
+     {/* mBody()->setPrefHeightInChar(h); */}
 
 void uiObject::setStretch( int hor, int ver )
-     {mBody()->setStretch(hor,ver); }
+     {/* mBody()->setStretch(hor,ver);  */}
 
-void uiObject::attach ( constraintType tp, int margin )
-    { mBody()->attach(tp, (uiObject*)0, margin); }
-
-void uiObject::attach ( constraintType tp, uiObject* other, int margin,
-			bool reciprocal )
-    { mBody()->attach(tp, other, margin, reciprocal); }
-
+void uiObject::attach ( constraintType tp, uiObject* other )
+{
+    if ( parent() && parent()->getLayoutMgr() )
+    {
+        parent()->getLayoutMgr()->attach( this, tp, other );
+    }
+}
 
 /*!
     Moves the \a second widget around the ring of focus widgets so
@@ -308,24 +375,48 @@ void uiObject::attach ( constraintType tp, uiObject* other, int margin,
 */
 void uiObject::setTabOrder( uiObject* first, uiObject* second )
 {
-    QWidget::setTabOrder( first->body()->qwidget(), second->body()->qwidget() );
+    if ( first->getNrWidgets()!=1  || second->getNrWidgets()!=1 )
+        return;
+    
+    QWidget::setTabOrder( first->getWidget(0), second->getWidget(0) );
 }
 
 
 void uiObject::setFont( const uiFont& f )
-    { mBody()->uisetFont(f); }
+{
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget( idx )->setFont( f.qFont() );
+    }
+}
 
 const uiFont* uiObject::font() const
-    { return mConstBody()->uifont(); }
+{
+    if ( !getNrWidgets() )
+        return 0;
+    
+    QFont qf( getConstWidget(0)->font() );
+    return &FontList().getFromQfnt(&qf);
+}
+
 
 uiSize uiObject::actualsize( bool include_border ) const
-    { return mConstBody()->actualsize( include_border ); }
+{ return uiSize( mUdf(int), mUdf(int)); }
 
 void uiObject::setCaption( const uiString& c )
-    { mBody()->uisetCaption(c); }
+{
+    if ( singlewidget_ )
+        singlewidget_->setWindowTitle( c.getQString() );
+}
 
-void uiObject::reDraw( bool deep )
-    { mBody()->reDraw( deep ); }
+
+void uiObject::reDraw( bool )
+{
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget( idx )->update();
+    }
+}
 
 
 uiMainWin* uiObject::mainwin()
@@ -341,14 +432,16 @@ uiMainWin* uiObject::mainwin()
 }
 
 
-QWidget* uiObject::getWidget( int idx )
-{ return !idx && body() ? body()->qwidget() : 0 ; }
+QWidget* uiObject::getWidget( int )
+{ return singlewidget_; }
 
 
 void uiObject::close()
 {
-    if ( body() && body()->qwidget() )
-	body()->qwidget()->close();
+    for ( int idx=0; idx<getNrWidgets(); idx++ )
+    {
+        getWidget( idx )->close();
+    }
 }
 
 
@@ -410,8 +503,11 @@ void uiObject::reParent( uiParent* p )
 
 bool uiObject::handleLongTabletPress()
 {
+    return false;
+    /*
     if ( !parent() || !parent()->getMainObject() || parent()->getMainObject()==this )
 	return false;
 
     return parent()->getMainObject()->handleLongTabletPress();
+     */
 }

@@ -8,7 +8,7 @@ ________________________________________________________________________
 
 -*/
 
-#include "uiobj.h"
+#include "uiparent.h"
 #include "uiobjbody.h"
 #include "uicursor.h"
 #include "uimainwin.h"
@@ -36,6 +36,12 @@ uiParent::uiParent( const char* nm )
 {}
 
 
+const QWidget* uiParent::getParentWidget() const
+{
+    return const_cast<uiParent*>(this)->getParentWidget();
+}
+
+
 void uiParent::addChild( uiObject& child )
 {
     uiLayoutMgr* layoutmgr = getLayoutMgr();
@@ -61,61 +67,15 @@ void uiParent::attachChildren ( const uiObject* child1, constraintType tp,
 }
 
 
-const ObjectSet<uiBaseObject>* uiParent::childList() const
+const ObjectSet<uiObject>* uiParent::childList() const
 {
-    uiParentBody* uipb =
-	    dynamic_cast<uiParentBody*>( const_cast<uiParent*>(this)->body() );
-    return uipb ? uipb->childList(): 0;
+    return getLayoutMgr()
+    	? &getLayoutMgr()->childList()
+    	: 0;
 }
 
 
 Color uiObject::roBackgroundColor() const
 {
     return backgroundColor().lighter( 2.5f );
-}
-
-
-Color uiParent::backgroundColor() const
-{
-    return mainObject() ? mainObject()->backgroundColor()
-			: uiMain::theMain().windowColor();
-}
-
-
-void uiParent::translateText()
-{
-    uiBaseObject::translateText();
-
-    if ( !childList() )
-	return;
-
-    for ( int idx=0; idx<childList()->size(); idx++ )
-    {
-	uiBaseObject* child = const_cast<uiBaseObject*>((*childList())[idx]);
-	child->translateText();
-    }
-}
-
-
-uiParentBody* uiParent::pbody()
-{
-    return dynamic_cast<uiParentBody*>( body() );
-}
-
-
-void uiParentBody::finaliseChildren()
-{
-    if ( !finalised_ )
-    {
-	finalised_= true;
-	for ( int idx=0; idx<children_.size(); idx++ )
-	    children_[idx]->finalise();
-    }
-}
-
-
-void uiParentBody::clearChildren()
-{
-    for ( int idx=0; idx<children_.size(); idx++ )
-	children_[idx]->clear();
 }

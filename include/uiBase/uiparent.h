@@ -19,7 +19,6 @@ class MouseCursor;
 class uiObjectBody;
 class uiObject;
 class uiMainWin;
-class uiParentBody;
 
 
 mExpClass(uiBase) uiParent 
@@ -34,11 +33,13 @@ public:
 
     virtual uiObject*		getUiObject()			{ return 0; }
     virtual mQtclass(QWidget)*	getParentWidget()		{ return 0; }
+    const mQtclass(QWidget)*	getParentWidget() const;
 
 
     virtual uiMainWin*	mainwin()				{ return 0; }
 
     virtual const uiLayoutMgr*	getLayoutMgr() const		{ return 0; }
+    uiLayoutMgr*		getLayoutMgr();
 
     //Temporary, not sure what to do with these.
     int	 /* refnr */		beginCmdRecEvent(const char* msg=0){ return 0; }

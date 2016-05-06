@@ -38,8 +38,8 @@ public:
 
     virtual uiMainWin*	mainwin()				{ return 0; }
 
-    virtual const uiLayoutMgr*	getLayoutMgr() const		{ return 0; }
-    uiLayoutMgr*		getLayoutMgr();
+    const uiLayoutMgr*		getLayoutMgr() const;
+    virtual uiLayoutMgr*	getLayoutMgr()			{ return 0; }
 
     //Temporary, not sure what to do with these.
     int	 /* refnr */		beginCmdRecEvent(const char* msg=0){ return 0; }

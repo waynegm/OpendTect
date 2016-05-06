@@ -22,7 +22,6 @@ ________________________________________________________________________
 #include "uimain.h"
 #include "uimainwin.h"
 #include "uiobj.h"
-#include "uiparentbody.h"
 #include "uipixmap.h"
 #include "uibutton.h"
 #include "uistatusbar.h"
@@ -85,7 +84,7 @@ QWidget* uiMsg::popParnt()
     if ( !mw ) mw = uiMain::theMain().topLevel();
 
     if ( !mw  )		return 0;
-    return mw->body()->qwidget();
+    return mw->getParentWidget();
 }
 
 

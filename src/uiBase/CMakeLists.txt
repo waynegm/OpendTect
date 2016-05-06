@@ -45,20 +45,20 @@ set(OD_MODULE_SOURCES
 #	uicombobox.cc
 #	uicursor.cc
 #	uidate.cc
-#	uidesktopservices.cc
+	uidesktopservices.cc
 #	uidial.cc
 #	uidockwin.cc
 	uieventfilter.cc
 #	uifiledlg.cc
-#	uifont.cc
+	uifont.cc
 #	uigraphicscoltab.cc
 #	uigraphicsitem.cc
 #	uigraphicsitemimpl.cc
 #	uigraphicsscene.cc
 #	uigraphicsviewbase.cc
 	uigroup.cc
-#	uihelpview.cc
-#	uiicon.cc
+	uihelpview.cc
+	uiicon.cc
 	uilabel.cc
 	uilayout.cc
 #	uilineedit.cc
@@ -68,7 +68,7 @@ set(OD_MODULE_SOURCES
 #	uimdiarea.cc
 	uimenu.cc
 #	uimouseeventblockerbygesture.cc
-#	uimsg.cc
+	uimsg.cc
 	uiobj.cc
 #	uiobjectstack.cc
 	uiparent.cc

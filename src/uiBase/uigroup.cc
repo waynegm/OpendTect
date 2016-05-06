@@ -72,6 +72,19 @@ void uiGroup::finalise()
 }
 
 
+int uiGroup::getNrWidgets() const
+{
+    return layoutmgr_->nrChildren();
+}
+
+
+QWidget* uiGroup::getWidget(int idx)
+{
+    uiObject* obj = layoutmgr_->getChild(idx);
+    return obj && obj->getNrWidgets() ? obj->getWidget(0) : 0;
+}
+
+
 void uiGroup::translateText()
 {
     if ( !childList() )

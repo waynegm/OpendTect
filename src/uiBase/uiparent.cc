@@ -9,7 +9,7 @@ ________________________________________________________________________
 -*/
 
 #include "uiparent.h"
-#include "uiobjbody.h"
+
 #include "uicursor.h"
 #include "uimainwin.h"
 #include "uimain.h"
@@ -26,12 +26,6 @@ ________________________________________________________________________
 mUseQtnamespace
 
 
-mDefineEnumUtils(uiRect,Side,"Side") { "Left", "Right", "Top", "Bottom", 0 };
-
-#define mBody_( imp_ )	dynamic_cast<uiObjectBody*>( imp_ )
-#define mBody()		mBody_( body() )
-#define mConstBody()	mBody_(const_cast<uiObject*>(this)->body())
-
 uiParent::uiParent( const char* nm )
 {}
 
@@ -40,6 +34,9 @@ const QWidget* uiParent::getParentWidget() const
 {
     return const_cast<uiParent*>(this)->getParentWidget();
 }
+
+const uiLayoutMgr* uiParent::getLayoutMgr() const
+{ return const_cast<uiParent*>(this)->getLayoutMgr(); }
 
 
 void uiParent::addChild( uiObject& child )

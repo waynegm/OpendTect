@@ -377,8 +377,7 @@ static bool getFont( mQtclass(QFont)& qfontout,
 {
     bool ok = false;
     qfontout = mQtclass(QFontDialog)::getFont( &ok, qfontin,
-			par && par->getNrWidgets()
-			    ? par->getWidget( 0 ) : 0,
+			par ? par->getParentWidget() : 0,
 			nm.getQString() );
     return ok;
 }

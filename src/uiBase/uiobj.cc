@@ -436,6 +436,10 @@ QWidget* uiObject::getWidget( int )
 { return singlewidget_; }
 
 
+int uiObject::getNrWidgets() const
+{ return 1; }
+
+
 void uiObject::close()
 {
     for ( int idx=0; idx<getNrWidgets(); idx++ )

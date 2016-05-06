@@ -51,7 +51,7 @@ public:
     void		finalise();
     void		translateText();
     
-    const uiLayoutMgr*	getLayoutMgr() const		{ return layoutmgr_; }
+    uiLayoutMgr*	getLayoutMgr() 	{ return layoutmgr_; }
 
     virtual int			getNrWidgets() const;
     virtual mQtclass(QWidget*)	getWidget(int idx);
@@ -63,8 +63,6 @@ protected:
 
     uiLayoutMgr*        layoutmgr_;
     
-    uiLayoutMgr*        getLayoutMgr()                  { return layoutmgr_; }
-
     virtual const uiObject*	getHAlignObj() const;
     virtual const uiObject*	getHCenterObj() const;
     virtual void		setHAlignObj(const uiObject*);

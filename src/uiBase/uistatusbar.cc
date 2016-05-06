@@ -26,7 +26,7 @@ uiStatusBar::uiStatusBar( uiMainWin* parnt, const char* nm )
     , statusbar_( new QStatusBar )
 {
 #ifndef __mac__ //TODO: Bugfix for gripper on Mac
-    sb.setSizeGripEnabled( false );
+    statusbar_->setSizeGripEnabled( false );
 #endif
 
     setSingleWidget( statusbar_ );

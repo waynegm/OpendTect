@@ -172,7 +172,7 @@ void uiObject::display( bool yn, bool shrink, bool maximize )
     
     for ( int idx=0; idx<getNrWidgets(); idx++ )
     {
-        getWidget(idx)->setShown( yn );
+        getWidget(idx)->setVisible( yn );
     }
 }
 

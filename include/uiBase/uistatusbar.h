@@ -12,30 +12,29 @@ ________________________________________________________________________
 -*/
 
 #include "uibasemod.h"
-#include "uibaseobject.h"
+#include "uiobj.h"
 #include "draw.h"
 #include "uistring.h"
 
-mFDQtclass(QStatusBar)
+mFDQtclass(QStatusBar);
+mFDQtclass(QLabel);
+
 class uiStatusBarBody;
 class uiMainWin;
 class uiObject;
 
 
-mExpClass(uiBase) uiStatusBar : public uiBaseObject
+mExpClass(uiBase) uiStatusBar : public uiObject
 {
-
-    friend class	uiMainWinBody;
-
 public:
 			~uiStatusBar();
 
-    int		addMsgFld(const uiString& lbltxt=uiString::emptyString(),
+    int			addMsgFld(const uiString& lbltxt=uiString::emptyString(),
 			  const uiString& tooltip =uiString::emptyString(),
 			  OD::Alignment::HPos al=OD::Alignment::Left,
 			  int stretch=1);
 
-    int		addMsgFld(const uiString& tooltip,
+    int			addMsgFld(const uiString& tooltip,
 				  OD::Alignment::HPos al=OD::Alignment::Left,
 				  int stretch=1);
     bool		addObject(uiObject*);
@@ -55,13 +54,10 @@ public:
 
 protected:
 
-                        uiStatusBar(uiMainWin*,const char*,
-				    mQtclass(QStatusBar&));
+                        	uiStatusBar(uiMainWin*,const char*);
 private:
-
-    uiStatusBarBody*	body_;
-    uiStatusBarBody&	mkbody(uiMainWin*, const char*,
-			       mQtclass(QStatusBar&));
+    mQtclass(QStatusBar)*		statusbar_;
+    ObjectSet<mQtclass(QLabel)>		labels_;
 };
 
 

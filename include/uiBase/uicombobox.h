@@ -17,7 +17,10 @@ ________________________________________________________________________
 
 class uiLabel;
 class uiComboBoxBody;
+class uiEventFilter;
 class BufferStringSet;
+class i_comboMessenger;
+mFDQtclass(QComboBox);
 
 /*!\brief Combo box.
 
@@ -28,7 +31,8 @@ class BufferStringSet;
 
   */
 
-mExpClass(uiBase) uiComboBox : public uiObject, public UserInputObjImpl<int>
+mExpClass(uiBase) uiComboBox : public uiSingleWidgetObject,
+                               public UserInputObjImpl<int>
 {
 public:
 
@@ -99,15 +103,18 @@ private:
     int			oldnritems_;
     int			oldcuritem_;
     TypeSet<int>	itemids_;
-    uiStringSet	itemstrings_;
+    uiStringSet		itemstrings_;
 
     mutable BufferString rettxt_;
 
-    uiComboBoxBody*	body_;
-    uiComboBoxBody&	mkbody(uiParent*,const char*);
     void		adjustWidth(const uiString&);
+    void		contextMenuEventCB(CallBacker*);
+    void		init();
     int			curwidth_;
     const EnumDef*	enumdef_;
+    
+    QComboBox*		combobox_;
+    i_comboMessenger*	messenger_;
 
 public:
 

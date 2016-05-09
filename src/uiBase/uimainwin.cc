@@ -119,7 +119,7 @@ uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
 	setup.caption_.isEmpty() ? "OpendTect" : setup.caption_.getQString() );
     qmainwindow_->setAttribute( Qt::WA_DeleteOnClose, setup.deleteonclose_ );
 
-    maingrp_ = new uiGroup( 0, "Main Group" );
+    maingrp_ = new uiLayoutGroup( p, "Main Group" );
 }
 
 
@@ -129,7 +129,11 @@ uiMainWin::~uiMainWin()
 
 
 void uiMainWin::show()
-{ qmainwindow_->show(); }
+{
+    maingrp_->finalise();
+    qmainwindow_->show();
+}
+
 
 void uiMainWin::close()
 { qmainwindow_->close(); }

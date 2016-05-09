@@ -19,7 +19,7 @@ ________________________________________________________________________
 mFDQtclass(QWidget)
 class ODMainWindow;
 class uiDockWin;
-class uiGroup;
+class uiLayoutGroup;
 class uiMenu;
 class uiMenuBar;
 class uiObject;
@@ -79,7 +79,7 @@ public:
 
 private:
     ODMainWindow*	qmainwindow_;
-    uiGroup*		maingrp_;
+    uiLayoutGroup*	maingrp_;
 };
 
 

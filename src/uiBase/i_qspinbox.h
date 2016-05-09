@@ -26,7 +26,7 @@ class QString;
 class i_SpinBoxMessenger : public QObject 
 {
     Q_OBJECT
-    friend class uiSpinBoxBody;
+    friend class uiSpinBox;
 
 protected:
 			i_SpinBoxMessenger(QDoubleSpinBox*  sndr,

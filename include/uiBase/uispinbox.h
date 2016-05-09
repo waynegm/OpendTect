@@ -16,11 +16,12 @@ ________________________________________________________________________
 #include "uigroup.h"
 #include "ranges.h"
 
-class uiSpinBoxBody;
+namespace uiBase { class QDoubleSpinBox; }
 class uiLabel;
+class i_SpinBoxMessenger;
 
 
-mExpClass(uiBase) uiSpinBox : public uiObject
+mExpClass(uiBase) uiSpinBox : public uiSingleWidgetObject
 { mODTextTranslationClass(uiSpinBox)
 friend class		uiSpinBoxBody;
 
@@ -104,17 +105,17 @@ public:
     void		translateText();
 private:
 
-    float		oldvalue_;
+    float			oldvalue_;
 
-    uiString		prefix_;
-    uiString		suffix_;
-    uiSpinBoxBody*	body_;
-    uiSpinBoxBody&	mkbody(uiParent*, const char*);
-
-    bool		dosnap_; /*!< If true, value in spinbox will be snapped
+    uiString			prefix_;
+    uiString			suffix_;
+    i_SpinBoxMessenger*		messenger_;
+    uiBase::QDoubleSpinBox*	body_;
+    bool			dosnap_;
+    				/*!< If true, value in spinbox will be snapped
 				  to a value equal to N*step. */
-    bool		focuschgtrigger_;
-    void		snapToStep(CallBacker*);
+    bool			focuschgtrigger_;
+    void			snapToStep(CallBacker*);
 
 public:
 // deprecated, do not use

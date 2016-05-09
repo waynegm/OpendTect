@@ -14,7 +14,6 @@ ________________________________________________________________________
 #include "i_qspinbox.h"
 #include "mouseevent.h"
 #include "perthreadrepos.h"
-#include "uiobjbody.h"
 #include "uivirtualkeyboard.h"
 
 #include <QContextMenuEvent>
@@ -25,64 +24,62 @@ ________________________________________________________________________
 
 mUseQtnamespace
 
-class uiSpinBoxBody : public uiObjBodyImpl<uiSpinBox,QDoubleSpinBox>
+namespace uiBase
 {
-public:
-                        uiSpinBoxBody(uiSpinBox&,uiParent*,const char*);
-    virtual		~uiSpinBoxBody();
 
-    virtual int		nrTxtLines() const	{ return 1; }
-    void		setNrDecimals(int);
-    void		setAlpha(bool yn);
-    bool		isAlpha() const		{ return isalpha_; }
-    bool		hadFocusChg() const	{ return hadfocuschg_; }
-    bool		isModified() const;
+    class QDoubleSpinBox : public ::QDoubleSpinBox
+    {
+    public:
+                        QDoubleSpinBox( uiSpinBox& hndl, QWidget* p );
+        virtual		~QDoubleSpinBox();
 
-    QValidator::State	validate( QString& input, int& posn ) const
-			{
-			    const double val = input.toDouble();
-			    if ( val > maximum() )
-				input.setNum( maximum() );
-			    return QDoubleSpinBox::validate( input, posn );
-			}
+        void		setNrDecimals(int);
+        void		setAlpha(bool yn);
+        bool		isAlpha() const		{ return isalpha_; }
+        bool		hadFocusChg() const	{ return hadfocuschg_; }
+        bool		isModified() const;
 
-    virtual double	valueFromText(const QString&) const;
-    virtual QString	textFromValue(double value) const;
+        QValidator::State validate( QString& input, int& posn ) const
+                        {
+                            const double val = input.toDouble();
+                            if ( val > maximum() )
+                              	input.setNum( maximum() );
+                            return ::QDoubleSpinBox::validate( input, posn );
+                        }
 
-    QLineEdit*		getLineEdit() const	{ return lineEdit(); }
+        virtual double	valueFromText(const QString&) const;
+        virtual QString	textFromValue(double value) const;
 
-protected:
-    virtual void	contextMenuEvent(QContextMenuEvent*);
-    virtual void	focusOutEvent(QFocusEvent*);
-
-
-private:
-
-    i_SpinBoxMessenger& messenger_;
-
-    QDoubleValidator*	dval;
-    bool		isalpha_;
-    bool		hadfocuschg_;
-
-};
+    protected:
+        virtual void	contextMenuEvent(QContextMenuEvent*);
+        virtual void	focusOutEvent(QFocusEvent*);
 
 
-uiSpinBoxBody::uiSpinBoxBody( uiSpinBox& hndl, uiParent* p, const char* nm )
-    : uiObjBodyImpl<uiSpinBox,QDoubleSpinBox>(hndl,p,nm)
-    , messenger_(*new i_SpinBoxMessenger(this,&hndl))
-    , dval(new QDoubleValidator(this))
+    private:
+        uiSpinBox&		handle_;
+
+        QDoubleValidator*	dval_;
+        bool			isalpha_;
+        bool			hadfocuschg_;
+
+    };
+} //namespace
+
+
+uiBase::QDoubleSpinBox::QDoubleSpinBox( uiSpinBox& hndl, QWidget* p )
+    : ::QDoubleSpinBox(p)
+    , dval_(new QDoubleValidator(this))
     , isalpha_(false)
     , hadfocuschg_(false)
+    , handle_( hndl )
 {
-    setHSzPol( uiObject::Small );
-    setCorrectionMode( QAbstractSpinBox::CorrectToNearestValue );
 }
 
 
-uiSpinBoxBody::~uiSpinBoxBody()
+uiBase::QDoubleSpinBox::~QDoubleSpinBox()
 {
-    delete &messenger_;
-    delete dval;
+
+    delete dval_;
 }
 
 
@@ -90,7 +87,7 @@ static const char* letters[] =
 { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
   "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", 0 };
 
-void uiSpinBoxBody::setAlpha( bool yn )
+void uiBase::QDoubleSpinBox::setAlpha( bool yn )
 {
     isalpha_ = yn;
     setMinimum( 0 );
@@ -99,7 +96,7 @@ void uiSpinBoxBody::setAlpha( bool yn )
 }
 
 
-double uiSpinBoxBody::valueFromText( const QString& qtxt ) const
+double uiBase::QDoubleSpinBox::valueFromText( const QString& qtxt ) const
 {
     if ( !specialValueText().isEmpty() && qtxt==specialValueText() )
 	return handle_.minFValue();
@@ -117,7 +114,7 @@ double uiSpinBoxBody::valueFromText( const QString& qtxt ) const
 }
 
 
-QString uiSpinBoxBody::textFromValue( double val ) const
+QString uiBase::QDoubleSpinBox::textFromValue( double val ) const
 {
     if ( !specialValueText().isEmpty() && val==handle_.minFValue() )
 	return specialValueText();
@@ -142,27 +139,30 @@ QString uiSpinBoxBody::textFromValue( double val ) const
 }
 
 
-void uiSpinBoxBody::setNrDecimals( int dec )
-{ dval->setDecimals( dec ); }
+void uiBase::QDoubleSpinBox::setNrDecimals( int dec )
+{ dval_->setDecimals( dec ); }
 
 
-bool uiSpinBoxBody::isModified() const
+bool uiBase::QDoubleSpinBox::isModified() const
 { return lineEdit()->isModified(); }
 
+/*TODO: Why are all these special cases needed? Can't we just use the normap
+        spinbox ?
+ */
 
-void uiSpinBoxBody::contextMenuEvent( QContextMenuEvent* ev )
+void uiBase::QDoubleSpinBox::contextMenuEvent( QContextMenuEvent* ev )
 {
     if ( uiVirtualKeyboard::isVirtualKeyboardEnabled() )
-	handle().popupVirtualKeyboard( ev->globalX(), ev->globalY() );
+	handle_.popupVirtualKeyboard( ev->globalX(), ev->globalY() );
     else
 	QDoubleSpinBox::contextMenuEvent( ev );
 }
 
 
-void uiSpinBoxBody::focusOutEvent( QFocusEvent* ev )
+void uiBase::QDoubleSpinBox::focusOutEvent( QFocusEvent* ev )
 {
     hadfocuschg_ = true;
-    QAbstractSpinBox::focusOutEvent( ev );
+    ::QAbstractSpinBox::focusOutEvent( ev );
     hadfocuschg_ = false;
 }
 
@@ -170,33 +170,33 @@ void uiSpinBoxBody::focusOutEvent( QFocusEvent* ev )
 //------------------------------------------------------------------------------
 
 uiSpinBox::uiSpinBox( uiParent* p, int dec, const char* nm )
-    : uiObject(p,nm,mkbody(p,nm))
+    : uiSingleWidgetObject(p,nm)
     , valueChanged(this)
     , valueChanging(this)
     , dosnap_(false)
     , focuschgtrigger_(true)
 {
+    body_ = new uiBase::QDoubleSpinBox( *this, getParentWidget(p) );
+    messenger_ = new i_SpinBoxMessenger( body_,this);
+    setHSzPol( uiObject::Small );
+    body_->setCorrectionMode( QAbstractSpinBox::CorrectToNearestValue );
     setNrDecimals( dec );
     setKeyboardTracking( false );
     valueChanged.notify( mCB(this,uiSpinBox,snapToStep) );
     oldvalue_ = getFValue();
 
     setMaxValue( INT_MAX );
+    setSingleWidget( body_ );
 }
 
 
 uiSpinBox::~uiSpinBox()
 {
     valueChanged.remove( mCB(this,uiSpinBox,snapToStep) );
+    delete messenger_;
     delete body_;
 }
 
-
-uiSpinBoxBody& uiSpinBox::mkbody(uiParent* parnt, const char* nm )
-{
-    body_= new uiSpinBoxBody(*this,parnt, nm);
-    return *body_;
-}
 
 void uiSpinBox::setSpecialValueText( const char* txt )
 {

@@ -16,11 +16,10 @@ ________________________________________________________________________
 #include "uistring.h"
 #include "odiconfile.h"
 
-class uiButtonBody;
-class uiCheckBoxBody;
-class uiPushButtonBody;
-class uiRadioButtonBody;
 mFDQtclass(QAbstractButton)
+mFDQtclass(QPushButton)
+mFDQtclass(QRadioButton)
+class ODCheckBox;
 
 class uiMenu;
 class uiPixmap;
@@ -33,8 +32,6 @@ mFDQtclass(QMenu)
 mExpClass(uiBase) uiButton : public uiSingleWidgetObject
 {
 public:
-			uiButton(uiParent*,const uiString&,const CallBack*,
-				 uiObjectBody&);
     virtual		~uiButton()		{}
 
     virtual void	setText(const uiString&);
@@ -62,6 +59,8 @@ public:
 						{ havecommonpbics_ = yn; }
 
 protected:
+			uiButton(uiParent*,const uiString&,const CallBack*,
+				 mQtclass(QAbstractButton*));
 
     uiString		text_;
     float		iconscale_;
@@ -103,8 +102,9 @@ private:
     void		updateIconSize();
 
     bool		immediate_;
-    uiPushButtonBody*	pbbody_;
-    uiPushButtonBody&	mkbody(uiParent*,const uiString&);
+
+    mQtclass(QPushButton*)	mkButton(uiParent*,const uiString&);
+    mQtclass(QPushButton*)	qpushbutton_;
 };
 
 
@@ -122,9 +122,8 @@ public:
 
 private:
 
-    uiRadioButtonBody*	rbbody_;
-    uiRadioButtonBody&	mkbody(uiParent*,const uiString&);
-
+    mQtclass(QRadioButton*)	mkButton(uiParent*,const uiString&);
+    mQtclass(QRadioButton*)	qradiobutton_;
 };
 
 
@@ -146,8 +145,8 @@ public:
 
 private:
 
-    uiCheckBoxBody*	cbbody_;
-    uiCheckBoxBody&	mkbody(uiParent*,const uiString&);
+    ODCheckBox*		mkButton(uiParent*,const uiString&);
+    ODCheckBox*		qcheckbox_;
 
 };
 

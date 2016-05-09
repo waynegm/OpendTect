@@ -36,7 +36,7 @@ public:
     const mQtclass(QWidget)*	getParentWidget() const;
 
 
-    virtual uiMainWin*	mainwin()				{ return 0; }
+    virtual uiMainWin*		mainwin()			{ return 0; }
 
     const uiLayoutMgr*		getLayoutMgr() const;
     virtual uiLayoutMgr*	getLayoutMgr()			{ return 0; }

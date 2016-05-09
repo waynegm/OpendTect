@@ -14,8 +14,8 @@ ________________________________________________________________________
 #include "uibutton.h"
 #include "uistrings.h"
 
-class uiToolButtonBody;
 class uiToolButtonSetup;
+mFDQtclass(QToolButton);
 
 
 mExpClass(uiBase) uiToolButton : public uiButton
@@ -60,13 +60,10 @@ public:
 
 private:
 
-    uiToolButtonBody*		tbbody_;
-    uiToolButtonBody&		mkbody(uiParent*,const char* icon_identifier,
-				       const uiString&);
-
     int				id_; // Used by toolbar
-
     uiMenu*			uimenu_;
+    mQtclass(QToolButton*)	qtoolbutton_;
+    mQtclass(QToolButton*)	mkButton(uiParent*,const char* id);
 };
 
 

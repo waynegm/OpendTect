@@ -14,7 +14,7 @@ ________________________________________________________________________
 #include "uimainwin.h"
 #include "uimsg.h"
 #include "uiaction.h"
-#include "uitreeview.h"
+//#include "uitreeview.h"
 #ifdef __mac__
 # include "uimacinit.h"
 #endif
@@ -459,9 +459,11 @@ void uiMain::setTopLevel( uiMainWin* obj )
 	return;
     }
 
+    /*
     if ( mainobj_ )
 	mainobj_->setExitAppOnClose( false );
     obj->setExitAppOnClose( true );
+    */
 
     mainobj_ = obj;
     init( mainobj_->getParentWidget() ); // inits SoQt if uicMain
@@ -611,7 +613,8 @@ void uiMain::useNameToolTip( bool yn )
     usenametooltip_ = yn;
     uiObject::updateToolTips();
     uiAction::updateToolTips();
-    uiTreeViewItem::updateToolTips();
+// TODO: enable when uiTreeView ported
+//    uiTreeViewItem::updateToolTips();
 }
 
 

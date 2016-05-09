@@ -11,7 +11,6 @@ ________________________________________________________________________
 #include "uimainwin.h"
 //#include "uidialog.h"
 
-#include "uibody.h"
 #include "uiclipboard.h"
 #include "uidesktopservices.h"
 #include "uidockwin.h"
@@ -21,8 +20,6 @@ ________________________________________________________________________
 #include "uimain.h"
 #include "uimenu.h"
 #include "uimsg.h"
-#include "uiobjbody.h"
-#include "uiparentbody.h"
 #include "uipixmap.h"
 #include "uiseparator.h"
 #include "uistatusbar.h"
@@ -67,6 +64,164 @@ ________________________________________________________________________
 mUseQtnamespace
 
 
+class ODMainWindow : public QMainWindow
+{ mODTextTranslationClass(ODMainWindow);
+friend class		uiMainWin;
+public:
+			ODMainWindow(uiMainWin& handle,uiParent* parnt,
+				     const char* nm,bool modal);
+    virtual		~ODMainWindow();
+
+    uiMainWin*		uimainwin();
+
+private:
+
+    uiMainWin&		uimw_;
+    int			iconsz_;
+    QEventLoop		eventloop_;
+};
+
+
+
+ODMainWindow::ODMainWindow( uiMainWin& uimw, uiParent* p,
+			    const char* nm, bool modal )
+    : QMainWindow(p ? p->getParentWidget() : 0,Qt::WindowFlags(Qt::Window))
+    , uimw_(uimw)
+{
+    if ( nm && *nm )
+	setObjectName( nm );
+
+    iconsz_ = uiObject::iconSize();
+    setIconSize( QSize(iconsz_,iconsz_) );
+
+    setWindowModality( modal ? Qt::WindowModal : Qt::NonModal );
+    setDockOptions( VerticalTabs | AnimatedDocks );
+}
+
+
+ODMainWindow::~ODMainWindow()
+{
+}
+
+
+uiMainWin* ODMainWindow::uimainwin()
+{ return &uimw_; }
+
+
+// uiMainWin
+uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
+    : uiParent(setup.caption_.getFullString())
+    , qmainwindow_(0)
+{
+    qmainwindow_ = new ODMainWindow( *this, p, setup.caption_.getFullString(),
+				     setup.modal_ );
+    qmainwindow_->setWindowIconText(
+	setup.caption_.isEmpty() ? "OpendTect" : setup.caption_.getQString() );
+    qmainwindow_->setAttribute( Qt::WA_DeleteOnClose, setup.deleteonclose_ );
+
+    maingrp_ = new uiGroup( 0, "Main Group" );
+}
+
+
+uiMainWin::~uiMainWin()
+{
+}
+
+
+void uiMainWin::show()
+{ qmainwindow_->show(); }
+
+void uiMainWin::close()
+{ qmainwindow_->close(); }
+
+void uiMainWin::raise()
+{ qmainwindow_->raise(); }
+
+uiStatusBar* uiMainWin::statusBar()
+{ return 0; }
+
+uiMenuBar* uiMainWin::menuBar()
+{ return 0; }
+
+void uiMainWin::addToolBar( uiToolBar* tb )
+{}
+
+
+uiToolBar* uiMainWin::removeToolBar( uiToolBar* tb )
+{ return 0; }
+
+
+void uiMainWin::addToolBarBreak()
+{ qmainwindow_->addToolBarBreak(); }
+
+
+uiLayoutMgr* uiMainWin::getLayoutMgr()
+{ return maingrp_->getLayoutMgr(); }
+
+
+uiMainWin* uiMainWin::activeWindow()
+{
+    QWidget* qwidget = qApp->activeWindow();
+    if ( !qwidget )
+	return 0;
+
+    ODMainWindow* odmw = dynamic_cast<ODMainWindow*>(qwidget);
+    if ( !odmw )
+	return 0;
+
+    return odmw->uimainwin();
+}
+
+
+uiString uiMainWin::uniqueWinTitle( const uiString& txt,
+				    QWidget* forwindow,
+				    BufferString* outputaddendum )
+{
+    const QWidgetList toplevelwigs = qApp->topLevelWidgets();
+
+    uiString res;
+    for ( int count=1; true; count++ )
+    {
+	bool unique = true;
+	uiString beginning = txt.isEmpty() ? tr("<no title>") : txt;
+
+	if ( count>1 )
+	{
+	    res = toUiString( "%1 {%2}").arg( beginning )
+		                        .arg( toUiString(count) );
+	    BufferString addendum( "  {", toString(count), "}" );
+	    if ( outputaddendum ) *outputaddendum = addendum;
+	}
+	else
+	{
+	    res = beginning;
+	}
+
+	QString wintitle = res.getQString();
+
+	for ( int idx=0; idx<toplevelwigs.count(); idx++ )
+	{
+	    const QWidget* qw = toplevelwigs.at( idx );
+	    if ( !qw->isWindow() || qw->isHidden() || qw==forwindow )
+		continue;
+
+	    if ( qw->windowTitle() == wintitle )
+	    {
+		unique = false;
+		break;
+	    }
+	}
+
+	if ( unique ) break;
+    }
+
+    return res;
+}
+
+
+
+
+#if 0
 static Threads::Mutex		winlistmutex_;
 static ObjectSet<uiMainWin>	orderedwinlist_;
 static uiMainWin*		programmedactivewin_ = 0;
@@ -91,7 +246,6 @@ static bool isInOrderedWinList( const uiMainWin* uimw )
 
 
 //=============================================================================
-
 
 class ODMainWindow : public QMainWindow
 { mODTextTranslationClass(ODMainWindow);
@@ -171,6 +325,7 @@ protected:
 
 private:
 
+    uiMainWin&		uimw_;
     QEventLoop		eventloop_;
 
     int			iconsz_;
@@ -192,8 +347,7 @@ private:
 ODMainWindow::ODMainWindow( uiMainWin& uimw, uiParent* p,
 			    const char* nm, bool modal )
 	: QMainWindow(p ? p->getParentWidget() : 0,getFlags(p,modal))
-	, handle_(uimw)
-	, initing_(true)
+	, uimw_(uimw)
 	, centralwidget_(0)
 	, statusbar_(0)
 	, menubar_(0)
@@ -239,7 +393,7 @@ ODMainWindow::~ODMainWindow()
     if ( !deletefromod_ )
     {
 	deletefrombody_ = true;
-	delete &handle_;
+	delete &uimw_;
     }
 
     delete statusbar_;
@@ -259,10 +413,11 @@ Qt::WindowFlags ODMainWindow::getFlags( bool hasparent, bool modal ) const
 { return Qt::WindowFlags( Qt::Window ); }
 
 
+
 void ODMainWindow::doShow( bool minimized )
 {
-    handle_.updateCaption();
-    eventrefnr_ = handle_.beginCmdRecEvent("WinPopUp");
+    uimw_.updateCaption();
+    eventrefnr_ = uimw_.beginCmdRecEvent("WinPopUp");
     managePopupPos();
 
     if ( minimized )
@@ -315,12 +470,12 @@ void ODMainWindow::doShow( bool minimized )
 
 #endif
 
-    if ( !handle_.afterPopup.isEmpty() )
+    if ( !uimw_.afterPopup.isEmpty() )
     {
-	handle_.afterpopuptimer_ = new Timer( "After popup timer" );
-	handle_.afterpopuptimer_->tick.notify(
-				mCB(&handle_,uiMainWin,aftPopupCB) );
-	handle_.afterpopuptimer_->start( 50, true );
+	uimw_.afterpopuptimer_ = new Timer( "After popup timer" );
+	uimw_.afterpopuptimer_->tick.notify(
+				mCB(&uimw_,uiMainWin,aftPopupCB) );
+	uimw_.afterpopuptimer_->start( 50, true );
     }
 
     if ( modal_ )
@@ -362,8 +517,6 @@ void ODMainWindow::construct( int nrstatusflds, bool wantmenubar )
 
 	toolbarsmnu_ = new uiMenu( &handle(), tr("Toolbars") );
     }
-
-    initing_ = false;
 }
 
 
@@ -413,7 +566,7 @@ void ODMainWindow::go( bool showminimized )
 {
     finalise( true );
     doShow( showminimized );
-    move( handle_.popuparea_ );
+    move( uimw_.popuparea_ );
 }
 
 
@@ -424,42 +577,42 @@ QMenu* ODMainWindow::createPopupMenu()
 void ODMainWindow::finalise( bool trigger_finalise_start_stop )
 {
     if ( trigger_finalise_start_stop )
-	handle_.preFinalise().trigger( handle_ );
+	uimw_.preFinalise().trigger( uimw_ );
 
     centralwidget_->finalise();
     finaliseChildren();
 
     if ( trigger_finalise_start_stop )
-	handle_.postFinalise().trigger( handle_ );
+	uimw_.postFinalise().trigger( uimw_ );
 }
 
 
 void ODMainWindow::closeEvent( QCloseEvent* ce )
 {
-    const int refnr = handle_.beginCmdRecEvent( "Close" );
+    const int refnr = uimw_.beginCmdRecEvent( "Close" );
 
-    if ( handle_.closeOK() )
+    if ( uimw_.closeOK() )
     {
-	handle_.windowClosed.trigger( handle_ );
+	uimw_.windowClosed.trigger( uimw_ );
 	ce->accept();
 
-	if ( isInOrderedWinList(&handle_) && modal_ )
+	if ( isInOrderedWinList(&uimw_) && modal_ )
 	    eventloop_.exit();
     }
     else
 	ce->ignore();
 
-     handle_.endCmdRecEvent( refnr, "Close" );
+     uimw_.endCmdRecEvent( refnr, "Close" );
 }
 
 
 void ODMainWindow::close()
 {
-    if ( !handle_.closeOK() ) return;
+    if ( !uimw_.closeOK() ) return;
 
-    handle_.windowClosed.trigger( handle_ );
+    uimw_.windowClosed.trigger( uimw_ );
 
-    if ( !isInOrderedWinList(&handle_) )
+    if ( !isInOrderedWinList(&uimw_) )
 	return;
 
     if ( testAttribute(Qt::WA_DeleteOnClose) )
@@ -654,7 +807,7 @@ void ODMainWindow::keyPressEvent( QKeyEvent* ev )
     OD::ButtonState modifier = OD::ButtonState( (int)ev->modifiers() );
 
     if ( key == OD::KB_C && modifier == OD::ControlButton )
-	handle_.ctrlCPressed.trigger();
+	uimw_.ctrlCPressed.trigger();
 
     return QMainWindow::keyPressEvent( ev );
 }
@@ -666,13 +819,13 @@ bool ODMainWindow::event( QEvent* ev )
     {
 	mExecMutex( CallBack* actcb = activatecbs_[nractivated_++] );
 	actcb->doCall( this );
-	handle_.activatedone.trigger( actcb->cbObj() );
+	uimw_.activatedone.trigger( actcb->cbObj() );
 	mExecMutex( activatecbs_ -= actcb; nractivated_-- );
 	delete actcb;
     }
     else if ( ev->type() == mUsrEvPopUpReady )
     {
-	handle_.endCmdRecEvent( eventrefnr_, "WinPopUp" );
+	uimw_.endCmdRecEvent( eventrefnr_, "WinPopUp" );
     }
     else
 	return QMainWindow::event( ev );
@@ -683,12 +836,12 @@ bool ODMainWindow::event( QEvent* ev )
 
 void ODMainWindow::managePopupPos()
 {
-    uiParent* myparent = handle_.parent();
+    uiParent* myparent = uimw_.parent();
     uiMainWin* myparentsmw = myparent ? myparent->mainwin() : 0;
     if ( myparentsmw && !myparentsmw->isHidden() )
 	return;
 
-    uiMainWin* parwin = handle_.programmedActiveWindow();
+    uiMainWin* parwin = uimw_.programmedActiveWindow();
     while ( parwin && parwin->isHidden() )
 	parwin = parwin->parent() ? parwin->parent()->mainwin() : 0;
 
@@ -696,7 +849,7 @@ void ODMainWindow::managePopupPos()
 	return;
 
     const uiRect pwrect = parwin->geometry( false );
-    handle_.setCornerPos( pwrect.get(uiRect::Left), pwrect.get(uiRect::Top) );
+    uimw_.setCornerPos( pwrect.get(uiRect::Left), pwrect.get(uiRect::Top) );
     moved_ = false;
 }
 
@@ -706,7 +859,7 @@ void ODMainWindow::managePopupPos()
 
 uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
     : uiParent(setup.caption_.getFullString(),0)
-    , body_(0)
+    , qmainwindow_(0)
     , parent_(p)
     , popuparea_(Auto)
     , windowClosed(this)
@@ -718,14 +871,14 @@ uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
     , afterpopuptimer_(0)
     , languagechangecount_( TrMgr().changeCount() )
 {
-    body_ = new ODMainWindow( *this, p, setup.caption_.getFullString(),
+    qmainwindow_ = new ODMainWindow( *this, p, setup.caption_.getFullString(),
 			       setup.modal_ );
-    setBody( body_ );
-    body_->construct( setup.nrstatusflds_, setup.withmenubar_ );
-    body_->setWindowIconText( setup.caption_.isEmpty()
+    setBody( qmainwindow_ );
+    qmainwindow_->construct( setup.nrstatusflds_, setup.withmenubar_ );
+    qmainwindow_->setWindowIconText( setup.caption_.isEmpty()
 		? "OpendTect"
 		: setup.caption_.getQString() );
-    body_->setAttribute( Qt::WA_DeleteOnClose, setup.deleteonclose_ );
+    qmainwindow_->setAttribute( Qt::WA_DeleteOnClose, setup.deleteonclose_ );
     ctrlCPressed.notify( mCB(this,uiMainWin,copyToClipBoardCB) );
 }
 
@@ -733,7 +886,7 @@ uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
 uiMainWin::uiMainWin( uiParent* parnt, const uiString& cpt,
 		      int nrstatusflds, bool withmenubar, bool modal )
     : uiParent(cpt.getFullString(),0)
-    , body_(0)
+    , qmainwindow_(0)
     , parent_(parnt)
     , popuparea_(Auto)
     , windowClosed(this)
@@ -745,10 +898,10 @@ uiMainWin::uiMainWin( uiParent* parnt, const uiString& cpt,
     , afterpopuptimer_(0)
     , languagechangecount_( TrMgr().changeCount() )
 {
-    body_ = new ODMainWindow( *this, parnt, caption_.getFullString(), modal );
-    setBody( body_ );
-    body_->construct( nrstatusflds, withmenubar );
-    body_->setWindowIconText( caption_.isEmpty()
+    qmainwindow_ = new ODMainWindow( *this, parnt, caption_.getFullString(), modal );
+    setBody( qmainwindow_ );
+    qmainwindow_->construct( nrstatusflds, withmenubar );
+    qmainwindow_->setWindowIconText( caption_.isEmpty()
 			     ? "OpendTect"
 			     : caption_.getQString() );
     ctrlCPressed.notify( mCB(this,uiMainWin,copyToClipBoardCB) );
@@ -759,7 +912,7 @@ uiMainWin::uiMainWin( uiParent* parnt, const uiString& cpt,
 
 uiMainWin::uiMainWin( uiString nm, uiParent* parnt )
     : uiParent(nm.getFullString(),0)
-    , body_(0)
+    , qmainwindow_(0)
     , parent_(parnt)
     , popuparea_(Auto)
     , windowClosed(this)
@@ -780,10 +933,10 @@ uiMainWin::~uiMainWin()
 {
     detachAllNotifiers();
 
-    if ( !body_->deletefrombody_ )
+    if ( !qmainwindow_->deletefrombody_ )
     {
-	body_->deletefromod_ = true;
-	delete body_;
+	qmainwindow_->deletefromod_ = true;
+	delete qmainwindow_;
     }
 
     winlistmutex_.lock();
@@ -798,32 +951,32 @@ uiMainWin::~uiMainWin()
 
 
 QWidget* uiMainWin::getWidget( int )
-{ return body_; }
+{ return qmainwindow_; }
 
 
-uiStatusBar* uiMainWin::statusBar()		{ return body_->uistatusbar(); }
-uiMenuBar* uiMainWin::menuBar()			{ return body_->uimenubar(); }
+uiStatusBar* uiMainWin::statusBar()		{ return qmainwindow_->uistatusbar(); }
+uiMenuBar* uiMainWin::menuBar()			{ return qmainwindow_->uimenubar(); }
 
 
 void uiMainWin::show()
 {
     addToOrderedWinList( this );
-    body_->go();
+    qmainwindow_->go();
 }
 
 
-void uiMainWin::close()				{ body_->close(); }
-void uiMainWin::reDraw(bool deep)		{ body_->reDraw(deep); }
-bool uiMainWin::touch()				{ return body_->touch(); }
-bool uiMainWin::finalised() const		{ return body_->finalised(); }
-void uiMainWin::setExitAppOnClose( bool yn )	{ body_->exitapponclose_ = yn; }
-void uiMainWin::showMaximized()			{ body_->showMaximized(); }
-void uiMainWin::showMinimized()			{ body_->showMinimized(); }
-void uiMainWin::showNormal()			{ body_->showNormal(); }
-bool uiMainWin::isMaximized() const		{ return body_->isMaximized(); }
-bool uiMainWin::isMinimized() const		{ return body_->isMinimized(); }
-bool uiMainWin::isHidden() const		{ return body_->isHidden(); }
-bool uiMainWin::isModal() const			{ return body_->isModal(); }
+void uiMainWin::close()				{ qmainwindow_->close(); }
+void uiMainWin::reDraw(bool deep)		{ qmainwindow_->reDraw(deep); }
+bool uiMainWin::touch()				{ return qmainwindow_->touch(); }
+bool uiMainWin::finalised() const		{ return qmainwindow_->finalised(); }
+void uiMainWin::setExitAppOnClose( bool yn )	{ qmainwindow_->exitapponclose_ = yn; }
+void uiMainWin::showMaximized()			{ qmainwindow_->showMaximized(); }
+void uiMainWin::showMinimized()			{ qmainwindow_->showMinimized(); }
+void uiMainWin::showNormal()			{ qmainwindow_->showNormal(); }
+bool uiMainWin::isMaximized() const		{ return qmainwindow_->isMaximized(); }
+bool uiMainWin::isMinimized() const		{ return qmainwindow_->isMinimized(); }
+bool uiMainWin::isHidden() const		{ return qmainwindow_->isHidden(); }
+bool uiMainWin::isModal() const			{ return qmainwindow_->isModal(); }
 
 
 void uiMainWin::setCaption( const uiString& txt )
@@ -836,8 +989,8 @@ void uiMainWin::setCaption( const uiString& txt )
 
 void uiMainWin::updateCaption()
 {
-    uniquecaption_ = uniqueWinTitle(caption_,body_,0);
-    body_->setWindowTitle( uniquecaption_.getQString() );
+    uniquecaption_ = uniqueWinTitle(caption_,qmainwindow_,0);
+    qmainwindow_->setWindowTitle( uniquecaption_.getQString() );
 }
 
 
@@ -848,43 +1001,43 @@ const uiString& uiMainWin::caption( bool unique ) const
 
 
 void uiMainWin::setDeleteOnClose( bool yn )
-{ body_->setAttribute( Qt::WA_DeleteOnClose, yn ); }
+{ qmainwindow_->setAttribute( Qt::WA_DeleteOnClose, yn ); }
 
 
 void uiMainWin::removeDockWindow( uiDockWin* dwin )
-{ body_->removeDockWin( dwin ); }
+{ qmainwindow_->removeDockWin( dwin ); }
 
 
 void uiMainWin::addDockWindow( uiDockWin& dwin, Dock d )
-{ body_->addDockWin( dwin, d ); }
+{ qmainwindow_->addDockWin( dwin, d ); }
 
 
 void uiMainWin::addToolBar( uiToolBar* tb )
-{ body_->addToolBar( tb ); }
+{ qmainwindow_->addToolBar( tb ); }
 
 
 uiToolBar* uiMainWin::removeToolBar( uiToolBar* tb )
-{ return body_->removeToolBar( tb ); }
+{ return qmainwindow_->removeToolBar( tb ); }
 
 
 void uiMainWin::addToolBarBreak()
-{ body_->addToolBarBreak(); }
+{ qmainwindow_->addToolBarBreak(); }
 
 
 uiMenu& uiMainWin::getToolbarsMenu() const
-{ return body_->getToolbarsMenu(); }
+{ return qmainwindow_->getToolbarsMenu(); }
 
 
 const ObjectSet<uiToolBar>& uiMainWin::toolBars() const
-{ return body_->toolBars(); }
+{ return qmainwindow_->toolBars(); }
 
 
 const ObjectSet<uiDockWin>& uiMainWin::dockWins() const
-{ return body_->dockWins(); }
+{ return qmainwindow_->dockWins(); }
 
 
 uiGroup* uiMainWin::topGroup()
-{ return body_->uiCentralWidg(); }
+{ return qmainwindow_->uiCentralWidg(); }
 
 
 void uiMainWin::setShrinkAllowed(bool yn)
@@ -896,7 +1049,7 @@ bool uiMainWin::shrinkAllowed()
 
 
 uiObject* uiMainWin::mainobject()
-    { return body_->uiCentralWidg()->mainObject(); }
+    { return qmainwindow_->uiCentralWidg()->mainObject(); }
 
 
 void uiMainWin::toStatusBar( const uiString& txt, int fldidx, int msecs )
@@ -912,7 +1065,7 @@ void uiMainWin::toStatusBar( const uiString& txt, int fldidx, int msecs )
 void uiMainWin::setSensitive( bool yn )
 {
     if ( menuBar() ) menuBar()->setSensitive( yn );
-    body_->setEnabled( yn );
+    qmainwindow_->setEnabled( yn );
 }
 
 
@@ -928,39 +1081,39 @@ uiMainWin* uiMainWin::gtUiWinIfIsBdy(QWidget* mwimpl)
 
 
 void uiMainWin::setCornerPos( int x, int y )
-{ body_->move( x, y ); }
+{ qmainwindow_->move( x, y ); }
 
 
 uiRect uiMainWin::geometry( bool frame ) const
 {
     // Workaround for Qt-bug: top left of area sometimes translates to origin!
-    QRect qarea = body_->geometry();
-    QRect qframe = body_->frameGeometry();
-    QPoint correction = body_->mapToGlobal(QPoint(0,0)) - qarea.topLeft();
+    QRect qarea = qmainwindow_->geometry();
+    QRect qframe = qmainwindow_->frameGeometry();
+    QPoint correction = qmainwindow_->mapToGlobal(QPoint(0,0)) - qarea.topLeft();
     qframe.translate( correction );
     qarea.translate( correction );
     QRect qrect = frame ? qframe : qarea;
 
-    //QRect qrect = frame ? body_->frameGeometry() : body_->geometry();
+    //QRect qrect = frame ? qmainwindow_->frameGeometry() : qmainwindow_->geometry();
     uiRect rect( qrect.left(), qrect.top(), qrect.right(), qrect.bottom() );
     return rect;
 }
 
 
 void uiMainWin::setIcon( const uiPixmap& pm )
-{ body_->setWindowIcon( *pm.qpixmap() ); }
+{ qmainwindow_->setWindowIcon( *pm.qpixmap() ); }
 
 void uiMainWin::setIconText( const uiString& txt)
-{ body_->setWindowIconText( txt.getQString() ); }
+{ qmainwindow_->setWindowIconText( txt.getQString() ); }
 
 void uiMainWin::saveSettings()
-{ body_->saveSettings(); }
+{ qmainwindow_->saveSettings(); }
 
 void uiMainWin::readSettings()
-{ body_->readSettings(); }
+{ qmainwindow_->readSettings(); }
 
 void uiMainWin::raise()
-{ body_->raise(); }
+{ qmainwindow_->raise(); }
 
 
 void uiMainWin::programActiveWindow( uiMainWin* mw )
@@ -1205,7 +1358,7 @@ bool uiMainWin::grab( const char* filenm, int zoom,
     {
 	QWidget* qwin = qApp->activeModalWidget();
 	if ( !qwin || zoom==1 )
-	    qwin = body_;
+	    qwin = qmainwindow_;
 
 	const int wdth = qwin->frameGeometry().width();
 	const int hght = qwin->frameGeometry().height();
@@ -1217,15 +1370,15 @@ bool uiMainWin::grab( const char* filenm, int zoom,
 
 
 void uiMainWin::activateInGUIThread( const CallBack& cb, bool busywait )
-{ body_->activateInGUIThread( cb, busywait ); }
+{ qmainwindow_->activateInGUIThread( cb, busywait ); }
 
 
 void uiMainWin::translateText()
 {
     uiParent::translateText();
 
-    for ( int idx=0; idx<body_->toolbars_.size(); idx++ )
-	body_->toolbars_[idx]->translateText();
+    for ( int idx=0; idx<qmainwindow_->toolbars_.size(); idx++ )
+	qmainwindow_->toolbars_[idx]->translateText();
 
     //Don't know if anything special needs to be done here.
 }
@@ -1319,7 +1472,7 @@ void uiMainWin::copyToClipBoard()
 {
     QWidget* qwin = getWidget(0);
     if ( !qwin )
-	qwin = body_;
+	qwin = qmainwindow_;
     WId wid = qwin->winId();
     const int wdth = qwin->frameGeometry().width();
     const int hght = qwin->frameGeometry().height();
@@ -1333,7 +1486,7 @@ void uiMainWin::saveImage( const char* fnm, int wdth, int hght, int res )
 {
     QWidget* qwin = getWidget(0);
     if ( !qwin )
-	qwin = body_;
+	qwin = qmainwindow_;
     WId wid = qwin->winId();
     mDefineStaticLocalObject( ImageSaver, imagesaver, );
     imagesaver.setImageProp( wid, fnm, wdth, hght, res );
@@ -1366,14 +1519,15 @@ void uiMainWin::saveAsPDF_PS( const char* filename, bool aspdf, int w,
 }
 
 
+
+
 //============================================================================
 
 /*!\brief Stand-alone dialog window with optional 'Ok', 'Cancel' and
 'Save defaults' button.
-
 */
 
-/*
+
 #define mHandle static_cast<uiDialog&>(handle_)
 
 class uiDialogBody : public ODMainWindow
@@ -2052,4 +2206,4 @@ int uiDialog::titlepos_ = 0; // default is centered.
 int uiDialog::titlePos()			{ return titlepos_; }
 void uiDialog::setTitlePos( int p )		{ titlepos_ = p; }
 
-*/
+#endif

@@ -425,6 +425,10 @@ void uiObject::reParent( uiParent* p )
 }
 
 
+QWidget* uiObject::getParentWidget( uiParent* p )
+{ return p ? p->getParentWidget() : 0; }
+
+
 bool uiObject::handleLongTabletPress()
 {
     return false;
@@ -502,6 +506,10 @@ void uiSingleWidgetObject::setStyleSheet( const char* qss )
 {
     singlewidget_->setStyleSheet( qss );
 }
+
+
+uiEventFilter* uiSingleWidgetObject::eventFilter()
+{ return eventfilter_; }
 
 
 void uiSingleWidgetObject::setSingleWidget( QWidget* w )

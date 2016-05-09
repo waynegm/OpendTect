@@ -27,7 +27,7 @@ mFDQtclass(QMenuBar)
 
 mExpClass(uiBase) uiMenuBar : public uiActionContainer, public uiBaseObject
 {
-    friend class		uiMainWinBody;
+    friend class		ODMainWindow;
     friend class		uiDialogBody;
 
 public:

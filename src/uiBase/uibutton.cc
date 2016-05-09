@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "uiicon.h"
 #include "uimain.h"
 #include "uimenu.h"
-#include "uiobjbody.h"
 #include "uipixmap.h"
 #include "uitoolbar.h"
 #include "uistrings.h"
@@ -39,43 +38,6 @@ mUseQtnamespace
 
 bool uiButton::havecommonpbics_ = false;
 
-
-
-class uiButtonBody : public uiObjectBody
-		   , public uiButtonMessenger
-{
-public:
-
-uiButtonBody( uiButton& uibut, uiParent* p, const uiString& txt,
-	      QAbstractButton& qbut )
-    : uiObjectBody(p,txt.getFullString())
-    , messenger_(qbut,*this)
-    , qbut_(qbut)
-    , uibut_(uibut)
-{
-    qbut_.setText( txt.getQString() );
-    setHSzPol( uiObject::SmallVar );
-}
-
-
-void doNotify()
-{
-    const int refnr = uibut_.beginCmdRecEvent();
-    uibut_.activated.trigger(uibut_);
-    uibut_.endCmdRecEvent( refnr );
-}
-
-virtual int nrTxtLines() const
-{
-    return 1;
-}
-
-    uiButton&		uibut_;
-    QAbstractButton&	qbut_;
-    i_ButMessenger	messenger_;
-};
-
-
 class IconUpdateEvent : public QEvent
 {
 public:
@@ -88,47 +50,7 @@ BufferString iconnm_;
 };
 
 
-//! Wrapper around QButtons.
-/*!
-    Extends each QButton class <ButT> with a i_ButMessenger, which connects
-    itself to the signals transmitted from Qt buttons.	Each signal is
-    relayed to the notifyHandler of a uiButton handle object.
-*/
-
-template<class ButT>
-class uiButtonTemplBody : public ButT
-			, public uiButtonBody
-{
-public:
-
-uiButtonTemplBody( uiButton& uibut, uiParent* p, const uiString& txt )
-    : uiButtonBody( uibut, p, txt, *this )
-    , ButT( p ? p->getParentWidget() : 0 )
-    , handle_(uibut)
-{
-}
-
-
-void keyPressEvent( QKeyEvent* qke )
-{
-    if ( qke && qke->key() == Qt::Key_Space )
-	return;
-
-    return ButT::keyPressEvent( qke );
-}
-
-
-void resizeEvent( QResizeEvent* ev )
-{
-    uiParent* hpar = uibut_.parent();
-    mDynamicCastGet(uiToolBar*,tb,hpar)
-    if ( hpar && !tb )
-	uibut_.updateIconSize();
-
-    QAbstractButton::resizeEvent( ev );
-}
-
-
+/*
 void customEvent( QEvent* ev )
 {
     mDynamicCastGet(IconUpdateEvent*,iue,ev)
@@ -136,71 +58,15 @@ void customEvent( QEvent* ev )
 
     handle_.setIcon( iue->iconnm_ );
 }
+*/
 
-
-
-#define mHANDLE_OBJ	uiButton
-#define mQWIDGET_BODY	QAbstractButton
-#include "i_uiobjqtbody.h"
-
-};
-
-#define mDefButtonBodyClass(nm,reactsto,constr_code,extr) \
-class ui##nm##Body : public uiButtonTemplBody<Q##nm> \
-{ \
-public: \
- \
-ui##nm##Body( uiButton& uibut, uiParent* parnt, const uiString& txt ) \
-    : uiButtonTemplBody<Q##nm>(uibut,parnt,txt) \
-{ \
-    setText( txt.getQString() ); \
-    constr_code; \
-} \
- \
-ui##nm##Body( uiButton& uibut, const uiPixmap& pm, \
-	      uiParent* parnt, const uiString& txt ) \
-    : uiButtonTemplBody<Q##nm>(uibut,parnt,txt) \
-{ \
-    setText( txt.getQString() ); \
-    constr_code; \
-} \
- \
-protected: \
- \
-virtual void notifyHandler( notifyTp tp ) \
-{ \
-    if ( tp == uiButtonMessenger::reactsto ) \
-	doNotify(); \
-} \
-\
-extr; \
- \
-}
 
 
 // uiButton
 
-mDefButtonBodyClass(PushButton,clicked,,);
-mDefButtonBodyClass(RadioButton,clicked,,);
-mDefButtonBodyClass(CheckBox,toggled,,void nextCheckState());
-mDefButtonBodyClass(ToolButton,clicked,setFocusPolicy( Qt::ClickFocus ),);
-
-
-void uiCheckBoxBody::nextCheckState()
-{
-    Qt::CheckState state = checkState();
-    if ( state==Qt::Unchecked )
-	setCheckState( Qt::Checked );
-    else
-	setCheckState( Qt::Unchecked );
-}
-
-
-#define muiButBody() dynamic_cast<uiButtonBody&>( *body() )
-
 uiButton::uiButton( uiParent* parnt, const uiString& nm, const CallBack* cb,
-		    uiObjectBody& b  )
-    : uiObject(parnt,nm.getFullString(),b)
+		    QAbstractButton* qbut )
+    : uiSingleWidgetObject(parnt,nm.getFullString(),qbut)
     , activated(this)
     , iconscale_(0.75)
     , text_(nm)
@@ -332,33 +198,31 @@ uiButton* uiButton::getStd( uiParent* p, OD::StdActionType typ,
 
 QAbstractButton* uiButton::qButton()
 {
-    return dynamic_cast<QAbstractButton*>( body() );
+    return dynamic_cast<QAbstractButton*>( getWidget(0) );
 }
 
-
-#define mQBut(typ) dynamic_cast<Q##typ&>( *body() )
 
 // uiPushButton
 uiPushButton::uiPushButton( uiParent* parnt, const uiString& nm, bool ia )
-    : uiButton( parnt, nm, 0, mkbody(parnt,nm) )
+    : uiButton(parnt,nm,0,new QPushButton)
     , immediate_(ia)
 {
     updateText();
 }
 
 
-uiPushButton::uiPushButton( uiParent* parnt, const uiString& nm,
+uiPushButton::uiPushButton( uiParent* p, const uiString& nm,
 			    const CallBack& cb, bool ia )
-    : uiButton( parnt, nm, &cb, mkbody(parnt,nm) )
+    : uiButton(p,nm,&cb,mkButton(p,nm))
     , immediate_(ia)
 {
     updateText();
 }
 
 
-uiPushButton::uiPushButton( uiParent* parnt, const uiString& nm,
+uiPushButton::uiPushButton( uiParent* p, const uiString& nm,
 			    const uiPixmap& pm, bool ia )
-    : uiButton( parnt, nm, 0, mkbody(parnt,nm) )
+    : uiButton(p,nm,0,mkButton(p,nm) )
     , immediate_(ia)
 {
     updateText();
@@ -366,9 +230,9 @@ uiPushButton::uiPushButton( uiParent* parnt, const uiString& nm,
 }
 
 
-uiPushButton::uiPushButton( uiParent* parnt, const uiString& nm,
+uiPushButton::uiPushButton( uiParent* p, const uiString& nm,
 			    const uiPixmap& pm, const CallBack& cb, bool ia )
-    : uiButton( parnt, nm, &cb, mkbody(parnt,nm) )
+    : uiButton(p,nm,&cb, mkButton(p,nm) )
     , immediate_(ia)
 {
     updateText();
@@ -376,32 +240,22 @@ uiPushButton::uiPushButton( uiParent* parnt, const uiString& nm,
 }
 
 
-uiPushButtonBody& uiPushButton::mkbody( uiParent* parnt, const uiString& txt )
+QPushButton* uiPushButton::mkButton( uiParent* p, const uiString& txt )
 {
-    pbbody_ = new uiPushButtonBody( *this, parnt, txt );
-    return *pbbody_;
+    qpushbutton_ = new QPushButton( txt.getQString(), p->getParentWidget() );
+    return qpushbutton_;
 }
 
 
 void uiPushButton::setMenu( uiMenu* menu )
 {
-    QAbstractButton* qbut = qButton();
-    mDynamicCastGet(QPushButton*,qpushbut,qbut)
-    if ( !qpushbut ) return;
-
     // not tested null, but found a link on Internet that says null hides
-    qpushbut->setMenu( menu ? menu->getQMenu() : 0 );
+    qpushbutton_->setMenu( menu ? menu->getQMenu() : 0 );
 }
 
 
 void uiPushButton::setFlat( bool yn )
-{
-    QAbstractButton* qbut = qButton();
-    mDynamicCastGet(QPushButton*,qpushbut,qbut)
-    if ( !qpushbut ) return;
-
-    qpushbut->setFlat( yn );
-}
+{ qpushbutton_->setFlat( yn ); }
 
 
 void uiPushButton::updateIconSize()
@@ -435,7 +289,7 @@ void uiPushButton::updateText()
 
 void uiPushButton::setDefault( bool yn )
 {
-    mQBut(PushButton).setDefault( yn );
+    qpushbutton_->setDefault( yn );
     setFocus();
 }
 
@@ -448,35 +302,34 @@ void uiPushButton::click()
 
 // uiRadioButton
 uiRadioButton::uiRadioButton( uiParent* p, const uiString& nm )
-    : uiButton(p,nm,0,mkbody(p,nm))
+    : uiButton(p,nm,0,mkButton(p,nm))
 {
 }
 
 
 uiRadioButton::uiRadioButton( uiParent* p, const uiString& nm,
 			      const CallBack& cb )
-    : uiButton(p,nm,&cb,mkbody(p,nm))
+    : uiButton(p,nm,&cb,mkButton(p,nm))
 {
 }
 
 
-uiRadioButtonBody& uiRadioButton::mkbody( uiParent* parnt,
-					  const uiString& txt )
+QRadioButton* uiRadioButton::mkButton( uiParent* p, const uiString& txt )
 {
-    rbbody_ = new uiRadioButtonBody( *this, parnt, txt );
-    return *rbbody_;
+    qradiobutton_ = new QRadioButton( txt.getQString(), p->getParentWidget() );
+    return qradiobutton_;
 }
 
 
 bool uiRadioButton::isChecked() const
 {
-    return rbbody_->isChecked ();
+    return qradiobutton_->isChecked ();
 }
 
 void uiRadioButton::setChecked( bool check )
 {
     mBlockCmdRec;
-    rbbody_->setChecked( check );
+    qradiobutton_->setChecked( check );
 }
 
 
@@ -488,41 +341,60 @@ void uiRadioButton::click()
 
 
 // uiCheckBox
+class ODCheckBox : public QCheckBox
+{
+public:
+ODCheckBox( const QString& txt, QWidget* qwidget )
+    : QCheckBox(txt,qwidget)
+{}
+
+void nextCheckState()
+{
+    Qt::CheckState state = checkState();
+    if ( state==Qt::Unchecked )
+	setCheckState( Qt::Checked );
+    else
+	setCheckState( Qt::Unchecked );
+}
+
+};
+
+
 uiCheckBox::uiCheckBox( uiParent* p, const uiString& nm )
-    : uiButton(p,nm,0,mkbody(p,nm))
+    : uiButton(p,nm,0,mkButton(p,nm))
 {
 }
 
 
 uiCheckBox::uiCheckBox( uiParent* p, const uiString& nm, const CallBack& cb )
-    : uiButton(p,nm,&cb,mkbody(p,nm))
+    : uiButton(p,nm,&cb,mkButton(p,nm))
 {
 }
 
 
-uiCheckBoxBody& uiCheckBox::mkbody( uiParent* parnt, const uiString& txt )
+ODCheckBox* uiCheckBox::mkButton( uiParent* p, const uiString& txt )
 {
-    cbbody_ = new uiCheckBoxBody( *this, parnt, txt );
-    return *cbbody_;
+    qcheckbox_ = new ODCheckBox( txt.getQString(), p->getParentWidget() );
+    return qcheckbox_;
 }
 
 
 bool uiCheckBox::isChecked() const
 {
-    return cbbody_->isChecked();
+    return qcheckbox_->isChecked();
 }
 
 
 void uiCheckBox::setChecked( bool yn )
 {
     mBlockCmdRec;
-    cbbody_->setChecked( yn );
+    qcheckbox_->setChecked( yn );
 }
 
 
 void uiCheckBox::setTriState( bool yn )
 {
-    cbbody_->setTristate( yn );
+    qcheckbox_->setTristate( yn );
 }
 
 
@@ -530,13 +402,13 @@ void uiCheckBox::setCheckState( OD::CheckState cs )
 {
     Qt::CheckState qcs = cs==OD::Unchecked ? Qt::Unchecked :
 	(cs==OD::Checked ? Qt::Checked : Qt::PartiallyChecked);
-    cbbody_->setCheckState( qcs );
+    qcheckbox_->setCheckState( qcs );
 }
 
 
 OD::CheckState uiCheckBox::getCheckState() const
 {
-    Qt::CheckState qcs = cbbody_->checkState();
+    Qt::CheckState qcs = qcheckbox_->checkState();
     return qcs==Qt::Unchecked ? OD::Unchecked :
 	(qcs==Qt::Checked ? OD::Checked : OD::PartiallyChecked);
 }
@@ -582,15 +454,14 @@ uiPushButton* uiToolButtonSetup::getPushButton( uiParent* p, bool wic ) const
 // button will reserve +- 3 times it's own width, which looks bad
 
 #define mSetDefPrefSzs() \
-    mDynamicCastGet(uiToolBar*,tb,parnt) \
+    mDynamicCastGet(uiToolBar*,tb,p) \
     if ( !tb ) setPrefWidth( prefVNrPics() );
 
 #define mInitTBList \
     id_(-1), uimenu_(0)
 
-uiToolButton::uiToolButton( uiParent* parnt, const uiToolButtonSetup& su )
-    : uiButton( parnt, su.name_, &su.cb_, mkbody(parnt,su.icid_,
-		su.name_) )
+uiToolButton::uiToolButton( uiParent* p, const uiToolButtonSetup& su )
+    : uiButton( p, su.name_, &su.cb_, mkButton(p,su.icid_) )
     , mInitTBList
 {
     setToolTip( su.tooltip_ );
@@ -608,10 +479,9 @@ uiToolButton::uiToolButton( uiParent* parnt, const uiToolButtonSetup& su )
 }
 
 
-uiToolButton::uiToolButton( uiParent* parnt, const char* fnm,
+uiToolButton::uiToolButton( uiParent* p, const char* fnm,
 			    const uiString& tt, const CallBack& cb )
-    : uiButton( parnt, tt, &cb,
-		mkbody(parnt,fnm,tt) )
+    : uiButton( p, tt, &cb, mkButton(p,fnm) )
     , mInitTBList
 {
     mSetDefPrefSzs();
@@ -619,10 +489,9 @@ uiToolButton::uiToolButton( uiParent* parnt, const char* fnm,
 }
 
 
-uiToolButton::uiToolButton( uiParent* parnt, uiToolButton::ArrowType at,
+uiToolButton::uiToolButton( uiParent* p, uiToolButton::ArrowType at,
 			    const uiString& tt, const CallBack& cb )
-    : uiButton( parnt, tt, &cb,
-		mkbody(parnt,"empty",tt) )
+    : uiButton( p, tt, &cb, mkButton(p,"empty") )
     , mInitTBList
 {
     mSetDefPrefSzs();
@@ -637,14 +506,14 @@ uiToolButton::~uiToolButton()
 }
 
 
-uiToolButtonBody& uiToolButton::mkbody( uiParent* parnt, const char* iconnm,
-					const uiString& txt)
+QToolButton* uiToolButton::mkButton( uiParent* p, const char* iconnm )
 {
-    tbbody_ = new uiToolButtonBody(*this,parnt,txt);
+    qtoolbutton_ = new QToolButton( p->getParentWidget() );
     uiIcon icon( iconnm );
-    tbbody_->setIcon( icon.qicon() );
-    tbbody_->setIconSize( QSize(iconSize(),iconSize()) );
-    return *tbbody_;
+    qtoolbutton_->setIcon( icon.qicon() );
+    qtoolbutton_->setIconSize( QSize(iconSize(),iconSize()) );
+    qtoolbutton_->setFocusPolicy( Qt::ClickFocus );
+    return qtoolbutton_;
 }
 
 
@@ -665,17 +534,20 @@ uiToolButton* uiToolButton::getStd( uiParent* p, OD::StdActionType typ,
 }
 
 
-bool uiToolButton::isOn() const { return tbbody_->isChecked(); }
+bool uiToolButton::isOn() const { return qtoolbutton_->isChecked(); }
 
 void uiToolButton::setOn( bool yn )
 {
     mBlockCmdRec;
-    tbbody_->setChecked( yn );
+    qtoolbutton_->setChecked( yn );
 }
 
 
-bool uiToolButton::isToggleButton() const     { return tbbody_->isCheckable();}
-void uiToolButton::setToggleButton( bool yn ) { tbbody_->setCheckable( yn ); }
+bool uiToolButton::isToggleButton() const
+{ return qtoolbutton_->isCheckable(); }
+
+void uiToolButton::setToggleButton( bool yn )
+{ qtoolbutton_->setCheckable( yn ); }
 
 
 void uiToolButton::click()
@@ -697,43 +569,43 @@ void uiToolButton::setArrowType( ArrowType type )
 	case RightArrow: setPixmap( "rightarrow" ); break;
     }
 #else
-    tbbody_->setArrowType( (Qt::ArrowType)(int)type );
+    qtoolbutton_->setArrowType( (Qt::ArrowType)(int)type );
 #endif
 }
 
 
 void uiToolButton::setShortcut( const char* sc )
 {
-    tbbody_->setShortcut( QString(sc) );
+    qtoolbutton_->setShortcut( QString(sc) );
 }
 
 
 void uiToolButton::setMenu( uiMenu* mnu, PopupMode mode )
 {
     const bool hasmenu = mnu && mnu->nrActions() > 0;
-    tbbody_->setMenu( hasmenu ? mnu->getQMenu() : 0 );
+    qtoolbutton_->setMenu( hasmenu ? mnu->getQMenu() : 0 );
 
     mDynamicCastGet(uiToolBar*,tb,parent())
     if ( !tb )
     {
 	if ( finalised() )
 	{
-	    QSize size = tbbody_->size();
+	    QSize size = qtoolbutton_->size();
 	    const int wdth =
 		hasmenu ? mCast(int,1.5*size.height()) : size.height();
 	    size.setWidth( wdth );
-	    tbbody_->resize( size );
+	    qtoolbutton_->resize( size );
 	}
 	else
 	{
 	    const int wdth =
 		hasmenu ? mCast(int,1.5*prefVNrPics()) : prefVNrPics();
-	    tbbody_->setPrefWidth( wdth );
+	    qtoolbutton_->setFixedWidth( wdth );
 	}
     }
 
     if ( !hasmenu ) mode = DelayedPopup;
-    tbbody_->setPopupMode( (QToolButton::ToolButtonPopupMode)mode );
+    qtoolbutton_->setPopupMode( (QToolButton::ToolButtonPopupMode)mode );
 
     OBJDISP()->go( uimenu_ );
     uimenu_ = mnu;

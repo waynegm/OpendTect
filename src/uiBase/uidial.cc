@@ -13,7 +13,7 @@ ________________________________________________________________________
 
 #include "ranges.h"
 #include "uilabel.h"
-#include "uilineedit.h"
+//#include "uilineedit.h"
 
 mUseQtnamespace
 
@@ -150,6 +150,7 @@ bool uiDial::hasStartAtTop() const
 }
 
 
+#if 0
 uiDialExtra::uiDialExtra( uiParent* p, const Setup& s, const char* nm )
     : uiGroup(p,nm)
     , editfld_(0)
@@ -226,3 +227,6 @@ void uiDialExtra::editRetPress( CallBacker* )
 {
     processInput();
 }
+
+
+#endif

@@ -18,6 +18,7 @@ ________________________________________________________________________
 #include "uilayout.h"
 #include "uitreeview.h"
 #include "pixmap.h"
+#include "uieventfilter.h"
 
 #include "color.h"
 #include "settingsaccess.h"
@@ -31,30 +32,6 @@ mUseQtnamespace
 
 
 mDefineEnumUtils(uiRect,Side,"Side") { "Left", "Right", "Top", "Bottom", 0 };
-
-
-class uiObjEventFilter : public QObject
-{
-public:
-			uiObjEventFilter( uiObject& uiobj )
-			    : uiobject_( uiobj )
-			{}
-protected:
-    bool		eventFilter(QObject*,QEvent*);
-    uiObject&		uiobject_;
-};
-
-
-bool uiObjEventFilter::eventFilter( QObject* obj, QEvent* ev )
-{
-    if ( ev && ev->type() == mUsrEvLongTabletPress )
-    {
-	uiobject_.handleLongTabletPress();
-	return true;
-    }
-
-    return false;
-}
 
 
 static ObjectSet<uiObject> uiobjectlist_;
@@ -75,37 +52,17 @@ uiObject::uiObject( uiParent* p, const char* nm )
     , setGeometry(this)
     , closed(this)
     , parent_( p )
-    , singlewidget_( 0 )
 {
     if ( p ) p->addChild( *this );
     uiobjectlist_ += this;
     updateToolTip();
-
-    uiobjeventfilter_ = new uiObjEventFilter( *this );
 }
 
 
 uiObject::~uiObject()
 {
-    if ( singlewidget_ )
-	singlewidget_->removeEventFilter( uiobjeventfilter_ );
-
-    delete uiobjeventfilter_;
-
     closed.trigger();
     uiobjectlist_ -= this;
-}
-
-
-void uiObject::setSingleWidget( QWidget* w )
-{
-    if ( singlewidget_ )
-	singlewidget_->removeEventFilter( uiobjeventfilter_ );
-
-    singlewidget_ = w;
-
-    if ( singlewidget_ )
-	singlewidget_->installEventFilter( uiobjeventfilter_ );
 }
 
 
@@ -176,22 +133,6 @@ void uiObject::display( bool yn, bool shrink, bool maximize )
     }
 }
 
-void uiObject::setFocus()
-{
-    if ( singlewidget_ ) singlewidget_->setFocus();
-    else pErrMsg("multiwidget not supported");
-}
-
-bool uiObject::hasFocus() const
-{ return singlewidget_ ? singlewidget_->hasFocus() : false; }
-
-void uiObject::disabFocus()
-{
-    for ( int idx=0; idx<getNrWidgets(); idx++ )
-    {
-        getWidget( idx )->setFocusPolicy( Qt::NoFocus );
-    }
-}
 
 
 void uiObject::setCursor( const MouseCursor& cursor )
@@ -225,18 +166,11 @@ bool uiObject::isCursorInside() const
 }
 
 
-void uiObject::setStyleSheet( const char* qss )
-{
-    if ( singlewidget_ )
-        singlewidget_->setStyleSheet( qss );
-}
-
-
 Color uiObject::backgroundColor() const
 {
-    return singlewidget_
-    	? Color(singlewidget_->palette().brush(
-                singlewidget_->backgroundRole() ).color().rgb() )
+    return getConstWidget(0)
+    	? Color(getConstWidget(0)->palette().brush(
+                getConstWidget(0)->backgroundRole() ).color().rgb() )
     : Color(0,0,0,0);
 }
 
@@ -403,12 +337,6 @@ const uiFont* uiObject::font() const
 uiSize uiObject::actualsize( bool include_border ) const
 { return uiSize( mUdf(int), mUdf(int)); }
 
-void uiObject::setCaption( const uiString& c )
-{
-    if ( singlewidget_ )
-        singlewidget_->setWindowTitle( c.getQString() );
-}
-
 
 void uiObject::reDraw( bool )
 {
@@ -430,14 +358,6 @@ uiMainWin* uiObject::mainwin()
 
     return par->mainwin();
 }
-
-
-QWidget* uiObject::getWidget( int )
-{ return singlewidget_; }
-
-
-int uiObject::getNrWidgets() const
-{ return 1; }
 
 
 void uiObject::close()
@@ -515,3 +435,85 @@ bool uiObject::handleLongTabletPress()
     return parent()->getMainObject()->handleLongTabletPress();
      */
 }
+
+
+uiSingleWidgetObject::uiSingleWidgetObject( uiParent* p, const char* nm,
+                                            QWidget* w )
+    : uiObject( p, nm )
+    , singlewidget_( 0 )
+    , eventfilter_( new uiEventFilter )
+{
+    eventfilter_->addEventType( uiEventFilter::LongTabletPress );
+
+    mAttachCB( eventfilter_->eventhappened,
+               uiSingleWidgetObject::longTabletPressCB);
+    
+    setSingleWidget( w );
+}
+
+
+uiSingleWidgetObject::~uiSingleWidgetObject()
+{
+    detachAllNotifiers();
+    delete eventfilter_;
+}
+
+
+void uiSingleWidgetObject::setFocus()
+{
+    singlewidget_->setFocus();
+}
+
+bool uiSingleWidgetObject::hasFocus() const
+{ return singlewidget_->hasFocus(); }
+
+
+void uiSingleWidgetObject::disabFocus()
+{
+    singlewidget_->setFocusPolicy( Qt::NoFocus );
+}
+
+
+void uiSingleWidgetObject::longTabletPressCB(CallBacker *)
+{
+    if ( eventfilter_->getCurrentEvent()->type()!=mUsrEvLongTabletPress )
+        return;
+    
+    handleLongTabletPress();
+}
+
+
+int uiSingleWidgetObject::getNrWidgets() const
+{ return 1; }
+
+
+QWidget* uiSingleWidgetObject::getWidget( int )
+{ return singlewidget_; }
+
+
+
+void uiSingleWidgetObject::setCaption( const uiString& c )
+{
+    singlewidget_->setWindowTitle( c.getQString() );
+}
+
+
+void uiSingleWidgetObject::setStyleSheet( const char* qss )
+{
+    singlewidget_->setStyleSheet( qss );
+}
+
+
+void uiSingleWidgetObject::setSingleWidget( QWidget* w )
+{
+    eventfilter_->detach();
+    
+    singlewidget_ = w;
+    
+    if ( singlewidget_ )
+        eventfilter_->attachToQObj( singlewidget_ );
+}
+
+
+
+

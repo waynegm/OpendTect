@@ -25,7 +25,7 @@ class uiObjectBody;
 class uiParent;
 class uiMainWin;
 class uiPixmap;
-class uiObjEventFilter;
+class uiEventFilter;
 
 
 /*!
@@ -68,14 +68,11 @@ public:
     void		translateText();
 
     void		display(bool yn,bool shrink=false,bool maximized=false);
-    void		setFocus();
-    bool		hasFocus() const;
-    void		disabFocus();
+
 
     virtual void	setCursor(const MouseCursor&);
     bool		isCursorInside() const;
 
-    virtual void	setStyleSheet(const char*);
     virtual Color	backgroundColor() const;
     Color		roBackgroundColor() const;
     virtual void	setBackgroundColor(const Color&);
@@ -118,7 +115,7 @@ public:
 
     void		setFont(const uiFont&);
     const uiFont*	font() const;
-    void		setCaption(const uiString&);
+
 
 
     void		shallowRedraw(CallBacker* =0)	{ reDraw( false ); }
@@ -133,9 +130,6 @@ public:
     void		reParent(uiParent*);
 
     uiMainWin*		mainwin();
-
-    int			getNrWidgets() const;
-    mQtclass(QWidget*)	getWidget(int);
 
     virtual bool	handleLongTabletPress();
 
@@ -155,22 +149,54 @@ public:
     static int		iconSize();
 
 protected:
+    mQtclass(QWidget*)	getParentWidget(uiParent* p);
+    
 			//! hook. Accepts/denies closing of window.
     virtual bool	closeOK()	{ closed.trigger(); return true; }
-    void		setSingleWidget(mQtclass(QWidget*));
 
     void		updateToolTip(CallBacker* = 0);
 
     uiString		tooltip_;
 
-    uiObjEventFilter*	uiobjeventfilter_;
-
 private:
 
     uiParent*		parent_;
-    mQtclass(QWidget*)	singlewidget_;
 };
 
+
+mExpClass(uiBase) uiSingleWidgetObject : public uiObject
+{
+protected:
+			uiSingleWidgetObject(uiParent*,const char* nm,
+                                             mQtclass(QWidget)* = 0 );
+    void		setSingleWidget(mQtclass(QWidget)*);
+    
+public:
+    
+    			~uiSingleWidgetObject();
+    int			getNrWidgets() const;
+    mQtclass(QWidget*)	getWidget(int);
+    
+    void		setFocus();
+    bool		hasFocus() const;
+    void		disabFocus();
+    
+    void		setCaption(const uiString&);
+    
+    virtual void	setStyleSheet(const char*);
+    
+    uiEventFilter*	eventFilter();
+    
+private:
+    
+    void		longTabletPressCB(CallBacker*);
+    void		popupVirtualKeyboardCB(CallBacker*);
+    void		enableVirtualKeyboard();
+    
+    mQtclass(QWidget*)	singlewidget_;
+    uiEventFilter*	eventfilter_;
+
+};
 
 #define mTemplTypeDef(fromclass,templ_arg,toclass) \
 	typedef fromclass<templ_arg> toclass;

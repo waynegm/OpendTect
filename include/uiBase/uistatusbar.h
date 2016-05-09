@@ -24,7 +24,7 @@ class uiMainWin;
 class uiObject;
 
 
-mExpClass(uiBase) uiStatusBar : public uiObject
+mExpClass(uiBase) uiStatusBar : public uiSingleWidgetObject
 {
 public:
 			~uiStatusBar();

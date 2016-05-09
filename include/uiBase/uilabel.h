@@ -20,7 +20,7 @@ mFDQtclass(QLabel);
 class uiGroup;
 class uiPixmap;
 
-mExpClass(uiBase) uiLabel : public uiObject
+mExpClass(uiBase) uiLabel : public uiSingleWidgetObject
 {
 public:
 

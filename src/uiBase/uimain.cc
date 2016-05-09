@@ -213,8 +213,7 @@ bool QtTabletEventFilter::eventFilter( QObject* obj, QEvent* ev )
 	{
 	    checklongleft_ = false;
 	    QEvent* qev = new QEvent( mUsrEvLongTabletPress );
-	    QApplication::postEvent(
-				   QApplication::focusWidget(), qev );
+	    QApplication::postEvent( 	QApplication::focusWidget(), qev );
 	}
 
 	QWidget* tlw = QApplication::topLevelAt( qme->globalPos() );

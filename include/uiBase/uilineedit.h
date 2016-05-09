@@ -48,7 +48,7 @@ public:
 
 
 mExpClass(uiBase) uiLineEdit : public UserInputObjImpl<const char*>,
-			       public uiObject
+			       public uiSingleWidgetObject
 {
 public:
 			//! pref_empty : return empty string/ null value

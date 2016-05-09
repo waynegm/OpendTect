@@ -30,7 +30,7 @@ mFDQtclass(QMenu)
 
 //!\brief is the base class for all buttons.
 
-mExpClass(uiBase) uiButton : public uiObject
+mExpClass(uiBase) uiButton : public uiSingleWidgetObject
 {
 public:
 			uiButton(uiParent*,const uiString&,const CallBack*,

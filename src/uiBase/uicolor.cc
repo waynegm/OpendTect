@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "uilabel.h"
 #include "uimain.h"
 #include "uimainwin.h"
-#include "uiparentbody.h"
 #include "uipixmap.h"
 #include "uispinbox.h"
 #include "uistrings.h"

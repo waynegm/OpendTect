@@ -22,7 +22,7 @@ ________________________________________________________________________
 mUseQtnamespace
 
 uiStatusBar::uiStatusBar( uiMainWin* parnt, const char* nm )
-    : uiObject(parnt,nm)
+    : uiSingleWidgetObject(parnt,nm)
     , statusbar_( new QStatusBar )
 {
 #ifndef __mac__ //TODO: Bugfix for gripper on Mac

@@ -23,7 +23,7 @@ ________________________________________________________________________
 mUseQtnamespace
 
 uiLabel::uiLabel( uiParent* p, const uiString& txt )
-    : uiObject(p,txt.getOriginalString())
+    : uiSingleWidgetObject(p,txt.getOriginalString())
     , qlabel_(new QLabel)
     , isrequired_(false)
 {
@@ -32,7 +32,7 @@ uiLabel::uiLabel( uiParent* p, const uiString& txt )
 
 
 uiLabel::uiLabel( uiParent* p, const uiString& txt, uiObject* buddy )
-    : uiObject(p,txt.getOriginalString())
+    : uiSingleWidgetObject(p,txt.getOriginalString())
     , qlabel_(new QLabel)
     , isrequired_(false)
 {
@@ -47,6 +47,7 @@ void uiLabel::init( const uiString& txt, uiObject* buddy )
 #ifdef __mac__
     setFont( uiFontList::getInst().get(FontData::Control) );
 #endif
+    setSingleWidget( qlabel_ );
 
     setText( txt );
     setTextSelectable( true );

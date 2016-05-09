@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "oddirs.h"
 #include "separstr.h"
 
-#include "uiparentbody.h"
 #include "uidialog.h"
 #include "uilineedit.h"
 #include "uilabel.h"

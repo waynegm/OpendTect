@@ -10,43 +10,26 @@ ________________________________________________________________________
 
 
 #include "uiprogressbar.h"
-#include "uiobjbody.h"
 
 #include	<QProgressBar>
 
 mUseQtnamespace
 
-class uiProgressBarBody : public uiObjBodyImpl<uiProgressBar,QProgressBar>
-{
-public:
-
-                        uiProgressBarBody( uiProgressBar& hndle, 
-					   uiParent* parnt, const char* nm )
-			    : uiObjBodyImpl<uiProgressBar,QProgressBar>
-				(hndle,parnt,nm)
-			    { 
-				setStretch( 1, 0 );
-				setHSzPol( uiObject::MedVar );
-			    }
-
-    virtual int 	nrTxtLines() const			{ return 1; }
-};
-
 
 
 uiProgressBar::uiProgressBar( uiParent* p, const char* txt, 
 			      int totsteps, int progr )
-    : uiObject(p,txt,mkbody(p,txt))
+    : uiSingleWidgetObject(p,txt)
+    , body_( new QProgressBar( getParentWidget(p) ) )
 {
+    setSingleWidget( body_ );
+    
+    setStretch( 1, 0 );
+    setHSzPol( uiObject::MedVar );
+    
     setProgress( progr );
     setTotalSteps( totsteps );
-}
-
-
-uiProgressBarBody& uiProgressBar::mkbody( uiParent* p, const char* txt )
-{
-    body_= new uiProgressBarBody( *this, p, txt );
-    return *body_; 
+    
 }
 
 

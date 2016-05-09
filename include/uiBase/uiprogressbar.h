@@ -14,9 +14,9 @@ ________________________________________________________________________
 #include "uibasemod.h"
 #include "uiobj.h"
 
-class uiProgressBarBody;
+mFDQtclass(QProgressBar);
 
-mExpClass(uiBase) uiProgressBar : public uiObject
+mExpClass(uiBase) uiProgressBar : public uiSingleWidgetObject
 {
 public:
 
@@ -30,8 +30,7 @@ public:
 
 private:
 
-    uiProgressBarBody*	body_;
-    uiProgressBarBody&	mkbody(uiParent*,const char*);
+    QProgressBar*	body_;
 };
 
 #endif

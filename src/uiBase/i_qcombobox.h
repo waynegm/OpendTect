@@ -25,7 +25,7 @@ QT_BEGIN_NAMESPACE
 class i_comboMessenger : public QObject 
 {
     Q_OBJECT
-    friend class	uiComboBoxBody;
+    friend class	uiComboBox;
 
 protected:
 			i_comboMessenger( QComboBox*  sndr,

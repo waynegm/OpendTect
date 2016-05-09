@@ -11,7 +11,6 @@ ________________________________________________________________________
 
 #include "uidate.h"
 
-#include "uiobjbody.h"
 #include "uilabel.h"
 #include "uimsg.h"
 #include "uicombobox.h"
@@ -23,27 +22,14 @@ ________________________________________________________________________
 
 mUseQtnamespace
 
-class uiCalendarBody : public uiObjBodyImpl<uiCalendar,QCalendarWidget>
-{
-public:
-
-uiCalendarBody( uiCalendar& hndl, uiParent* p)
-    : uiObjBodyImpl<uiCalendar,QCalendarWidget>(hndl,p,0)
-{}
-
-};
-
 
 uiCalendar::uiCalendar( uiParent* p )
-    : uiObject(p,0,mkbody(p) )
-{}
-
-
-uiCalendarBody& uiCalendar::mkbody( uiParent* p )
-{ 
-    body_= new uiCalendarBody(*this,p );
-    return *body_; 
+    : uiSingleWidgetObject(p,0)
+    , body_( new QCalendarWidget( getParentWidget(p) ) )
+{
+    setSingleWidget( body_ );
 }
+
 
 void uiCalendar::setDate( const DateInfo& di )
 {

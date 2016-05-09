@@ -16,14 +16,14 @@ ________________________________________________________________________
 #include "uigroup.h"
 #include "dateinfo.h"
 
-class uiCalendarBody;
+mFDQtclass(QCalendarWidget);
 class uiComboBox;
 class uiLineEdit;
 class uiLabel;
 class uiPushButton;
 
 /* Displays a calendar where the uses can select a date. */
-mExpClass(uiBase) uiCalendar : public uiObject
+mExpClass(uiBase) uiCalendar : public uiSingleWidgetObject
 { mODTextTranslationClass(uiCalendar);
 public:
                         uiCalendar(uiParent*);
@@ -32,9 +32,7 @@ public:
 
 private:
 
-    uiCalendarBody*	body_;
-    uiCalendarBody&	mkbody(uiParent*);
-
+    QCalendarWidget*	body_;
 };
 
 

@@ -323,11 +323,17 @@ bool uiEventFilterImpl::eventFilter( QObject* obj, QEvent* ev )
 
 QEvent::Type uiEventFilterImpl::translate( uiEventFilter::EventType tp )
 {
+    if ( tp==uiEventFilter::LongTabletPress )
+        return mUsrEvLongTabletPress;
+    
     mImpTransform( uiEventFilter, QEvent );
 }
 
 
 uiEventFilter::EventType uiEventFilterImpl::translate( QEvent::Type tp )
 {
+    if ( tp==mUsrEvLongTabletPress )
+        return uiEventFilter::LongTabletPress;
+    
     mImpTransform( QEvent, uiEventFilter );
 }

@@ -173,7 +173,9 @@ public:
 	WindowTitleChange,
 	WindowUnblocked,
 	WinIdChange,
-	ZOrderChange
+	ZOrderChange,
+        
+        LongTabletPress //dGB custom (mUsrEvLongTabletPress)
     };
 
     void			addEventType(EventType);

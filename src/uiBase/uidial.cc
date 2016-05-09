@@ -10,7 +10,6 @@ ________________________________________________________________________
 
 #include "uidial.h"
 #include "i_qdial.h"
-#include "uiobjbody.h"
 
 #include "ranges.h"
 #include "uilabel.h"
@@ -18,55 +17,31 @@ ________________________________________________________________________
 
 mUseQtnamespace
 
-class uiDialBody : public uiObjBodyImpl<uiDial,QDial>
-{
-public:
-
-                        uiDialBody(uiDial&,uiParent*,const char*);
-
-    virtual		~uiDialBody()		{ delete &messenger_; }
-
-    virtual int	nrTxtLines() const	{ return 1; }
-
-private:
-
-    i_DialMessenger&	messenger_;
-
-};
-
-
-uiDialBody::uiDialBody( uiDial& hndle, uiParent* p, const char* nm )
-    : uiObjBodyImpl<uiDial,QDial>(hndle,p,nm)
-    , messenger_( *new i_DialMessenger(this,&hndle) )
-{
-    setHSzPol( uiObject::Medium );
-    setFocusPolicy( Qt::WheelFocus );
-    setNotchesVisible( true );
-}
 
 
 //------------------------------------------------------------------------------
 
 uiDial::uiDial( uiParent* p, const char* nm )
-    : uiObject(p,nm,mkbody(p,nm))
+    : uiSingleWidgetObject(p,nm)
     , valueChanged(this)
     , sliderMoved(this)
     , sliderPressed(this)
     , sliderReleased(this)
     , startAtTop_(true)
+    , body_( new QDial )
 {
+    setSingleWidget( body_ );
+    messenger_ = new i_DialMessenger(body_,this);
+    setHSzPol( uiObject::Medium );
+    
+    body_->setFocusPolicy( Qt::WheelFocus );
+    body_->setNotchesVisible( true );
 }
 
 
 uiDial::~uiDial()
 {
-}
-
-
-uiDialBody& uiDial::mkbody( uiParent* p, const char* nm )
-{
-    body_= new uiDialBody( *this, p, nm );
-    return *body_;
+    delete messenger_;
 }
 
 
@@ -165,20 +140,20 @@ void uiDial::getInterval( StepInterval<int>& intv ) const
 
 void uiDial::setStartAtTop( bool top )
 {
-	startAtTop_ = top;
+    startAtTop_ = top;
 }
 
 
 bool uiDial::hasStartAtTop() const
 {
-	return startAtTop_;
+    return startAtTop_;
 }
 
 
 uiDialExtra::uiDialExtra( uiParent* p, const Setup& s, const char* nm )
-        : uiGroup(p,nm)
-	, editfld_(0)
-	, lbl_(0)
+    : uiGroup(p,nm)
+    , editfld_(0)
+    , lbl_(0)
 {
     init( s, nm );
 }

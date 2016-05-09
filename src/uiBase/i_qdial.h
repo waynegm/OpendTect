@@ -26,7 +26,7 @@ QT_BEGIN_NAMESPACE
 class i_DialMessenger : public QObject
 {
     Q_OBJECT
-    friend class	uiDialBody;
+    friend class	uiDial;
 
 protected:
 

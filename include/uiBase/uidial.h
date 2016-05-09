@@ -15,12 +15,13 @@ ________________________________________________________________________
 #include "uigroup.h"
 #include "uiobj.h"
 
-class uiDialBody;
+mFDQtclass(QDial);
+class i_DialMessenger;
 
 class uiLabel;
 class uiLineEdit;
 
-mExpClass(uiBase) uiDial : public uiObject
+mExpClass(uiBase) uiDial : public uiSingleWidgetObject
 {
 public:
 
@@ -59,8 +60,8 @@ public:
 
 private:
 
-    uiDialBody*		body_;
-    uiDialBody&		mkbody(uiParent*,const char*);
+    QDial*		body_;
+    i_DialMessenger*	messenger_;
 
     bool		startAtTop_;
 			// true - numbering starts at the top

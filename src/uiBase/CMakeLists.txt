@@ -38,7 +38,7 @@ set(OD_MODULE_SOURCES
 	qptr.cc
 	uiaction.cc
 	uibaseobject.cc
-#	uibutton.cc
+	uibutton.cc
 #	uibuttongroup.cc
 	uiclipboard.cc
 	uicolor.cc
@@ -51,10 +51,10 @@ set(OD_MODULE_SOURCES
 	uieventfilter.cc
 	uifiledlg.cc
 	uifont.cc
-#	uigraphicscoltab.cc
-#	uigraphicsitem.cc
-#	uigraphicsitemimpl.cc
-#	uigraphicsscene.cc
+	uigraphicscoltab.cc
+	uigraphicsitem.cc
+	uigraphicsitemimpl.cc
+	uigraphicsscene.cc
 #	uigraphicsviewbase.cc
 	uigroup.cc
 	uihelpview.cc

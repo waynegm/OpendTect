@@ -14,7 +14,7 @@ ________________________________________________________________________
 #include "uibutton.h"
 #include "uistrings.h"
 
-class uiToolButtonBody;
+mFDQtclass(QToolButton);
 class uiToolButtonSetup;
 
 
@@ -59,11 +59,11 @@ public:
     void			click();
 
 private:
+    
+    void			clicked() { doTrigger(); }
+    				//Toolbutton is activated on click
 
-    uiToolButtonBody*		tbbody_;
-    uiToolButtonBody&		mkbody(uiParent*,const char* icon_identifier,
-				       const uiString&);
-
+    mQtclass(QToolButton)*	tbbody_;
     int				id_; // Used by toolbar
 
     uiMenu*			uimenu_;

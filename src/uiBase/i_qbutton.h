@@ -30,12 +30,12 @@ class i_ButMessenger : public QObject
 
 public:
 
-i_ButMessenger( QAbstractButton& sndr, uiButtonMessenger& receiver )
+i_ButMessenger( QAbstractButton* sndr, uiButton* receiver )
     : receiver_(receiver)
     , sender_(sndr)
 {
 #define mConnectButMsngr(nm,args) \
-    connect( &sender_, SIGNAL(nm(args)), this, SLOT(nm(args)) )
+    connect( sender_, SIGNAL(nm(args)), this, SLOT(nm(args)) )
 
     mConnectButMsngr( toggled, bool );
     mConnectButMsngr( clicked, );
@@ -45,15 +45,15 @@ i_ButMessenger( QAbstractButton& sndr, uiButtonMessenger& receiver )
 
 private:
 
-    uiButtonMessenger&	receiver_;
-    QAbstractButton&	sender_;
+    uiButton*		receiver_;
+    QAbstractButton*	sender_;
 
 public slots:
 
-    void toggled(bool)	{ receiver_.notifyHandler(uiButtonMessenger::toggled); }
-    void clicked()	{ receiver_.notifyHandler(uiButtonMessenger::clicked); }
-    void pressed()	{ receiver_.notifyHandler(uiButtonMessenger::pressed); }
-    void released()	{ receiver_.notifyHandler(uiButtonMessenger::released);}
+    void toggled(bool)	{ receiver_->toggled(); }
+    void clicked()	{ receiver_->clicked(); }
+    void pressed()	{ receiver_->pressed(); }
+    void released()	{ receiver_->released();}
 
 };
 

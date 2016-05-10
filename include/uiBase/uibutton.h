@@ -16,16 +16,16 @@ ________________________________________________________________________
 #include "uistring.h"
 #include "odiconfile.h"
 
-class uiButtonBody;
-class uiCheckBoxBody;
-class uiPushButtonBody;
-class uiRadioButtonBody;
+mFDQtclass(QPushButton);
+mFDQtclass(QCheckBox);
+mFDQtclass(QRadioButton);
 mFDQtclass(QAbstractButton)
 
 class uiMenu;
 class uiPixmap;
-mFDQtclass(QEvent)
-mFDQtclass(QMenu)
+class i_ButMessenger;
+mFDQtclass(QEvent);
+mFDQtclass(QMenu);
 
 
 //!\brief is the base class for all buttons.
@@ -33,9 +33,8 @@ mFDQtclass(QMenu)
 mExpClass(uiBase) uiButton : public uiSingleWidgetObject
 {
 public:
-			uiButton(uiParent*,const uiString&,const CallBack*,
-				 uiObjectBody&);
-    virtual		~uiButton()		{}
+			uiButton(uiParent*,const uiString&,const CallBack*);
+    virtual		~uiButton();
 
     virtual void	setText(const uiString&);
     const uiString&	text() const			{ return text_; }
@@ -47,9 +46,6 @@ public:
     virtual void	click()		= 0;
 
     Notifier<uiButton>	activated;
-
-			//! Not for casual use
-    mQtclass(QAbstractButton*)	qButton();
 
     static uiButton*	getStd(uiParent*,OD::StdActionType,const CallBack&,
 				bool immediate);
@@ -63,13 +59,28 @@ public:
 
 protected:
 
+    friend class	i_ButMessenger;
+    i_ButMessenger*	messenger_;
     uiString		text_;
     float		iconscale_;
     static bool		havecommonpbics_;
+    void		doTrigger();
+    void		setButtonWidget(mQtclass(QAbstractButton*));
 
     virtual void	translateText();
     virtual void	setPM(const uiPixmap&);
-
+    
+    virtual void	toggled()	{}
+    virtual void	clicked()	{}
+    virtual void	pressed()	{}
+    virtual void	released()	{}
+private:
+    
+    void		updateIconCB(CallBacker*);
+    void		eventCB(CallBacker*);
+    
+    BufferString		icon_;
+    mQtclass(QAbstractButton)*	button_;
 };
 
 
@@ -97,14 +108,15 @@ public:
     void		setFlat(bool);
 
 private:
+    void		clicked() { doTrigger(); }
+    			//Pushbutton is activated on click
 
     void		translateText();
     void		updateText();
     void		updateIconSize();
 
-    bool		immediate_;
-    uiPushButtonBody*	pbbody_;
-    uiPushButtonBody&	mkbody(uiParent*,const uiString&);
+    bool			immediate_;
+    mQtclass(QPushButton)*	pbbody_;
 };
 
 
@@ -121,10 +133,11 @@ public:
     void		click();
 
 private:
+    
+    void		clicked() { doTrigger(); }
+    			//Radiobutton is activated on click
 
-    uiRadioButtonBody*	rbbody_;
-    uiRadioButtonBody&	mkbody(uiParent*,const uiString&);
-
+    mQtclass(QRadioButton)*	rbbody_;
 };
 
 
@@ -145,32 +158,9 @@ public:
     void		click();
 
 private:
+    void		toggled() { doTrigger(); }
 
-    uiCheckBoxBody*	cbbody_;
-    uiCheckBoxBody&	mkbody(uiParent*,const uiString&);
-
-};
-
-
-//! Button Abstract Base class
-
-mExpClass(uiBase) uiButtonMessenger
-{
-    friend class        i_ButMessenger;
-
-public:
-
-			uiButtonMessenger()		{}
-    virtual		~uiButtonMessenger()		{}
-
-    //! Button signals emitted by Qt.
-    enum notifyTp       { clicked, pressed, released, toggled };
-
-protected:
-
-    //! Handler called from Qt.
-    virtual void	notifyHandler(notifyTp)		= 0;
-
+    mQtclass(QCheckBox)* cbbody_;
 };
 
 #endif

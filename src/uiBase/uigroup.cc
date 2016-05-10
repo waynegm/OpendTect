@@ -159,11 +159,14 @@ void uiGroup::reSizeChildren( const uiObject* obj, float wfac, float hfac )
 uiLayoutGroup::uiLayoutGroup( uiParent* p, const char* nm )
     : uiGroup( p, nm )
     , widget_( new QFrame )
-{}
+{
+    layoutmgr_->enableOwnGrid();
+}
 
 
 QWidget* uiLayoutGroup::getWidget(int idx)
 { return idx ? 0 : widget_; }
+
 
 void uiLayoutGroup::setFrame( bool yn )
 {

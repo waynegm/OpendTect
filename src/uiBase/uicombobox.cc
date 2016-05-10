@@ -13,7 +13,7 @@ ________________________________________________________________________
 #include "uilabel.h"
 #include "uipixmap.h"
 #include "uieventfilter.h"
-#include "uivirtualkeyboard.h"
+//#include "uivirtualkeyboard.h"
 #include "uifont.h"
 
 #include "datainpspec.h"
@@ -246,9 +246,10 @@ void uiComboBox::contextMenuEventCB(CallBacker * cb)
                     eventFilter()->getCurrentEvent() );
     if ( !ev )
         return;
-    
+/* 
     if ( uiVirtualKeyboard::isVirtualKeyboardEnabled() )
         popupVirtualKeyboard( ev->globalX(), ev->globalY() );
+*/
 }
 
 
@@ -452,6 +453,7 @@ void uiComboBox::popupVirtualKeyboard( int globalx, int globaly )
     if ( isReadOnly() || !hasFocus() )
 	return;
 
+/*
     uiVirtualKeyboard virkeyboard( *this, globalx, globaly );
     virkeyboard.show();
 
@@ -464,6 +466,7 @@ void uiComboBox::popupVirtualKeyboard( int globalx, int globaly )
 	setCurrentItem( txt );
 	selectionChanged.trigger();
     }
+*/
 }
 
 

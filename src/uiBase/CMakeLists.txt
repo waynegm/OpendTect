@@ -17,18 +17,18 @@ set(QT_MOC_HEADERS
 	i_qbutton.h
 	i_qcombobox.h
 	i_qdial.h
-	i_qlineedit.h
-	i_qlistbox.h
-	i_qmdiarea.h
+#	i_qlineedit.h
+#	i_qlistbox.h
+#	i_qmdiarea.h
 	i_qptr.h
-	i_qslider.h
+#	i_qslider.h
 	i_qspinbox.h
 	i_qsystemtrayicon.h
-	i_qtabbar.h
-	i_qtable.h
-	i_qtextedit.h
+#	i_qtabbar.h
+#	i_qtable.h
+#	i_qtextedit.h
 	i_qtoolbar.h
-	i_qtreeview.h
+#	i_qtreeview.h
 	i_qtxtbrowser.h
 )
 
@@ -39,17 +39,17 @@ set(OD_MODULE_SOURCES
 	uiaction.cc
 	uibaseobject.cc
 	uibutton.cc
-#	uibuttongroup.cc
+	uibuttongroup.cc
 	uiclipboard.cc
-	uicolor.cc
+#	uicolor.cc
 	uicombobox.cc
 	uicursor.cc
-	uidate.cc
+#	uidate.cc
 	uidesktopservices.cc
 	uidial.cc
 #	uidockwin.cc
 	uieventfilter.cc
-	uifiledlg.cc
+#	uifiledlg.cc
 	uifont.cc
 	uigraphicscoltab.cc
 	uigraphicsitem.cc
@@ -64,7 +64,7 @@ set(OD_MODULE_SOURCES
 #	uilineedit.cc
 #	uilistbox.cc
 	uimain.cc
-#	uimainwin.cc
+	uimainwin.cc
 #	uimdiarea.cc
 	uimenu.cc
 	uimouseeventblockerbygesture.cc
@@ -97,6 +97,8 @@ if ( APPLE )
     list ( APPEND OD_MODULE_SOURCES uimacinit.cc )
 endif()
 
-set(OD_MODULE_GUI_PROGS od_DispMsg.cc  )
+set(OD_TEST_PROGS uimwlayout.cc )
+
+#set(OD_MODULE_GUI_PROGS od_DispMsg.cc  )
 OD_ADD_SOURCE_FILES( uimainicon.xpm )
 OD_INIT_MODULE()

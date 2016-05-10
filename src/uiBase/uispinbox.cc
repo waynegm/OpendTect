@@ -14,7 +14,7 @@ ________________________________________________________________________
 #include "i_qspinbox.h"
 #include "mouseevent.h"
 #include "perthreadrepos.h"
-#include "uivirtualkeyboard.h"
+//#include "uivirtualkeyboard.h"
 
 #include <QContextMenuEvent>
 #include <QLineEdit>
@@ -152,10 +152,12 @@ bool uiBase::QDoubleSpinBox::isModified() const
 
 void uiBase::QDoubleSpinBox::contextMenuEvent( QContextMenuEvent* ev )
 {
+/*
     if ( uiVirtualKeyboard::isVirtualKeyboardEnabled() )
 	handle_.popupVirtualKeyboard( ev->globalX(), ev->globalY() );
     else
 	QDoubleSpinBox::contextMenuEvent( ev );
+*/
 }
 
 
@@ -494,11 +496,13 @@ void uiSpinBox::popupVirtualKeyboard( int globalx, int globaly )
     if ( !hasFocus() )
 	return;
 
+/*
     uiVirtualKeyboard virkeyboard( *this, globalx, globaly );
     virkeyboard.show();
 
     if ( virkeyboard.enterPressed() )
 	valueChanged.trigger();
+*/
 }
 
 

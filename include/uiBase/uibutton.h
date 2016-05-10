@@ -16,10 +16,11 @@ ________________________________________________________________________
 #include "uistring.h"
 #include "odiconfile.h"
 
+
 mFDQtclass(QPushButton);
 mFDQtclass(QCheckBox);
 mFDQtclass(QRadioButton);
-mFDQtclass(QAbstractButton)
+mFDQtclass(QAbstractButton);
 
 class uiMenu;
 class uiPixmap;
@@ -33,8 +34,8 @@ mFDQtclass(QMenu);
 mExpClass(uiBase) uiButton : public uiSingleWidgetObject
 {
 public:
-			uiButton(uiParent*,const uiString&,const CallBack*);
     virtual		~uiButton();
+
 
     virtual void	setText(const uiString&);
     const uiString&	text() const			{ return text_; }
@@ -58,6 +59,8 @@ public:
 						{ havecommonpbics_ = yn; }
 
 protected:
+    			uiButton(uiParent*,const uiString&,const CallBack*);
+
 
     friend class	i_ButMessenger;
     i_ButMessenger*	messenger_;
@@ -116,7 +119,9 @@ private:
     void		updateIconSize();
 
     bool			immediate_;
-    mQtclass(QPushButton)*	pbbody_;
+
+    mQtclass(QPushButton*)	qpushbutton_;
+
 };
 
 
@@ -137,7 +142,7 @@ private:
     void		clicked() { doTrigger(); }
     			//Radiobutton is activated on click
 
-    mQtclass(QRadioButton)*	rbbody_;
+    mQtclass(QRadioButton*)	qradiobutton_;
 };
 
 
@@ -160,7 +165,8 @@ public:
 private:
     void		toggled() { doTrigger(); }
 
-    mQtclass(QCheckBox)* cbbody_;
+    mQtclass(QCheckBox)* qcheckbox_;
+
 };
 
 #endif

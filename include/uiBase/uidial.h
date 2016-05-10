@@ -19,7 +19,7 @@ mFDQtclass(QDial);
 class i_DialMessenger;
 
 class uiLabel;
-class uiLineEdit;
+//class uiLineEdit;
 
 mExpClass(uiBase) uiDial : public uiSingleWidgetObject
 {
@@ -67,6 +67,8 @@ private:
 			// true - numbering starts at the top
 };
 
+
+#if 0
 /*! Dial with label */
 mExpClass(uiBase) uiDialExtra : public uiGroup
 {
@@ -107,5 +109,7 @@ protected:
     void                editRetPress(CallBacker*);
     void                sliderMove(CallBacker*);
 };
+
+#endif
 
 #endif

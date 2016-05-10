@@ -17,24 +17,78 @@ ________________________________________________________________________
 #include "uistring.h"
 
 mFDQtclass(QWidget)
+class ODMainWindow;
 class uiDockWin;
-class uiGroup;
-class uiMainWinBody;
+class uiLayoutGroup;
+class uiMenu;
 class uiMenuBar;
 class uiObject;
-class uiMenu;
 class uiStatusBar;
 class uiToolBar;
-class Timer;
 class BufferStringSet;
+class Timer;
 
 /*!
 \brief User interface main window.
 */
 
+
 mExpClass(uiBase) uiMainWin : public uiParent
 { mODTextTranslationClass(uiMainWin);
-friend class uiMainWinBody;
+friend class ODMainWindow;
+public:
+    mExpClass(uiBase) Setup
+    { mODTextTranslationClass(Setup);
+    public:
+			Setup( const uiString& capt )
+			: caption_(capt)
+			, icontxt_(capt)
+			, modal_(false)
+			, withmenubar_(true)
+			, deleteonclose_(true)
+			, nrstatusflds_(1)
+			{}
+
+	mDefSetupMemb(uiString,caption)
+	mDefSetupMemb(uiString,icontxt)
+	mDefSetupMemb(bool,modal)
+	mDefSetupMemb(bool,withmenubar)
+	mDefSetupMemb(bool,deleteonclose)
+	mDefSetupMemb(int,nrstatusflds)
+    };
+
+			uiMainWin(uiParent*,const uiMainWin::Setup&);
+    virtual		~uiMainWin();
+
+    virtual void	show();
+    void                close();
+    void		raise();
+
+    uiMenuBar*		menuBar();
+    uiStatusBar*	statusBar();
+    void		addToolBar(uiToolBar*);
+    uiToolBar*		removeToolBar(uiToolBar*);
+    void		addToolBarBreak();
+
+    uiLayoutMgr*	getLayoutMgr();
+
+    static uiMainWin*	activeWindow();
+    static uiString	uniqueWinTitle(const uiString&,
+				       mQtclass(QWidget*) forwindow=0,
+				       BufferString* addendum = 0);
+
+private:
+    ODMainWindow*	qmainwindow_;
+    uiLayoutGroup*	maingrp_;
+};
+
+
+
+
+#if 0
+mExpClass(uiBase) uiMainWin : public uiParent
+{ mODTextTranslationClass(uiMainWin);
+friend class ODMainWindow;
 public:
     mExpClass(uiBase) Setup
     { mODTextTranslationClass(Setup);
@@ -130,7 +184,7 @@ public:
     Notifier<uiMainWin>	windowClosed;
 			//!< triggered when window exits
 
-			//! get uiMainWin for mwimpl if it is a uiMainWinBody
+			//! get uiMainWin for mwimpl if it is an ODMainWindow
     static uiMainWin*	gtUiWinIfIsBdy(mQtclass(QWidget*) mwimpl);
 
     enum PopupArea	{ TopLeft, TopRight, BottomLeft, BottomRight,
@@ -145,7 +199,7 @@ public:
     bool		touch(); //!< resets pop-up timer if !poppedUp yet
     bool		finalised() const;
     virtual uiMainWin*	mainwin() { return this; }
-    virtual const uiLayoutMgr* getLayoutMgr() const;
+    virtual uiLayoutMgr* getLayoutMgr();
     uiParent*		parent()			{ return parent_; }
     const uiParent*	parent() const			{ return parent_; }
 
@@ -209,7 +263,7 @@ protected:
     void		aftPopupCB(CallBacker*);
     void		languageChangeCB(CallBacker*);
 
-    uiMainWinBody*	body_;
+    ODMainWindow*	qmainwindow_;
     uiParent*		parent_;
     Timer*		afterpopuptimer_;
 
@@ -227,5 +281,7 @@ public:
     static void		programActiveWindow(uiMainWin*);
     static uiMainWin*	programmedActiveWindow();
 };
+
+#endif
 
 #endif

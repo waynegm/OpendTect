@@ -22,19 +22,27 @@ class uiLabel;
 class uiLineEdit;
 class uiSliderBody;
 class uiSpinBox;
+class i_SliderMessenger;
+mFDQtclass(QSlider);
 
 
-mExpClass(uiBase) uiSliderObj : public uiObject
+mExpClass(uiBase) uiSliderObj : public uiSingleWidgetObject
 {
 public:
-			uiSliderObj(uiParent*,const char* nm);
-			~uiSliderObj();
-
-    uiSliderBody&	body()		{ return *body_; }
-
+				uiSliderObj(uiParent*,const char* nm);
+				~uiSliderObj();
+    
+    void			setOrientation(bool isvert);
+    
+    Notifier<uiSliderObj>	valueChanged;
+    Notifier<uiSliderObj>	sliderMoved;
+    Notifier<uiSliderObj>	sliderPressed;
+    Notifier<uiSliderObj>	sliderReleased;
+    
 private:
-    uiSliderBody*	body_;
-    uiSliderBody&	mkbody(uiParent*,const char*);
+    i_SliderMessenger*	messenger_;
+    
+    QSlider*		slider_;
 };
 
 
@@ -109,11 +117,6 @@ public:
 
     bool		isLogScale()			{ return logscale_; }
 
-    Notifier<uiSlider>	valueChanged;
-    Notifier<uiSlider>	sliderMoved;
-    Notifier<uiSlider>	sliderPressed;
-    Notifier<uiSlider>	sliderReleased;
-
     float		getLinearFraction() const;
     void		setLinearFraction(float fraction);
 
@@ -135,8 +138,8 @@ private:
 
     void		init(const Setup&,const char*);
 
-    void		sliderMove(CallBacker*);
-    void		editRetPress(CallBacker*);
+    void		sliderMoveCB(CallBacker*);
+    void		editRetPressCB(CallBacker*);
 
     float		userValue(int) const;
     int			sliderValue(float) const;

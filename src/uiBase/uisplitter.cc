@@ -12,41 +12,23 @@ ________________________________________________________________________
 #include "uisplitter.h"
 
 #include "uigroup.h"
-#include "uiobjbody.h"
 
 #include <QSplitter>
 
 mUseQtnamespace
 
-class uiSplitterBody : public uiObjBodyImpl<uiSplitter,QSplitter>
-{
-public:
-
-uiSplitterBody( uiSplitter& hndl, uiParent* p, const char* nm )
-    : uiObjBodyImpl<uiSplitter,QSplitter>(hndl,p,nm)
-{
-}
-
-};
-
 
 uiSplitter::uiSplitter( uiParent* p, const char* txt, bool hor )
-    : uiObject(p, txt, mkbody(p,txt) )
+    : uiSingleWidgetObject(p, txt )
+    , qsplitter_( new QSplitter( getParentWidget(p)))
 {
-    body_->setOrientation( hor ? Qt::Horizontal : Qt::Vertical );
+    qsplitter_->setOrientation( hor ? Qt::Horizontal : Qt::Vertical );
     setStretch( 2, 2 );
-}
-
-
-uiSplitterBody& uiSplitter::mkbody( uiParent* p, const char* nm )
-{ 
-    body_ = new uiSplitterBody( *this, p, nm );
-    return *body_; 
 }
 
 
 void uiSplitter::addGroup( uiGroup* grp )
 {
     if ( grp )
-	body_->addWidget( grp->getWidget(0) );
+	qsplitter_->addWidget( grp->getWidget(0) );
 }

@@ -77,20 +77,20 @@ set(OD_MODULE_SOURCES
 	uirgbarray.cc
 	uirubberband.cc
 	uiseparator.cc
-#	uishortcutsmgr.cc
-#	uislider.cc
+	uishortcutsmgr.cc
+	uislider.cc
 	uispinbox.cc
 	uisplashscreen.cc
-#	uisplitter.cc
+	uisplitter.cc
 	uistatusbar.cc
-#	uisystemtrayicon.cc
+	uisystemtrayicon.cc
 #	uitabbar.cc
 #	uitable.cc
 #	uitabstack.cc
 #	uitextedit.cc
 	uitoolbar.cc
 #	uitreeview.cc
-#	uivirtualkeyboard.cc
+	uivirtualkeyboard.cc
 )
 
 if ( APPLE )

@@ -28,11 +28,11 @@ class QString;
 class i_SliderMessenger : public QObject
 {
     Q_OBJECT
-    friend class	uiSliderBody;
+    friend class	uiSliderObj;
 
 protected:
 
-i_SliderMessenger( QSlider* sndr, uiSlider* receiver )
+i_SliderMessenger( QSlider* sndr, uiSliderObj* receiver )
     : sender_(sndr)
     , receiver_(receiver)
 {
@@ -45,13 +45,13 @@ i_SliderMessenger( QSlider* sndr, uiSlider* receiver )
 
 private:
 
-    uiSlider*	receiver_;
-    QSlider*	sender_;
+    uiSliderObj*	receiver_;
+    QSlider*		sender_;
 
 #define mTrigger( notifier ) \
-    const int refnr = receiver_->slider()->beginCmdRecEvent( #notifier ); \
+    const int refnr = receiver_->beginCmdRecEvent( #notifier ); \
     receiver_->notifier.trigger(*receiver_); \
-    receiver_->slider()->endCmdRecEvent( refnr, #notifier );
+    receiver_->endCmdRecEvent( refnr, #notifier );
 
 private slots:
 

@@ -15,7 +15,7 @@ ________________________________________________________________________
 #include "uiobj.h"
 
 class uiGroup;
-class uiSplitterBody;
+mFDQtclass(QSplitter);
 
 /*! \brief Provides a splitter object
 
@@ -33,7 +33,7 @@ Example:
 
 */
 
-mExpClass(uiBase) uiSplitter : public uiObject
+mExpClass(uiBase) uiSplitter : public uiSingleWidgetObject
 {
 public:
                         uiSplitter(uiParent*,const char* nm="Splitter", 
@@ -44,8 +44,7 @@ public:
 
 private:
 
-    uiSplitterBody*	body_;
-    uiSplitterBody&	mkbody(uiParent*,const char*);
+    QSplitter*		qsplitter_;
 };
 
 #endif

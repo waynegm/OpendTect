@@ -10,7 +10,6 @@ ________________________________________________________________________
 
 #include "uislider.h"
 #include "i_qslider.h"
-#include "uiobjbody.h"
 
 #include "uilabel.h"
 #include "uilineedit.h"
@@ -25,49 +24,106 @@ ________________________________________________________________________
 
 mUseQtnamespace
 
-//------------------------------------------------------------------------------
-
-class uiSliderBody : public uiObjBodyImpl<uiSliderObj,QSlider>
-{
-public:
-
-			uiSliderBody(uiSliderObj&,uiParent*,const char*);
-
-    virtual		~uiSliderBody()		{ delete &messenger_; }
-
-    virtual int	nrTxtLines() const	{ return 1; }
-
-private:
-
-    i_SliderMessenger&	messenger_;
-
-};
-
-
-uiSliderBody::uiSliderBody( uiSliderObj& hndl, uiParent* p, const char* nm )
-    : uiObjBodyImpl<uiSliderObj,QSlider>(hndl,p,nm)
-    , messenger_( *new i_SliderMessenger(this,(uiSlider*)p) )
-{
-    setHSzPol( uiObject::Medium );
-    setFocusPolicy( Qt::WheelFocus );
-}
-
-
 
 // uiSliderObj
 uiSliderObj::uiSliderObj( uiParent* p, const char* nm )
-    : uiObject(p,nm,mkbody(p,nm))
+    : uiSingleWidgetObject(p,nm)
+    , slider_( new QSlider )
+    , messenger_( 0 )
+    , valueChanged(this)
+    , sliderMoved(this)
+    , sliderPressed(this)
+    , sliderReleased(this)
 {
+    messenger_ = new i_SliderMessenger(slider_,this);
+    setSingleWidget( slider_ );
+    slider_->setFocusPolicy( Qt::WheelFocus );
 }
 
 uiSliderObj::~uiSliderObj()
-{ delete body_; }
+{ delete messenger_; }
 
-uiSliderBody& uiSliderObj::mkbody( uiParent* p, const char* nm )
+
+void uiSliderObj::setOrientation( OD::Orientation orient )
 {
-    body_= new uiSliderBody( *this, p, nm );
-    return *body_;
+    slider_->setOrientation(
+                orient == OD::Vertical
+                            ? Qt::Vertical
+                            : Qt::Horizontal );
 }
+
+float uiSliderObj::getLinearFraction() const
+{
+    float start = slider_->minimum();
+    float range = slider_->maximum() - start;
+    return range ? (slider_->sliderPosition()-start)/range : 1.0;
+}
+
+
+void uiSliderObj::setLinearFraction( float frac )
+{
+    mSliderBlockCmdRec;
+    if ( frac>=0.0 && frac<=1.0 )
+    {
+        const float val = (1-frac)*slider_->minimum() +
+        frac*slider_->maximum();
+        slider_->setValue( mNINT32(val) );
+    }
+}
+
+
+int uiSliderObj::getIntValue() const
+{ return slider_->value(); }
+
+
+void uiSliderObj::setTickMarks( TickPosition ticks )
+{ slider_->setTickPosition( QSlider::TickPosition( (int)ticks ) ); }
+
+uiSlider::TickPosition uiSliderObj::tickMarks() const
+{ return (uiSlider::TickPosition)( (int)slider_->tickPosition() ); }
+
+
+OD::Orientation uiSliderObj::getOrientation() const
+{ return (OD::Orientation)( (int)slider_->orientation() ); }
+
+void uiSlider::setInverted( bool yn )
+{ slider_->setInvertedAppearance( yn ); }
+
+bool uiSlider::isInverted() const
+{ return slider_->invertedAppearance(); }
+
+void uiSlider::setInvertedControls( bool yn )
+{ slider_->body().setInvertedControls( yn ); }
+
+bool uiSlider::hasInvertedControls() const
+{ return slider_->body().invertedControls(); }
+
+
+void uiSlider::setMinValue( float minval )
+{
+    mSliderBlockCmdRec;
+    slider_->body().setMinimum( sliderValue(minval) );
+}
+
+
+void uiSlider::setMaxValue( float maxval )
+{
+    mSliderBlockCmdRec;
+    slider_->body().setMaximum( sliderValue(maxval) );
+}
+
+
+float uiSliderObj::minValue() const
+{
+    return userValue( slider_->minimum() );
+}
+
+
+float uiSliderObj::maxValue() const
+{
+    return userValue( slider_->maximum() );
+}
+
 
 //------------------------------------------------------------------------------
 
@@ -77,10 +133,6 @@ uiSlider::uiSlider( uiParent* p, const Setup& setup, const char* nm )
     , editfld_(0)
     , inteditfld_(0)
     , logscale_(setup.logscale_)
-    , valueChanged(this)
-    , sliderMoved(this)
-    , sliderPressed(this)
-    , sliderReleased(this)
 {
     init( setup, nm );
 }
@@ -96,8 +148,9 @@ void uiSlider::init( const uiSlider::Setup& setup, const char* nm )
 {
     slider_ = new uiSliderObj( this, nm );
     const bool isvert = setup.isvertical_;
-    slider_->body().setOrientation( isvert ? Qt::Vertical : Qt::Horizontal );
-    slider_->body().setStretch( isvert ? 0 : 1, isvert ? 1 : 0 );
+
+    slider_->setOrientation( isvert ? OD::Vertical : OD::Horizontal );
+    //slider_->body().setStretch( isvert ? 0 : 1, isvert ? 1 : 0 );
 
     int nrdec = setup.nrdec_;
     if ( nrdec < 0 ) nrdec = 0;
@@ -109,12 +162,12 @@ void uiSlider::init( const uiSlider::Setup& setup, const char* nm )
 
     if ( setup.withedit_ )
     {
-	valueChanged.notify( mCB(this,uiSlider,sliderMove) );
+        mAttachCB( slider_->valueChanged, uiSlider::sliderMoveCB );
 	editfld_ = new uiLineEdit( this,
 			BufferString(setup.lbl_.getFullString()," value") );
 	editfld_->setHSzPol( uiObject::Small );
-	editfld_->returnPressed.notify( mCB(this,uiSlider,editRetPress) );
-	sliderMove(0);
+        mAttachCB( editfld_->returnPressed, uiSlider::editRetPressCB );
+	sliderMoveCB(0);
     }
 
     if ( setup.isvertical_ )
@@ -150,21 +203,7 @@ void uiSlider::setToolTip( const uiString& tt )
 
 float uiSlider::getLinearFraction() const
 {
-    float start = slider_->body().minimum();
-    float range = slider_->body().maximum() - start;
-    return range ? (slider_->body().sliderPosition()-start)/range : 1.0;
-}
-
-
-void uiSlider::setLinearFraction( float frac )
-{
-    mSliderBlockCmdRec;
-    if ( frac>=0.0 && frac<=1.0 )
-    {
-	const float val = (1-frac)*slider_->body().minimum() +
-		frac*slider_->body().maximum();
-	slider_->body().setValue( mNINT32(val) );
-    }
+    return slider_->getLinearFraction();
 }
 
 
@@ -200,84 +239,30 @@ void uiSlider::setText( const char* txt )
 { setValue( toFloat(txt) ); }
 
 void uiSlider::setValue( int ival )
-{ slider_->body().setValue( ival ); }
+{ slider_->setValue( ival ); }
 
 void uiSlider::setValue( float fval )
 {
     mSliderBlockCmdRec;
     int val = sliderValue( fval );
-    slider_->body().setValue( val );
+    slider_->setValue( val );
 }
 
 
 const char* uiSlider::text() const
 {
-    result_ = userValue( slider_->body().value() );
+    result_ = userValue( getIntValue() );
     return (const char*)result_;
 }
 
 
 int uiSlider::getIntValue() const
-{ return slider_->body().value(); }
+{ return slider_->getIntValue(); }
 
 
 float uiSlider::getFValue() const
-{ return userValue( slider_->body().value() ); }
+{ return userValue( getIntValue() );
 
-void uiSlider::setTickMarks( TickPosition ticks )
-{ slider_->body().setTickPosition( QSlider::TickPosition( (int)ticks ) ); }
-
-uiSlider::TickPosition uiSlider::tickMarks() const
-{ return (uiSlider::TickPosition)( (int)slider_->body().tickPosition() ); }
-
-
-void uiSlider::setOrientation( OD::Orientation orient )
-{
-    slider_->body().setOrientation(
-	orient == OD::Vertical ? Qt::Vertical : Qt::Horizontal );
-}
-
-
-OD::Orientation uiSlider::getOrientation() const
-{ return (OD::Orientation)( (int)slider_->body().orientation() ); }
-
-void uiSlider::setInverted( bool yn )
-{ slider_->body().setInvertedAppearance( yn ); }
-
-bool uiSlider::isInverted() const
-{ return slider_->body().invertedAppearance(); }
-
-void uiSlider::setInvertedControls( bool yn )
-{ slider_->body().setInvertedControls( yn ); }
-
-bool uiSlider::hasInvertedControls() const
-{ return slider_->body().invertedControls(); }
-
-
-void uiSlider::setMinValue( float minval )
-{
-    mSliderBlockCmdRec;
-    slider_->body().setMinimum( sliderValue(minval) );
-}
-
-
-void uiSlider::setMaxValue( float maxval )
-{
-    mSliderBlockCmdRec;
-    slider_->body().setMaximum( sliderValue(maxval) );
-}
-
-
-float uiSlider::minValue() const
-{
-    return userValue( slider_->body().minimum() );
-}
-
-
-float uiSlider::maxValue() const
-{
-    return userValue( slider_->body().maximum() );
-}
 
 
 void uiSlider::setStep( float stp )

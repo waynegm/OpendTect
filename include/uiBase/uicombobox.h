@@ -46,6 +46,7 @@ public:
 			/*!<Similar to const char** Adds strings until an empty
 			    string is found. */
 			uiComboBox(uiParent*,const EnumDef&,const char* nm);
+			/*!<EnumDef is assumed to remain in mem*/
     virtual		~uiComboBox();
 
     virtual void        setReadOnly( bool = true );

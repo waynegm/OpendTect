@@ -367,11 +367,11 @@ int dgbSurfDataReader::nextStep()
 		    mErrRetRead( uiStrings::phrCannotRead( sHorizonData() ) )
 	    }
 
-	    int cp;
-	    if ( !readInt(cp) || !readInt(valsleftonsection_) )
+	    int cursec = -1;
+	    if ( !readInt(cursec) || !readInt(valsleftonsection_) )
 		mErrRetRead( uiStrings::phrCannotRead( sHorizonData() ) )
 
-	    currentsection_ = mCast(EM::SectionID,cp);
+	    currentsection_ = mCast(EM::SectionID,cursec);
 	    totalnr_ = 100;
 	    chunksize_ = valsleftonsection_/totalnr_+1;
 	    if ( chunksize_ < 100 )
@@ -404,11 +404,11 @@ int dgbSurfDataReader::nextStep()
     if ( interpreter ) \
     { \
 	char buf[sizeof(res)]; \
-	stream_->getBin( buf, sizeof(res) ); \
+	if ( !stream_->getBin(buf,sizeof(res)) ) return false; \
 	res = interpreter->get( buf, 0 ); \
     } \
     else \
-	stream_->get( res ); \
+    { if ( stream_->get(res).isBad() ) return false; } \
     return true;
 
 bool dgbSurfDataReader::readInt( int& res )

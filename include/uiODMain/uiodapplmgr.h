@@ -102,6 +102,7 @@ public:
     void			editAttribSet(bool is2d);
     bool			editNLA(bool is2d);
     void			createVol(bool is2d,bool multiattrib);
+    void			createVolProcOutput(bool);
     void			doWellXPlot(CallBacker* =0);
 				//!< This plots between well and attrib
     void			doAttribXPlot(CallBacker* =0);
@@ -153,11 +154,10 @@ public:
     bool			selectAttrib(int id,int attrib);
 
     // PickSets
-    bool			storePickSets();
+    bool			storePickSets(int polyopt,const char* cat=0);
     bool			storePickSet(const Pick::Set&);
     bool			storePickSetAs(const Pick::Set&);
     bool			setPickSetDirs(Pick::Set&);
-    bool			pickSetsStored() const;
 
     // Tool to exhange mouse-cursor information between windows
     MouseCursorExchange&	mouseCursorExchange();
@@ -184,7 +184,6 @@ public:
     void			manSurvCB(CallBacker*);
     void			seisOut2DCB(CallBacker*);
     void			seisOut3DCB(CallBacker*);
-    void			createVolProcOutput(CallBacker*);
     void			editAttr2DCB(CallBacker*)
 				    { editAttribSet(true); }
     void			editAttr3DCB(CallBacker*)

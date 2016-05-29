@@ -181,6 +181,7 @@ Processor* EngineMan::createProcessor( const DescSet& attribset,
     Desc* targetdesc = const_cast<Desc*>(attribset.getDesc(outid));
     if ( !targetdesc ) return 0;
 
+    targetdesc->updateParams();
     Processor* processor = new Processor( *targetdesc, linename, errmsg );
     if ( !processor->isOK() )
     {
@@ -510,32 +511,12 @@ RefMan<RegularSeisDataPack> EngineMan::getDataPackOutput(
     {
 	// For running dimensions, steps of TrcKeyZSampling (Inl, Crl and Z)
 	// should be same as that of datapack (packset) that is preloaded.
-	TrcKeyZSampling outputtkzs = packset[0]->sampling();
+	TrcKeyZSampling availabletkzs = packset[0]->sampling();
 	for ( int idx=1; idx<packset.size(); idx++ )
-	    outputtkzs.include( packset[idx]->sampling() );
+	    availabletkzs.include( packset[idx]->sampling() );
 
-	TrcKeyZSampling clippedtkzs( outputtkzs );
-	clippedtkzs.limitTo( tkzs_, true );
-
-	if ( clippedtkzs.isDefined() )
-	{
-	    outputtkzs.shrinkTo( tkzs_ );
-
-	    if ( tkzs_.nrLines() == 1 )
-		outputtkzs.hsamp_.setLineRange( tkzs_.hsamp_.lineRange() );
-	    if ( tkzs_.nrTrcs() == 1 )
-		outputtkzs.hsamp_.setTrcRange( tkzs_.hsamp_.trcRange() );
-	    if ( tkzs_.nrZ() == 1 )
-		outputtkzs.zsamp_ = tkzs_.zsamp_;
-	}
-	else
-	{
-	    // To create dummy with a single undefined voxel
-	    outputtkzs = tkzs_;
-	    outputtkzs.hsamp_.stop_ = outputtkzs.hsamp_.start_;
-	    outputtkzs.zsamp_.stop = outputtkzs.zsamp_.start;
-	}
-
+	TrcKeyZSampling outputtkzs = tkzs_;
+	outputtkzs.adjustTo( availabletkzs, true );
 	output->setSampling( outputtkzs );
     }
 
@@ -582,11 +563,14 @@ void EngineMan::setTrcKeyZSampling( const TrcKeyZSampling& newcs )
 DescSet* EngineMan::createNLAADS( DescID& nladescid, uiString& errmsg,
 				  const DescSet* addtoset )
 {
+    if ( !nlamodel_ )
+    { errmsg = toUiString("Internal: No NLA Model"); return 0; }
+
     if ( attrspecs_.isEmpty() ) return 0;
     DescSet* descset = addtoset ? new DescSet( *addtoset )
 				: new DescSet( attrspecs_[0].is2D() );
 
-    if ( !addtoset && nlamodel_ && !descset->usePar(nlamodel_->pars()) )
+    if ( !addtoset && !descset->usePar(nlamodel_->pars()) )
     {
 	errmsg = descset->errMsg();
 	delete descset;
@@ -1183,7 +1167,7 @@ Processor* EngineMan::getProcessor( uiString& errmsg )
     {
 	DescID nlaid( SelSpec::cNoAttrib() );
 	procattrset_ = createNLAADS( nlaid, errmsg );
-	if ( !errmsg.isEmpty() )
+	if ( !procattrset_ )
 	    mErrRet(errmsg)
 	outid = nlaid;
     }
@@ -1218,7 +1202,7 @@ Processor* EngineMan::createTrcSelOutput( uiString& errmsg,
     if ( !proc )
 	return 0;
 
-    TrcSelectionOutput* attrout	= new TrcSelectionOutput( bidvalset, outval );
+    TrcSelectionOutput* attrout = new TrcSelectionOutput( bidvalset, outval );
     attrout->setOutput( &output );
     if ( cubezbounds )
 	attrout->setTrcsBounds( *cubezbounds );

@@ -115,10 +115,10 @@ public:
     void			setValue(double,int idx=0);
 
     virtual int			getDefaultIntValue(int idx=0) const;
-    virtual float		getDefaultfValue(int idx=0) const;
+    virtual float		getDefaultFValue(int idx=0) const;
     bool			getDefaultBoolValue(int idx=0) const;
     const char*			getDefaultStringValue(int idx=0) const;
-    virtual double		getDefaultdValue(int idx=0) const;
+    virtual double		getDefaultDValue(int idx=0) const;
 
     void			setDefaultValue(int,int idx=0);
     void			setDefaultValue(float,int idx=0);
@@ -140,10 +140,14 @@ protected:
     virtual bool		isEqual(const Param&) const;
 
 public:
-    /*mDeprecated*/ float	getfValue(int idx=0) const
+    mDeprecated float		getfValue( int idx=0 ) const
 				{ return getFValue( idx ); }
-    /*mDeprecated*/ double	getdValue(int idx=0) const
+    mDeprecated double		getdValue( int idx=0 ) const
 				{ return getDValue( idx ); }
+    mDeprecated float		getDefaultfValue( int idx=0 ) const
+				{ return getDefaultFValue( idx ); }
+    mDeprecated double		getDefaultdValue( int idx=0 ) const
+				{ return getDefaultDValue( idx ); }
 };
 
 } // namespace Attrib

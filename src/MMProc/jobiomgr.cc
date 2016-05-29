@@ -333,6 +333,7 @@ bool JobIOHandler::readTag( char& tag, SeparString& sepstr,
 // JobIOMgr
 JobIOMgr::JobIOMgr( int firstport, float prioritylevel )
     : iohdlr_(*new JobIOHandler(firstport))
+    , execpars_(true)
 {
     for ( int count=0; count<10 && !iohdlr_.ready(); count++ )
 	{ sleepSeconds( 0.1 ); }
@@ -568,23 +569,31 @@ void JobIOMgr::mkCommand( OS::MachineCommand& mc, const HostData& machine,
     }
 
     CommandString argstr( machine );
-    FilePath progfp( progname );
+    BufferString cmd;
     if ( unixtounix )
-    { //ssh-rsh requires full path to exec
-	progfp.insert( GetExecPlfDir() );
-	progfp = machine.convPath( HostData::Appl, progfp, &localhost );
-    }
+	cmd.set( JobIOMgr::mkRexecCmd( progname, machine, localhost ) );
+    else
+	cmd.set( progname );
 
     argstr.addFlag( OS::MachineCommand::sKeyMasterHost(),
 		 System::localAddress() );
     argstr.addFlag( OS::MachineCommand::sKeyMasterPort(), iohdlr_.port() );
     argstr.addFlag( OS::MachineCommand::sKeyJobID(), ji.descnr_ );
-
-    BufferString cmd( unixtounix ? progfp.fullPath( machine.pathStyle() ).str()
-				 : progfp.fileName().str() );
-
     argstr.addFilePath( iopfp );
     cmd.addSpace().add( argstr.string() );
 
     mc.setCommand( cmd.str() );
+}
+
+
+BufferString JobIOMgr::mkRexecCmd( const char* prognm,
+				   const HostData& machine,
+				   const HostData& localhost )
+{
+    FilePath execfp( GetScriptDir(), "exec_prog" );
+    execfp = machine.convPath( HostData::Appl, execfp, &localhost );
+
+    BufferString res( execfp.fullPath( machine.pathStyle() ).str() );
+
+    return res.addSpace().add( prognm );
 }

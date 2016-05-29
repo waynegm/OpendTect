@@ -155,9 +155,8 @@ uiSeisWvltExp::uiSeisWvltExp( uiParent* p )
 				     BoolInpSpec(true) );
     addzfld_->attach( alignedBelow, wvltfld_ );
 
-    outpfld_ = new uiFileInput( this, uiStrings::phrOutput(uiStrings::phrASCII(
-				uiStrings::sFile())), uiFileInput::Setup()
-				.forread(false) );
+    outpfld_ = new uiFileInput( this, uiStrings::sOutputASCIIFile(),
+				uiFileInput::Setup().forread(false) );
     outpfld_->attach( alignedBelow, addzfld_ );
 }
 

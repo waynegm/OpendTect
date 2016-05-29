@@ -219,6 +219,9 @@ uiString uiStrings::phrWriting( const uiString& string )
 uiString uiStrings::phrSave( const uiString& string )
 { return toUiString(joinstring).arg(sSave()).arg(string); }
 
+uiString uiStrings::phrSaveAs( const uiString& string )
+{ return tr( "Save %1 as" ).arg( string ); }
+
 uiString uiStrings::phrShowIn( const uiString& string )
 { return toUiString(joinstring).arg(sShowIn()).arg(string); }
 
@@ -230,6 +233,9 @@ uiString uiStrings::phrStorageDir( const uiString& string )
 
 uiString uiStrings::phrLoad( const uiString& string )
 { return toUiString(joinstring).arg(sLoad()).arg(string); }
+
+uiString uiStrings::phrLoading( const uiString& string )
+{ return tr("Loading %1").arg(string); }
 
 uiString uiStrings::phrXcoordinate( const uiString& string )
 { return toUiString(joinstring).arg(sXcoordinate()).arg(string); }

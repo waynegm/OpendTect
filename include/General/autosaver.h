@@ -12,109 +12,74 @@ ________________________________________________________________________
 -*/
 
 #include "generalmod.h"
-#include "monitor.h"
-#include "multiid.h"
+#include "notify.h"
 #include "uistring.h"
-class Timer;
-class IOObj;
 class IOStream;
-
-
-/*!\brief Object that with auto-save.
-
-  You need to provide a fingerprint of your state when asked (prepare for this
-  coming from another thread). If the fingerprint differs from previous time,
-  you will be asked to store. The IOObj you get will be a modified version
-  (always default local format). It will have a temporary IOObj ID.
-  The actual fingerprint is up to you. Just make the chance of accidental
-  match very low.
-
-  You should tell the object when the user has (in some way) successfully
-  saved the object, so next autosave can be postponed.
-
-*/
 
 
 namespace OD
 {
 
-class AutoSaveMgr;
+class AutoSaveObj;
+class Saveable;
 
 
-mExpClass(General) AutoSaver : public Monitorable
-{
+/*!\brief Auto-save manager. Singleton class.  Works from its own thread. */
+
+mExpClass(General) AutoSaver : public CallBacker
+{ mODTextTranslationClass(AutoSaver)
 public:
 
-			AutoSaver(const Monitorable&);
+    bool		isActive(bool bydefault=false) const;
+    void		setActive(bool,bool makedefault=true);
+    int			nrSecondsBetweenSaves() const;
+    void		setNrSecondsBetweenSaves(int);
+
+    void		add(const Saveable&);
+
+			// triggered from mgr's thread. CB obj is the saver.
+    Notifier<AutoSaver> saveDone;
+    Notifier<AutoSaver> saveFailed;
+
+private:
+
+			AutoSaver();
 			~AutoSaver();
-    const Monitorable&	monitored() const		{ return obj_; }
 
-    mImplSimpleMonitoredGetSet(inline,key,setKey,MultiID,key_)
-    mImplSimpleMonitoredGetSet(inline,nrSeconds,setNrSeconds,int,nrseconds_)
-    inline		mImplSimpleMonitoredGet(isFinished,bool,objdeleted_)
-
-			// These functions can be called from any thread
-    virtual BufferString getFingerPrint() const		= 0;
-    virtual bool	store(const IOObj&) const	= 0;
-    virtual void	remove(const IOObj&) const;
-
-    void		userSaveOccurred();
-    bool		saveNow()		{ return doWork(true); }
-    uiString		errMsg() const		{ return errmsg_; }
-
-protected:
-
-    const Monitorable&	obj_;
-    MultiID		key_;
-    int			nrseconds_;
-    bool		objdeleted_;
-
-    BufferString	prevfingerprint_;
-    IOStream*		prevstoreioobj_;
-    int			savenr_;
+    mutable Threads::Lock lock_;
+    Threads::Thread*	thread_;
+    ObjectSet<AutoSaveObj> asobjs_;
     int			curclockseconds_;
-    int			lastsaveclockseconds_;
-    mutable uiString	errmsg_;
+    int			nrclocksecondsbetweenautosaves_;
+    Threads::Atomic<bool> isactive_;
+    Threads::Atomic<bool> appexits_;
+    Threads::Atomic<bool> surveychanges_;
 
-    bool		doWork(bool forcesave);
+    void		remove(AutoSaveObj*);
+    void		appExitCB(CallBacker*);
+    void		svrDelCB(CallBacker*);
+    void		survChgCB(CallBacker*);
 
-private:
+    void		go();
+    static inline void	goCB(CallBacker*);
 
-    void		objDel(CallBacker*);
-    void		removePrevStored();
+    void		handleSurvChg();
 
-    bool		act(int);
-    friend class	AutoSaveMgr;
+    friend class	AutoSaveObj;
 
-};
-
-
-/*!\brief Auto-save manager. Singleton class. */
-
-mExpClass(General) AutoSaveMgr : public CallBacker
-{ mODTextTranslationClass(AutoSaveMgr)
 public:
 
-    void		add(AutoSaver*);
+    // Probably not useful 4 u:
 
-    static AutoSaveMgr&	getInst();
-
-private:
-
-			AutoSaveMgr();
-
-    Timer&		timer_;
-    ObjectSet<AutoSaver> savers_;
-    Threads::Lock	lock_;
-    int			nrcycles_; // one per second
-
-    void		timerTick(CallBacker*);
+    static AutoSaver&	getInst();		    // use OD::AUTOSAVE()
+    void		setEmpty();		    // try setActive(false)
+    Threads::Thread&	thread()		    { return *thread_; }
 
 };
 
 
-mGlobal(General) inline AutoSaveMgr& AUTOSAVE()
-{ return AutoSaveMgr::getInst(); }
+mGlobal(General) inline AutoSaver& AUTOSAVE()
+{ return AutoSaver::getInst(); }
 
 
 }; //namespace OD

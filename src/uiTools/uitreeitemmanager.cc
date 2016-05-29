@@ -88,6 +88,18 @@ bool uiTreeItem::anyButtonClick( uiTreeViewItem* item )
 }
 
 
+bool uiTreeItem::doubleClick( uiTreeViewItem* item )
+{
+    for ( int idx=0; idx<children_.size(); idx++ )
+    {
+	if ( children_[idx]->doubleClick(item) )
+	    return true;
+    }
+
+    return false;
+}
+
+
 void uiTreeItem::updateSelection( int selid, bool downward )
 {
     if ( uitreeviewitem_ )
@@ -529,6 +541,7 @@ uiTreeTopItem::uiTreeTopItem( uiTreeView* listview, bool disab )
 			mCB(this,uiTreeTopItem,rightClickCB) );
     listview_->mouseButtonPressed.notify(
 			mCB(this,uiTreeTopItem,anyButtonClickCB) );
+    listview_->doubleClicked.notify( mCB(this,uiTreeTopItem,doubleClickCB) );
     listview_->selectionChanged.notify(
 			mCB(this,uiTreeTopItem,selectionChanged) );
     listview_->itemRenamed.notify( mCB(this,uiTreeTopItem,itemRenamed) );
@@ -541,6 +554,7 @@ uiTreeTopItem::~uiTreeTopItem()
 			mCB(this,uiTreeTopItem,rightClickCB) );
     listview_->mouseButtonPressed.remove(
 			mCB(this,uiTreeTopItem,anyButtonClickCB) );
+    listview_->doubleClicked.remove( mCB(this,uiTreeTopItem,doubleClickCB) );
     listview_->selectionChanged.remove(
 			mCB(this,uiTreeTopItem,selectionChanged) );
     listview_->itemRenamed.remove( mCB(this,uiTreeTopItem,itemRenamed) );
@@ -606,9 +620,20 @@ void uiTreeTopItem::rightClickCB( CallBacker* )
 }
 
 
-void uiTreeTopItem::anyButtonClickCB( CallBacker* cb )
+void uiTreeTopItem::anyButtonClickCB( CallBacker* )
 {
     handleSelectionChanged( true );
+}
+
+
+void uiTreeTopItem::doubleClickCB( CallBacker* )
+{
+    uiTreeViewItem* itm = listview_->itemNotified();
+    if ( !itm )
+	return;
+
+    if ( doubleClick(itm) )
+	listview_->unNotify();
 }
 
 

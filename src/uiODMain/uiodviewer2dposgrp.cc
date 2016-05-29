@@ -161,10 +161,7 @@ void uiODViewer2DPosGrp::usePar( const IOPar& selpar )
     posdatasel_->usePar( selpar );
 
     if ( postypefld_)
-    {
 	postypefld_->box()->setText( mToPosTypeStr(posdatasel_->postype_) );
-	postypefld_->display( !posdatasel_->tkzs_.isFlat() );
-    }
 
     updateFlds();
 }
@@ -281,7 +278,6 @@ bool uiODViewer2DPosGrp::commitSel( bool emiterror )
     uiAttrSel* attrsel = is2D() ? inp2dfld_ : inp3dfld_;
     if ( attrsel && posdatasel_->selectdata_ )
     {
-	attrsel->processInput();
 	BufferString attrnm = attrsel->getAttrName();
 	if ( attrnm.isEmpty() )
 	    { mErrRet( uiStrings::phrSelect(tr("a valid attribute")) ) }
@@ -306,7 +302,12 @@ void uiODViewer2DPosGrp::updateDataSelFld()
 {
     uiAttrSel* attrsel = is2D() ? inp2dfld_ : inp3dfld_;
     if ( attrsel )
+    {
 	attrsel->display( posdatasel_->selectdata_ );
+	if ( posdatasel_->selspec_.id().isValid() )
+	    attrsel->setSelSpec( &posdatasel_->selspec_ );
+    }
+
 }
 
 
@@ -431,9 +432,12 @@ void Viewer2DPosDataSel::fillPar( IOPar& iop ) const
 {
     tkzs_.fillPar( iop );
     selspec_.fillPar( iop );
-    iop.set( sKeyRdmLineID(), rdmlineid_ );
-    iop.set( sKeyRdmLineMultiID(), rdmlinemultiid_ );
-    iop.set( sKeyRdmLineID(), rdmlineid_ );
+    if ( postype_ == Viewer2DPosDataSel::RdmLine )
+    {
+	iop.set( sKeyRdmLineMultiID(), rdmlinemultiid_ );
+	iop.set( sKeyRdmLineID(), rdmlineid_ );
+    }
+
     iop.setYN( sKeySelectData(), selectdata_ );
     iop.set( sKey::GeomID(), geomid_ );
     iop.set( PosTypeDef().name(), toString(postype_) );
@@ -444,10 +448,15 @@ void Viewer2DPosDataSel::usePar( const IOPar& iop )
 {
     tkzs_.usePar( iop );
     selspec_.usePar( iop );
-    iop.get( sKeyRdmLineID(), rdmlineid_ );
-    iop.get( sKeyRdmLineMultiID(), rdmlinemultiid_ );
-    iop.get( sKeyRdmLineID(), rdmlineid_ );
+    PosTypeDef().parse( iop, PosTypeDef().name(), postype_ );
+    if ( postype_ == Viewer2DPosDataSel::RdmLine )
+    {
+	iop.get( sKeyRdmLineID(), rdmlineid_ );
+	iop.get( sKeyRdmLineMultiID(), rdmlinemultiid_ );
+    }
+    else
+	rdmlinemultiid_.setUdf();
+
     iop.getYN( sKeySelectData(), selectdata_ );
     iop.get( sKey::GeomID(), geomid_ );
-    PosTypeDef().parse( iop, PosTypeDef().name(), postype_ );
 }

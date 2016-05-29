@@ -53,6 +53,7 @@ public:
     uiODViewer2D*		find2DViewer(const MouseEventHandler&);
     uiODViewer2D*		find2DViewer(const Pos::GeomID&);
     uiODViewer2D*		find2DViewer(const TrcKeyZSampling&);
+    int				nr2DViewers() const;
 
     int				displayIn2DViewer(
 	    				Viewer2DPosDataSel&,bool wva,
@@ -186,6 +187,7 @@ protected:
     void			setupFaults(uiODViewer2D*);
     void			setupFaultSSs(uiODViewer2D*);
     void			setupPickSets(uiODViewer2D*);
+    void			setupCurInterpItem(uiODViewer2D*);
     void			reSetPrevDragMode(uiODViewer2D*);
 
     void			fillPar(IOPar&) const;

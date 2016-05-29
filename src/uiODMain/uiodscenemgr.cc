@@ -49,7 +49,7 @@ ________________________________________________________________________
 #include "ioman.h"
 #include "ioobj.h"
 #include "mpeengine.h"
-#include "picksetmgr.h"
+#include "picksetmanager.h"
 #include "ptrman.h"
 #include "randomlinegeom.h"
 #include "sorting.h"
@@ -327,6 +327,9 @@ void uiODSceneMgr::setSceneName( int sceneid, const uiString& nm )
 
 uiString uiODSceneMgr::getSceneName( int sceneid ) const
 { return const_cast<uiODSceneMgr*>(this)->visServ().getObjectName( sceneid ); }
+
+const ZDomain::Info* uiODSceneMgr::zDomainInfo( int sceneid ) const
+{ return const_cast<uiODSceneMgr*>(this)->visServ().zDomainInfo( sceneid ); }
 
 
 void uiODSceneMgr::getScenePars( IOPar& iopar )
@@ -744,12 +747,20 @@ void uiODSceneMgr::switchCameraType( CallBacker* )
 }
 
 
-int uiODSceneMgr::askSelectScene() const
+int uiODSceneMgr::askSelectScene( const char* zdomkeyfilter ) const
 {
     uiStringSet scenenms; TypeSet<int> sceneids;
+    const FixedString zdomkey( zdomkeyfilter );
     for ( int idx=0; idx<scenes_.size(); idx++ )
     {
 	int sceneid = scenes_[idx]->itemmanager_->sceneID();
+	if ( !zdomkey.isEmpty() )
+	{
+	    const ZDomain::Info* zinfo = zDomainInfo( sceneid );
+	    if ( !zinfo || zdomkey != zinfo->key() )
+		continue;
+	}
+
 	sceneids += sceneid;
 	scenenms.add( getSceneName(sceneid) );
     }
@@ -1110,24 +1121,23 @@ void uiODSceneMgr::gtLoadedPickSetIDs( const uiTreeItem& topitm,
     for ( int chidx=0; chidx<topitm.nrChildren(); chidx++ )
     {
 	const uiTreeItem* chlditm = topitm.getChild( chidx );
+	MultiID setid;
 	if ( poly )
 	{
 	    mDynamicCastGet(const uiODPolygonTreeItem*,polyitem,chlditm)
 	    if ( !polyitem )
 		continue;
-
-	    const MultiID& mid = Pick::Mgr().get( polyitem->getSet() );
-	    picks.addIfNew( mid );
+	    setid = Pick::SetMGR().getID( polyitem->getSet() );
 	}
 	else
 	{
 	    mDynamicCastGet(const uiODPickSetTreeItem*,pickitem,chlditm)
 	    if ( !pickitem )
 		continue;
-
-	    const MultiID& mid = Pick::Mgr().get( pickitem->getSet() );
-	    picks.addIfNew( mid );
+	    setid = Pick::SetMGR().getID( pickitem->getSet() );
 	}
+	if ( !setid.isUdf() )
+	    picks.addIfNew( setid );
     }
 }
 
@@ -1226,10 +1236,11 @@ int uiODSceneMgr::addEMItem( const EM::ObjectID& emid, int sceneid )
 }
 
 
-int uiODSceneMgr::addPickSetItem( const MultiID& mid, int sceneid )
+int uiODSceneMgr::addPickSetItem( const MultiID& setid, int sceneid )
 {
-    Pick::Set* ps = applMgr().pickServer()->loadSet( mid );
-    if ( !ps ) return -1;
+    RefMan<Pick::Set> ps = Pick::SetMGR().fetchForEdit( setid );
+    if ( !ps )
+	return -1;
 
     return addPickSetItem( *ps, sceneid );
 }

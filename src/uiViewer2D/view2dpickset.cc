@@ -15,8 +15,8 @@ ________________________________________________________________________
 #include "flatposdata.h"
 #include "ioobj.h"
 #include "ioman.h"
-#include "picksetmgr.h"
-#include "picksettr.h"
+#include "ctxtioobj.h"
+#include "picksetmanager.h"
 #include "seisdatapack.h"
 #include "separstr.h"
 #include "survinfo.h"
@@ -28,15 +28,21 @@ ________________________________________________________________________
 
 mCreateVw2DFactoryEntry( VW2DPickSet );
 
-VW2DPickSet::VW2DPickSet( const EM::ObjectID& picksetidx, uiFlatViewWin* win,
+VW2DPickSet::VW2DPickSet( const EM::ObjectID& psid, uiFlatViewWin* win,
 			  const ObjectSet<uiFlatViewAuxDataEditor>& editors )
     : Vw2DDataObject()
     , pickset_(0)
     , deselected_(this)
     , isownremove_(false)
 {
-    if ( picksetidx >= 0 && Pick::Mgr().size() > picksetidx )
-	pickset_ = &Pick::Mgr().get( picksetidx );
+    if ( psid > 0 )
+    {
+	MultiID setid( IOObjContext::getStdDirData(IOObjContext::Loc)->id_ );
+	setid.add( psid );
+	RefMan<Pick::Set> ps = Pick::SetMGR().fetchForEdit( setid );
+	if ( ps )
+	    setPickSet( ps );
+    }
 
     for ( int idx=0; idx<editors.size(); idx++ )
     {
@@ -45,7 +51,6 @@ VW2DPickSet::VW2DPickSet( const EM::ObjectID& picksetidx, uiFlatViewWin* win,
 	picks_ += viewers_[idx]->createAuxData( "Picks" );
 
 	viewers_[idx]->addAuxData( picks_[idx] );
-	viewers_[idx]->appearance().annot_.editable_ = false;
 	mAttachCB( viewers_[idx]->dataChanged, VW2DPickSet::dataChangedCB );
 
 	auxids_ += editors_[idx]->addAuxData( picks_[idx], true );
@@ -54,9 +59,6 @@ VW2DPickSet::VW2DPickSet( const EM::ObjectID& picksetidx, uiFlatViewWin* win,
 	mAttachCB( editors_[idx]->removeSelected, VW2DPickSet::pickRemoveCB );
 	mAttachCB( editors_[idx]->movementFinished, VW2DPickSet::pickAddChgCB );
     }
-
-    mAttachCB( Pick::Mgr().setChanged, VW2DPickSet::dataChangedCB );
-    mAttachCB( Pick::Mgr().locationChanged, VW2DPickSet::dataChangedCB );
 }
 
 
@@ -69,6 +71,19 @@ VW2DPickSet::~VW2DPickSet()
 	editors_[ivwr]->removeAuxData( auxids_[ivwr] );
     }
     deepErase( picks_ );
+}
+
+
+void VW2DPickSet::setPickSet( Pick::Set* ps )
+{
+    if ( pickset_ == ps )
+	return;
+    else if ( pickset_ )
+	mDetachCB( pickset_->objectChanged(), VW2DPickSet::dataChangedCB );
+
+    pickset_ = ps;
+    if ( pickset_ )
+	mAttachCB( pickset_->objectChanged(), VW2DPickSet::dataChangedCB );
 }
 
 
@@ -91,18 +106,14 @@ void VW2DPickSet::pickAddChgCB( CallBacker* cb )
     if ( dp )
     {
 	mDynamicCastGet(const SeisFlatDataPack*,seisdp,dp.ptr())
-	if ( seisdp && seisdp->nrTrcs() )
+	if ( seisdp && seisdp->nrTrcs() && seisdp->is2D() )
 	{
 	    const TrcKey trckey = seisdp->getTrcKey( 0 );
 	    newloc.setGeomID( trckey.geomID() );
 	}
     }
 
-    (*pickset_) += newloc;
-    const int locidx = pickset_->size()-1;
-    Pick::SetMgr::ChangeData cd( Pick::SetMgr::ChangeData::Added,
-				 pickset_, locidx );
-    Pick::Mgr().reportChange( 0, cd );
+    pickset_->add( newloc );
 }
 
 
@@ -112,7 +123,7 @@ void VW2DPickSet::pickRemoveCB( CallBacker* cb )
     if ( !editor || !pickset_ ) return;
 
     const int editoridx = editors_.indexOf( editor );
-    if ( editoridx<0 ) return;
+    if ( editoridx < 0 ) return;
 
     const TypeSet<int>&	selpts = editor->getSelPtIdx();
     const int selsize = selpts.size();
@@ -125,10 +136,7 @@ void VW2DPickSet::pickRemoveCB( CallBacker* cb )
 
 	const int pickidx = picksetidxs_[locidx];
 	picksetidxs_.removeSingle( locidx );
-	Pick::SetMgr::ChangeData cd( Pick::SetMgr::ChangeData::ToBeRemoved,
-				     pickset_, pickidx );
-	pickset_->removeSingle( pickidx );
-	Pick::Mgr().reportChange( 0, cd );
+	pickset_->remove( pickidx );
     }
 
     isownremove_ = false;
@@ -137,9 +145,10 @@ void VW2DPickSet::pickRemoveCB( CallBacker* cb )
 
 OD::MarkerStyle2D VW2DPickSet::get2DMarkers( const Pick::Set& ps ) const
 {
-    OD::MarkerStyle2D style( OD::MarkerStyle2D::Square, ps.disp_.mkstyle_.size_,
-			 ps.disp_.mkstyle_.color_ );
-    switch( ps.disp_.mkstyle_.type_ )
+    const Pick::Set::Disp psdisp = ps.getDisp();
+    OD::MarkerStyle2D style( OD::MarkerStyle2D::Square, psdisp.mkstyle_.size_,
+			     psdisp.mkstyle_.color_ );
+    switch( psdisp.mkstyle_.type_ )
     {
 	case OD::MarkerStyle3D::Plane:
 	    style.type_ = OD::MarkerStyle2D::Plane;
@@ -172,11 +181,14 @@ OD::MarkerStyle2D VW2DPickSet::get2DMarkers( const Pick::Set& ps ) const
 
 void VW2DPickSet::updateSetIdx( const TrcKeyZSampling& cs )
 {
-    if ( !pickset_ ) return;
+    if ( !pickset_ )
+	return;
+
     picksetidxs_.erase();
+    MonitorLock ml( *pickset_ );
     for ( int idx=0; idx<pickset_->size(); idx++ )
     {
-	if ( cs.hsamp_.includes((*pickset_)[idx].binID()) )
+	if ( cs.hsamp_.includes(pickset_->get(idx).binID()) )
 	    picksetidxs_ += idx;
     }
 }
@@ -184,11 +196,14 @@ void VW2DPickSet::updateSetIdx( const TrcKeyZSampling& cs )
 
 void VW2DPickSet::updateSetIdx( const TrcKeyPath& trckeys )
 {
-    if ( !pickset_ ) return;
+    if ( !pickset_ )
+	return;
+
     picksetidxs_.erase();
+    MonitorLock ml( *pickset_ );
     for ( int idx=0; idx<pickset_->size(); idx++ )
     {
-	if ( trckeys.isPresent((*pickset_)[idx].trcKey()) )
+	if ( trckeys.isPresent(pickset_->get(idx).trcKey()) )
 	    picksetidxs_ += idx;
     }
 }
@@ -197,18 +212,21 @@ void VW2DPickSet::updateSetIdx( const TrcKeyPath& trckeys )
 void VW2DPickSet::drawAll()
 {
     ConstRefMan<FlatDataPack> fdp = viewers_[0]->getPack( true, true );
-    if ( !fdp || !pickset_ ) return;
+    if ( !fdp || !pickset_ )
+	return;
 
     mDynamicCastGet(const RegularFlatDataPack*,regfdp,fdp.ptr());
     mDynamicCastGet(const RandomFlatDataPack*,randfdp,fdp.ptr());
-    if ( !regfdp && !randfdp ) return;
+    if ( !regfdp && !randfdp )
+	return;
 
     if ( regfdp )
 	updateSetIdx( regfdp->sampling() );
     else if ( randfdp )
 	updateSetIdx( randfdp->getPath() );
 
-    if ( isownremove_ ) return;
+    if ( isownremove_ )
+	return;
 
     RefMan<Survey::Geometry3D> geom3d = SI().get3DGeometry( false );
     const Pos::IdxPair2Coord& bid2crd = geom3d->binID2Coord();
@@ -227,15 +245,17 @@ void VW2DPickSet::drawAll()
 	OD::MarkerStyle2D markerstyle = get2DMarkers( *pickset_ );
 	const int nrpicks = picksetidxs_.size();
 	ConstRefMan<ZAxisTransform> zat = vwr.getZAxisTransform();
+	MonitorLock ml( *pickset_ );
 	for ( int idx=0; idx<nrpicks; idx++ )
 	{
 	    const int pickidx = picksetidxs_[idx];
-	    const Coord3& pos = (*pickset_)[pickidx].pos();
+	    const Pick::Location pl = pickset_->get ( pickidx );
+	    const Coord3& pos = pl.pos();
 	    const double z = zat ? zat->transform(pos) : pos.z;
 	    if ( regfdp && regfdp->isVertical() )
 	    {
 		BufferString dipval;
-		(*pickset_)[pickidx].getKeyedText( "Dip" , dipval );
+		pl.getKeyedText( "Dip" , dipval );
 		SeparString dipstr( dipval );
 		const Coord bidf = bid2crd.transformBackNoSnap( pos.coord() );
 		const bool oninl =
@@ -277,9 +297,11 @@ void VW2DPickSet::drawAll()
 
 void VW2DPickSet::clearPicks()
 {
-    if ( !pickset_ ) return;
-    pickset_->erase();
-    drawAll();
+    if ( pickset_ )
+    {
+	pickset_->setEmpty();
+	drawAll();
+    }
 }
 
 
@@ -326,22 +348,16 @@ bool VW2DPickSet::usePar( const IOPar& iop )
     MultiID mid;
     iop.get( sKeyMID(), mid );
 
-    PtrMan<IOObj> ioobj = IOM().get( mid );
-    if ( Pick::Mgr().indexOf(ioobj->key()) >= 0 )
+    RefMan<Pick::Set> newps = Pick::SetMGR().fetchForEdit( mid );
+    if ( !newps )
 	return false;
-    Pick::Set* newps = new Pick::Set; uiString errmsg;
-    if ( PickSetTranslator::retrieve(*newps,ioobj,errmsg) )
-    {
-	Pick::Mgr().set( ioobj->key(), newps );
-	pickset_ = newps;
-	return true;
-    }
-    delete newps;
-    return false;
+
+    setPickSet( newps );
+    return true;
 }
 
 
-const MultiID VW2DPickSet::pickSetID() const
+MultiID VW2DPickSet::pickSetID() const
 {
-    return pickset_ ? Pick::Mgr().get( *pickset_ ) : -1;
+    return pickset_ ? Pick::SetMGR().getID( *pickset_ ) : MultiID::udf();
 }

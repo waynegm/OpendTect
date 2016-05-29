@@ -52,6 +52,11 @@ ________________________________________________________________________
 #include "survgeom2d.h"
 #include "view2ddata.h"
 #include "view2ddataman.h"
+#include "vishorizondisplay.h"
+#include "vishorizon2ddisplay.h"
+#include "visfaultdisplay.h"
+#include "visfaultsticksetdisplay.h"
+#include "vispicksetdisplay.h"
 #include "visrandomtrackdisplay.h"
 
 
@@ -94,6 +99,10 @@ uiODViewer2DMgr::~uiODViewer2DMgr()
 }
 
 
+int uiODViewer2DMgr::nr2DViewers() const
+{ return viewers2d_.size(); }
+
+
 void uiODViewer2DMgr::surveyChangedCB( CallBacker* )
 {
     if ( l2dintersections_ )
@@ -113,6 +122,35 @@ bool uiODViewer2DMgr::isItemPresent( const uiTreeItem* item ) const
     }
 
     return false;
+}
+
+
+void uiODViewer2DMgr::setupCurInterpItem( uiODViewer2D* vwr2d )
+{
+    const int visselobjid = visServ().getCurInterObjID();
+    if ( visselobjid<0 )
+	return;
+
+    ConstRefMan<visBase::DataObject> dataobj = visServ().getObject(visselobjid);
+    mDynamicCastGet(const visSurvey::HorizonDisplay*,hor3ddisp,dataobj.ptr());
+    mDynamicCastGet(const visSurvey::Horizon2DDisplay*,hor2ddisp,dataobj.ptr());
+    mDynamicCastGet(const visSurvey::FaultDisplay*,fltdisp,dataobj.ptr());
+    mDynamicCastGet(const visSurvey::FaultStickSetDisplay*,fltssdisp,
+	    	    dataobj.ptr());
+    mDynamicCastGet(const visSurvey::PickSetDisplay*,pickdisp,dataobj.ptr());
+    if ( hor3ddisp )
+	vwr2d->setupTrackingHorizon3D( hor3ddisp->getObjectID() );
+    else if ( hor2ddisp )
+	vwr2d->setupTrackingHorizon2D( hor2ddisp->getObjectID() );
+    else if ( fltdisp )
+	vwr2d->setupNewTempFault( fltdisp->getEMObjectID() );
+    else if ( fltssdisp )
+    {
+	vwr2d->setupNewTempFaultSS( fltssdisp->getEMObjectID() );
+	vwr2d->setupNewTempFaultSS2D( fltssdisp->getEMObjectID() );
+    }
+    else if ( pickdisp )
+	vwr2d->setupNewPickSet( pickdisp->getMultiID() );
 }
 
 
@@ -661,6 +699,7 @@ void uiODViewer2DMgr::attachNotifiersAndSetAuxData( uiODViewer2D* vwr2d )
     setupFaults( vwr2d );
     setupFaultSSs( vwr2d );
     setupPickSets( vwr2d );
+    setupCurInterpItem( vwr2d );
 }
 
 
@@ -810,8 +849,6 @@ void uiODViewer2DMgr::getVWR2DDataGeomIDs(
 	if ( vdlnms.isPresent(wvalnm) )
 	    commongids += Survey::GM().getGeomID( wvalnm );
     }
-
-    return;
 }
 
 

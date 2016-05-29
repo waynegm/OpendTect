@@ -33,7 +33,8 @@ mExpClass(uiVolumeProcessing) uiChain : public uiDialog
 { mODTextTranslationClass(uiChain);
 public:
 
-				uiChain(uiParent*,Chain&, bool withprocessnow);
+				uiChain(uiParent*,Chain&,bool is2d,
+					bool withprocessnow);
 				~uiChain();
 
     void			setChain(Chain&);
@@ -69,10 +70,12 @@ protected:
     void			moveDownCB(CallBacker*);
     void			propertiesCB(CallBacker*);
 
-    static uiString		getPossibleInitialStepNames();
+    static uiString		getPossibleInitialStepNames(bool);
 
     IOPar			restorepar_;
     Chain&			chain_;
+    bool			is2d_;
+    BufferStringSet		factorysteptypes_;
 
     uiListBox*			factorylist_;
     uiButton*			addstepbutton_;

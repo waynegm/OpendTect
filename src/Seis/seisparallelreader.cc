@@ -230,21 +230,18 @@ bool ParallelReader::doWork( od_int64 start, od_int64 stop, int threadid )
         bidvalpos = bidvals_->getPos( start );
         if ( !bidvalpos.isValid() )
             return false;
-
-        curbid = bidvals_->getBinID( bidvalpos );
     }
     else
     {
 	iter.setSampling( tkzs_.hsamp_ );
-	iter.setNextPos( tkzs_.hsamp_.trcKeyAt(start) );
-	iter.next( curbid );
+	iter.setCurrentPos( start );
     }
 
     SeisTrc trc;
 
 #define mUpdateInterval 100
     int nrdone = 0;
-    for ( od_int64 idx=start; true; idx++, nrdone++ )
+    for ( od_int64 idx=start; idx<=stop; idx++, nrdone++ )
     {
 	if ( nrdone>mUpdateInterval )
 	{
@@ -254,6 +251,13 @@ bool ParallelReader::doWork( od_int64 start, od_int64 stop, int threadid )
 	    if ( !shouldContinue() )
 		return false;
 	}
+
+	if ( ( bidvals_ && !bidvals_->next(bidvalpos,false) ) ||
+	     ( !bidvals_ && !iter.next() ) )
+	    return false;
+
+	curbid = bidvals_ ? bidvals_->getBinID( bidvalpos )
+			  : iter.curBinID();
 
         if ( translator->goTo( curbid )
 	  && reader->get( trc )
@@ -303,22 +307,6 @@ bool ParallelReader::doWork( od_int64 start, od_int64 stop, int threadid )
 		}
             }
         }
-
-        if ( idx==stop )
-            break;
-
-        if ( bidvals_ )
-        {
-            if ( !bidvals_->next(bidvalpos,false) )
-                return false;
-
-            curbid = bidvals_->getBinID( bidvalpos );
-        }
-        else
-        {
-            if ( !iter.next( curbid ) )
-                return false;
-        }
     }
 
     addToNrDone( nrdone );
@@ -341,28 +329,21 @@ ParallelReader2D::ParallelReader2D( const IOObj& ioobj, Pos::GeomID geomid,
     , dc_(DataCharacteristics::Auto)
     , dpclaimed_(false)
     , scaler_(0)
+    , dp_(0)
 {
-    SeisIOObjInfo info( ioobj );
-    info.getDataChar( dc_ );
-    if ( !comps )
-    {
-	const int nrcomps = info.nrComponents( geomid );
-	for ( int idx=0; idx<nrcomps; idx++ )
-	    components_ += idx;
-    }
-    else
+    if ( comps )
 	components_ = *comps;
 
-    if ( !tkzs )
-    {
-	StepInterval<int> trcrg;
-	info.getRanges( geomid, trcrg, tkzs_.zsamp_ );
-	tkzs_.hsamp_.set( Interval<int>(geomid,geomid), trcrg );
-    }
-    else
+    if ( tkzs )
 	tkzs_ = *tkzs;
 
-    totalnr_ = tkzs_.hsamp_.totalNr();
+    totalnr_ = tkzs_.isEmpty() ? 1 : tkzs_.hsamp_.totalNr();
+}
+
+
+bool ParallelReader2D::doPrepare( int )
+{
+    return init();
 }
 
 
@@ -371,13 +352,33 @@ bool ParallelReader2D::init()
     const SeisIOObjInfo info( *ioobj_ );
     if ( !info.isOK() ) return false;
 
+    info.getDataChar( dc_ );
+    if ( components_.isEmpty() )
+    {
+	const int nrcomps = info.nrComponents( geomid_ );
+	for ( int idx=0; idx<nrcomps; idx++ )
+	    components_ += idx;
+    }
+
+    if ( tkzs_.isEmpty() )
+    {
+	StepInterval<int> trcrg;
+	info.getRanges( geomid_, trcrg, tkzs_.zsamp_ );
+	tkzs_.hsamp_.set( Interval<int>(geomid_,geomid_), trcrg );
+    }
+
+    totalnr_ = tkzs_.hsamp_.totalNr();
+
     dp_ = new RegularSeisDataPack( SeisDataPack::categoryStr(true,true), &dc_ );
     dp_->setSampling( tkzs_ );
     if ( scaler_ )
 	dp_->setScaler( *scaler_ );
 
     if ( !addComponents(*dp_,*ioobj_,components_,0) )
+    {
+	dp_->unRef(); dp_ = 0;
 	return false;
+    }
 
     msg_ = uiStrings::phrReading( ioobj_->uiName() );
 
@@ -514,11 +515,12 @@ class ArrayFiller : public Task
 {
 public:
 ArrayFiller( SeisTrc& trc, const TypeSet<int>& components,
-	     const TypeSet<int>& outcomponents, RegularSeisDataPack& dp )
+	     const TypeSet<int>& outcomponents, RegularSeisDataPack& dp,
+	     bool is2d )
     : trc_(trc)
     , components_(components)
     , outcomponents_(outcomponents)
-    , dp_(dp)
+    , dp_(dp),is2d_(is2d)
 {}
 
 
@@ -527,10 +529,15 @@ ArrayFiller( SeisTrc& trc, const TypeSet<int>& components,
 
 bool execute()
 {
-    const int idx0 = dp_.sampling().hsamp_.lineIdx( trc_.info().inl() );
-    const int idx1 = dp_.sampling().hsamp_.trcIdx( trc_.info().crl() );
+    const int idx0 = is2d_ ? 0
+		: dp_.sampling().hsamp_.lineIdx( trc_.info().inl() );
+    const int idx1 = dp_.sampling().hsamp_.trcIdx( is2d_ ? trc_.info().nr_
+							 : trc_.info().crl() );
 
-    const StepInterval<float>& zsamp = dp_.sampling().zsamp_;
+    StepInterval<float> dpzsamp = dp_.sampling().zsamp_;
+    const StepInterval<float>& trczsamp = trc_.zRange();
+    dpzsamp.limitTo( trczsamp );
+    const int startidx = dp_.sampling().zsamp_.nearestIndex( dpzsamp.start );
 
     for ( int cidx=0; cidx<outcomponents_.size(); cidx++ )
     {
@@ -555,26 +562,27 @@ bool execute()
 	    const od_int64 offset = arr.info().getOffset( idx0, idx1, 0 );
 	    char* dststartptr = storarr + offset*bytespersamp;
 
-	    for ( int zidx=0; zidx<zsamp.nrSteps()+1; zidx++ )
+	    for ( int zidx=0; zidx<dpzsamp.nrSteps()+1; zidx++ )
 	    {
 		// Check if amplitude equals undef value of underlying data
 		// type knowing that array has been initialized with undefs
-		const float zval = zsamp.atIndex( zidx );
+		const float zval = dpzsamp.atIndex( zidx );
 		const int trczidx = trc_.nearestSample( zval );
 		const unsigned char* srcptr =
 			databuf->data() + trczidx*bytespersamp;
-		char* dstptr = dststartptr + zidx*bytespersamp;
+		char* dstptr = dststartptr + (zidx+startidx)*bytespersamp;
 		if ( memcmp(dstptr,srcptr,bytespersamp) )
 		    OD::sysMemCopy(dstptr,srcptr,bytespersamp );
 		else
-		    arr.set( idx0, idx1, zidx, trc_.getValue(zval,idcin) );
+		    arr.set( idx0, idx1, zidx+startidx,
+						    trc_.getValue(zval,idcin) );
 	    }
 	}
 	else
 	{
-	    for ( int zidx=0; zidx<zsamp.nrSteps()+1; zidx++ )
+	    for ( int zidx=0; zidx<dpzsamp.nrSteps()+1; zidx++ )
 	    {
-		const float zval = zsamp.atIndex( zidx );
+		const float zval = dpzsamp.atIndex( zidx );
 		arr.set( idx0, idx1, zidx, trc_.getValue(zval,idcin) );
 	    }
 	}
@@ -589,6 +597,7 @@ protected:
     const TypeSet<int>&		components_;
     const TypeSet<int>&		outcomponents_;
     RegularSeisDataPack&	dp_;
+    bool			is2d_;
 };
 
 
@@ -604,24 +613,13 @@ SequentialReader::SequentialReader( const IOObj& ioobj,
     , rdr_(*new SeisTrcReader(ioobj_))
     , dc_(DataCharacteristics::Auto)
     , initialized_(false)
+    , is2d_(false)
 {
-    SeisIOObjInfo info( ioobj );
-    info.getDataChar( dc_ );
-    if ( !comps )
-    {
-	const int nrcomps = info.nrComponents();
-	for ( int idx=0; idx<nrcomps; idx++ )
-	    components_ += idx;
-    }
-    else
+    if ( comps )
 	components_ = *comps;
 
-    info.getRanges( tkzs_ );
     if ( tkzs )
-	tkzs_.limitTo( *tkzs );
-
-    totalnr_ = tkzs_.hsamp_.totalNr();
-    nrdone_ = 0;
+	tkzs_ = *tkzs;
 
     queueid_ = Threads::WorkManager::twm().addQueue(
 				Threads::WorkManager::MultiThread,
@@ -689,26 +687,71 @@ bool SequentialReader::init()
     if ( initialized_ )
 	return true;
 
-    nrdone_ = 0;
     msg_ = tr("Initializing reader");
-    const SeisIOObjInfo info( *ioobj_ );
+    SeisIOObjInfo info( ioobj_ );
     if ( !info.isOK() ) return false;
+    is2d_ = info.is2D();
+    info.getDataChar( dc_ );
+    if ( components_.isEmpty() )
+    {
+	const int nrcomps = info.nrComponents();
+	for ( int idx=0; idx<nrcomps; idx++ )
+	    components_ += idx;
+    }
+
+    if ( is2d_ && !TrcKey::is2D(tkzs_.hsamp_.survid_) )
+    {
+	pErrMsg("TrcKeySampling for 2D data needed with GeomID as lineNr");
+	return false;
+    }
+
+    if ( !dp_ )
+    {
+	if ( !is2d_ )
+	{
+	    TrcKeyZSampling storedtkzs;
+	    info.getRanges( storedtkzs );
+	    if ( tkzs_.isDefined() )
+		tkzs_. limitTo( storedtkzs );
+	    else
+		tkzs_ = storedtkzs;
+	}
+	else
+	{
+	    Pos::GeomID geomid = tkzs_.hsamp_.start_.lineNr();
+	    StepInterval<int> trcrg;
+	    StepInterval<float> zrg;
+	    if ( !info.getRanges(geomid,trcrg,zrg) )
+		return false;
+
+	    trcrg.limitTo( tkzs_.hsamp_.trcRange() );
+	    tkzs_.zsamp_.limitTo( zrg );
+	    tkzs_.hsamp_.setTrcRange( trcrg );
+	}
+
+	dp_ = new RegularSeisDataPack( SeisDataPack::categoryStr(true,false),
+					&dc_);
+	DPM( DataPackMgr::SeisID() ).add( dp_.ptr() );
+	dp_->setSampling( tkzs_ );
+	dp_->setName( ioobj_->name() );
+	if ( scaler_ && !scaler_->isEmpty() )
+	    dp_->setScaler( *scaler_ );
+
+	if ( !addComponents(*dp_,*ioobj_,components_,0) )
+	    return false;
+    }
+
+    if ( !is2d_ )
+    {
+	PosInfo::CubeData cubedata;
+	if ( rdr_.get3DGeometryInfo(cubedata) )
+	    dp_->setTrcsSampling( new PosInfo::SortedCubeData(cubedata) );
+    }
+
+    totalnr_ = tkzs_.hsamp_.totalNr();
+    nrdone_ = 0;
 
     mSetSelData()
-
-    dp_ = new RegularSeisDataPack( SeisDataPack::categoryStr(true,false), &dc_);
-    DPM( DataPackMgr::SeisID() ).add( dp_.ptr() );
-    dp_->setSampling( tkzs_ );
-    dp_->setName( ioobj_->name() );
-    if ( scaler_ && !scaler_->isEmpty() )
-	dp_->setScaler( *scaler_ );
-
-    if ( !addComponents(*dp_,*ioobj_,components_,0) )
-	return false;
-
-    PosInfo::CubeData cubedata;
-    if ( rdr_.get3DGeometryInfo(cubedata) )
-	dp_->setTrcsSampling( new PosInfo::SortedCubeData(cubedata) );
 
     initialized_ = true;
     msg_ = uiStrings::phrReading( tr(" %1 \'%2\'").arg( uiStrings::sVolume() )
@@ -719,12 +762,8 @@ bool SequentialReader::init()
 
 bool SequentialReader::setDataPack( RegularSeisDataPack& dp, od_ostream* strm )
 {
-    nrdone_ = 0;
-
     dp_ = &dp;
-
     DPM( DataPackMgr::SeisID() ).add( dp_.ptr() );
-
     setDataChar( DataCharacteristics( dp.getDataDesc() ).userType() );
     setScaler( dp.getScaler() && !dp.getScaler()->isEmpty()
 	       ? dp.getScaler()->clone() : 0 );
@@ -732,22 +771,13 @@ bool SequentialReader::setDataPack( RegularSeisDataPack& dp, od_ostream* strm )
 
     if ( dp.sampling().isDefined() )
 	tkzs_ = dp.sampling();
+    else
+	dp_->setSampling( tkzs_ );
 
-    dp.setSampling( tkzs_ );
-
-    mSetSelData()
-
-    if ( dp.nrComponents() < components_.size() &&
+    if ( dp_->nrComponents() < components_.size() &&
 	 !addComponents(*dp_,*ioobj_,components_,strm) )
 	return false;
 
-    PosInfo::CubeData cubedata;
-    if ( rdr_.get3DGeometryInfo(cubedata) )
-	dp_->setTrcsSampling( new PosInfo::SortedCubeData(cubedata) );
-
-    initialized_ = true;
-    msg_ = uiStrings::phrReading( tr(" %1 \'%2\'").arg( uiStrings::sVolume() )
-						  .arg( ioobj_->uiName() ) );
     return true;
 }
 
@@ -773,7 +803,8 @@ int SequentialReader::nextStep()
 
     const TypeSet<int>& outcomponents = outcomponents_
 				      ? *outcomponents_ : components_;
-    Task* task = new ArrayFiller( *trc, components_, outcomponents, *dp_ );
+    Task* task =
+	new ArrayFiller( *trc, components_, outcomponents, *dp_, is2d_ );
     Threads::WorkManager::twm().addWork(
 	Threads::Work(*task,true), 0, queueid_, false, false, true );
 

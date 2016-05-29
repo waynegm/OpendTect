@@ -64,6 +64,8 @@ bool uiODVW2DVariableDensityTreeItem::init()
 
     uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(0);
     mAttachCB( vwr.dataChanged,uiODVW2DVariableDensityTreeItem::dataChangedCB );
+    mAttachCB( vwr.dispParsChanged,
+	       uiODVW2DVariableDensityTreeItem::dataChangedCB );
 
     const FlatView::DataDispPars& ddp = vwr.appearance().ddpars_;
     uitreeviewitem_->setCheckable( true );
@@ -247,40 +249,34 @@ void uiODVW2DVariableDensityTreeItem::createSelMenu( MenuItem& mnu )
     ConstRefMan<FlatDataPack> dp = vwr.getPack( false, true );
     if ( !dp ) return;
 
+    uiAttribPartServer* attrserv = applMgr()->attrServer();
     const Attrib::SelSpec& as = viewer2D()->selSpec( false );
     MenuItem* subitem = 0;
-    applMgr()->attrServer()->resetMenuItems();
+    attrserv->resetMenuItems();
 
     mDynamicCastGet(const RegularFlatDataPack*,regfdp,dp.ptr());
     const bool is2d = regfdp && regfdp->is2D();
+    Pos::GeomID geomid = viewer2D()->geomID();
+    subitem = attrserv->storedAttribMenuItem(as,is2d,false);
     if ( is2d )
-    {
-//	BufferString ln;
-//	dp2ddh->getLineName( ln );
-// TODO: Use lnm to get attributes for this line only
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,true,false);
-    }
-    else
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,false,false);
+	attrserv->filter2DMenuItems( *subitem, as, geomid, true, 0 );
     mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
-    subitem = applMgr()->attrServer()->calcAttribMenuItem( as, is2d, true );
-    mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
+
+    subitem = attrserv->calcAttribMenuItem( as, is2d, true );
     if ( is2d )
-    {
-//	BufferString ln;
-//	dp2ddh->getLineName( ln );
-// TODO: Use lnm to get attributes for this line only
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,true,true);
-    }
-    else
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,false,true );
+	attrserv->filter2DMenuItems( *subitem, as, geomid, false, 2 );
+    mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
+    
+    subitem = attrserv->storedAttribMenuItem(as,is2d,true );
+    if ( is2d )
+	attrserv->filter2DMenuItems( *subitem, as, geomid, true, 1 );
     mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
 }
 
 
 bool uiODVW2DVariableDensityTreeItem::handleSelMenu( int mnuid )
 {
-    const uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(0);
+    uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(0);
     ConstRefMan<FlatDataPack> dp = vwr.getPack( false, true );
     if ( !dp ) return false;
 
@@ -302,7 +298,14 @@ bool uiODVW2DVariableDensityTreeItem::handleSelMenu( int mnuid )
     if ( dpid == DataPack::cNoID() ) return false;
 
     viewer2D()->setSelSpec( &selas, false );
-    viewer2D()->useStoredDispPars( false );
+    if ( !viewer2D()->useStoredDispPars(false) )
+    {
+	ColTab::MapperSetup& vdmapper =
+	    vwr.appearance().ddpars_.vd_.mappersetup_;
+	if ( vdmapper.type_ != ColTab::MapperSetup::Fixed )
+	    vdmapper.range_ = Interval<float>::udf();
+    }
+
     const ColTab::Sequence seq( vwr.appearance().ddpars_.vd_.ctab_ );
     displayMiniCtab( &seq );
 

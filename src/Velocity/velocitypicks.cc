@@ -16,8 +16,8 @@
 #include "ioman.h"
 #include "ioobj.h"
 #include "emhorizon3d.h"
+#include "picksetmanager.h"
 #include "picksettr.h"
-#include "pickset.h"
 #include "ptrman.h"
 #include "randcolor.h"
 #include "smoother1d.h"
@@ -379,12 +379,11 @@ bool Picks::isChanged() const
 { return changed_; }
 
 
-bool Picks::store( const IOObj* ioobjarg )
+bool Picks::store( const IOObj* passedioobj )
 {
-    PtrMan<IOObj> ioobj = ioobjarg->clone();
-    if ( storageid_!=ioobj->key() )
+    if ( storageid_!=passedioobj->key() )
     {
-	storageid_=ioobj->key();
+	storageid_=passedioobj->key();
 	change.trigger(BinID(-1,-1));
 	changelate.trigger(BinID(-1,-1));
     }
@@ -396,8 +395,8 @@ bool Picks::store( const IOObj* ioobjarg )
 	    emids += horizons_[idx]->id();
     }
 
-    ::Pick::Set ps( ioobj->name() );
-    ps.disp_.mkstyle_.color_ = color_;
+    RefMan< ::Pick::Set > ps = new ::Pick::Set;
+    ps->setDispColor( color_ );
     RowCol arrpos( 0, 0 );
     if ( picks_.isValidPos( arrpos ) )
     {
@@ -414,25 +413,20 @@ bool Picks::store( const IOObj* ioobjarg )
 	    if ( idx!=-1 )
 		pickloc.setText( BufferString("",idx) );
 
-	    ps += pickloc;
+	    ps->add( pickloc );
 	} while ( picks_.next(arrpos,false) );
     }
 
-    fillPar( ps.pars_ );
-    ps.pars_.set( sKey::Version(), 2 );
+    IOPar psiop( ps->pars() );
+    fillPar( psiop );
+    psiop.set( sKey::Version(), 2 );
+    ps->setPars( psiop );
 
-    uiString errmsg;
-    if ( !PickSetTranslator::store(ps,ioobj,errmsg) )
-	{ errmsg_ = mFromUiStringTodo( errmsg ); return false; }
-
+    PtrMan<IOObj> ioobj = passedioobj->clone();
     fillIOObjPar( ioobj->pars() );
-
-    if ( !IOM().commitChanges(*ioobj) )
-    {
-	errmsg_ = mFromUiStringTodo(
-		    uiStrings::phrCannotWriteDBEntry( ioobj->uiName() ) );
-	return false;
-    }
+    uiString errmsg = ::Pick::SetMGR().store( *ps, storageid_, &ioobj->pars() );
+    if ( !errmsg.isEmpty() )
+	{ errmsg_ = mFromUiStringTodo( errmsg ); return false; }
 
     changed_ = false;
     change.trigger(BinID(-1,-1));
@@ -786,26 +780,26 @@ bool Picks::load( const IOObj* ioobj )
 
     storageid_ = ioobj->key();
 
-    ::Pick::Set pickset( ioobj->name() );
     uiString errmsg;
-    if ( !PickSetTranslator::retrieve(pickset,ioobj,errmsg) )
-    {
-	errmsg_ = mFromUiStringTodo( errmsg );
-	return false;
-    }
+    ConstRefMan< ::Pick::Set > ps = ::Pick::SetMGR().fetch( ioobj->key(),
+	    						    errmsg );
+    if ( !errmsg.isEmpty() )
+	{ errmsg_ = mFromUiStringTodo( errmsg ); return false; }
 
-    if ( !usePar( pickset.pars_ ) )
+    const IOPar psiop( ps->pars() );
+    if ( !usePar(psiop) )
     {
 	if ( !usePar( ioobj->pars() ) ) //Old format
 	    return false;
     }
 
     int version = 1;
-    pickset.pars_.get( sKey::Version(), version );
+    psiop.get( sKey::Version(), version );
 
-    for ( int idx=pickset.size()-1; idx>=0; idx-- )
+    MonitorLock ml( *ps );
+    for ( int idx=ps->size()-1; idx>=0; idx-- )
     {
-	const ::Pick::Location& ploc = pickset[idx];
+	const ::Pick::Location ploc = ps->get( idx );
 	if ( !ploc.hasPos() || !ploc.hasDir() )
 	    continue;
 
@@ -826,7 +820,7 @@ bool Picks::load( const IOObj* ioobj )
 	picks_.add( &pick, bid );
     }
 
-    color_ = pickset.disp_.mkstyle_.color_;
+    color_ = ps->dispColor();
 
     changed_ = false;
     change.trigger( BinID(-1,-1) );

@@ -58,15 +58,16 @@ bool Poly2HorVol::setHorizon( const MultiID& mid, TaskRunner* tr )
 
 float Poly2HorVol::getM3( float vel, bool upw, bool useneg )
 {
-    if ( !hor_ || ! ps_ )
+    if ( !hor_ || !ps_ )
 	return mUdf(float);
 
     ODPolygon<float> poly;
     TrcKeySampling hs;
     TypeSet<Coord> pts; TypeSet<float> zvals;
+    MonitorLock ml( *ps_ );
     for ( int idx=0; idx<ps_->size(); idx++ )
     {
-	const Pick::Location& pl = (*ps_)[idx];
+	const Pick::Location pl = ps_->get( idx );
 	if ( !pl.hasPos() )
 	    continue;
 
@@ -78,6 +79,7 @@ float Poly2HorVol::getM3( float vel, bool upw, bool useneg )
 	else
 	    hs.start_ = hs.stop_ = bid;
     }
+    ml.unlockNow();
 
     TriangulatedGridder2D grdr;
     grdr.setPoints( pts );
@@ -91,14 +93,16 @@ float Poly2HorVol::getM3( float vel, bool upw, bool useneg )
 
     const int nrsect = hor_->nrSections();
     TrcKeySamplingIterator iter( hs );
-    BinID bid; float totth = 0;
-    while ( iter.next(bid) )
+    float totth = 0;
+    do
     {
+	const TrcKey trk( iter.curTrcKey() );
+	const BinID bid( trk.position() );
 	if ( !poly.isInside(mPolyLoc(bid),true,1e-6) )
 	    continue;
 
 	const EM::SubID subid = bid.toInt64();
-	const Coord pos( hs.toCoord(bid) );
+	const Coord pos( trk.getCoord() );
 
 	for ( int isect=0; isect<nrsect; isect++ )
 	{
@@ -122,7 +126,7 @@ float Poly2HorVol::getM3( float vel, bool upw, bool useneg )
 	    if ( useneg || th > 0 )
 		{ totth += th; break; }
 	}
-    }
+    } while ( iter.next() );
 
     const float cellarea = SI().inlDistance() * hs.step_.inl()
 			 * SI().crlDistance() * hs.step_.crl();

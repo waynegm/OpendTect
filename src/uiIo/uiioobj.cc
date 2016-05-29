@@ -102,16 +102,17 @@ bool uiIOObj::removeImpl( bool rmentry, bool mustrm, bool doconfirm )
 
 bool uiIOObj::fillCtio( CtxtIOObj& ctio, bool warnifexist )
 {
-    if ( ctio.name().isEmpty() )
+    if ( ctio.getName().isEmpty() )
     {
 	if ( !ctio.ioobj_ )
 	    return false;
 	ctio.setName( ctio.ioobj_->name() );
     }
-    const char* nm = ctio.name().buf();
+
+    const BufferString nm = ctio.getName();
 
     const IODir iodir( ctio.ctxt_.getSelKey() );
-    const IOObj* existioobj = iodir.get( nm, ctio.ctxt_.trgroup_->groupName() );
+    const IOObj* existioobj = iodir.get( nm, ctio.ctxt_.translatorGroupName() );
     if ( !existioobj )
     {
 	ctio.setObj( 0 );

@@ -142,9 +142,8 @@ TypeSet<Interval<int> > DataPackOutput::getLocalZRanges( const BinID&,
 
 void DataPackOutput::setPossibleVolume( const TrcKeyZSampling& possvol )
 {
-    dcsampling_ = possvol;
-    dcsampling_.limitTo( desiredvolume_ );
-    desiredvolume_ = dcsampling_;
+    desiredvolume_.adjustTo( possvol );
+    dcsampling_ = desiredvolume_;
 }
 
 
@@ -208,7 +207,10 @@ void DataPackOutput::collectData( const DataHolder& data, float refstep,
 				     (idx+extrazsamp)*refstep, refstep )
 		    : data.series(desoutputs_[desout])->value(idx-data.z0_);
 
-		const int zoutidx = (int)Math::Floor( idx-z0 );
+		int zoutidx = (int)Math::Floor( idx-z0 );
+		if ( zoutidx<0 ) //to prevent crash in case of rounding pb
+		    zoutidx = 0;
+
 		output_->data(desout).set( lineidx, trcidx, zoutidx, val );
 	    }
 	}
@@ -489,7 +491,9 @@ bool SeisTrcStorOutput::writeTrc()
     if ( !storinited_ )
     {
 	SeisTrcTranslator* transl = 0;
-	if ( !writer_->is2D() )
+	if ( writer_->is2D() && seldata_ )
+	    writer_->setSelData( seldata_->clone() );
+	else
 	{
 	    transl = writer_->seisTranslator();
 	    if ( transl )

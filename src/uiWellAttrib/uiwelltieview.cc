@@ -34,6 +34,7 @@ ________________________________________________________________________
 #include "welltiedata.h"
 #include "welltiegeocalculator.h"
 #include "welltiepickset.h"
+#include "zaxistransform.h"
 
 
 #define mGetWD(act) const Well::Data* wd = data_.wd_; if ( !wd ) act;
@@ -148,7 +149,7 @@ void uiTieView::initFlatViewer()
     app.ddpars_.show( true, false );
     app.ddpars_.wva_.mappersetup_.cliprate_.set(0.0,0.0);
     app.annot_.x1_.name_ = data_.sKeySeismic();
-    app.annot_.x2_.name_ =  "TWT (ms)";
+    app.annot_.x2_.name_ =  "TWT";
     app.annot_.title_ = "Synthetics<--------------------"
 			"------------------------------->Seismics";
     vwr_->viewChanged.notify( mCB(this,uiTieView,zoomChg) );
@@ -197,7 +198,6 @@ void uiTieView::drawTraces()
 	SeisTrc* trc = new SeisTrc;
 	trc->copyDataFrom( issynth ? data_.synthtrc_ : data_.seistrc_ );
 	trc->info().sampling_ = data_.getTraceRange();
-	trc->info().sampling_.scale( mCast(float,SI().zDomain().userFactor()) );
 	trcbuf_.add( trc );
 	bool udf = idx == 0 || idx == midtrc || idx == midtrc+1 || idx>nrtrcs-2;
 	if ( udf )
@@ -242,7 +242,9 @@ void uiTieView::setLogsRanges( Interval<float> rg )
 void uiTieView::zoomChg( CallBacker* )
 {
     const uiWorldRect& curwr = vwr_->curView();
-    Interval<float> zrg( (float) curwr.top(), (float) curwr.bottom() );
+    const float userfac = SI().showZ2UserFactor();;
+    Interval<float> zrg( (float) curwr.top()*userfac, 
+					    (float) curwr.bottom()*userfac );
     setLogsRanges( zrg );
 }
 
@@ -312,7 +314,6 @@ void uiTieView::drawViewerWellMarkers()
 
 	wellmarkerauxdatas_ += auxdata;
 	vwr_->addAuxData( auxdata );
-	zpos *= SI().zDomain().userFactor();
 	const int shapeint = mrkdisp.shapeint_;
 	const int drawsize = mrkdisp.size_;
 	OD::LineStyle ls = OD::LineStyle( OD::LineStyle::Dot, drawsize, col );
@@ -356,10 +357,9 @@ void uiTieView::drawUserPicks( const TypeSet<Marker>& pickset, bool issynth )
     for ( int idx=0; idx<pickset.size(); idx++ )
     {
 	const Marker& pick = pickset[idx];
-	float zpos = pick.zpos_* SI().zDomain().userFactor();
 	OD::LineStyle ls = OD::LineStyle( OD::LineStyle::Solid, pick.size_, pick.color_ );
 	userpickauxdatas_[idx]->linestyle_ = ls;
-	drawMarker(userpickauxdatas_[idx], issynth, zpos );
+	drawMarker(userpickauxdatas_[idx], issynth, pick.zpos_ );
     }
 }
 
@@ -377,7 +377,7 @@ void uiTieView::drawHorizons()
 	horauxdatas_ += auxdata;
 	vwr_->addAuxData( auxdata );
 	const Marker& hor = horizons[idx];
-	float zval = hor.zpos_;
+	float zval = hor.zpos_*(1.f/SI().zDomain().userFactor());
 
 	BufferString mtxt( hor.name_ );
 	if ( !params_.disphorfullnames_ && mtxt.size() > 3 )

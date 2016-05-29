@@ -55,16 +55,18 @@ public:
 			NamedMonitorable(const char* nm=0);
 			NamedMonitorable(const NamedMonitorable&);
 			NamedMonitorable(const NamedObject&);
-    NamedMonitorable&	operator =(const NamedMonitorable&);
+			mDeclMonitorableAssignment(NamedMonitorable);
     NamedMonitorable&	operator =(const NamedObject&);
     virtual		~NamedMonitorable();
     bool		operator ==(const NamedMonitorable&) const;
     bool		operator ==(const NamedObject&) const;
 
     inline virtual	mImplSimpleMonitoredGet(getName,BufferString,name_)
-    inline virtual	mImplSimpleMonitoredSet(setName,const char*,name_)
+    inline virtual	mImplSimpleMonitoredSet(setName,const char*,name_,1)
 
     mDeclInstanceCreatedNotifierAccess( NamedMonitorable );
+
+    static ChangeType	cNameChange()		{ return 1; }
 
 };
 

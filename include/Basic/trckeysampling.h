@@ -31,6 +31,9 @@ public:
 			TrcKeySampling(const TrcKeySampling&);
 			TrcKeySampling(Pos::GeomID);
 
+    bool		is2D() const	{ return TrcKey::is2D(survid_); }
+    Pos::GeomID		getGeomID() const;
+
     TrcKeySampling&	set(const Interval<int>& linerg,
 			    const Interval<int>& trcnrrg);
 			    //!< steps copied if available
@@ -172,20 +175,19 @@ public:
 mExpClass(Basic) TrcKeySamplingIterator
 {
 public:
-		TrcKeySamplingIterator() : tks_( true ) { reset(); }
-		TrcKeySamplingIterator( const TrcKeySampling& hs )
-		    : tks_(hs)	{ reset(); }
+		TrcKeySamplingIterator();
+		TrcKeySamplingIterator(const TrcKeySampling&);
 
-    void	setSampling( const TrcKeySampling& tks )
-		{ tks_ = tks; reset(); }
-
+    void	setSampling(const TrcKeySampling&);
+    void	setCurrentPos( od_int64 pos )		{ curpos_ = pos; }
     void	reset();
-    void	setNextPos(const TrcKey& trk) { curpos_ = tks_.globalIdx(trk); }
-    bool	next(TrcKey&) const;
-    bool	next(BinID&) const;
 
-    od_int64	curIdx() const		     { return curpos_; }
-    TrcKey	curTrcKey() const	     { return tks_.atIndex( curIdx() );}
+    bool	next() const;
+
+    TrcKey	curTrcKey() const;
+    BinID	curBinID() const;
+
+    od_int64	curIdx() const				{ return curpos_; }
 
 protected:
 

@@ -251,6 +251,18 @@ void uiODDisplayTreeItem::keyPressCB( CallBacker* cb )
 }
 
 
+bool uiODDisplayTreeItem::doubleClick( uiTreeViewItem* item )
+{
+    if ( item != uitreeviewitem_ )
+	return uiTreeItem::doubleClick( item );
+
+    if ( !select() ) return false;
+
+    visserv_->setMaterial( displayID() );
+    return true;
+}
+
+
 void uiODDisplayTreeItem::setOnlyAtSectionsDisplay( bool yn )
 {
     visserv_->setOnlyAtSectionsDisplay( displayid_, yn );
@@ -374,7 +386,7 @@ void uiODDisplayTreeItem::handleMenuCB( CallBacker* cb )
 {
     mCBCapsuleUnpackWithCaller( int, mnuid, caller, cb );
     mDynamicCastGet(MenuHandler*,menu,caller);
-    if ( menu->isHandled() || menu->menuID()!=displayID() || mnuid==-1 )
+    if ( !menu || menu->isHandled() || menu->menuID()!=displayID() || mnuid==-1)
 	return;
 
     if ( mnuid==lockmnuitem_.id )

@@ -24,8 +24,7 @@ ________________________________________________________________________
 #include "ioobj.h"
 #include "oddirs.h"
 #include "pickretriever.h"
-#include "pickset.h"
-#include "picksettr.h"
+#include "picksetmanager.h"
 #include "posinfo2d.h"
 #include "ptrman.h"
 #include "seisselection.h"
@@ -37,8 +36,10 @@ ________________________________________________________________________
 
 #include "uiattribfactory.h"
 #include "uiattrsel.h"
+#include "uipicksettools.h"
 #include "uitoolbutton.h"
 #include "uibuttongroup.h"
+#include "uicombobox.h"
 #include "uigeninput.h"
 #include "uiioobjsel.h"
 #include "uilabel.h"
@@ -54,50 +55,39 @@ using namespace Attrib;
 
 static const int cInitNrRows = 4;
 
-static const char* statstrs[] =
-{
-	"Average",
-	"Median",
-	"Variance",
-	"Min",
-	"Max",
-	0
-};
-
 mInitAttribUI(uiFingerPrintAttrib,FingerPrint,"FingerPrint",sKeyPatternGrp())
 
 
 class uiFPAdvancedDlg: public uiDialog
 { mODTextTranslationClass(uiFPAdvancedDlg);
     public:
+
 			uiFPAdvancedDlg(uiParent*,calcFingParsObject*,
 					const BufferStringSet&);
-			~uiFPAdvancedDlg();
 
-    void                prepareNumGroup(uiGroup*,const BufferStringSet&);
-    void                rangeSel(CallBacker*);
-    void                calcPush(CallBacker*);
-    bool                acceptOK(CallBacker*);
+    void		prepareNumGroup(uiGroup*,const BufferStringSet&);
+    void		rangeSel(CallBacker*);
+    void		calcPush(CallBacker*);
+    bool		acceptOK(CallBacker*);
 
-    uiButtonGroup*      rangesgrp_;
-    uiRadioButton*      picksetbut_;
-    uiIOObjSel*         picksetfld_;
+    uiButtonGroup*	rangesgrp_;
+    uiRadioButton*	picksetbut_;
+    uiPickSetIOObjSel*	picksetfld_;
 
-    ObjectSet<uiGenInput>       valflds_;
-    ObjectSet<uiGenInput>       minmaxflds_;
-    ObjectSet<uiSpinBox>        wgtflds_;
+    ObjectSet<uiGenInput> valflds_;
+    ObjectSet<uiGenInput> minmaxflds_;
+    ObjectSet<uiSpinBox> wgtflds_;
 
-    calcFingParsObject& calcobj_;
-    CtxtIOObj&          ctio_;
+    calcFingParsObject&	calcobj_;
     uiString		errmsg_;
 };
 
 
 uiFingerPrintAttrib::uiFingerPrintAttrib( uiParent* p, bool is2d )
     : uiAttrDescEd(p,is2d, mODHelpKey(mFingerPrintAttribHelpID) )
-    , ctio_(*mMkCtxtIOObj(PickSet))
     , refposfld_(0)
     , linefld_(0)
+    , def_ ( *(new EnumDefImpl<Stats::Type> (Stats::TypeDef() ) ))
 {
     calcobj_ = new calcFingParsObject( this );
 
@@ -138,13 +128,20 @@ uiFingerPrintAttrib::uiFingerPrintAttrib( uiParent* p, bool is2d )
 	linefld_->attach( alignedBelow, refposfld_ );
     }
 
-    picksetfld_ = new uiIOObjSel( this, ctio_, mJoinUiStrs(sPickSet(),
-							   sFile().toLower()) );
+    picksetfld_ = new uiPickSetIOObjSel( this );
     picksetfld_->attach( alignedBelow, refgrp_ );
     picksetfld_->display( false );
 
-    statsfld_ = new uiGenInput( this, tr("PickSet statistic"),
-			       StringListInpSpec(statstrs) );
+    def_.remove( def_.getKey(Stats::Count) );
+    def_.remove( def_.getKey(Stats::RMS) );
+    def_.remove( def_.getKey(Stats::StdDev) );
+    def_.remove( def_.getKey(Stats::NormVariance) );
+    def_.remove( def_.getKey(Stats::Extreme) );
+    def_.remove( def_.getKey(Stats::Sum) );
+    def_.remove( def_.getKey(Stats::SqSum) );
+    def_.remove( def_.getKey(Stats::MostFreq) );
+
+    statsfld_ = new uiComboBox( this, def_, "PickSet statistic" );
     statsfld_->attach( alignedBelow, picksetfld_ );
     statsfld_->display( false );
 
@@ -197,8 +194,6 @@ uiFingerPrintAttrib::uiFingerPrintAttrib( uiParent* p, bool is2d )
 
 uiFingerPrintAttrib::~uiFingerPrintAttrib()
 {
-    delete ctio_.ioobj_;
-    delete &ctio_;
     pickretriever_->finished()->remove(
 			mCB(this,uiFingerPrintAttrib,pickRetrieved) );
 }
@@ -289,8 +284,27 @@ bool uiFingerPrintAttrib::setParameters( const Desc& desc )
 
     mIfGetInt( FingerPrint::valreftypeStr(), type, refgrp_->selectButton(type) )
 
-    mIfGetInt( FingerPrint::statstypeStr(), statsval,
-	       statsfld_->setValue(statsval) )
+    Attrib::ValParam* valparamstatsval = const_cast<Attrib::ValParam*>(
+				desc.getValParam(FingerPrint::statstypeStr()));
+    mDynamicCastGet(Attrib::EnumParam*,enumparamstatsval,valparamstatsval);
+    if ( enumparamstatsval )
+    {
+	int statsval;
+	if ( enumparamstatsval->isSet() )
+	    statsval = enumparamstatsval->getIntValue(0);
+	else
+	    statsval = enumparamstatsval->getDefaultIntValue(0);
+	statsfld_->setCurrentItem( FingerPrint::getStatsTypeString(statsval) );
+    }
+    else
+    {
+	//!< Old param files, prior to 6.2
+	int statstype = valparamstatsval->getIntValue(0) + 1;
+	statstype += (statstype < (int)Stats::RMS ? 0 : 2);
+	statstype += (statstype < (int)Stats::NormVariance ? 0 : 1);
+	//!< Count, RMS, StdDev, NormVariance not used, so skip them
+	statsfld_->setCurrentItem(Stats::TypeDef().getKeyForIndex(statstype) );
+    }
 
     refSel(0);
 
@@ -389,7 +403,8 @@ bool uiFingerPrintAttrib::getParameters( Desc& desc )
     }
     else if ( refgrpval == 2 )
     {
-	mSetInt( FingerPrint::statstypeStr(), statsfld_->getIntValue() );
+	mSetEnum( FingerPrint::statstypeStr(),
+		  Stats::TypeDef().indexOf( statsfld_->currentItem() ) );
 	if ( picksetfld_->ioobj(true) )
 	    mSetString( FingerPrint::valpicksetStr(),
 			picksetfld_->key() )
@@ -507,7 +522,8 @@ void uiFingerPrintAttrib::getAdvancedPush(CallBacker*)
     }
     calcobj_->setUserRefList( refset );
     if ( picksetbut_->isChecked() )
-	calcobj_->setValStatsType( statsfld_->getIntValue() );
+	calcobj_->setValStatsType(
+			def_.getEnumForIndex(statsfld_->currentItem() ) );
 
     advanceddlg_->go();
 }
@@ -541,7 +557,7 @@ void uiFingerPrintAttrib::calcPush(CallBacker*)
     calcobj_->setValRgSet( valuesset, true );
     calcobj_->setValRgSet( rangesset, false );
     if ( picksetbut_->isChecked() )
-	calcobj_->setValStatsType( statsfld_->getIntValue() );
+	calcobj_->setValStatsType( Stats::TypeDef().parse(statsfld_->text() ) );
 
     calcobj_->computeValsAndRanges();
 }
@@ -550,6 +566,7 @@ void uiFingerPrintAttrib::calcPush(CallBacker*)
 BinIDValueSet* uiFingerPrintAttrib::createValuesBinIDSet(
 						uiString& errmsg ) const
 {
+    BinIDValueSet* retset = new BinIDValueSet( 1, false );
     if ( refgrp_->selectedId() == 1 )
     {
 	BinID refpos = is2d_ ? get2DRefPos() : refposfld_->getBinID();
@@ -564,14 +581,10 @@ BinIDValueSet* uiFingerPrintAttrib::createValuesBinIDSet(
 	    return 0;
 	}
 
-	BinIDValueSet* bidvalset = new BinIDValueSet( 1, false );
-	bidvalset->add( refpos, refposz );
-	return bidvalset;
+	retset->add( refpos, refposz );
     }
     else if ( refgrp_->selectedId() == 2 )
     {
-	ObjectSet<BinIDValueSet> values;
-	picksetfld_->processInput();
 	const IOObj* ioobj = picksetfld_->ioobj(true);
 	if ( !ioobj )
 	{
@@ -580,24 +593,19 @@ BinIDValueSet* uiFingerPrintAttrib::createValuesBinIDSet(
 	    return 0;
 	}
 
-	BufferStringSet ioobjids;
-	ioobjids.add( ioobj->key() );
-	errmsg.setEmpty();
-	PickSetTranslator::createBinIDValueSets( ioobjids, values, errmsg );
-	if ( values.isEmpty() || errmsg.isSet() )
-	{
-	    uiMSG().error( uiStrings::phrJoinStrings(
-			   tr("Cannot extract values at PickSet locations." ),
-			   errmsg ) );
+	ConstRefMan<Pick::Set> ps = Pick::SetMGR().fetch( ioobj->key(), errmsg);
+	if ( !ps )
 	    return 0;
-	}
 
-	BinIDValueSet* pickvals = new BinIDValueSet( *(values[0]) );
-	deepErase( values );
-	return pickvals;
+	 MonitorLock ml( *ps );
+	 for ( int idx=0; idx<ps->size(); idx++ )
+	 {
+	     Pick::Location pl = ps->get( idx );
+	     retset->add( pl.binID(), pl.z() );
+	 }
     }
 
-    return new BinIDValueSet( 1, false );
+    return retset;
 }
 
 
@@ -641,7 +649,6 @@ uiFPAdvancedDlg::uiFPAdvancedDlg( uiParent* p, calcFingParsObject* calcobj,
     : uiDialog( p, uiDialog::Setup(tr("FingerPrint attribute advanced options"),
 				   tr("Specify advanced options"),
                                    mODHelpKey(mFPAdvancedDlgHelpID) ) )
-    , ctio_(*mMkCtxtIOObj(PickSet))
     , calcobj_(*calcobj)
 {
     rangesgrp_ = new uiButtonGroup( this, "Get ranges from", OD::Horizontal );
@@ -654,8 +661,7 @@ uiFPAdvancedDlg::uiFPAdvancedDlg( uiParent* p, calcFingParsObject* calcobj,
     autobut->activated.notify( mCB(this,uiFPAdvancedDlg,rangeSel ) );
     rangesgrp_->selectButton( calcobj_.getRgRefType() );
 
-    picksetfld_ = new uiIOObjSel( this, ctio_, mJoinUiStrs(sPickSet(),
-							   sFile().toLower()) );
+    picksetfld_ = new uiPickSetIOObjSel( this );
     picksetfld_->attach( alignedBelow, (uiParent*)rangesgrp_ );
     picksetfld_->setInput( MultiID(calcobj_.getRgRefPick().buf()) );
     picksetfld_->display( true );
@@ -669,13 +675,6 @@ uiFPAdvancedDlg::uiFPAdvancedDlg( uiParent* p, calcFingParsObject* calcobj,
     calcbut->attach( alignedBelow, (uiParent*)attrvalsgrp );
 
     postFinalise().notify( mCB(this,uiFPAdvancedDlg,rangeSel) );
-}
-
-
-uiFPAdvancedDlg::~uiFPAdvancedDlg()
-{
-    delete ctio_.ioobj_;
-    delete &ctio_;
 }
 
 
@@ -752,7 +751,6 @@ void uiFPAdvancedDlg::calcPush( CallBacker* cb )
 
     if ( refgrpval == 1 )
     {
-	picksetfld_->processInput();
 	const IOObj* ioobj = picksetfld_->ioobj(true);
 	if ( !ioobj )
 	{

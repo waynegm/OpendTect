@@ -47,11 +47,8 @@ uiODVw2DFaultSS2DParentTreeItem::~uiODVw2DFaultSS2DParentTreeItem()
 bool uiODVw2DFaultSS2DParentTreeItem::showSubMenu()
 {
     uiMenu mnu( getUiParent(), uiStrings::sAction() );
-    uiMenu* addmenu = new uiMenu( uiStrings::sAdd() );
-    addmenu->insertItem( new uiAction(tr("In all 2D Viewers")), 1 );
-    addmenu->insertItem( new uiAction(tr("Only in this 2D Viewer")), 2 );
-    mnu.insertItem( addmenu );
-    mnu.insertItem( new uiAction(uiStrings::sNew()), 0 );
+    mnu.insertItem( createAddMenu() );
+    mnu.insertItem( new uiAction(uiStrings::sNew()), getNewItemID() );
     insertStdSubMenu( mnu );
     return handleSubMenu( mnu.exec() );
 }
@@ -61,7 +58,7 @@ bool uiODVw2DFaultSS2DParentTreeItem::handleSubMenu( int mnuid )
 {
     handleStdSubMenu( mnuid );
 
-    if ( mnuid == 0 )
+    if ( mnuid == getNewItemID() )
     {
 	RefMan<EM::EMObject> emo =
 		EM::EMM().createTempObject( EM::FaultStickSet::typeStr() );
@@ -77,14 +74,14 @@ bool uiODVw2DFaultSS2DParentTreeItem::handleSubMenu( int mnuid )
 	applMgr()->viewer2DMgr().addNewTempFaultSS2D(
 		emo->id(), viewer2D()->getSyncSceneID() );
     }
-    else if ( mnuid == 1 || mnuid == 2 )
+    else if ( isAddItem(mnuid,true) || isAddItem(mnuid,false) )
     {
 	ObjectSet<EM::EMObject> objs;
 	applMgr()->EMServer()->selectFaultStickSets( objs );
 	TypeSet<EM::ObjectID> emids;
 	for ( int idx=0; idx<objs.size(); idx++ )
 	    emids += objs[idx]->id();
-	if ( mnuid==1 )
+	if ( isAddItem(mnuid,true) )
 	{
 	    addFaultSS2Ds( emids );
 	    applMgr()->viewer2DMgr().addFaultSS2Ds( emids );
@@ -171,12 +168,30 @@ void uiODVw2DFaultSS2DParentTreeItem::addFaultSS2Ds(
 	    new uiODVw2DFaultSS2DTreeItem( emidstobeloaded[idx] );
 	addChld( childitem, false, false );
 	if ( editor )
-	{
 	    editor->addUser();
-	    viewer2D()->viewControl()->setEditMode( true );
-	    childitem->select();
+    }
+}
+
+
+void uiODVw2DFaultSS2DParentTreeItem::setupNewTempFaultSS2D( EM::ObjectID emid )
+{
+    TypeSet<EM::ObjectID> emidsloaded;
+    getLoadedFaultSS2Ds( emidsloaded );
+    if ( !emidsloaded.isPresent(emid) )
+	return;
+
+    for ( int idx=0; idx<nrChildren(); idx++ )
+    {
+	mDynamicCastGet(uiODVw2DFaultSS2DTreeItem*,fss2dtreeitm,getChild(idx))
+	if ( fss2dtreeitm && emid==fss2dtreeitm->emObjectID() )
+	{
+	    if ( viewer2D() && viewer2D()->viewControl() )
+		viewer2D()->viewControl()->setEditMode( true );
+	    fss2dtreeitm->select();
+	    break;
 	}
     }
+
 }
 
 
@@ -189,7 +204,8 @@ void uiODVw2DFaultSS2DParentTreeItem::addNewTempFaultSS2D( EM::ObjectID emid )
 
     uiODVw2DFaultSS2DTreeItem* fss2ditem = new uiODVw2DFaultSS2DTreeItem( emid);
     addChld( fss2ditem,false, false );
-    viewer2D()->viewControl()->setEditMode( true );
+    if ( viewer2D() && viewer2D()->viewControl() )
+	viewer2D()->viewControl()->setEditMode( true );
     fss2ditem->select();
 }
 
@@ -279,11 +295,12 @@ bool uiODVw2DFaultSS2DTreeItem::init()
 
     fssview_->draw();
 
-    mAttachCB( viewer2D()->viewControl()->editPushed(),
+    if ( viewer2D() && viewer2D()->viewControl() )
+	mAttachCB( viewer2D()->viewControl()->editPushed(),
 	       uiODVw2DFaultSS2DTreeItem::enableKnotsCB );
-    
+
     uiODVw2DTreeItem::addKeyBoardEvent();
-    
+
     return true;
 }
 
@@ -329,8 +346,10 @@ void uiODVw2DFaultSS2DTreeItem::enableKnotsCB( CallBacker* )
 
 bool uiODVw2DFaultSS2DTreeItem::select()
 {
-    uitreeviewitem_->setSelected( true);
+    if ( uitreeviewitem_->treeView() )
+	uitreeviewitem_->treeView()->clearSelection();
 
+    uitreeviewitem_->setSelected( true);
     if ( fssview_ )
     {
 	viewer2D()->dataMgr()->setSelected( fssview_ );

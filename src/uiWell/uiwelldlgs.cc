@@ -2,8 +2,8 @@
 ________________________________________________________________________
 
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
- Author:        N. Hemstra
- Date:          October 2003
+ Author:	N. Hemstra
+ Date:		October 2003
 ________________________________________________________________________
 
 -*/
@@ -96,7 +96,7 @@ uiWellTrackDlg::uiWellTrackDlg( uiParent* p, Well::Data& d )
 					      .rowgrow(true)
 					      .defrowlbl("")
 					      .removeselallowed(false),
-		        "Well Track Table" );
+			"Well Track Table" );
     tbl_->setColumnLabels( trackcollbls );
     tbl_->setNrRows( nremptyrows );
     tbl_->setPrefWidth( 500 );
@@ -303,7 +303,7 @@ public:
 
 uiWellTrackReadDlg( uiParent* p, Table::FormatDesc& fd, Well::Track& track )
 	: uiDialog(p,uiDialog::Setup(tr("Import New Well Track"),mNoDlgTitle,
-                                     mODHelpKey(mWellTrackReadDlgHelpID)))
+				     mODHelpKey(mWellTrackReadDlgHelpID)))
 	, track_(track)
 	, fd_(fd)
 {
@@ -462,8 +462,17 @@ bool uiWellTrackDlg::updNow( CallBacker* )
     bool needfill = false;
     for ( int idx=0; idx<nrrows; idx++ )
     {
-	if ( rowIsIncomplete(idx) )
+	if ( rowIsNotSet(idx) )
 	    continue;
+
+	if ( rowIsIncomplete(idx) )
+	{
+	    uiString msg =
+	    	tr("X, Y, Z or MD is not set in row %1.\n"
+		   "Please enter a valid value or remove this row.").arg(idx+1);
+	    uiMSG().error( msg );
+	    return false;
+	}
 
 	const double xval = getX( idx );
 	const double yval = getY( idx );
@@ -472,11 +481,11 @@ bool uiWellTrackDlg::updNow( CallBacker* )
 	const Coord3 newc( xval, yval, zval );
 	if ( !SI().isReasonable(newc) )
 	{
-	    uiString msg = tr("Found undefined values in row %1. "
-			      "Please enter valid values")
-			 .arg(idx + 1);
-	    uiMSG().message( msg );
-	    return false;
+	    uiString msg =
+		tr("The coordinate in row %1 seems to be far outside "
+		   "the survey.\nDo you want to continue?").arg(idx+1);
+	    const bool res = uiMSG().askGoOn( msg );
+	    if ( !res ) return false;
 	}
 
 	if ( idx > 0 && mIsUdf(dahval) )
@@ -609,6 +618,13 @@ bool uiWellTrackDlg::rowIsIncomplete( int row ) const
 }
 
 
+bool uiWellTrackDlg::rowIsNotSet( int row ) const
+{
+    return mIsUdf(getX(row)) && mIsUdf(getY(row)) &&
+	   mIsUdf(getZ(row)) && mIsUdf(getMD(row));
+}
+
+
 bool uiWellTrackDlg::rejectOK( CallBacker* )
 {
     track_ = *orgtrack_;
@@ -661,6 +677,7 @@ bool uiWellTrackDlg::acceptOK( CallBacker* )
 
 void uiWellTrackDlg::exportCB( CallBacker* )
 {
+    updNow( 0 );
     if ( !track_.size() )
     {
 	uiMSG().message( tr("No data available to export") );
@@ -668,6 +685,7 @@ void uiWellTrackDlg::exportCB( CallBacker* )
     }
 
     uiFileDialog fdlg( this, false, 0, 0, tr("File name for export") );
+    fdlg.setDefaultExtension( "dat" );
     fdlg.setDirectory( GetDataDir() );
     if ( !fdlg.go() )
 	return;
@@ -792,7 +810,7 @@ uiD2TModelDlg::uiD2TModelDlg( uiParent* p, Well::Data& wd, bool cksh )
 	new uiPushButton( iobutgrp, uiStrings::sImport(),
 	    mCB(this,uiD2TModelDlg,readNew), false );
     new uiPushButton( iobutgrp, uiStrings::sExport(),
-        mCB(this,uiD2TModelDlg,expData), false );
+	mCB(this,uiD2TModelDlg,expData), false );
     if ( replvelfld_ )
 	iobutgrp->attach( ensureBelow, replvelfld_ );
     else
@@ -1626,7 +1644,7 @@ bool uiD2TModelDlg::acceptOK( CallBacker* )
 //============================================================================
 
 uiNewWellDlg::uiNewWellDlg( uiParent* p )
-        : uiGetObjectName(p,uiGetObjectName::Setup(tr("New Well"),mkWellNms())
+	: uiGetObjectName(p,uiGetObjectName::Setup(tr("New Well"),mkWellNms())
 				.inptxt(tr("New well name")) )
 {
     setHelpKey( mODHelpKey(mNewWellTrackDlgHelpID) );

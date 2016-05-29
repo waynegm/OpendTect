@@ -18,7 +18,7 @@ ________________________________________________________________________
 
 class FlatView_CB_Rcvr;
 class ZAxisTransform;
-
+namespace ZDomain { class Def; }
 namespace FlatView
 {
 
@@ -62,7 +62,7 @@ public:
 
     bool			enabled_;	//!<Turns on/off everything
     BufferString		name_;
-    OD::Alignment			namealignment_;
+    OD::Alignment		namealignment_;
     int				namepos_;	//!<nodraw=udf, before first=-1,
 					    //!< center=0, after last=1
     Interval<double>*		x1rg_;		//!<if 0, use viewer's rg & zoom
@@ -78,9 +78,9 @@ public:
 				      excess points.
 				*/
 
-    OD::LineStyle			linestyle_;
+    OD::LineStyle		linestyle_;
     Color			fillcolor_;
-    OD::FillPattern			fillpattern_;
+    OD::FillPattern		fillpattern_;
     int				zvalue_; //!<overlay zvalue ( max=on top )
     MouseCursor			cursor_;
 
@@ -332,6 +332,8 @@ public:
     bool		setZAxisTransform(ZAxisTransform*);
     bool		hasZAxisTransform() const
 			{ return datatransform_; }
+    void		setZDomain(const ZDomain::Def&);
+    const ZDomain::Info& zDomain() const;
 
     void		addPack(::DataPack::ID);
 			/*!< Adds to list and obtains the DataPack, but does not
@@ -428,6 +430,7 @@ protected:
     Appearance*			defapp_;
     DataPackMgr&		dpm_;
     ZAxisTransform*		datatransform_;
+    ZDomain::Info*		zdinfo_;
     FlatView_CB_Rcvr*		cbrcvr_;
     mutable Threads::Lock	lock_;
     bool			needstatusbarupd_;

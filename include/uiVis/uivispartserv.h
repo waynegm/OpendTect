@@ -214,6 +214,8 @@ public:
     int			getSelObjectId() const;
     int			getSelAttribNr() const;
     void		setSelObjectId(int visid,int attrib=-1);
+    void		setCurInterObjID(int visid) { curinterpobjid_ = visid; }
+    int			getCurInterObjID() const    { return curinterpobjid_; }
     int			getSceneID(int visid) const;
     const ZDomain::Info* zDomainInfo(int sceneid) const;
 			/*!< Returns Z domain info of scene */
@@ -383,6 +385,7 @@ public:
     bool			isLocked(int id) const;
 
     bool			sendVisEvent(int);
+    Notifier<uiVisPartServer>	planeMovedEvent;
 
 protected:
 
@@ -442,6 +445,7 @@ protected:
     int				eventattrib_;
     int				selattrib_;
     int				mapperrgeditordisplayid_;
+    int				curinterpobjid_;
 
     int				seltype_;
     SelectionMode		selectionmode_;

@@ -26,16 +26,13 @@ namespace visSurvey
     class MPEClickCatcher;
 }
 
-class uiPropertiesDialog;
 class uiVisPartServer;
-
 
 /*! \brief Dialog for tracking properties
 */
 mExpClass(uiVis) uiMPEMan : public CallBacker
 { mODTextTranslationClass(uiMPEMan)
 public:
-    friend class uiPropertiesDialog;
 				uiMPEMan(uiParent*,uiVisPartServer*);
 				~uiMPEMan();
 
@@ -60,6 +57,7 @@ protected:
     void			keyEventCB(CallBacker*);
     void			mpeActionCalledCB(CallBacker*);
     void			mpeActionFinishedCB(CallBacker*);
+    void			planeChangedCB(CallBacker*);
     int				popupMenu();
     void			handleAction(int);
 
@@ -68,6 +66,7 @@ protected:
     void			stopTracking();
     void			changePolySelectionMode();
     void			showParentsPath();
+    void			lockAll();
     void			clearSelection();
     void			deleteSelection();
     void			undo();

@@ -187,40 +187,32 @@ void uiODVW2DWiggleVarAreaTreeItem::createSelMenu( MenuItem& mnu )
 
     const Attrib::SelSpec& as = viewer2D()->selSpec( true );
     MenuItem* subitem = 0;
-    applMgr()->attrServer()->resetMenuItems();
+    uiAttribPartServer* attrserv = applMgr()->attrServer();
+    attrserv->resetMenuItems();
 
     mDynamicCastGet(const RegularFlatDataPack*,regfdp,dp.ptr());
     const bool is2d = regfdp && regfdp->is2D();
+    Pos::GeomID geomid = viewer2D()->geomID();
+    subitem = applMgr()->attrServer()->storedAttribMenuItem(as,is2d,false);
     if ( is2d )
-    {
-//	BufferString lnm;
-//	dp2ddh->getLineName( lnm );
-// TODO: Use lnm to get attributes for this line only
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,true,false);
-    }
-    else
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,false,false);
+	attrserv->filter2DMenuItems( *subitem, as, geomid, true, 0 );
     mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
 
     subitem = applMgr()->attrServer()->calcAttribMenuItem( as, is2d, true );
+    if ( is2d )
+	attrserv->filter2DMenuItems( *subitem, as, geomid, false, 2 );
     mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
 
+    subitem = applMgr()->attrServer()->storedAttribMenuItem(as,is2d,true);
     if ( is2d )
-    {
-//	BufferString lnm;
-//	dp2ddh->getLineName( lnm );
-// TODO: Use lnm to get attributes for this line only
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,true,true);
-    }
-    else
-	subitem = applMgr()->attrServer()->storedAttribMenuItem(as,false,true);
+	attrserv->filter2DMenuItems( *subitem, as, geomid, true, 1 );
     mAddMenuItem( &mnu, subitem, subitem->nrItems(), subitem->checked );
 }
 
 
 bool uiODVW2DWiggleVarAreaTreeItem::handleSelMenu( int mnuid )
 {
-    const uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(0);
+    uiFlatViewer& vwr = viewer2D()->viewwin()->viewer(0);
     ConstRefMan<FlatDataPack> dp = vwr.getPack( true, true );
     if ( !dp ) return false;
 
@@ -242,7 +234,14 @@ bool uiODVW2DWiggleVarAreaTreeItem::handleSelMenu( int mnuid )
     if ( dpid == DataPack::cNoID() ) return false;
 
     viewer2D()->setSelSpec( &selas, true );
-    viewer2D()->useStoredDispPars( true );
+    if ( !viewer2D()->useStoredDispPars(true) )
+    {
+	ColTab::MapperSetup& wvamapper =
+	    vwr.appearance().ddpars_.wva_.mappersetup_;
+	if ( wvamapper.type_ != ColTab::MapperSetup::Fixed )
+	    wvamapper.range_ = Interval<float>::udf();
+    }
+
     for ( int ivwr=0; ivwr<viewer2D()->viewwin()->nrViewers(); ivwr++ )
     {
 	FlatView::DataDispPars& ddpars =

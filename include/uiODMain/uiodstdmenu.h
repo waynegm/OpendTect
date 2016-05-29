@@ -153,6 +153,8 @@ ________________________________________________________________________
 #define m3DFrom2DMnuItm		(mProcMnu + 25)
 #define mPSProc2DMnuItm		(mProcMnu + 26)
 #define mPSProc3DMnuItm		(mProcMnu + 27)
+#define mVolProc2DMnuItm	(mProcMnu + 28)
+#define mVolProc3DMnuItm	(mProcMnu + 29)
 #define mCreateSurf2DMnuItm	(mUseHorMnu + 1)
 #define mCompBetweenHor2DMnuItm	(mUseHorMnu + 2)
 #define mCompAlongHor2DMnuItm	(mUseHorMnu + 3)
@@ -224,8 +226,9 @@ ________________________________________________________________________
 #define mAboutMnuItm		(mHelpMnuBase + 4)
 #define mSupportMnuItm		(mHelpMnuBase + 5)
 #define mWorkflowsMnuItm	(mHelpMnuBase + 6)
-#define mShortcutsMnuItm	(mHelpMnuBase + 7)
-#define mLegalMnuItm		(mHelpMnuBase + 8)
+#define mAttribMatrixMnuItm	(mHelpMnuBase + 7)
+#define mShortcutsMnuItm	(mHelpMnuBase + 8)
+#define mLegalMnuItm		(mHelpMnuBase + 9)
 
 
 #endif

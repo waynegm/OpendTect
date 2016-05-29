@@ -234,7 +234,7 @@ bool LogCubeCreator::setOutputNm( const char* suffix, bool withwllnm )
 	    fnm.addSpace().add( wellnmsuffix );
 
 	const IOObj* presentobj = IOM().getLocal( fnm.buf(),
-						  ctxt.trgroup_->groupName() );
+						  ctxt.translatorGroupName() );
 	if ( !presentobj )
 	    continue;
 
@@ -438,9 +438,9 @@ bool LogCubeCreator::makeLogTraces( int iwll )
 	hrg.snapToSurvey();
 
 	TrcKeySamplingIterator hsit( hrg );
-	BinID bid;
-	while ( hsit.next(bid) )
+	do
 	{
+	    const BinID bid( hsit.curBinID() );
 	    if ( bid.sqDistTo(trackpos) <= sqstep )
 	    {
 		for ( int ilog=0; ilog<nrlogs; ilog++ )
@@ -464,7 +464,7 @@ bool LogCubeCreator::makeLogTraces( int iwll )
 		    trcsbufout.get( trcpos )->set( itrckpt, logval, 0 );
 		}
 	    }
-	}
+	} while ( hsit.next() );
     }
 
     deepErase( logtrcs );

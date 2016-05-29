@@ -28,12 +28,15 @@ static bool isnotnull = true;
 
 Pos::IdxPairDataSet::ObjData::ObjData( const ObjData& oth )
     : objs_(oth.objs_)
-    , bufsz_(oth.bufsz_)
+    , bufsz_(0)
     , buf_(0)
 {
     if ( oth.buf_ )
     {
-	buf_ = new BufType[ bufsz_ ];
+	BufType* newbuf = new BufType[ oth.bufsz_ ];
+	// may throw here, then caller should catch
+	buf_ = newbuf;
+	bufsz_ = oth.bufsz_;
 	OD::memCopy( buf_, oth.buf_, bufsz_ );
     }
 }
@@ -140,9 +143,9 @@ bool Pos::IdxPairDataSet::ObjData::incrObjSize( ObjSzType orgsz,
     ObjSzType offsorg = offs;
     ObjSzType offsnew = offs + gapsz;
 
-    while ( offsnew < bufsz_+gapsz )
+    while ( offsorg+orgsz < orgbufsz )
     {
-	ObjSzType nrbytes2copy = newsz;
+	ObjSzType nrbytes2copy = orgsz;
 	if ( offsnew + nrbytes2copy > bufsz_ )
 	    nrbytes2copy = bufsz_ - offsnew;
 	if ( nrbytes2copy > 0 )
@@ -175,13 +178,12 @@ void Pos::IdxPairDataSet::ObjData::decrObjSize( ObjSzType orgsz,
     if ( offs )
 	OD::memCopy( buf_, orgbuf, offs );
 
-    const ObjSzType gapsz = orgsz - newsz;
-    ObjSzType offsorg = offs + gapsz;
+    ObjSzType offsorg = offs + orgsz - newsz;
     ObjSzType offsnew = offs;
 
-    while ( offsorg < orgbufsz )
+    while ( offsnew+newsz < bufsz_ )
     {
-	ObjSzType nrbytes2copy = orgsz;
+	ObjSzType nrbytes2copy = newsz;
 	if ( offsorg + nrbytes2copy > orgbufsz )
 	    nrbytes2copy = orgbufsz - offsorg;
 	if ( nrbytes2copy > 0 )

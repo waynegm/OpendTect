@@ -37,27 +37,31 @@ namespace VolProc
 const char* uiChain::sKeySettingKey()
 { return "dTect.ProcessVolumeBuilderOnOK"; }
 
-mImplFactory2Param( uiStepDialog, uiParent*, Step*, uiStepDialog::factory );
+mImplFactory3Param( uiStepDialog, uiParent*, Step*, bool,
+		    uiStepDialog::factory );
 
 
 // uiStepDialog
-uiStepDialog::uiStepDialog( uiParent* p, const uiString& stepnm, Step* step )
+uiStepDialog::uiStepDialog( uiParent* p, const uiString& stepnm, Step* step,
+			    bool is2d )
     : uiDialog( p, uiDialog::Setup(tr("Edit step"),stepnm,mNoHelpKey) )
     , step_(step)
     , multiinpfld_(0)
+    , is2d_(is2d)
 {
 }
 
 
-void uiStepDialog::addMultiInputFld()
+void uiStepDialog::addMultiInputFld( uiGroup* grp )
 {
     const int nrinp = step_->getNrInputs();
     if ( nrinp == 0 )
 	return;
 
+    uiParent* prnt = grp ? (uiParent*)grp : (uiParent*)this;
     const int nrrows = nrinp==-1 ? 2 : nrinp;
     uiTable::Setup ts( nrrows, 1 );
-    multiinpfld_ = new uiTable( this, ts, "Step inputs" );
+    multiinpfld_ = new uiTable( prnt, ts, "Step inputs" );
     multiinpfld_->setColumnLabel( 0, uiStrings::sInput() );
     initInputTable( nrinp );
 }
@@ -193,12 +197,34 @@ bool uiStepDialog::acceptOK( CallBacker* )
 }
 
 
+bool getNamesFromFactory( uiStringSet& uinms, BufferStringSet& nms, bool is2d )
+{
+    for ( int idx=0; idx<uiStepDialog::factory().size(); idx++ )
+    {
+	PtrMan<Step> step =
+	    Step::factory().create(uiStepDialog::factory().getNames().get(idx));
+	if ( !step || (is2d && !step->canHandle2D()) )
+	    continue;
+
+	uinms.add( uiStepDialog::factory().getUserNames()[idx] );
+	nms.add( uiStepDialog::factory().getNames().get(idx) );
+    }
+
+    return nms.size();
+}
+
 // uiChain
-uiChain::uiChain( uiParent* p, Chain& chn, bool withprocessnow )
+
+
+#define mGetIOObjContext is2d_ ? VolProcessing2DTranslatorGroup::ioContext() \
+				: VolProcessingTranslatorGroup::ioContext();
+
+uiChain::uiChain( uiParent* p, Chain& chn, bool is2d, bool withprocessnow )
     : uiDialog( p, uiDialog::Setup(tr("Volume Builder: Setup"),
 				   mNoDlgTitle, mODHelpKey(mChainHelpID) )
 	    .modal(!withprocessnow) )
     , chain_(chn)
+    , is2d_(is2d)
 {
     chain_.ref();
 
@@ -210,17 +236,19 @@ uiChain::uiChain( uiParent* p, Chain& chn, bool withprocessnow )
 
     uiGroup* flowgrp = new uiGroup( this, "Flow group" );
 
+    uiStringSet uinames;
+    getNamesFromFactory( uinames, factorysteptypes_, is2d_ );
     const CallBack addcb( mCB(this,uiChain,addStepPush) );
     uiLabel* availablelabel = new uiLabel( flowgrp, tr("Available steps") );
     factorylist_ = new uiListBox( flowgrp, "Processing methods" );
-    factorylist_->addItems( uiStepDialog::factory().getUserNames() );
+    factorylist_->addItems( uinames );
     factorylist_->setHSzPol( uiObject::Wide );
     factorylist_->selectionChanged.notify( mCB(this,uiChain,factoryClickCB) );
     factorylist_->attach( ensureBelow, availablelabel );
     factorylist_->doubleClicked.notify( addcb );
 
     const int maxvsz = 15;
-    const int nrsteps = uiStepDialog::factory().size();
+    const int nrsteps = uinames.size();
     const int vsz = mMIN( nrsteps, maxvsz );
     factorylist_->box()->setPrefHeightInChar( vsz );
 
@@ -259,7 +287,7 @@ uiChain::uiChain( uiParent* p, Chain& chn, bool withprocessnow )
 
     flowgrp->setHAlignObj( steplist_ );
 
-    IOObjContext ctxt = VolProcessingTranslatorGroup::ioContext();
+    IOObjContext ctxt = mGetIOObjContext;
     ctxt.forread_ = false;
 
     objfld_ = new uiIOObjSel( this, ctxt, tr("On OK, store As") );
@@ -360,7 +388,7 @@ bool uiChain::doSave()
 
 bool uiChain::doSaveAs()
 {
-    IOObjContext ctxt = VolProcessingTranslatorGroup::ioContext();
+    IOObjContext ctxt = mGetIOObjContext;
     ctxt.forread_ = false;
     uiIOObjSelDlg dlg( this, ctxt, tr("Volume Builder Setup") );
     if ( !dlg.go() || !dlg.nrChosen() )
@@ -420,8 +448,7 @@ void uiChain::updateButtons()
 	    stepsel!=steplist_->size()-1 );
 
     const bool hasdlg = stepsel>=0 &&
-	uiStepDialog::factory().hasName(
-		chain_.getStep(stepsel)->factoryKeyword());
+	factorysteptypes_.isPresent( chain_.getStep(stepsel)->factoryKeyword());
 
     propertiesbutton_->setSensitive( hasdlg );
 }
@@ -433,7 +460,7 @@ bool uiChain::showPropDialog( int idx )
     if ( !step ) return false;
 
     PtrMan<uiStepDialog> dlg = uiStepDialog::factory().create(
-	    step->factoryKeyword(), this, step );
+				step->factoryKeyword(), this, step, is2d_ );
     if ( !dlg )
     {
 	uiMSG().error( tr("Internal error. Step cannot be created") );
@@ -450,7 +477,7 @@ bool uiChain::showPropDialog( int idx )
 
 void uiChain::readPush( CallBacker* )
 {
-    IOObjContext ctxt = VolProcessingTranslatorGroup::ioContext();
+    IOObjContext ctxt = mGetIOObjContext;
     ctxt.forread_ = true;
     uiIOObjSelDlg dlg( this, ctxt );
     dlg.selGrp()->setConfirmOverwrite( false );
@@ -458,7 +485,8 @@ void uiChain::readPush( CallBacker* )
 	return;
 
     uiString errmsg;
-    if ( VolProcessingTranslator::retrieve( chain_, dlg.ioObj(), errmsg ) )
+    const IOObj* ioobj = dlg.ioObj();
+    if ( VolProcessingTranslator::retrieve(chain_,ioobj,errmsg) )
     {
 	updObj( *dlg.ioObj() );
 	updateList();
@@ -513,8 +541,7 @@ void uiChain::addStepPush(CallBacker*)
     if ( sel == -1 )
 	return;
 
-    const char* steptype = uiStepDialog::factory().getNames()[sel]->buf();
-    addStep( steptype );
+    addStep( factorysteptypes_.get(sel) );
 }
 
 
@@ -529,7 +556,7 @@ void uiChain::addStep( const char* steptype )
 	    tr("The %1 cannot be used as an initial volume. "
 		"Please select one of the following as initial step:\n%2.")
 		.arg( step->factoryDisplayName() )
-		.arg( getPossibleInitialStepNames() ) );
+		.arg( getPossibleInitialStepNames(is2d_) ) );
 
 	delete step;
 	return;
@@ -628,7 +655,7 @@ void uiChain::propertiesCB( CallBacker* )
 }
 
 
-uiString uiChain::getPossibleInitialStepNames()
+uiString uiChain::getPossibleInitialStepNames( bool is2d )
 {
     mDefineStaticLocalObject( uiString, names, (uiString::emptyString()) );
 
@@ -641,6 +668,9 @@ uiString uiChain::getPossibleInitialStepNames()
 		uiStepDialog::factory().getNames()[idx]->buf();
 
 	    PtrMan<Step> step = Step::factory().create( steptype );
+	    if ( is2d && !step->canHandle2D() )
+		continue;
+
 	    if ( step->getNrInputs()>0 && step->needsInput() )
 		continue;
 

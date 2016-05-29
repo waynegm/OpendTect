@@ -724,6 +724,27 @@ int uiEMPartServer::loadAuxData( const EM::ObjectID& id, const char* attrnm,
 }
 
 
+bool uiEMPartServer::loadAuxData( const EM::ObjectID& id,
+			const BufferStringSet& selattrnms, bool removeold )
+{
+    const MultiID mid = em_.getMultiID( id );
+    EM::IOObjInfo eminfo( mid );
+    BufferStringSet attrnms;
+    eminfo.getAttribNames( attrnms );
+
+    TypeSet<int> idxs;
+    for ( int idx=0; idx<selattrnms.size(); idx++ )
+    {
+	const int selidx = attrnms.indexOf( selattrnms.get(idx) );
+	if ( selidx < 0 ) continue;
+
+	idxs += idx;
+    }
+
+    return loadAuxData( id, idxs, removeold );
+}
+
+
 bool uiEMPartServer::storeFaultAuxData( const EM::ObjectID& id,
 	BufferString& auxdatanm, const Array2D<float>& data )
 {
@@ -1634,7 +1655,7 @@ void uiEMPartServer::fillPickSet( Pick::Set& ps, MultiID horid )
     int idx = 0;
     while ( idx < ps.size() )
     {
-	const BinID bid = ps[idx].binID();
+	const BinID bid = ps.get( idx ).binID();
 	const EM::SubID subid = bid.toInt64();
 	double zval = hor->getPos( hor->sectionID(0), subid ).z;
 	if ( mIsUdf(zval) )
@@ -1644,10 +1665,10 @@ void uiEMPartServer::fillPickSet( Pick::Set& ps, MultiID horid )
 	    if ( geom )
 		zval = geom->computePosition( Coord(bid.inl(),bid.crl()) ).z;
 	    if ( mIsUdf(zval) )
-		{ ps.removeSingle(idx); continue; }
+		{ ps.remove(idx); continue; }
 	}
 
-	ps[idx].setZ( zval );
+	ps.setZ( idx, zval );
 	idx++;
     }
 

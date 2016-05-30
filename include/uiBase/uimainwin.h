@@ -33,7 +33,7 @@ class Timer;
 */
 
 
-mExpClass(uiBase) uiMainWin : public uiParent
+mExpClass(uiBase) uiMainWin : public uiParent, public CallBacker
 { mODTextTranslationClass(uiMainWin);
 friend class ODMainWindow;
 public:
@@ -70,7 +70,13 @@ public:
     uiToolBar*		removeToolBar(uiToolBar*);
     void		addToolBarBreak();
 
+    void		setCaption(const uiString&);
+
     uiLayoutMgr*	getLayoutMgr();
+
+
+    Notifier<uiMainWin>	windowClosed;
+    //!< triggered when window exits
 
     static uiMainWin*	activeWindow();
     static uiString	uniqueWinTitle(const uiString&,

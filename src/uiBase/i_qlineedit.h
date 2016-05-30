@@ -26,7 +26,7 @@ class QString;
 class i_lineEditMessenger : public QObject
 {
     Q_OBJECT
-    friend class	uiLineEditBody;
+    friend class	uiLineEdit;
 
 protected:
 i_lineEditMessenger( QLineEdit* sndr, uiLineEdit* receiver )

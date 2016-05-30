@@ -32,7 +32,34 @@ public:
 				uiSliderObj(uiParent*,const char* nm);
 				~uiSliderObj();
     
-    void			setOrientation(bool isvert);
+    void			setVertical(bool isvert);
+    bool			isVertical() const;
+    
+    void			setInverted( bool yn );
+    bool			isInverted() const;
+    
+    void			setInvertedControls( bool yn );
+    bool			hasInvertedControls() const;
+
+    int				getSliderPosition() const;
+    void			setSliderPosition(int);
+    
+    int				getMinimum() const;
+    void			setMinimum(int);
+    
+    int 			getMaximum() const;
+    void			setMaximum(int);
+    
+    int				getStep() const;
+    void			setStep(int);
+    
+    enum			TickPosition { NoMarks=0, Above=1, Left=Above,
+        					Below=2, Right=Below, Both=3 };
+    
+    void			setTickMarks(TickPosition);
+    TickPosition		getTickMarks() const;
+    void			setTickStep(int);
+    int				getTickStep() const;
     
     Notifier<uiSliderObj>	valueChanged;
     Notifier<uiSliderObj>	sliderMoved;
@@ -74,8 +101,7 @@ public:
 			uiSlider(uiParent*,const Setup&,const char* nm=0);
 			~uiSlider();
 
-    enum		TickPosition { NoMarks=0, Above=1, Left=Above, Below=2,
-				      Right=Below, Both=3 };
+
 
     void		processInput();
     void		setToolTip(const uiString&);
@@ -103,10 +129,11 @@ public:
     void		getInterval(StepInterval<float>&) const;
     void		setLinearScale(double,double);
 
-    void		setTickMarks(TickPosition);
-    TickPosition	tickMarks() const;
+    void		setTickMarks(uiSliderObj::TickPosition);
+    uiSliderObj::TickPosition	tickMarks() const;
     void		setTickStep(int);
     int			tickStep() const;
+
     void		setOrientation(OD::Orientation);
     OD::Orientation	getOrientation() const;
 

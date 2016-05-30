@@ -16,6 +16,8 @@ ________________________________________________________________________
 #include "userinputobj.h"
 
 class uiLineEditBody;
+mFDQtclass(QLineEdit);
+class i_lineEditMessenger;
 
 mExpClass(uiBase) uiIntValidator
 {
@@ -55,6 +57,7 @@ public:
 			//  insted of undefined value, when line edit is empty.
 			uiLineEdit(uiParent*,const char* nm);
 			uiLineEdit(uiParent*,const DataInpSpec&,const char* nm);
+                        ~uiLineEdit();
 
     void		setEdited(bool=true);
     bool		isEdited() const;
@@ -116,12 +119,14 @@ protected:
 			{ returnPressed.notify( cb ); return true; }
 
 private:
+    void			contextMenuEventCB(CallBacker*);
+    void			init();
 
-    uiLineEditBody*	body_;
-    uiLineEditBody&	mkbody(uiParent*, const char*);
+    mQtclass(QLineEdit)*	lineedit_;
+    i_lineEditMessenger*	messenger_;
 
-    mutable BufferString result_;
-    int			nrdecimals_;
+    mutable BufferString 	result_;
+    int				nrdecimals_;
 
 };
 

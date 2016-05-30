@@ -25,6 +25,10 @@ ________________________________________________________________________
 mUseQtnamespace
 
 
+
+#define mSliderBlockCmdRec	CmdRecStopper cmdrecstopper( slider_ );
+
+
 // uiSliderObj
 uiSliderObj::uiSliderObj( uiParent* p, const char* nm )
     : uiSingleWidgetObject(p,nm)
@@ -44,84 +48,142 @@ uiSliderObj::~uiSliderObj()
 { delete messenger_; }
 
 
-void uiSliderObj::setOrientation( OD::Orientation orient )
+void uiSliderObj::setVertical( bool isvert )
 {
-    slider_->setOrientation(
-                orient == OD::Vertical
-                            ? Qt::Vertical
-                            : Qt::Horizontal );
-}
-
-float uiSliderObj::getLinearFraction() const
-{
-    float start = slider_->minimum();
-    float range = slider_->maximum() - start;
-    return range ? (slider_->sliderPosition()-start)/range : 1.0;
+    slider_->setOrientation( isvert ? Qt::Vertical : Qt::Horizontal );
 }
 
 
-void uiSliderObj::setLinearFraction( float frac )
-{
-    mSliderBlockCmdRec;
-    if ( frac>=0.0 && frac<=1.0 )
-    {
-        const float val = (1-frac)*slider_->minimum() +
-        frac*slider_->maximum();
-        slider_->setValue( mNINT32(val) );
-    }
-}
+bool uiSliderObj::isVertical() const
+{ return slider_->orientation() == Qt::Vertical; }
 
 
-int uiSliderObj::getIntValue() const
-{ return slider_->value(); }
+void uiSliderObj::setStep(int s)
+{ slider_->setPageStep(s); }
+
+
+int uiSliderObj::getStep() const
+{ return slider_->pageStep(); }
+
+
+void uiSliderObj::setTickStep(int s)
+{ slider_->setTickInterval(s); }
+
+
+int uiSliderObj::getTickStep() const
+{ return slider_->tickInterval(); }
+
+
+void uiSliderObj::setInverted( bool yn )
+{ slider_->setInvertedAppearance( yn ); }
+
+bool uiSliderObj::isInverted() const
+{ return slider_->invertedAppearance(); }
+
+void uiSliderObj::setInvertedControls( bool yn )
+{ slider_->setInvertedControls( yn ); }
+
+bool uiSliderObj::hasInvertedControls() const
+{ return slider_->invertedControls(); }
+
+
+int uiSliderObj::getMinimum() const { return slider_->minimum(); }
+
+
+void uiSliderObj::setMinimum(int m) { slider_->setMinimum(m); }
+
+
+int uiSliderObj::getMaximum() const { return slider_->maximum(); }
+
+
+void uiSliderObj::setMaximum(int m) { slider_->setMaximum(m); }
+
+
+int uiSliderObj::getSliderPosition() const { return slider_->sliderPosition(); }
+
+
+void uiSliderObj::setSliderPosition(int p) { slider_->setSliderPosition(p); }
+
 
 
 void uiSliderObj::setTickMarks( TickPosition ticks )
 { slider_->setTickPosition( QSlider::TickPosition( (int)ticks ) ); }
 
-uiSlider::TickPosition uiSliderObj::tickMarks() const
-{ return (uiSlider::TickPosition)( (int)slider_->tickPosition() ); }
+
+uiSliderObj::TickPosition uiSliderObj::getTickMarks() const
+{ return (uiSliderObj::TickPosition) slider_->tickPosition(); }
 
 
-OD::Orientation uiSliderObj::getOrientation() const
-{ return (OD::Orientation)( (int)slider_->orientation() ); }
+float uiSlider::getLinearFraction() const
+{
+    float start = slider_->getMinimum();
+    float range = slider_->getMaximum() - start;
+    return range ? (slider_->getSliderPosition()-start)/range : 1.0;
+}
+
+
+void uiSlider::setLinearFraction( float frac )
+{
+    mSliderBlockCmdRec;
+    if ( frac>=0.0 && frac<=1.0 )
+    {
+        const float val = (1-frac)*slider_->getMinimum() +
+        frac*slider_->getMaximum();
+        slider_->setSliderPosition( mNINT32(val) );
+    }
+}
+
+
+int uiSlider::getIntValue() const
+{ return slider_->getSliderPosition(); }
+
+
+void uiSlider::setTickMarks( uiSliderObj::TickPosition ticks )
+{ slider_->setTickMarks( ticks ); }
+
+uiSliderObj::TickPosition uiSlider::tickMarks() const
+{ return slider_->getTickMarks(); }
+
+
+OD::Orientation uiSlider::getOrientation() const
+{ return slider_->isVertical() ? OD::Vertical : OD::Horizontal; }
 
 void uiSlider::setInverted( bool yn )
-{ slider_->setInvertedAppearance( yn ); }
+{ slider_->setInverted( yn ); }
 
 bool uiSlider::isInverted() const
-{ return slider_->invertedAppearance(); }
+{ return slider_->isInverted(); }
 
 void uiSlider::setInvertedControls( bool yn )
-{ slider_->body().setInvertedControls( yn ); }
+{ slider_->setInvertedControls( yn ); }
 
 bool uiSlider::hasInvertedControls() const
-{ return slider_->body().invertedControls(); }
+{ return slider_->hasInvertedControls(); }
 
 
 void uiSlider::setMinValue( float minval )
 {
     mSliderBlockCmdRec;
-    slider_->body().setMinimum( sliderValue(minval) );
+    slider_->setMinimum( sliderValue(minval) );
 }
 
 
 void uiSlider::setMaxValue( float maxval )
 {
     mSliderBlockCmdRec;
-    slider_->body().setMaximum( sliderValue(maxval) );
+    slider_->setMaximum( sliderValue(maxval) );
 }
 
 
-float uiSliderObj::minValue() const
+float uiSlider::minValue() const
 {
-    return userValue( slider_->minimum() );
+    return userValue( slider_->getMinimum() );
 }
 
 
-float uiSliderObj::maxValue() const
+float uiSlider::maxValue() const
 {
-    return userValue( slider_->maximum() );
+    return userValue( slider_->getMaximum() );
 }
 
 
@@ -149,7 +211,7 @@ void uiSlider::init( const uiSlider::Setup& setup, const char* nm )
     slider_ = new uiSliderObj( this, nm );
     const bool isvert = setup.isvertical_;
 
-    slider_->setOrientation( isvert ? OD::Vertical : OD::Horizontal );
+    slider_->setVertical( isvert );
     //slider_->body().setStretch( isvert ? 0 : 1, isvert ? 1 : 0 );
 
     int nrdec = setup.nrdec_;
@@ -191,20 +253,11 @@ void uiSlider::init( const uiSlider::Setup& setup, const char* nm )
 }
 
 
-#define mSliderBlockCmdRec	CmdRecStopper cmdrecstopper( slider_ );
-
-
 void uiSlider::processInput()
 { if ( editfld_ ) setValue( editfld_->getFValue() ); }
 
 void uiSlider::setToolTip( const uiString& tt )
 { slider_->setToolTip( tt ); }
-
-
-float uiSlider::getLinearFraction() const
-{
-    return slider_->getLinearFraction();
-}
 
 
 void uiSlider::setScale( float fact, float constant )
@@ -239,13 +292,13 @@ void uiSlider::setText( const char* txt )
 { setValue( toFloat(txt) ); }
 
 void uiSlider::setValue( int ival )
-{ slider_->setValue( ival ); }
+{ slider_->setSliderPosition( ival ); }
 
 void uiSlider::setValue( float fval )
 {
     mSliderBlockCmdRec;
     int val = sliderValue( fval );
-    slider_->setValue( val );
+    slider_->setSliderPosition( val );
 }
 
 
@@ -256,12 +309,8 @@ const char* uiSlider::text() const
 }
 
 
-int uiSlider::getIntValue() const
-{ return slider_->getIntValue(); }
-
-
 float uiSlider::getFValue() const
-{ return userValue( getIntValue() );
+{ return userValue( getIntValue() ); }
 
 
 
@@ -274,14 +323,14 @@ void uiSlider::setStep( float stp )
 	const float fstp = stp / scaler_->factor;
 	istep = mNINT32( fstp );
     }
-    slider_->body().setSingleStep( istep );
-    slider_->body().setPageStep( istep );
+
+    slider_->setStep( istep );
 }
 
 
 float uiSlider::step() const
 {
-    return userValue( slider_->body().singleStep() );
+    return userValue( slider_->getStep() );
 }
 
 
@@ -290,14 +339,15 @@ void uiSlider::setInterval( const StepInterval<int>& intv )
 
 void uiSlider::setInterval( int start, int stop, int stp )
 {
-    slider_->body().setRange( start, stop );
-    slider_->body().setSingleStep( stp );
-    slider_->body().setPageStep( stp );
+    slider_->setMinimum( start );
+    slider_->setMaximum( stop );
+    slider_->setStep( stp );
 }
 
 
 void uiSlider::setInterval( const StepInterval<float>& intv )
 { setInterval( intv.start, intv.stop, intv.step ); }
+
 
 void uiSlider::setInterval( float start, float stop, float stp )
 {
@@ -326,13 +376,13 @@ void uiSlider::setLinearScale( double constant, double factor )
 
 
 int uiSlider::tickStep() const
-{ return slider_->body().tickInterval() ; }
+{ return slider_->getTickStep(); }
 
 void uiSlider::setTickStep( int s )
-{ slider_->body().setTickInterval(s); }
+{ slider_->setTickStep(s); }
 
 
-void uiSlider::sliderMove( CallBacker* )
+void uiSlider::sliderMoveCB( CallBacker* )
 {
     const float val = getFValue();
     if ( editfld_ ) editfld_->setValue( val );
@@ -344,10 +394,11 @@ float uiSlider::editValue() const
     return editfld_ ? editfld_->getFValue() : mUdf(float);
 }
 
-void uiSlider::editRetPress( CallBacker* )
+
+void uiSlider::editRetPressCB( CallBacker* )
 {
     if ( editfld_ )
 	setValue( editfld_->getFValue() );
 
-    valueChanged.trigger();
+    slider_->valueChanged.trigger();
 }

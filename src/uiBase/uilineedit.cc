@@ -12,9 +12,8 @@ ________________________________________________________________________
 #include "i_qlineedit.h"
 
 #include "datainpspec.h"
+#include "uieventfilter.h"
 #include "mouseevent.h"
-#include "uibody.h"
-#include "uiobjbody.h"
 #include "uivirtualkeyboard.h"
 
 #include <QSize>
@@ -25,81 +24,52 @@ ________________________________________________________________________
 
 mUseQtnamespace
 
-class uiLineEditBody : public uiObjBodyImpl<uiLineEdit,QLineEdit>
-{
-public:
-
-                        uiLineEditBody( uiLineEdit& hndle,
-				   uiParent*, const char* nm="Line Edit body");
-
-    virtual		~uiLineEditBody()		{ delete &messenger_; }
-
-    virtual int	nrTxtLines() const		{ return 1; }
-
-protected:
-
-    virtual void	contextMenuEvent(QContextMenuEvent*);
-
-private:
-
-    i_lineEditMessenger& messenger_;
-
-};
-
-
-uiLineEditBody::uiLineEditBody( uiLineEdit& hndle,uiParent* parnt,
-				const char* nm )
-    : uiObjBodyImpl<uiLineEdit,QLineEdit>(hndle,parnt,nm)
-    , messenger_ ( *new i_lineEditMessenger(this,&hndle) )
-{
-    setStretch( 1, 0 );
-    setHSzPol( uiObject::Medium );
-}
-
-
-void uiLineEditBody::contextMenuEvent( QContextMenuEvent* ev )
-{
-    if ( uiVirtualKeyboard::isVirtualKeyboardEnabled() )
-	handle().popupVirtualKeyboard( ev->globalX(), ev->globalY() );
-    else
-	QLineEdit::contextMenuEvent( ev );
-}
-
 
 //------------------------------------------------------------------------------
 
 
 uiLineEdit::uiLineEdit( uiParent* parnt, const DataInpSpec& spec,
 			const char* nm )
-    : uiObject( parnt, nm, mkbody(parnt,nm) )
+    : uiSingleWidgetObject(parnt, nm )
     , editingFinished(this), returnPressed(this)
     , selectionChanged(this), textChanged(this)
     , UserInputObjImpl<const char*>()
 {
+    init();
     setText( spec.text() );
 }
 
 
 uiLineEdit::uiLineEdit( uiParent* parnt, const char* nm )
-    : uiObject( parnt, nm, mkbody(parnt,nm) )
+    : uiSingleWidgetObject(parnt, nm )
     , editingFinished(this), returnPressed(this)
     , selectionChanged(this), textChanged(this)
     , UserInputObjImpl<const char*>()
+    , lineedit_( new QLineEdit )
 {
+    init();
     setText( "" );
 }
 
 
-uiLineEditBody& uiLineEdit::mkbody( uiParent* parnt, const char* nm )
+uiLineEdit::~uiLineEdit()
 {
-    body_ = new uiLineEditBody(*this,parnt,nm);
-    return *body_;
+    delete messenger_;
+}
+
+void uiLineEdit::init()
+{
+    messenger_ = new i_lineEditMessenger(lineedit_,this);
+    setSingleWidget( lineedit_ );
+    
+    mAttachCB( eventFilter()->eventhappened, uiLineEdit::contextMenuEventCB);
+    eventFilter()->addEventType( uiEventFilter::ContextMenu );
 }
 
 
 const char* uiLineEdit::getvalue_() const
 {
-    result_.set( body_->text() ).trimBlanks();
+    result_.set( lineedit_->text() ).trimBlanks();
     return result_.buf();
 }
 
@@ -107,45 +77,45 @@ const char* uiLineEdit::getvalue_() const
 void uiLineEdit::setvalue_( const char* t )
 {
     mBlockCmdRec;
-    body_->setText( mIsUdf(t) ? QString() : QString(t) );
-    body_->setCursorPosition( 0 );
+    lineedit_->setText( mIsUdf(t) ? QString() : QString(t) );
+    lineedit_->setCursorPosition( 0 );
     setEdited( false );
 }
 
 
 void uiLineEdit::setPasswordMode()
 {
-    body_->setEchoMode( QLineEdit::Password );
+    lineedit_->setEchoMode( QLineEdit::Password );
 }
 
 
 void uiLineEdit::setValidator( const uiIntValidator& val )
 {
-    body_->setValidator( new QIntValidator(val.bottom_, val.top_,body_) );
+    lineedit_->setValidator( new QIntValidator(val.bottom_, val.top_,lineedit_) );
 }
 
 
 void uiLineEdit::setValidator( const uiFloatValidator& val )
 {
     QDoubleValidator* qdval =
-	new QDoubleValidator( val.bottom_, val.top_, val.nrdecimals_, body_ );
+	new QDoubleValidator( val.bottom_, val.top_, val.nrdecimals_, lineedit_ );
     if ( !val.scnotation_ )
 	qdval->setNotation( QDoubleValidator::StandardNotation );
-    body_->setValidator( qdval );
+    lineedit_->setValidator( qdval );
 }
 
 
 void uiLineEdit::setMaxLength( int maxtxtlength )
-{ body_->setMaxLength( maxtxtlength ); }
+{ lineedit_->setMaxLength( maxtxtlength ); }
 
 int uiLineEdit::maxLength() const
-{ return body_->maxLength(); }
+{ return lineedit_->maxLength(); }
 
 void uiLineEdit::setEdited( bool yn )
-{ body_->setModified( yn ); }
+{ lineedit_->setModified( yn ); }
 
 bool uiLineEdit::isEdited() const
-{ return body_->isModified(); }
+{ return lineedit_->isModified(); }
 
 void uiLineEdit::setCompleter( const BufferStringSet& bs, bool cs )
 {
@@ -156,62 +126,74 @@ void uiLineEdit::setCompleter( const BufferStringSet& bs, bool cs )
     QCompleter* qc = new QCompleter( qsl, 0 );
     qc->setCaseSensitivity( cs ? Qt::CaseSensitive
 			       : Qt::CaseInsensitive );
-    body_->setCompleter( qc );
+    lineedit_->setCompleter( qc );
 }
 
 
 void uiLineEdit::setPlaceholderText( const uiString& txt )
 {
-    body_->setPlaceholderText( txt.getQString() );
+    lineedit_->setPlaceholderText( txt.getQString() );
 }
 
 
 void uiLineEdit::setReadOnly( bool yn )
-{ body_->setReadOnly( yn ); }
+{ lineedit_->setReadOnly( yn ); }
 
 bool uiLineEdit::isReadOnly() const
-{ return body_->isReadOnly(); }
+{ return lineedit_->isReadOnly(); }
 
 bool uiLineEdit::update_( const DataInpSpec& spec )
 { setText( spec.text() ); return true; }
 
 void uiLineEdit::home()
-{ body_->home( false ); }
+{ lineedit_->home( false ); }
 
 void uiLineEdit::end()
-{ body_->end( false ); }
+{ lineedit_->end( false ); }
 
 void uiLineEdit::backspace()
-{ body_->backspace(); }
+{ lineedit_->backspace(); }
+
+
+void uiLineEdit::contextMenuEventCB(CallBacker* cb)
+{
+    mDynamicCastGet(const QContextMenuEvent*, ev,
+                    eventFilter()->getCurrentEvent() );
+    if ( !ev )
+        return;
+
+     if ( uiVirtualKeyboard::isVirtualKeyboardEnabled() )
+         popupVirtualKeyboard( ev->globalX(), ev->globalY() );
+}
 
 void uiLineEdit::del()
-{ body_->del(); }
+{ lineedit_->del(); }
 
 void uiLineEdit::cursorBackward( bool mark, int steps )
-{ body_->cursorBackward( mark, steps ); }
+{ lineedit_->cursorBackward( mark, steps ); }
 
 void uiLineEdit::cursorForward( bool mark, int steps )
-{ body_->cursorForward( mark, steps ); }
+{ lineedit_->cursorForward( mark, steps ); }
 
 int uiLineEdit::cursorPosition() const
-{ return body_->cursorPosition(); }
+{ return lineedit_->cursorPosition(); }
 
 void uiLineEdit::insert( const char* txt )
 {
     mBlockCmdRec;
-    body_->insert( txt );
+    lineedit_->insert( txt );
 }
 
 int uiLineEdit::selectionStart() const
-{ return body_->selectionStart(); }
+{ return lineedit_->selectionStart(); }
 
 void uiLineEdit::setSelection( int start, int length )
-{ body_->setSelection( start, length ); }
+{ lineedit_->setSelection( start, length ); }
 
 
 const char* uiLineEdit::selectedText() const
 {
-    result_ = body_->selectedText();
+    result_ = lineedit_->selectedText();
     return result_.buf();
 }
 

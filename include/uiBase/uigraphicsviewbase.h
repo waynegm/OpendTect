@@ -24,7 +24,7 @@ class MouseEventHandler;
 class uiRect;
 
 
-mExpClass(uiBase) uiGraphicsViewBase : public uiObject
+mExpClass(uiBase) uiGraphicsViewBase : public uiSingleWidgetObject
 {
 friend class uiGraphicsViewBody;
 public:

@@ -112,6 +112,7 @@ uiMainWin* ODMainWindow::uimainwin()
 uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
     : uiParent(setup.caption_.getFullString())
     , qmainwindow_(0)
+    , windowClosed(this)
 {
     qmainwindow_ = new ODMainWindow( *this, p, setup.caption_.getFullString(),
 				     setup.modal_ );

@@ -42,7 +42,8 @@ bool uiVirtualKeyboard::isVirtualKeyboardEnabled()
 
 
 uiVirtualKeyboard::uiVirtualKeyboard( uiObject& inpobj, int x, int y )
-    : uiMainWin( inpobj.parent(), tr("Virtual Keyboard"), 0, false, true )
+    : uiMainWin( inpobj.parent(),
+                 uiMainWin::Setup( tr("Virtual Keyboard") ) )
     , inputobj_( inpobj )
     , globalx_( x )
     , globaly_( y )
@@ -61,8 +62,8 @@ uiVirtualKeyboard::uiVirtualKeyboard( uiObject& inpobj, int x, int y )
 {
     nractivevirtualkeyboards_++;
 
-    if ( x>=0 && y>=0 && !mIsUdf(x) && !mIsUdf(y) )
-	setCornerPos( x, y );
+   // if ( x>=0 && y>=0 && !mIsUdf(x) && !mIsUdf(y) )
+	//setCornerPos( x, y );
 
     uiString wintitle = tr("Virtual Keyboard [%1]").
 					arg(toUiString(inputobj_.name()));

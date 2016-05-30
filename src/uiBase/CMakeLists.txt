@@ -17,11 +17,11 @@ set(QT_MOC_HEADERS
 	i_qbutton.h
 	i_qcombobox.h
 	i_qdial.h
-#	i_qlineedit.h
+	i_qlineedit.h
 #	i_qlistbox.h
 #	i_qmdiarea.h
 	i_qptr.h
-#	i_qslider.h
+	i_qslider.h
 	i_qspinbox.h
 	i_qsystemtrayicon.h
 #	i_qtabbar.h
@@ -61,7 +61,7 @@ set(OD_MODULE_SOURCES
 	uiicon.cc
 	uilabel.cc
 	uilayout.cc
-#	uilineedit.cc
+	uilineedit.cc
 #	uilistbox.cc
 	uimain.cc
 	uimainwin.cc

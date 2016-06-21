@@ -55,7 +55,7 @@ set(OD_MODULE_SOURCES
 	uigraphicsitem.cc
 	uigraphicsitemimpl.cc
 	uigraphicsscene.cc
-#	uigraphicsviewbase.cc
+	uigraphicsviewbase.cc
 	uigroup.cc
 	uihelpview.cc
 	uiicon.cc

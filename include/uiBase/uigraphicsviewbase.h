@@ -22,6 +22,7 @@ class GestureEventHandler;
 class KeyboardEventHandler;
 class MouseEventHandler;
 class uiRect;
+mFDQtclass(QGraphicsView);
 
 
 mExpClass(uiBase) uiGraphicsViewBase : public uiSingleWidgetObject
@@ -118,8 +119,14 @@ protected:
 
     void			translateText();
 
-    uiGraphicsViewBody*		body_;
-    uiGraphicsViewBody&		mkbody(uiParent*,const char*);
+    QGraphicsView*		graphicsview_;
+    MouseEventHandler*		mousehandler_;
+    KeyboardEventHandler*	keyboardhandler_;
+    GestureEventHandler*	gestureeventhandler_;
+    
+    uiPoint			startpos_;
+    bool			midmousebutfordrag_;
+    bool			reversemousewheel_;
 
     uiRect*			selectedarea_;
     uiGraphicsScene*		scene_;

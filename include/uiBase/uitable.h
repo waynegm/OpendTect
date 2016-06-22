@@ -23,10 +23,11 @@ class BufferStringSet;
 class uiPixmap;
 class uiGroup;
 class uiLabel;
-class uiTableBody;
+
+mFDQtclass(QTableWidget);
 
 
-mExpClass(uiBase) uiTable : public uiObject
+mExpClass(uiBase) uiTable : public uiSingleWidgetObject
 { mODTextTranslationClass(uiTable)
 friend class		i_tableMessenger;
 friend class		uiTableBody;
@@ -328,18 +329,19 @@ public:
 
 protected:
 
-    mutable ObjectSet<SelectionRange> selranges_;
-    RowCol		notifcell_;
-    TypeSet<RowCol>	notifcells_;
-    TypeSet<int>	notifrows_;
-    TypeSet<int>	notifcols_;
-    bool		seliscols_;
-    RowCol		newcell_;
 
-    mutable Setup	setup_;
+    mutable ObjectSet<SelectionRange>	selranges_;
+    RowCol				notifcell_;
+    TypeSet<RowCol>			notifcells_;
+    TypeSet<int>			notifrows_;
+    TypeSet<int>			notifcols_;
+    bool				seliscols_;
+    RowCol				newcell_;
 
-    virtual void	popupMenu(CallBacker*);
-    OD::ButtonState	buttonstate_;
+    mutable Setup			setup_;
+
+    virtual void			popupMenu(CallBacker*);
+    OD::ButtonState			buttonstate_;
 
     void		geometrySet_(CallBacker*);
     void		updateCellSizes(const uiSize* sz=0);
@@ -353,17 +355,16 @@ protected:
 
 private:
 
-    uiTableBody*	body_;
-    uiTableBody&	mkbody(uiParent*,const char*,int,int);
+    QTableWidget*	qtable_;
     uiLabel*		cornerlabel_;
 
     mutable uiSize	lastsz;
 
 public:
     /*mDeprecated*/ double	getdValue( const RowCol& rc ) const
-			{ return getDValue( rc ); }
+				{ return getDValue( rc ); }
     /*mDeprecated*/ float	getfValue( const RowCol& rc ) const
-			{ return getFValue( rc ); }
+				{ return getFValue( rc ); }
 };
 
 #endif

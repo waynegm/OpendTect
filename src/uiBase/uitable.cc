@@ -16,7 +16,6 @@ ________________________________________________________________________
 #include "uifont.h"
 #include "uilabel.h"
 #include "uimenu.h"
-#include "uiobjbody.h"
 #include "uipixmap.h"
 #include "uistrings.h"
 #include "uivirtualkeyboard.h"
@@ -41,6 +40,8 @@ mUseQtnamespace
 /* Idea from:
 http://www.qtforum.org/article/34125/disable-qtablewidget-selection-color.html
 */
+
+/*
 
 class BackgroundDelegate : public QStyledItemDelegate
 {
@@ -480,11 +481,13 @@ int uiTableBody::maxNrOfSelections() const
 
     return rowCount()*columnCount();
 }
+ 
+ */
 
 
 
 uiTable::uiTable( uiParent* p, const Setup& s, const char* nm )
-    : uiObject(p,nm,mkbody(p,nm,s.size_.row(),s.size_.col()))
+    : uiSingleWidgetObject(p,nm)
     , setup_(s)
     , buttonstate_(OD::NoButton)
     , valueChanged(this)
@@ -501,6 +504,7 @@ uiTable::uiTable( uiParent* p, const Setup& s, const char* nm )
     , columnClicked(this)
     , istablereadonly_(false)
     , seliscols_(false)
+    , qtable_(new QTableWidget )
 {
     setGeometry.notify( mCB(this,uiTable,geometrySet_) );
 
@@ -512,19 +516,14 @@ uiTable::uiTable( uiParent* p, const Setup& s, const char* nm )
     if ( s.defcollbl_ )
 	setDefaultColLabels();
 
-    QHeaderView* hhdr = body_->horizontalHeader();
-    hhdr->setMinimumSectionSize( (int)(s.mincolwdt_*body_->fontWidth()) );
+    QHeaderView* hhdr = qtable_->horizontalHeader();
+    
+    pErrMsg("Font width below not implemented");
+    //hhdr->setMinimumSectionSize( (int)(s.mincolwdt_*qtable_->fontWidth()) );
 
     // Horrible ... using setPrefWidthInChar will prevent events to be emitted
     cornerlabel_ = new uiLabel( parent(), tr("                    ") );
     cornerlabel_->attach( atSamePosition, this );
-}
-
-
-uiTableBody& uiTable::mkbody( uiParent* p, const char* nm, int nr, int nc )
-{
-    body_ = new uiTableBody( *this, p, nm, nr, nc );
-    return *body_;
 }
 
 
@@ -535,10 +534,10 @@ uiTable::~uiTable()
 
 
 void uiTable::showGrid( bool yn )
-{ body_->setShowGrid( yn ); }
+{ qtable_->setShowGrid( yn ); }
 
 bool uiTable::gridShown() const
-{ return body_->showGrid(); }
+{ return qtable_->showGrid(); }
 
 
 void uiTable::setDefaultRowLabels()
@@ -586,19 +585,19 @@ void uiTable::update( bool row, int rc )
 
 int uiTable::columnWidth( int col ) const
 {
-    return col == -1 ? 0 : body_->columnWidth(col);
+    return col == -1 ? 0 : qtable_->columnWidth(col);
 }
 
 
 int uiTable::rowHeight( int row ) const
 {
-    return row == -1 ? 0 : body_->rowHeight( row );
+    return row == -1 ? 0 : qtable_->rowHeight( row );
 }
 
 
 void uiTable::setLeftMargin( int wdth )
 {
-    QHeaderView* header = body_->verticalHeader();
+    QHeaderView* header = qtable_->verticalHeader();
     if ( !header ) return;
 
     header->setVisible( wdth > 0 );
@@ -608,25 +607,27 @@ void uiTable::setLeftMargin( int wdth )
 void uiTable::setColumnWidth( int col, int w )
 {
     if ( col >= 0 )
-	body_->setColumnWidth( col, w );
+	qtable_->setColumnWidth( col, w );
     else if ( col == -1 )
     {
 	for ( int idx=0; idx<nrCols(); idx++ )
-	    body_->setColumnWidth( idx, w );
+	    qtable_->setColumnWidth( idx, w );
     }
 }
 
 
 void uiTable::setColumnWidthInChar( int col, float w )
 {
-    const float wdt = w * body_->fontWidth();
+    /*
+    const float wdt = w * qtable_->fontWidth();
     setColumnWidth( col, mNINT32(wdt) );
+     */
 }
 
 
 void uiTable::setTopMargin( int h )
 {
-    QHeaderView* header = body_->horizontalHeader();
+    QHeaderView* header = qtable_->horizontalHeader();
     if ( !header ) return;
 
     header->setVisible( h > 0 );
@@ -636,19 +637,21 @@ void uiTable::setTopMargin( int h )
 void uiTable::setRowHeight( int row, int h )
 {
     if ( row >= 0 )
-	body_->setRowHeight( row, h );
+	qtable_->setRowHeight( row, h );
     else if ( row == -1 )
     {
 	for ( int idx=0; idx<nrRows(); idx++ )
-	    body_->setRowHeight( idx, h );
+	    qtable_->setRowHeight( idx, h );
     }
 }
 
 
 void uiTable::setRowHeightInChar( int row, float h )
 {
+    /*
     float hgt = h * body_->fontHeight();
     setRowHeight( row, mNINT32(hgt) );
+     */
 }
 
 
@@ -656,7 +659,7 @@ void uiTable::insertRows( int row, int cnt )
 {
     mBlockCmdRec;
     for ( int idx=0; idx<cnt; idx++ )
-	body_->insertRow( row );
+	qtable_->insertRow( row );
 
     updateRow( row );
 }
@@ -666,7 +669,7 @@ void uiTable::insertColumns( int col, int cnt )
 {
     mBlockCmdRec;
     for ( int idx=0; idx<cnt; idx++ )
-	body_->insertColumn( col );
+	qtable_->insertColumn( col );
 
     updateCol( col );
 }
@@ -685,7 +688,7 @@ void uiTable::removeRow( int row )
     mBlockCmdRec;
     for ( int col=0; col<nrCols(); col++ )
 	clearCellObject( RowCol(row,col) );
-    body_->removeRow( row );
+    qtable_->removeRow( row );
     updateRow(row);
 }
 
@@ -695,7 +698,7 @@ void uiTable::removeColumn( int col )
     mBlockCmdRec;
     for ( int row=0; row<nrRows(); row++ )
 	clearCellObject( RowCol(row,col) );
-    body_->removeColumn( col );
+    qtable_->removeColumn( col );
     updateCol(col);
 }
 
@@ -709,26 +712,26 @@ void uiTable::removeColumns( const TypeSet<int>& idxs )
 void uiTable::setNrRows( int nr )
 {
     mBlockCmdRec;
-    body_->setNrLines( nr );
+    //qtable_->setNrLines( nr );
     updateRow(0);
 }
 
 void uiTable::setNrCols( int nr )
 {
     mBlockCmdRec;
-    body_->setColumnCount( nr );
+    qtable_->setColumnCount( nr );
     updateCol(0);
 }
 
-int uiTable::nrRows() const		{ return body_->rowCount(); }
-int uiTable::nrCols() const		{ return body_->columnCount(); }
+int uiTable::nrRows() const		{ return qtable_->rowCount(); }
+int uiTable::nrCols() const		{ return qtable_->columnCount(); }
 
 
 void uiTable::setPrefHeightInRows( int nrrows )
 {
     const QDesktopWidget* qdesktop = QApplication::desktop();
     const QRect geom = qdesktop->availableGeometry();
-    body_->setPrefHeightInRows( nrrows, int(geom.height()*0.9) );
+    //body_->setPrefHeightInRows( nrrows, int(geom.height()*0.9) );
 }
 
 
@@ -736,14 +739,14 @@ void uiTable::setPrefWidthInChars( int nrchars )
 {
     const QDesktopWidget* qdesktop = QApplication::desktop();
     const QRect geom = qdesktop->availableGeometry();
-    body_->setPrefWidthInChars( nrchars, int(geom.width()*0.9) );
+    //body_->setPrefWidthInChars( nrchars, int(geom.width()*0.9) );
 }
 
 
 void uiTable::clearCell( const RowCol& rc )
 {
     mBlockCmdRec;
-    QTableWidgetItem* itm = body_->takeItem( rc.row(), rc.col() );
+    QTableWidgetItem* itm = qtable_->takeItem( rc.row(), rc.col() );
     delete itm;
 }
 
@@ -752,10 +755,10 @@ void uiTable::setCurrentCell( const RowCol& rc, bool noselection )
 {
     mBlockCmdRec;
     if ( noselection )
-	body_->setCurrentCell( rc.row(), rc.col(),
+	qtable_->setCurrentCell( rc.row(), rc.col(),
 			       QItemSelectionModel::NoUpdate );
     else
-	body_->setCurrentCell( rc.row(), rc.col() );
+	qtable_->setCurrentCell( rc.row(), rc.col() );
 }
 
 
@@ -774,7 +777,7 @@ const char* uiTable::text( const RowCol& rc ) const
     }
 
     mDeclStaticString( ret );
-    QTableWidgetItem* itm = body_->item( rc.row(), rc.col() );
+    QTableWidgetItem* itm = qtable_->item( rc.row(), rc.col() );
     ret = itm ? itm->text() : "";
     return ret;
 }
@@ -798,8 +801,8 @@ void uiTable::setText( const RowCol& rc, const uiString& txt )
     uiObject* cellobj = getCellObject( rc );
     if ( !cellobj )
     {
-	QTableWidgetItem* itm = body_->getItem( rc );
-	itm->setText( txt.getQString() );
+	//QTableWidgetItem* itm = qtable_->getItem( rc.row(), rc.col() );
+	//itm->setText( txt.getQString() );
     }
     else
     {
@@ -821,7 +824,7 @@ static QAbstractItemView::EditTriggers triggers =
 
 void uiTable::setTableReadOnly( bool yn )
 {
-    body_->setEditTriggers( yn ? triggers_ro : triggers );
+    qtable_->setEditTriggers( yn ? triggers_ro : triggers );
     istablereadonly_ = yn;
 }
 
@@ -836,27 +839,31 @@ static Qt::ItemFlags std_flags_ro = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
 void uiTable::setColumnReadOnly( int col, bool yn )
 {
+    /*
     mBlockCmdRec;
     for ( int row=0; row<nrRows(); row++ )
     {
-	QTableWidgetItem* itm = body_->getItem( RowCol(row,col),
+	QTableWidgetItem* itm = qtable_->getItem( RowCol(row,col),
 							  true );
 	if ( itm ) itm->setFlags( yn ? std_flags_ro : std_flags );
     }
+     */
 }
 
 
 void uiTable::setCellReadOnly( const RowCol& rc, bool yn )
 {
     mBlockCmdRec;
+    /*
     QTableWidgetItem* itm = body_->item( rc.row(), rc.col() );
     if ( itm ) itm->setFlags( yn ? std_flags_ro : std_flags );
+     */
 }
 
 
 bool uiTable::isCellReadOnly( const RowCol& rc ) const
 {
-    QTableWidgetItem* itm = body_->item( rc.row(), rc.col() );
+    QTableWidgetItem* itm = qtable_->item( rc.row(), rc.col() );
     return itm && !itm->flags().testFlag( Qt::ItemIsEditable );
 }
 
@@ -864,12 +871,14 @@ bool uiTable::isCellReadOnly( const RowCol& rc ) const
 void uiTable::setRowReadOnly( int row, bool yn )
 {
     mBlockCmdRec;
+    /*
     for ( int col=0; col<nrCols(); col++ )
     {
 	QTableWidgetItem* itm = body_->getItem( RowCol(row,col),
 							  true );
 	if ( itm ) itm->setFlags( yn ? std_flags_ro : std_flags );
     }
+     */
 }
 
 
@@ -879,7 +888,7 @@ bool uiTable::isColumnReadOnly( int col ) const
     int nrro = 0;
     for ( int row=0; row<nrRows(); row++ )
     {
-	QTableWidgetItem* itm = body_->item( row, col );
+	QTableWidgetItem* itm = qtable_->item( row, col );
 	if ( itm )
 	{
 	    nritems ++;
@@ -898,7 +907,7 @@ bool uiTable::isRowReadOnly( int row ) const
     int nrro = 0;
     for ( int col=0; col<nrCols(); col++ )
     {
-	QTableWidgetItem* itm = body_->item( row, col );
+	QTableWidgetItem* itm = qtable_->item( row, col );
 	if ( itm )
 	{
 	    nritems++;
@@ -914,88 +923,92 @@ bool uiTable::isRowReadOnly( int row ) const
 void uiTable::hideColumn( int col, bool yn )
 {
     mBlockCmdRec;
-    if ( yn ) body_->hideColumn( col );
-    else body_->showColumn( col );
+    if ( yn ) qtable_->hideColumn( col );
+    else qtable_->showColumn( col );
 }
 
 void uiTable::hideRow( int col, bool yn )
 {
     mBlockCmdRec;
-    if ( yn ) body_->hideRow( col );
-    else body_->showRow( col );
+    if ( yn ) qtable_->hideRow( col );
+    else qtable_->showRow( col );
 }
 
 bool uiTable::isColumnHidden( int col ) const
-{ return body_->isColumnHidden(col); }
+{ return qtable_->isColumnHidden(col); }
 
 bool uiTable::isRowHidden( int row ) const
-{ return body_->isRowHidden(row); }
+{ return qtable_->isRowHidden(row); }
 
 
 bool uiTable::isTopHeaderHidden() const
-{ return !body_->horizontalHeader()->isVisible(); }
+{ return !qtable_->horizontalHeader()->isVisible(); }
 
 bool uiTable::isLeftHeaderHidden() const
-{ return !body_->verticalHeader()->isVisible(); }
+{ return !qtable_->verticalHeader()->isVisible(); }
 
 void uiTable::setTopHeaderHidden( bool yn )
-{ body_->horizontalHeader()->setVisible( !yn ); }
+{ qtable_->horizontalHeader()->setVisible( !yn ); }
 
 void uiTable::setLeftHeaderHidden( bool yn )
-{ body_->verticalHeader()->setVisible( !yn ); }
+{ qtable_->verticalHeader()->setVisible( !yn ); }
 
 
 
 void uiTable::resizeHeaderToContents( bool hor )
 {
-    QHeaderView* hdr = hor ? body_->horizontalHeader()
-			   : body_->verticalHeader();
+    QHeaderView* hdr = hor ? qtable_->horizontalHeader()
+			   : qtable_->verticalHeader();
     if ( hdr ) hdr->resizeSections( QHeaderView::ResizeToContents );
 }
 
 
 void uiTable::resizeColumnToContents( int col )
-{ body_->resizeColumnToContents( col ); }
+{ qtable_->resizeColumnToContents( col ); }
 
 void uiTable::resizeColumnsToContents()
-{ body_->resizeColumnsToContents(); }
+{ qtable_->resizeColumnsToContents(); }
 
 void uiTable::resizeRowToContents( int row )
-{ body_->resizeRowToContents( row ); }
+{ qtable_->resizeRowToContents( row ); }
 
 void uiTable::resizeRowsToContents()
-{ body_->resizeRowsToContents(); }
+{ qtable_->resizeRowsToContents(); }
 
 
 void uiTable::setColumnResizeMode( ResizeMode mode )
 {
-    QHeaderView* header = body_->horizontalHeader();
-    setResizeMode( header, (QHeaderView::ResizeMode)(int)mode );
+    QHeaderView* header = qtable_->horizontalHeader();
+    //setResizeMode( header, (QHeaderView::ResizeMode)(int)mode );
 }
 
 
 void uiTable::setRowResizeMode( ResizeMode mode )
 {
-    QHeaderView* header = body_->verticalHeader();
-    setResizeMode( header, (QHeaderView::ResizeMode)(int)mode );
+    QHeaderView* header = qtable_->verticalHeader();
+    //setResizeMode( header, (QHeaderView::ResizeMode)(int)mode );
 }
 
 
 void uiTable::setColumnStretchable( int col, bool yn )
 {
-    QHeaderView* header = body_->horizontalHeader();
+    /*
+    QHeaderView* header = qtable_->horizontalHeader();
     QHeaderView::ResizeMode mode = yn ? QHeaderView::Stretch
 				      : QHeaderView::Interactive ;
     setResizeMode( header, mode, header->logicalIndex(col) );
+     */
 }
 
 
 void uiTable::setRowStretchable( int row, bool yn )
 {
-    QHeaderView* header = body_->verticalHeader();
+    /*
+    QHeaderView* header = qtable_->verticalHeader();
     QHeaderView::ResizeMode mode = yn ? QHeaderView::Stretch
 				      : QHeaderView::Interactive;
     setResizeMode( header, mode, header->logicalIndex(row) );
+     */
 }
 
 
@@ -1008,36 +1021,42 @@ bool uiTable::isRowStretchable( int row ) const
 
 void uiTable::setPixmap( const RowCol& rc, const uiPixmap& pm )
 {
+    /*
     mBlockCmdRec;
-    QTableWidgetItem* itm = body_->getItem( rc );
+    QTableWidgetItem* itm = qtable_->getItem( rc );
     if ( itm ) itm->setIcon( *pm.qpixmap() );
+     */
 }
 
 
 void uiTable::setColor( const RowCol& rc, const Color& col )
 {
+    /*
     mBlockCmdRec;
     QColor qcol( col.r(), col.g(), col.b(), 255-col.t() );
-    QTableWidgetItem* itm = body_->getItem( rc );
+    QTableWidgetItem* itm = qtable_->getItem( rc );
     if ( itm ) itm->setBackground( qcol );
-    body_->setFocus();
+    qtable_->setFocus();
+     */
 }
 
 
 Color uiTable::getColor( const RowCol& rc ) const
 {
-    QTableWidgetItem* itm = body_->getItem( rc, false );
+    /*
+    QTableWidgetItem* itm = qtable_->getItem( rc, false );
     if ( !itm ) return Color(255,255,255);
 
     const QColor qcol = itm->background().color();
     return Color( qcol.red(), qcol.green(), qcol.blue(), 255-qcol.alpha() );
+     */
 }
 
 
 void uiTable::setHeaderBackground( int idx, const Color& col, bool isrow )
 {
-    QTableWidgetItem* itm = isrow ? body_->verticalHeaderItem( idx )
-					    : body_->horizontalHeaderItem( idx);
+    QTableWidgetItem* itm = isrow ? qtable_->verticalHeaderItem( idx )
+                                  : qtable_->horizontalHeaderItem( idx);
     if ( !itm )
 	return;
 
@@ -1048,8 +1067,8 @@ void uiTable::setHeaderBackground( int idx, const Color& col, bool isrow )
 
 Color uiTable::getHeaderBackground( int idx, bool isrow ) const
 {
-    QTableWidgetItem* itm = isrow ? body_->verticalHeaderItem( idx )
-					    : body_->horizontalHeaderItem( idx);
+    QTableWidgetItem* itm = isrow ? qtable_->verticalHeaderItem( idx )
+                                  : qtable_->horizontalHeaderItem( idx);
     if ( !itm ) return Color(255,255,255);
 
     const QColor qcol = itm->background().color();
@@ -1059,7 +1078,7 @@ Color uiTable::getHeaderBackground( int idx, bool isrow ) const
 
 const char* uiTable::rowLabel( int row ) const
 {
-    QTableWidgetItem* itm = body_->verticalHeaderItem( row );
+    QTableWidgetItem* itm = qtable_->verticalHeaderItem( row );
     if ( !itm )
 	return 0;
 
@@ -1071,9 +1090,11 @@ const char* uiTable::rowLabel( int row ) const
 
 void uiTable::setRowLabel( int row, const char* label )
 {
-    QTableWidgetItem& itm = body_->getRCItem( row, true );
+    /*
+    QTableWidgetItem& itm = qtable_->getRCItem( row, true );
     itm.setText( label );
     itm.setToolTip( label );
+     */
 }
 
 
@@ -1095,14 +1116,16 @@ void uiTable::setTopLeftCornerLabel( const uiString& txt )
 
 void uiTable::setRowToolTip( int row, const char* tt )
 {
-    body_->getRCItem(row,true).setToolTip( tt );
+    //qtable_->getRCItem(row,true).setToolTip( tt );
 }
 
 
 void uiTable::setLabelBGColor( int rc, Color c, bool isrow )
 {
-    QTableWidgetItem& qw = body_->getRCItem( rc, isrow );
+    /*
+    QTableWidgetItem& qw = qtable_->getRCItem( rc, isrow );
     qw.setBackground( QBrush(QColor(c.r(),c.g(), c.b(),255)) );
+     */
 }
 
 
@@ -1115,7 +1138,7 @@ void uiTable::setRowLabels( const char** labels )
 
 void uiTable::setRowLabels( const BufferStringSet& labels )
 {
-    body_->setNrLines( labels.size() );
+    //body_->setNrLines( labels.size() );
     for ( int i=0; i<labels.size(); i++ )
         setRowLabel( i, *labels[i] );
 }
@@ -1123,7 +1146,7 @@ void uiTable::setRowLabels( const BufferStringSet& labels )
 
 const char* uiTable::columnLabel( int col ) const
 {
-    QTableWidgetItem* itm = body_->horizontalHeaderItem( col );
+    QTableWidgetItem* itm = qtable_->horizontalHeaderItem( col );
     if ( !itm )
 	return 0;
 
@@ -1135,16 +1158,18 @@ const char* uiTable::columnLabel( int col ) const
 
 void uiTable::setColumnLabel( int col, const uiString& label )
 {
-    QTableWidgetItem& itm = body_->getRCItem( col, false );
+    /*
+    QTableWidgetItem& itm = qtable_->getRCItem( col, false );
     itm.setText( label.getQString() );
     itm.setToolTip( label.getQString() );
+     */
 }
 
 
 void uiTable::setColumnToolTip( int col, const uiString& tt )
 {
-    QTableWidgetItem& itm = body_->getRCItem( col, false );
-    itm.setToolTip( tt.getQString() );
+    //QTableWidgetItem& itm = body_->getRCItem( col, false );
+    //itm.setToolTip( tt.getQString() );
 }
 
 
@@ -1157,7 +1182,7 @@ void uiTable::setColumnLabels( const char** labels )
 
 void uiTable::setColumnLabels( const BufferStringSet& labels )
 {
-    body_->setColumnCount( labels.size() );
+    qtable_->setColumnCount( labels.size() );
 
     for ( int i=0; i<labels.size(); i++ )
         setColumnLabel( i, toUiString(labels[i]->buf()) );
@@ -1166,8 +1191,8 @@ void uiTable::setColumnLabels( const BufferStringSet& labels )
 
 void uiTable::setLabelAlignment( OD::Alignment::HPos hal, bool col )
 {
-    QHeaderView* hdr = col ? body_->horizontalHeader()
-				     : body_->verticalHeader();
+    QHeaderView* hdr = col ? qtable_->horizontalHeader()
+                           : qtable_->verticalHeader();
     if ( hdr )
     {
 	OD::Alignment al( hal, OD::Alignment::VCenter );
@@ -1178,6 +1203,7 @@ void uiTable::setLabelAlignment( OD::Alignment::HPos hal, bool col )
 
 void uiTable::setCellToolTip( const RowCol& rc, const uiString& tt )
 {
+    /*
     uiObject* cellobj = getCellObject( rc );
     if ( !cellobj )
     {
@@ -1186,6 +1212,7 @@ void uiTable::setCellToolTip( const RowCol& rc, const uiString& tt )
     }
     else
 	cellobj->setToolTip( tt );
+     */
 }
 
 
@@ -1252,16 +1279,16 @@ void uiTable::setSelectionMode( SelectionMode m )
     switch ( m )
     {
 	case Single:
-	    body_->setSelectionMode( QAbstractItemView::SingleSelection );
+	    qtable_->setSelectionMode( QAbstractItemView::SingleSelection );
 	    break;
 	case Multi:
-	    body_->setSelectionMode( QAbstractItemView::ExtendedSelection );
+	    qtable_->setSelectionMode( QAbstractItemView::ExtendedSelection );
 	    break;
 	case SingleRow:
 	    setSelectionBehavior( uiTable::SelectRows );
 	    break;
 	default:
-	    body_->setSelectionMode( QAbstractItemView::NoSelection );
+	    qtable_->setSelectionMode( QAbstractItemView::NoSelection );
 	    break;
     }
 }
@@ -1270,15 +1297,15 @@ void uiTable::setSelectionMode( SelectionMode m )
 void uiTable::setSelectionBehavior( SelectionBehavior sb )
 {
     const int sbi = (int)sb;
-    body_->setSelectionBehavior( (QAbstractItemView::SelectionBehavior)sbi );
+    qtable_->setSelectionBehavior( (QAbstractItemView::SelectionBehavior)sbi );
 }
 
 
 void uiTable::editCell( const RowCol& rc, bool replace )
 {
     mBlockCmdRec;
-    QTableWidgetItem* itm = body_->item( rc.row(), rc.col() );
-    body_->editItem( itm );
+    QTableWidgetItem* itm = qtable_->item( rc.row(), rc.col() );
+    qtable_->editItem( itm );
 }
 
 
@@ -1479,6 +1506,7 @@ void uiTable::geometrySet_( CallBacker* cb )
 
 void uiTable::updateCellSizes( const uiSize* size )
 {
+    /*
     if ( size ) lastsz = *size;
     else	size = &lastsz;
 
@@ -1555,32 +1583,33 @@ void uiTable::updateCellSizes( const uiSize* size )
 	    availhgt -= rowhgt;
 	}
     }
+     */
 }
 
 
 void uiTable::clearTable()
 {
     mBlockCmdRec;
-    body_->clearTable();
+    //qtable_->clearTable();
 }
 
 
 void uiTable::removeAllSelections()
 {
     mBlockCmdRec;
-    body_->clearSelection();
+    qtable_->clearSelection();
 }
 
 
 bool uiTable::isSelected ( const RowCol& rc ) const
 {
-    const QItemSelectionModel* selmodel = body_->selectionModel();
+    const QItemSelectionModel* selmodel = qtable_->selectionModel();
     const QAbstractItemModel* model = selmodel ? selmodel->model()
 							 : 0;
     if ( !model )
 	return false;
 
-    QModelIndex idx = body_->rootIndex();
+    QModelIndex idx = qtable_->rootIndex();
     idx = model->index( rc.row(), rc.col(), idx );
     return selmodel->isSelected( idx );
 }
@@ -1588,15 +1617,15 @@ bool uiTable::isSelected ( const RowCol& rc ) const
 
 bool uiTable::isRowSelected( int row ) const
 {
-    QItemSelectionModel* model = body_->selectionModel();
-    return model ? model->isRowSelected( row, body_->rootIndex() ) : false;
+    QItemSelectionModel* model = qtable_->selectionModel();
+    return model ? model->isRowSelected( row, qtable_->rootIndex() ) : false;
 }
 
 
 bool uiTable::isColumnSelected( int col ) const
 {
-    QItemSelectionModel* model = body_->selectionModel();
-    return model ? model->isColumnSelected( col, body_->rootIndex() ) : false;
+    QItemSelectionModel* model = qtable_->selectionModel();
+    return model ? model->isColumnSelected( col, qtable_->rootIndex() ) : false;
 }
 
 
@@ -1661,16 +1690,16 @@ bool uiTable::getSelectedCols( TypeSet<int>& sel ) const
 
 
 int uiTable::currentRow() const
-{ return body_->currentRow(); }
+{ return qtable_->currentRow(); }
 
 int uiTable::currentCol() const
-{ return body_->currentColumn(); }
+{ return qtable_->currentColumn(); }
 
 
 void uiTable::setSelected( const RowCol& rc, bool yn )
 {
     mBlockCmdRec;
-    QTableWidgetItem* itm = body_->item( rc.row(), rc.col() );
+    QTableWidgetItem* itm = qtable_->item( rc.row(), rc.col() );
     if ( itm )
 	itm->setSelected( yn );
 }
@@ -1679,44 +1708,50 @@ void uiTable::setSelected( const RowCol& rc, bool yn )
 void  uiTable::selectRow( int row )
 {
     mBlockCmdRec;
-    return body_->selectRow( row );
+    return qtable_->selectRow( row );
 }
 
 
 void  uiTable::selectColumn( int col )
 {
     mBlockCmdRec;
-    return body_->selectColumn( col );
+    return qtable_->selectColumn( col );
 }
 
 
 void uiTable::ensureCellVisible( const RowCol& rc )
 {
-    QTableWidgetItem* itm = body_->item( rc.row(), rc.col() );
-    body_->scrollToItem( itm );
+    QTableWidgetItem* itm = qtable_->item( rc.row(), rc.col() );
+    qtable_->scrollToItem( itm );
 }
 
 
 void uiTable::setCellGroup( const RowCol& rc, uiGroup* grp )
 {
+    /*
     mBlockCmdRec;
     clearCellObject( rc );
     body_->setCellObject( rc, grp );
+     */
 }
 
 
 uiGroup* uiTable::getCellGroup( const RowCol& rc ) const
 {
+    /*
     mDynamicCastGet(uiGroupObj*,grpobj,getCellObject(rc));
     return grpobj ? grpobj->group() : 0;
+     */
 }
 
 
 void uiTable::setCellObject( const RowCol& rc, uiObject* obj )
 {
+    /*
     mBlockCmdRec;
     clearCellObject( rc );
     body_->setCellObject( rc, obj );
+     */
 
     mDynamicCastGet(uiComboBox*,cb,obj)
     if ( cb )
@@ -1725,7 +1760,7 @@ void uiTable::setCellObject( const RowCol& rc, uiObject* obj )
 
 
 uiObject* uiTable::getCellObject( const RowCol& rc ) const
-{ return body_->getCellObject( rc ); }
+{ /* return body_->getCellObject( rc ); */ }
 
 
 void uiTable::clearCellObject( const RowCol& rc )
@@ -1737,12 +1772,12 @@ void uiTable::clearCellObject( const RowCol& rc )
     if ( cb )
 	cb->selectionChanged.remove( mCB(this,uiTable,cellObjChangedCB) );
 
-    body_->clearCellObject( rc );
+    // body_->clearCellObject( rc );
 }
 
 
 RowCol uiTable::getCell( uiObject* obj )
-{ return body_->getCell( obj ); }
+{ /* return body_->getCell( obj ); */ }
 
 
 void uiTable::cellObjChangedCB( CallBacker* cb )
@@ -1758,7 +1793,7 @@ void uiTable::cellObjChangedCB( CallBacker* cb )
 const ObjectSet<uiTable::SelectionRange>& uiTable::selectedRanges() const
 {
     deepErase( selranges_ );
-    QItemSelectionModel* mdl = body_->selectionModel();
+    QItemSelectionModel* mdl = qtable_->selectionModel();
     if ( !mdl ) return selranges_;
 
     const QList<QItemSelectionRange> qranges = mdl->selection();
@@ -1778,13 +1813,13 @@ const ObjectSet<uiTable::SelectionRange>& uiTable::selectedRanges() const
 
 uiTable::SelectionBehavior uiTable::getSelBehavior() const
 {
-    return body_->getSelBehavior();
+    //return body_->getSelBehavior();
 }
 
 
 int uiTable::maxNrOfSelections() const
 {
-    return body_->maxNrOfSelections();
+    //return body_->maxNrOfSelections();
 }
 
 
@@ -1796,7 +1831,7 @@ void uiTable::selectItems( const TypeSet<RowCol>& rcs, bool yn )
     {
 	if ( mIsUdf(rcs[idx].row()) || mIsUdf(rcs[idx].col()) )
 	    continue;
-	QTableWidgetItem* itm = body_->item( rcs[idx].row(), rcs[idx].col() );
+	QTableWidgetItem* itm = qtable_->item( rcs[idx].row(), rcs[idx].col() );
 	if ( !itm || (yn && itm->isSelected()) || (!yn && !itm->isSelected()) )
 	    continue;
 	itm->setSelected( yn );

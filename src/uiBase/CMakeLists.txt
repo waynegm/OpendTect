@@ -85,7 +85,7 @@ set(OD_MODULE_SOURCES
 	uistatusbar.cc
 	uisystemtrayicon.cc
 #	uitabbar.cc
-#	uitable.cc
+	uitable.cc
 #	uitabstack.cc
 #	uitextedit.cc
 	uitoolbar.cc

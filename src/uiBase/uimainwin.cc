@@ -988,7 +988,6 @@ void uiMainWin::setCaption( const uiString& txt )
 {
     caption_ = txt;
     updateCaption();
-
 }
 
 

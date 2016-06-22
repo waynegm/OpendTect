@@ -84,6 +84,11 @@ public:
 				       BufferString* addendum = 0);
 
 private:
+    void		updateCaption();
+
+    uiString		caption_;
+    uiString		uniquecaption_;
+
     ODMainWindow*	qmainwindow_;
     uiLayoutGroup*	maingrp_;
 };

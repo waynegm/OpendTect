@@ -225,6 +225,21 @@ uiString uiMainWin::uniqueWinTitle( const uiString& txt,
 
 
 
+void uiMainWin::setCaption( const uiString& txt )
+{
+    caption_ = txt;
+    updateCaption();
+}
+
+
+void uiMainWin::updateCaption()
+{
+    uniquecaption_ = uniqueWinTitle(caption_,qmainwindow_,0);
+    qmainwindow_->setWindowTitle( uniquecaption_.getQString() );
+}
+
+
+
 
 #if 0
 static Threads::Mutex		winlistmutex_;
@@ -982,20 +997,6 @@ bool uiMainWin::isMaximized() const		{ return qmainwindow_->isMaximized(); }
 bool uiMainWin::isMinimized() const		{ return qmainwindow_->isMinimized(); }
 bool uiMainWin::isHidden() const		{ return qmainwindow_->isHidden(); }
 bool uiMainWin::isModal() const			{ return qmainwindow_->isModal(); }
-
-
-void uiMainWin::setCaption( const uiString& txt )
-{
-    caption_ = txt;
-    updateCaption();
-}
-
-
-void uiMainWin::updateCaption()
-{
-    uniquecaption_ = uniqueWinTitle(caption_,qmainwindow_,0);
-    qmainwindow_->setWindowTitle( uniquecaption_.getQString() );
-}
 
 
 const uiString& uiMainWin::caption( bool unique ) const

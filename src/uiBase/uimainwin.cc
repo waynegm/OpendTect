@@ -41,6 +41,7 @@ ________________________________________________________________________
 #include "thread.h"
 #include "timer.h"
 
+#include <QLabel>
 #include <QAbstractButton>
 #include <QApplication>
 #include <QClipboard>
@@ -60,6 +61,7 @@ ________________________________________________________________________
 #include <QSettings>
 #include <QStatusBar>
 #include <QWidget>
+#include <QLayout>
 
 mUseQtnamespace
 
@@ -110,17 +112,20 @@ uiMainWin* ODMainWindow::uimainwin()
 
 // uiMainWin
 uiMainWin::uiMainWin( uiParent* p, const uiMainWin::Setup& setup )
-    : uiParent(setup.caption_.getFullString())
-    , qmainwindow_(0)
-    , windowClosed(this)
+    : uiParent( setup.caption_.getFullString() )
+    , qmainwindow_( 0 )
+    , windowClosed( this )
+    , maingrp_( 0 )
 {
     qmainwindow_ = new ODMainWindow( *this, p, setup.caption_.getFullString(),
 				     setup.modal_ );
+
     qmainwindow_->setWindowIconText(
 	setup.caption_.isEmpty() ? "OpendTect" : setup.caption_.getQString() );
     qmainwindow_->setAttribute( Qt::WA_DeleteOnClose, setup.deleteonclose_ );
 
-    maingrp_ = new uiLayoutGroup( p, "Main Group" );
+    maingrp_ = new uiLayoutGroup( this, "Main Group" );
+    maingrp_->getWidget(0)->setParent( qmainwindow_ );
 }
 
 
@@ -148,6 +153,7 @@ uiStatusBar* uiMainWin::statusBar()
 uiMenuBar* uiMainWin::menuBar()
 { return 0; }
 
+
 void uiMainWin::addToolBar( uiToolBar* tb )
 {}
 
@@ -161,7 +167,7 @@ void uiMainWin::addToolBarBreak()
 
 
 uiLayoutMgr* uiMainWin::getLayoutMgr()
-{ return maingrp_->getLayoutMgr(); }
+{ return maingrp_ ? maingrp_->getLayoutMgr() : 0; }
 
 
 uiMainWin* uiMainWin::activeWindow()

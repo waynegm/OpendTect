@@ -65,6 +65,7 @@ void uiGroup::finalise()
     }
     
     uiObject::finalise();
+
     
     getLayoutMgr()->populateGrid();
     
@@ -161,6 +162,7 @@ uiLayoutGroup::uiLayoutGroup( uiParent* p, const char* nm )
     , widget_( new QFrame )
 {
     layoutmgr_->enableOwnGrid();
+    widget_->setLayout( getLayoutMgr()->qLayout() );
 }
 
 

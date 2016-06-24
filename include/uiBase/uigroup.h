@@ -97,8 +97,6 @@ protected:
     void			setShrinkAllowed(bool);
     bool			shrinkAllowed();
 
-
-
     mQtclass(QFrame*)		widget_;
 };
 

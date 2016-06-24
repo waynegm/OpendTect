@@ -149,7 +149,7 @@ public:
     static int		iconSize();
 
 protected:
-    mQtclass(QWidget*)	getParentWidget(uiParent* p);
+    static mQtclass(QWidget*)	getParentWidget(uiParent* p);
     
 			//! hook. Accepts/denies closing of window.
     virtual bool	closeOK()	{ closed.trigger(); return true; }

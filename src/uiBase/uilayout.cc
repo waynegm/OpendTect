@@ -12,8 +12,10 @@ ________________________________________________________________________
 #include "uilayout.h"
 
 #include "uiobj.h"
+#include "uigroup.h"
 
 #include <QGridLayout>
+#include <QWidget>
 
 
 uiConstraint::uiConstraint( constraintType tp, i_LayoutItem* o, int marg )
@@ -265,5 +267,15 @@ bool uiLayoutMgr::Relationship::operator==(const uiLayoutMgr::Relationship& b) c
 {
     return obj0_==b.obj0_ && obj1_==b.obj1_ && type_==b.type_;
 }
+
+
+QLayout* uiLayoutMgr::qLayout()
+{
+    return layout_;
+}
+
+
+const QLayout* uiLayoutMgr::qLayout() const
+{ return const_cast<uiLayoutMgr*>(this)->qLayout(); }
 
 

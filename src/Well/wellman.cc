@@ -8,7 +8,6 @@
 #include "wellman.h"
 
 #include "iodir.h"
-#include "iodirentry.h"
 #include "welltransl.h"
 #include "ptrman.h"
 #include "welldata.h"

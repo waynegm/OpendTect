@@ -33,7 +33,6 @@ ________________________________________________________________________
 #include "emsurfaceiodata.h"
 #include "emsurfaceauxdata.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "ioobj.h"
 #include "randcolor.h"

@@ -114,6 +114,12 @@ ConstRefMan<DBDir> DBMan::fetch( DirID dirid ) const
 }
 
 
+ConstRefMan<DBDir> DBMan::fetch( const IOObjContext& ctxt ) const
+{
+    return fetch( ctxt.getSelDirID() );
+}
+
+
 bool DBMan::isKeyString( const char* kystr ) const
 {
     return DBKey::isValidString( kystr );

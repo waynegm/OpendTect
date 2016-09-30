@@ -14,7 +14,6 @@
 #include "emioobjinfo.h"
 #include "iodir.h"
 #include "ioman.h"
-#include "iodirentry.h"
 #include "uibutton.h"
 #include "uidialog.h"
 #include "uigeninput.h"

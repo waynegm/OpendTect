@@ -102,7 +102,7 @@ void OD::AutoSaveObj::removeIOObjAndData( IOStream*& ioobj ) const
 	return;
 
     ioobj->implRemove();
-    IOM().permRemove( ioobj->key() );
+    IOM().removeEntry( ioobj->key() );
     delete ioobj;
     ioobj = 0;
 }
@@ -309,7 +309,7 @@ bool OD::AutoSaver::restore( IOStream& iostrm, const char* newnm )
     iostrm.acquireNewKeyIn( tmpky.dirID() );
     if ( IOM().commitChanges(iostrm) )
     {
-	IOM().permRemove( tmpky );
+	IOM().removeEntry( tmpky );
 	return true;
     }
 

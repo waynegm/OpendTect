@@ -671,14 +671,14 @@ int SEGY::FileIndexer::nextStep()
 	const SEGY::FileDataSet& fds = scanner_->fileDataSet();
 	if ( !fds.nrFiles() )
 	{
-	    IOM().permRemove( ioobj_->key() );
+	    IOM().removeEntry( ioobj_->key() );
 	    msg_ = tr("No files scanned");
 	    return ErrorOccurred();
 	}
 
 	if ( fds.isEmpty() )
 	{
-	    IOM().permRemove( ioobj_->key() );
+	    IOM().removeEntry( ioobj_->key() );
 	    msg_ = fds.nrFiles() > 1
 		? tr("No traces found in any of the files")
 		: tr("No traces found in file");

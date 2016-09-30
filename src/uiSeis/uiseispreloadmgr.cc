@@ -15,7 +15,6 @@
 #include "file.h"
 #include "filepath.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "ioobj.h"
 #include "preloads.h"

@@ -16,9 +16,8 @@ ________________________________________________________________________
 #include "monitor.h"
 #include "ptrman.h"
 #include "uistring.h"
+#include "ioobjctxt.h"
 class DBDir;
-class IOObj;
-class CtxtIOObj;
 class IOObjSelConstraints;
 
 
@@ -53,6 +52,7 @@ public:
 
     ConstRefMan<DBDir>	fetchRootDir() const	{ return rootdbdir_; }
     ConstRefMan<DBDir>	fetch(DirID) const;
+    ConstRefMan<DBDir>	fetch(const IOObjContext&) const;
 
     BufferString	rootDir() const		{ return rootdir_; }
     BufferString	surveyName() const;
@@ -125,8 +125,11 @@ public:
     static uiRetVal	isValidSurveyDir(const char* dirnm);
     void		applClosing()		{ applicationClosing.trigger();}
 
+    mDeprecated bool	permRemove( const DBKey& ky )
+    			{ return removeEntry(ky); }
+    mDeprecated bool	commitChanges( const IOObj& ioobj )
+			{ return setEntry(ioobj); }
 };
 
 
 mGlobal(General) DBMan&	DBM();
-// inline mGlobal(General) mDeprecated DBMan&	IOM()	{ return DBM(); }

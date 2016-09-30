@@ -13,7 +13,6 @@ ________________________________________________________________________
 
 #include "ioobj.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "survinfo.h"
 #include "wavelet.h"

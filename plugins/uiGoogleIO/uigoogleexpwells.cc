@@ -19,7 +19,6 @@
 #include "welldata.h"
 #include "welltrack.h"
 #include "wellreader.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "latlong.h"
 #include "od_ostream.h"

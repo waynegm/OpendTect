@@ -22,7 +22,7 @@ ________________________________________________________________________
 #include "zdomain.h"
 #include "ctxtioobj.h"
 #include "trckeyzsampling.h"
-#include "iodirentry.h"
+#include "iodir.h"
 #include "iostrm.h"
 #include "ioman.h"
 #include "iopar.h"

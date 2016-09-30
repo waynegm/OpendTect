@@ -334,7 +334,7 @@ bool uiClusterProc::mergeOutput( const IOPar& pars, TaskRunner* trans,
     if ( pars.get("Output.0.Seismic.ID",tempid) )
     {
 	IOM().to( SeisTrcTranslatorGroup::ioContext().getSelDirID() );
-	IOM().permRemove( tempid );
+	IOM().removeEntry( tempid );
     }
 
     FixedString tmpdir = pars.find( sKey::TmpStor() );
@@ -376,7 +376,7 @@ bool uiClusterProc::mergeOutput( const IOPar& pars, TaskRunner* trans,
     if ( pars.get("Output.0.Seismic.ID",tempid) )
     {
 	 IOM().to( SeisTrcTranslatorGroup::ioContext().getSelDirID() );
-	 IOM().permRemove( tempid );
+	 IOM().removeEntry( tempid );
     }
 
     FixedString tmpdir = pars.find( sKey::TmpStor() );

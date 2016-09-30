@@ -19,7 +19,6 @@ static const char* rcsID = "$Id$";
 #include "emsurfacegeometry.h"
 #include "emsurfacetr.h"
 #include "initearthmodel.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "linesetposinfo.h"
 #include "position.h"

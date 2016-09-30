@@ -82,7 +82,7 @@ bool uiIOObj::removeImpl( bool rmentry, bool mustrm, bool doconfirm )
 
     if ( rmentry )
     {
-	const bool removed = IOM().permRemove( ioobj_.key() );
+	const bool removed = IOM().removeEntry( ioobj_.key() );
 	if ( removed )
 	{
 	    if ( IOObj::isSurveyDefault(ioobj_.key()) )

@@ -114,7 +114,7 @@ static bool doScan( od_ostream& strm, IOPar& iop, bool isps, bool is2d )
     if ( !indexer.go(strm) )
     {
 	strm << indexer.uiMessage().getFullString();
-	IOM().permRemove( dbky );
+	IOM().removeEntry( dbky );
 	return false;
     }
 

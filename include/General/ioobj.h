@@ -142,7 +142,6 @@ protected:
 
 private:
 
-    friend class	IODir;
     friend class	DBDir;
 
     static IOObj*	produce(const char*,const char* nm,const DBKey& ky,

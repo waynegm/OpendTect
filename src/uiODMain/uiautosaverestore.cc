@@ -203,7 +203,7 @@ int uiAutoSave2RealObjDlg::run4All( const char* hnm, const char* unm )
 	if ( delthisone || delall )
 	{
 	    ioobj.implRemove();
-	    IOM().permRemove( ioobj.key() );
+	    IOM().removeEntry( ioobj.key() );
 	}
     }
 

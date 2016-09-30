@@ -4,7 +4,7 @@
 ________________________________________________________________________
 
  (C) dGB Beheer B.V.; (LICENSE) http://opendtect.org/OpendTect_license.txt
- Author:	A.H. Bril
+ Author:	Bert
  Date:		Sep 2016
 ________________________________________________________________________
 
@@ -20,6 +20,7 @@ ________________________________________________________________________
 #include "threadlock.h"
 #include "uistring.h"
 #include "ioobjctxt.h"
+class TranslatorGroup;
 
 
 /*\brief 'Directory' of IOObj objects.
@@ -115,9 +116,13 @@ public:
     static void		getTmpIOObjs(DirID,ObjectSet<IOObj>&,
 					const IOObjSelConstraints* c=0);
 
+    mDeprecated bool	commitChanges( const IOObj* obj )
+			{ return obj ? commitChanges(*obj) : false; }
+
 };
 
 
+/*\brief iterates a DBDir */
 
 mExpClass(General) DBDirIter : public MonitorableIter<DBDir::size_type>
 {
@@ -138,5 +143,45 @@ public:
 private:
 
     DBDirIter&		operator =(const DBDirIter&);
+
+};
+
+
+/*!\brief list of DBDir entries, sorted by name, conforming to a context.
+    Can be Filtered using GlobExpr. */
+
+mExpClass(General) DBDirEntryList
+{
+public:
+
+    typedef ObjectSet<IOObj>::size_type	size_type;
+    typedef size_type			IdxType;
+
+			DBDirEntryList(const IOObjContext&);
+					//!< empty; needs to be filled
+			DBDirEntryList(const DBDir&,const IOObjContext&);
+			DBDirEntryList(const DBDir&,const TranslatorGroup*,
+					const char* translator_globexpr=0);
+			~DBDirEntryList();
+    const char*		name() const	{ return name_; }
+    size_type		size() const	{ return entries_.size(); }
+    bool		isEmpty() const	{ return entries_.isEmpty(); }
+
+    void		fill(const DBDir&,const char* nmfiltglobexpr=0);
+    IdxType		indexOf(const char*) const;
+
+    const IOObj&	ioobj( IdxType idx ) const { return *entries_[idx]; }
+    DBKey		key(IdxType) const;
+    BufferString	name(IdxType) const;
+    BufferString	dispName(IdxType) const;
+    BufferString	iconName(IdxType) const;
+
+protected:
+
+    ObjectSet<IOObj>	entries_;
+    IOObjContext&	ctxt_;
+    BufferString	name_;
+
+    void		sort();
 
 };

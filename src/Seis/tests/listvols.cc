@@ -7,7 +7,6 @@
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "testprog.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "iodir.h"
 #include "segydirecttr.h"

@@ -295,7 +295,7 @@ void ui2DGeomManageDlg::lineRemoveCB( CallBacker* )
 	    continue;
 	}
 
-	IOM().permRemove( ioobj->key() );
+	IOM().removeEntry( ioobj->key() );
 	Survey::GMAdmin().removeGeometry( geomid );
 	const FixedString crfromstr = ioobj->pars().find( sKey::CrFrom() );
 	if ( !crfromstr.isEmpty() )

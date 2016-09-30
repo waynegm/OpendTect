@@ -23,7 +23,6 @@ ________________________________________________________________________
 #include "ioobj.h"
 #include "ctxtioobj.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "randomlinegeom.h"
 #include "randomlinetr.h"
 #include "survgeometry.h"

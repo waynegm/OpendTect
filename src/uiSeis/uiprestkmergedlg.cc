@@ -24,7 +24,6 @@ ________________________________________________________________________
 #include "posinfo.h"
 #include "ptrman.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "ioobj.h"
 #include "ctxtioobj.h"

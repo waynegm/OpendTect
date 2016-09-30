@@ -19,7 +19,6 @@ ________________________________________________________________________
 #include "emhorizon3d.h"
 #include "emsurfaceiodata.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "ioobj.h"
 

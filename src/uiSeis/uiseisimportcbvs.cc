@@ -137,7 +137,7 @@ void uiSeisImportCBVS::inpSel( CallBacker* )
 }
 
 
-#define rmTmpIOObj() IOM().permRemove( tmpid_)
+#define rmTmpIOObj() IOM().removeEntry( tmpid_ )
 
 bool uiSeisImportCBVS::acceptOK()
 {

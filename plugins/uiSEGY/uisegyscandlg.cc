@@ -218,7 +218,7 @@ bool uiSEGYScanDlg::doWork( const IOObj& )
     if ( !rv )
     {
 	if ( outfld_ )
-	    IOM().permRemove( outfld_->key(true) );
+	    IOM().removeEntry( outfld_->key(true) );
 	return false;
     }
 
@@ -226,7 +226,7 @@ bool uiSEGYScanDlg::doWork( const IOObj& )
     if ( !uiSEGY::displayWarnings(scanner_->warnings(),haveoutput) )
     {
 	if ( haveoutput )
-	    IOM().permRemove( outfld_->key(true) );
+	    IOM().removeEntry( outfld_->key(true) );
 	return false;
     }
 

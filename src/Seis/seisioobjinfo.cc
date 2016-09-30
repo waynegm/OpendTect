@@ -14,7 +14,6 @@
 #include "keystrs.h"
 #include "globexpr.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "iopar.h"
 #include "iostrm.h"

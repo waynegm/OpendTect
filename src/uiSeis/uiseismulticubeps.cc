@@ -27,7 +27,6 @@ ________________________________________________________________________
 #include "ctxtioobj.h"
 #include "ioman.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioobj.h"
 #include "od_helpids.h"
 

@@ -563,3 +563,131 @@ DBDirIter::ObjID DBDirIter::objID() const
     return isValid() ? dbDir().objs_[curidx_]->key().objID()
 		     : ObjID::getInvalid();
 }
+
+
+DBDirEntryList::DBDirEntryList( const IOObjContext& ct )
+    : ctxt_(*new IOObjContext(ct))
+{
+}
+
+
+DBDirEntryList::DBDirEntryList( const DBDir& id, const IOObjContext& ct )
+    : ctxt_(*new IOObjContext(ct))
+{
+    fill( id );
+}
+
+
+DBDirEntryList::DBDirEntryList( const DBDir& id, const TranslatorGroup* tr,
+				const char* allowedtransls )
+    : ctxt_(*new IOObjContext(tr))
+{
+    ctxt_.toselect_.allowtransls_ = allowedtransls;
+    fill( id );
+}
+
+
+DBDirEntryList::~DBDirEntryList()
+{
+    deepErase( entries_ );
+    delete &ctxt_;
+}
+
+
+void DBDirEntryList::fill( const DBDir& dbdir, const char* nmfilt )
+{
+    if ( dbdir.isBad() )
+	{ pErrMsg("Bad DBDir" ); return; }
+
+    deepErase( entries_ );
+    name_ = dbdir.name();
+    GlobExpr* ge = nmfilt && *nmfilt ? new GlobExpr(nmfilt) : 0;
+
+    DBDirIter iter( dbdir );
+    while ( iter.next() )
+    {
+	const IOObj& obj = iter.ioObj();
+	if ( !obj.isTmp() && ctxt_.validIOObj(obj) )
+	{
+	    if ( !ge || ge->matches(obj.name()) )
+		entries_ += obj.clone();
+	}
+    }
+
+    delete ge;
+    sort();
+}
+
+
+DBKey DBDirEntryList::key( IdxType idx ) const
+{
+    if ( !entries_.validIdx(idx) )
+	return DBKey::getInvalid();
+    return entries_[idx]->key();
+}
+
+
+BufferString DBDirEntryList::name( IdxType idx ) const
+{
+    if ( !entries_.validIdx(idx) )
+	return BufferString::empty();
+    return entries_[idx]->name();
+}
+
+
+BufferString DBDirEntryList::dispName( IdxType idx ) const
+{
+    if ( !entries_.validIdx(idx) )
+	return BufferString::empty();
+
+    const IOObj& obj = *entries_[idx];
+    const DBKey dbky = entries_[idx]->key();
+    const BufferString nm( obj.name() );
+    if ( IOObj::isSurveyDefault(dbky) )
+	return BufferString( "> ", nm, " <" );
+    else if ( StreamProvider::isPreLoaded(dbky.toString(),true) )
+	return BufferString( "/ ", nm, " \\" );
+    return nm;
+}
+
+
+BufferString DBDirEntryList::iconName( IdxType idx ) const
+{
+    if ( entries_.validIdx(idx) )
+    {
+	const IOObj& obj = *entries_[idx];
+	PtrMan<Translator> transl = obj.createTranslator();
+	if ( transl )
+	    return BufferString( transl->iconName() );
+    }
+
+    return BufferString::empty();
+}
+
+
+void DBDirEntryList::sort()
+{
+    BufferStringSet nms; const size_type sz = size();
+    for ( IdxType idx=0; idx<sz; idx++ )
+	nms.add( entries_[idx]->name() );
+
+    IdxType* idxs = nms.getSortIndexes();
+
+    ObjectSet<IOObj> tmp( entries_ );
+    entries_.erase();
+    for ( IdxType idx=0; idx<sz; idx++ )
+	entries_ += tmp[ idxs[idx] ];
+    delete [] idxs;
+}
+
+
+DBDirEntryList::IdxType DBDirEntryList::indexOf( const char* nm ) const
+{
+    for ( IdxType idx=0; idx<size(); idx++ )
+    {
+	const IOObj& entry = *entries_[idx];
+	if ( entry.name() == nm )
+	    return idx;
+    }
+    return -1;
+}

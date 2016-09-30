@@ -29,7 +29,6 @@ ________________________________________________________________________
 #include "file.h"
 #include "iodir.h"
 #include "ioobj.h"
-#include "iodirentry.h"
 #include "iopar.h"
 #include "oddirs.h"
 #include "randcolor.h"

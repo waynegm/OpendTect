@@ -18,7 +18,6 @@
 #include "iostrm.h"
 #include "iopar.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "oddirs.h"
 #include "hostdata.h"
 #include "file.h"
@@ -314,7 +313,7 @@ bool SeisJobExecProv::removeTempSeis()
     if ( !ioobj ) return true;
 
     FilePath fp( ioobj->fullUserExpr(true) );
-    IOM().permRemove( tmpstorid_ );
+    IOM().removeEntry( tmpstorid_ );
 
     if ( fp.fileName() == "i.*" )
 	fp.setFileName(0);

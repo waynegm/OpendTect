@@ -13,7 +13,6 @@ ________________________________________________________________________
 #include "file.h"
 #include "filepath.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "ioobj.h"
 #include "iopar.h"
@@ -372,7 +371,7 @@ bool uiIOObjManipGroup::rmEntry( IOObj& ioobj )
     }
 
     return exists ? uiIOObj(ioobj).removeImpl( true, shldrm )
-		  : IOM().permRemove( ioobj.key() );
+		  : IOM().removeEntry( ioobj.key() );
 }
 
 

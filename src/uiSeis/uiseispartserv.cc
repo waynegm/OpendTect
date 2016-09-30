@@ -13,7 +13,6 @@ ________________________________________________________________________
 #include "arrayndimpl.h"
 #include "ctxtioobj.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "ioobj.h"
 #include "iopar.h"

@@ -434,7 +434,7 @@ bool uiSEGYReadFinisher::do3D( const IOObj& inioobj, const IOObj& outioobj,
 
     wrr.erase(); // closes output
     if ( !handleWarnings(!doimp,indexer,imp) )
-	{ IOM().permRemove( outioobj.key() ); return false; }
+	{ IOM().removeEntry( outioobj.key() ); return false; }
 
     if ( indexer )
     {

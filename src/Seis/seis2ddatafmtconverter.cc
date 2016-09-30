@@ -13,7 +13,6 @@
 #include "file.h"
 #include "filepath.h"
 #include "iodir.h"
-#include "iodirentry.h"
 #include "ioman.h"
 #include "iopar.h"
 #include "keystrs.h"

@@ -102,7 +102,7 @@ double uiBase::QDoubleSpinBox::valueFromText( const QString& qtxt ) const
 	return handle_.minFValue();
 
     if ( !isalpha_ )
-	return QDoubleSpinBox::valueFromText( qtxt );
+	return ::QDoubleSpinBox::valueFromText( qtxt );
 
     for ( int idx=0; idx<26; idx++ )
     {
@@ -120,7 +120,7 @@ QString uiBase::QDoubleSpinBox::textFromValue( double val ) const
 	return specialValueText();
 
     if ( !isalpha_ )
-	return QDoubleSpinBox::textFromValue( val );
+	return ::QDoubleSpinBox::textFromValue( val );
 
     QString svtxt = specialValueText();
     int intval = mNINT32(val);

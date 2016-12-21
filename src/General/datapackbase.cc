@@ -27,7 +27,7 @@ public:
     MapDataPackXYRotater( MapDataPack& mdp )
 	: mdp_( mdp )
     {
-	float anglenorth = fabs( SI().angleXInl() - 90*mDeg2RadD );
+	float anglenorth = fabs( SI().angleXInl() );
 	if ( anglenorth > M_PI_2 )
 	    anglenorth = ( float )( M_PI - anglenorth );
 

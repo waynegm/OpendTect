@@ -210,7 +210,9 @@ template <class T> inline int Array2DFilterer<T>::nextStep()
 	    return ErrorOccurred();
 	}
 
-	if ( pars_.stepout_.col()<1 && pars_.stepout_.row()<1 )
+	if ( inputrowsize_ < 2 * pars_.stepout_.row() + 1
+	  || inputcolsize_ < 2 * pars_.stepout_.col() + 1
+	  || (pars_.stepout_.col() < 1 && pars_.stepout_.row() < 1) )
 	{
 	    ErrMsg("Invalid parameters");
 	    return ErrorOccurred();

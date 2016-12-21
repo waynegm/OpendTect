@@ -861,7 +861,7 @@ void HorizonDisplay::createDisplayDataPacks(
     const int sidcol =
 	data->dataSet().findColDef(sidcoldef,PosVecDataSet::NameExact);
     const int nrfixedcols = data->nrFixedCols();
-    const int shift = data->validColID(sidcol) ? nrfixedcols+1 : nrfixedcols;
+    const int shift = sidcol==-1 ?  nrfixedcols : nrfixedcols+1;
     const BinIDValueSet* cache =
 	sections_.isEmpty() ? 0 : sections_[0]->getCache( channel );
     if ( !cache )

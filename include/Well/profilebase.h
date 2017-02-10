@@ -37,6 +37,7 @@ public:
     Well::MarkerSet	markers_;
     MultiID		wellid_;
     Coord		coord_;
+    BufferString	name() const;
 protected:
 			ProfileBase(float pos)
 			    : pos_(pos), wellid_(MultiID::udf())	{}
@@ -47,7 +48,7 @@ protected:
 };
 
 
-mExpClass(Well) ProfileSet :  public CallBacker
+mExpClass(Well) ProfileModelBase :  public CallBacker
 {
 public:
     int			size() const	{ return profs_.size();}
@@ -70,6 +71,9 @@ public:
 				//!< -1 ->  none before, size() -> none after
 				//!< if start == stop then exact match
     int			indexOf(const MultiID&) const;
+    int			indexOf(const ProfileBase&) const;
+    int			indexBefore(float pos,bool onlywell) const;
+    int			indexAfter(float pos,bool onlywell) const;
     int			idxBefore(float pos,bool& isatequalpos) const;
     float		getMaxZ() const;
 

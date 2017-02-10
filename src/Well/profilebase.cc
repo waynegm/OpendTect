@@ -7,10 +7,18 @@
 
 #include "profilebase.h"
 #include "iopar.h"
+#include "ioman.h"
 #include "keystrs.h"
 
 static const float poseps_ = 1e-6;
 static const char* sKeyMarkers()	{ return "Markers"; }
+
+
+BufferString ProfileBase::name() const
+{
+    return wellid_.isUdf() ? BufferString("")
+			   : BufferString( IOM().nameOf( wellid_ ) );
+}
 
 
 void ProfileBase::copyFrom( const ProfileBase& oth )
@@ -191,7 +199,7 @@ void ProfileBase::ensureNoMarkerZCrossings( Interval<int> rg,
 }
 
 
-int ProfileSet::nrWells( bool unique ) const
+int ProfileModelBase::nrWells( bool unique ) const
 {
     int ret = 0;
     TypeSet<MultiID> ids;
@@ -210,14 +218,14 @@ int ProfileSet::nrWells( bool unique ) const
 }
 
 
-void ProfileSet::removeAll()
+void ProfileModelBase::removeAll()
 {
     while ( size() )
 	delete profs_.removeSingle( 0 );
 }
 
 
-void ProfileSet::removeProfiles( bool well )
+void ProfileModelBase::removeProfiles( bool well )
 {
     for ( int idx=0; idx<profs_.size(); idx++ )
     {
@@ -233,7 +241,7 @@ bool posEqual( float p1, float p2 )
 }
 
 
-void ProfileSet::removeAtSamePos( int idxtokeep )
+void ProfileModelBase::removeAtSamePos( int idxtokeep )
 {
     for ( int idx=1; idx<profs_.size(); idx++ )
     {
@@ -299,7 +307,7 @@ ProfileBase* ProfileFactory::create( const char* keystr )
 }
 
 
-int ProfileSet::idxBefore( float pos, bool& isat ) const
+int ProfileModelBase::idxBefore( float pos, bool& isat ) const
 {
     isat = false;
 
@@ -316,7 +324,7 @@ int ProfileSet::idxBefore( float pos, bool& isat ) const
 }
 
 
-int ProfileSet::set( ProfileBase* prof, bool replacesamepos )
+int ProfileModelBase::set( ProfileBase* prof, bool replacesamepos )
 {
     if ( !prof )
 	return -1;
@@ -352,7 +360,7 @@ int ProfileSet::set( ProfileBase* prof, bool replacesamepos )
 }
 
 
-int ProfileSet::nearestIndex( float pos, bool onlywll ) const
+int ProfileModelBase::nearestIndex( float pos, bool onlywll ) const
 {
     int prevwellidx = -1; float prevwellpos = mUdf(float);
 
@@ -384,7 +392,7 @@ int ProfileSet::nearestIndex( float pos, bool onlywll ) const
 }
 
 
-Interval<int> ProfileSet::getIndexes( float pos, bool noinv ) const
+Interval<int> ProfileModelBase::getIndexes( float pos, bool noinv ) const
 {
     const int sz = size();
 
@@ -411,7 +419,7 @@ Interval<int> ProfileSet::getIndexes( float pos, bool noinv ) const
 }
 
 
-int ProfileSet::indexOf( const MultiID& wid ) const
+int ProfileModelBase::indexOf( const MultiID& wid ) const
 {
     if ( wid.isEmpty() ) return -1;
 
@@ -426,7 +434,39 @@ int ProfileSet::indexOf( const MultiID& wid ) const
 }
 
 
-float ProfileSet::getMaxZ() const
+int ProfileModelBase::indexBefore( float pos, bool onlywell ) const
+{
+    int idxbfore = -1;
+    for ( int idx=0; idx<size(); idx++ )
+    {
+	if ( profs_[idx]->pos_ > pos )
+	    return idxbfore;
+
+	if ( !onlywell || profs_[idx]->isWell() )
+	    idxbfore =	idx;
+    }
+
+    return idxbfore;
+}
+
+
+int ProfileModelBase::indexAfter( float pos, bool onlywell ) const
+{
+    int idxafter = -1;
+    for ( int idx=size()-1; idx>0; idx-- )
+    {
+	if ( profs_[idx]->pos_ < pos )
+	    return idxafter;
+
+	if ( !onlywell || profs_[idx]->isWell() )
+	    idxafter =	idx;
+    }
+
+    return idxafter;
+}
+
+
+float ProfileModelBase::getMaxZ() const
 {
     float maxz = 0;
     for ( int idx=0; idx<profs_.size(); idx++ )

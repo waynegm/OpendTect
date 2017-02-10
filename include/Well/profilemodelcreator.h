@@ -1,5 +1,5 @@
-#ifndef profilesetcreator_h
-#define profilesetcreator_h
+#ifndef profilemodelcreator_h
+#define profilemodelcreator_h
 
 /*+
 ________________________________________________________________________
@@ -17,7 +17,7 @@ ________________________________________________________________________
 #include "bufstring.h"
 
 class BufferStringSet;
-class ProfileSet;
+class ProfileModelBase;
 class ProfilePosDataSet;
 class TaskRunner;
 class ZAxisTransform;
@@ -28,14 +28,15 @@ template <class T> class PolyLineND;
 
 /*!\brief Base class for horizon users in profile mode */
 
-mExpClass(Well) ProfileSetFromEventCreator
+mExpClass(Well) ProfileModelFromEventCreator
 {
 public:
 
     enum MovePol	{ MoveNone, MoveAll, MoveAbove, MoveBelow };
 
-			ProfileSetFromEventCreator( ProfileSet&,int maxnrpts=0);
-    virtual		~ProfileSetFromEventCreator();
+			ProfileModelFromEventCreator(ProfileModelBase&,
+						     int maxnrpts=0);
+    virtual		~ProfileModelFromEventCreator();
     virtual void	reset();
 
     bool		go(TaskRunner* tr=0);
@@ -48,7 +49,7 @@ public:
 
 protected:
 
-    ProfileSet&		profs_;
+    ProfileModelBase&		profs_;
     ProfilePosDataSet&	ppds_;
     ZAxisTransform*	t2dtr_;
     bool		needt2d_;
@@ -70,17 +71,16 @@ protected:
 /*!\brief uses horizon to set depths of control profiles. By default uses
   first well profile for T2D conversion. */
 
-mExpClass(Well) ProfileSetFromSingleEventCreator
-				: public ProfileSetFromEventCreator
+mExpClass(Well) ProfileModelFromSingleEventCreator
+				: public ProfileModelFromEventCreator
 {
 public:
 
-			ProfileSetFromSingleEventCreator(
-				ProfileSet&);
+			ProfileModelFromSingleEventCreator(ProfileModelBase&);
     virtual void	reset();
     void		init();
 
-    static bool		canDoWork(const ProfileSet&);
+    static bool		canDoWork(const ProfileModelBase&);
 
 			// settable
     void		setZValProv( const ZValueProvider* zprov )
@@ -107,18 +107,18 @@ protected:
  */
 
 
-mExpClass(Well) ProfileSetFromMultiEventCreator
-				: public ProfileSetFromEventCreator
+mExpClass(Well) ProfileModelFromMultiEventCreator
+				: public ProfileModelFromEventCreator
 {
 public:
 
-				ProfileSetFromMultiEventCreator(
-					ProfileSet&,
+				ProfileModelFromMultiEventCreator(
+					ProfileModelBase&,
 					const ObjectSet<ZValueProvider>&,
 					const BufferStringSet& lvlnms,
 					const TypeSet<Coord>& linegeom,
 					int totalnrprofs=0);
-				~ProfileSetFromMultiEventCreator();
+				~ProfileModelFromMultiEventCreator();
 
 protected:
 

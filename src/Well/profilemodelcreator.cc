@@ -6,7 +6,7 @@
 
 static const char* rcsID mUsedVar = "$Id$";
 
-#include "profilesetcreator.h"
+#include "profilemodelcreator.h"
 #include "profilebase.h"
 #include "array1dinterpol.h"
 #include "arrayndimpl.h"
@@ -50,7 +50,7 @@ class ProfilePosDataSet : public TypeSet<ProfilePosData>
 {
 public:
 
-ProfilePosDataSet( ProfileSet& pms )
+ProfilePosDataSet( ProfileModelBase& pms )
     : profs_(pms)
 {
 }
@@ -97,7 +97,7 @@ void setInterpCoord( int ippd, int ippd0, int ippd1 )
     ppd.coord_ = Coord( c0.x + delta.x * nrdists, c0.y + delta.y * nrdists );
 }
 
-    ProfileSet& profs_;
+    ProfileModelBase& profs_;
 
 };
 
@@ -105,7 +105,8 @@ void setInterpCoord( int ippd, int ippd0, int ippd1 )
 #define mErrRet(s) { errmsg_ = s; return false; }
 
 
-ProfileSetFromEventCreator::ProfileSetFromEventCreator( ProfileSet& p, int mxp )
+ProfileModelFromEventCreator::ProfileModelFromEventCreator( ProfileModelBase& p,
+							    int mxp )
     : profs_(p)
     , ppds_(*new ProfilePosDataSet(p))
     , t2dtr_(0)
@@ -127,7 +128,7 @@ ProfileSetFromEventCreator::ProfileSetFromEventCreator( ProfileSet& p, int mxp )
 }
 
 
-ProfileSetFromEventCreator::~ProfileSetFromEventCreator()
+ProfileModelFromEventCreator::~ProfileModelFromEventCreator()
 {
     reset();
     delete &ppds_;
@@ -135,7 +136,7 @@ ProfileSetFromEventCreator::~ProfileSetFromEventCreator()
 }
 
 
-void ProfileSetFromEventCreator::reset()
+void ProfileModelFromEventCreator::reset()
 {
     if ( t2dtr_ )
 	{ t2dtr_->unRef(); t2dtr_ = 0; }
@@ -143,7 +144,7 @@ void ProfileSetFromEventCreator::reset()
 }
 
 
-bool ProfileSetFromEventCreator::go( TaskRunner* tr )
+bool ProfileModelFromEventCreator::go( TaskRunner* tr )
 {
     errmsg_.setEmpty();
     if ( ppds_.isEmpty() )
@@ -178,7 +179,7 @@ bool ProfileSetFromEventCreator::go( TaskRunner* tr )
 }
 
 
-void ProfileSetFromEventCreator::addNewPositions()
+void ProfileModelFromEventCreator::addNewPositions()
 {
     const int oldsz = ppds_.size();
     const int nrnew = maxnrprofs_ - oldsz;
@@ -220,7 +221,7 @@ void ProfileSetFromEventCreator::addNewPositions()
 }
 
 
-int ProfileSetFromEventCreator::addNewProfilesAfter( int ippd,
+int ProfileModelFromEventCreator::addNewProfilesAfter( int ippd,
 					int nr2add, bool islast )
 {
     if ( nr2add < 1 ) return ippd + 1;
@@ -252,7 +253,7 @@ int ProfileSetFromEventCreator::addNewProfilesAfter( int ippd,
 }
 
 
-void ProfileSetFromEventCreator::getKnownDepths(
+void ProfileModelFromEventCreator::getKnownDepths(
 	const ZValueProvider& zprov, const char* mrkrnm )
 {
     // Get the depths from the horizon + transform
@@ -290,7 +291,7 @@ void ProfileSetFromEventCreator::getKnownDepths(
 }
 
 
-void ProfileSetFromEventCreator::interpolateZOffsets()
+void ProfileModelFromEventCreator::interpolateZOffsets()
 {
     int iprevppd = -1;
     for ( int ippd=0; ippd<ppds_.size(); ippd++ )
@@ -332,7 +333,7 @@ void ProfileSetFromEventCreator::interpolateZOffsets()
 }
 
 
-void ProfileSetFromEventCreator::setMarkerDepths( const char* mrknm )
+void ProfileModelFromEventCreator::setMarkerDepths( const char* mrknm )
 {
     interpolateZOffsets();
 
@@ -357,7 +358,7 @@ void ProfileSetFromEventCreator::setMarkerDepths( const char* mrknm )
 }
 
 
-bool ProfileSetFromEventCreator::doPush( float orgz, float newz ) const
+bool ProfileModelFromEventCreator::doPush( float orgz, float newz ) const
 {
     if ( movepol_ < MoveAbove )
 	return movepol_ == MoveAll;
@@ -366,7 +367,7 @@ bool ProfileSetFromEventCreator::doPush( float orgz, float newz ) const
 }
 
 
-bool ProfileSetFromEventCreator::doPull( float orgz, float newz ) const
+bool ProfileModelFromEventCreator::doPull( float orgz, float newz ) const
 {
     if ( movepol_ < MoveAbove )
 	return movepol_ == MoveAll;
@@ -376,9 +377,9 @@ bool ProfileSetFromEventCreator::doPull( float orgz, float newz ) const
 
 
 
-ProfileSetFromSingleEventCreator::ProfileSetFromSingleEventCreator(
-	ProfileSet& m)
-    : ProfileSetFromEventCreator(m)
+ProfileModelFromSingleEventCreator::ProfileModelFromSingleEventCreator(
+	ProfileModelBase& m)
+    : ProfileModelFromEventCreator(m)
     , zvalprov_(0)
     , sectionangle_(0)
     , sectionlength_(1000)
@@ -386,7 +387,7 @@ ProfileSetFromSingleEventCreator::ProfileSetFromSingleEventCreator(
 }
 
 
-void ProfileSetFromSingleEventCreator::init()
+void ProfileModelFromSingleEventCreator::init()
 {
     ppds_.addExistingProfiles();
     addNewPositions();
@@ -394,14 +395,14 @@ void ProfileSetFromSingleEventCreator::init()
 }
 
 
-void ProfileSetFromSingleEventCreator::reset()
+void ProfileModelFromSingleEventCreator::reset()
 {
     zvalprov_ = 0;
-    ProfileSetFromEventCreator::reset();
+    ProfileModelFromEventCreator::reset();
 }
 
 
-void ProfileSetFromSingleEventCreator::fillCoords()
+void ProfileModelFromSingleEventCreator::fillCoords()
 {
     int icoordprof0 = -1, icoordprof1 = -1;
     for ( int ippd=0; ippd<ppds_.size(); ippd++ )
@@ -449,8 +450,8 @@ void ProfileSetFromSingleEventCreator::fillCoords()
 }
 
 
-bool ProfileSetFromSingleEventCreator::canDoWork(
-				const ProfileSet& pm )
+bool ProfileModelFromSingleEventCreator::canDoWork(
+				const ProfileModelBase& pm )
 {
     const int nruniqwells = pm.nrWells( true );
     if ( nruniqwells < 1 ) return false;
@@ -462,7 +463,7 @@ bool ProfileSetFromSingleEventCreator::canDoWork(
 }
 
 
-bool ProfileSetFromSingleEventCreator::doGo( TaskRunner* tr )
+bool ProfileModelFromSingleEventCreator::doGo( TaskRunner* tr )
 {
     if ( marker_.isEmpty() )
 	mErrRet("Please specify a marker")
@@ -475,11 +476,11 @@ bool ProfileSetFromSingleEventCreator::doGo( TaskRunner* tr )
 
 
 
-ProfileSetFromMultiEventCreator::ProfileSetFromMultiEventCreator(
-	ProfileSet& m,
+ProfileModelFromMultiEventCreator::ProfileModelFromMultiEventCreator(
+	ProfileModelBase& m,
 	const ObjectSet<ZValueProvider>& zprovs, const BufferStringSet& lvlnms,
 	const TypeSet<Coord>& linegeom, int totalnrprofs )
-    : ProfileSetFromEventCreator(m,totalnrprofs)
+    : ProfileModelFromEventCreator(m,totalnrprofs)
     , zvalprovs_(zprovs)
     , lvlnms_(lvlnms)
 {
@@ -494,12 +495,12 @@ ProfileSetFromMultiEventCreator::ProfileSetFromMultiEventCreator(
 }
 
 
-ProfileSetFromMultiEventCreator::~ProfileSetFromMultiEventCreator()
+ProfileModelFromMultiEventCreator::~ProfileModelFromMultiEventCreator()
 {
 }
 
 
-void ProfileSetFromMultiEventCreator::fillCoords(
+void ProfileModelFromMultiEventCreator::fillCoords(
 					const TypeSet<Coord>& linegeom )
 {
     const PolyLineND<Coord> pline( linegeom );
@@ -513,7 +514,7 @@ void ProfileSetFromMultiEventCreator::fillCoords(
 }
 
 
-bool ProfileSetFromMultiEventCreator::doGo( TaskRunner* tr )
+bool ProfileModelFromMultiEventCreator::doGo( TaskRunner* tr )
 {
     for ( int idx=0; idx<zvalprovs_.size(); idx++ )
     {

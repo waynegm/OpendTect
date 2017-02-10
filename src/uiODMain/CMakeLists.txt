@@ -19,7 +19,6 @@ set(OD_MODULE_SOURCES
 	inituiodmain.cc
 	measuretoolman.cc
 	odsession.cc
-	uiprofilesetcreator.cc
 	uiodannottreeitem.cc
 	uiodannotarrowtreeitem.cc
 	uiodannotimagetreeitem.cc

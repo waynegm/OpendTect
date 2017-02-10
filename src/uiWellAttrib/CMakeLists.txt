@@ -32,6 +32,7 @@ set( OD_MODULE_SOURCES
 	uisynthtorealscale.cc
 	uisynthgendlg.cc
 	uisynthseis.cc
+	uiprofilemodelfromevcr.cc
 	inituiwellattrib.cc
 )
 

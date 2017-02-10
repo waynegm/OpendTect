@@ -10,12 +10,13 @@ ________________________________________________________________________
 
 static const char* rcsID mUsedVar = "$Id$";
 
-#include "uiprofilesetcreator.h"
+#include "uiprofilemodelfromevcr.h"
 #include "uicombobox.h"
 #include "uidialog.h"
 #include "uiflatviewer.h"
 #include "uigeninput.h"
 #include "uilistbox.h"
+#include "uimsg.h"
 #include "uitable.h"
 #include "uitoolbutton.h"
 #include "uitaskrunner.h"
@@ -23,14 +24,15 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "flatposdata.h"
 #include "seisdatapack.h"
 #include "profilebase.h"
-#include "profilesetcreator.h"
+#include "profilemodelcreator.h"
+#include "profilemodelbaseauxdatamgr.h"
 #include "zvalueprovider.h"
 
 class uiEventMarkerTieDialog : public uiDialog
 { mODTextTranslationClass(uiEventMarkerTieDialog)
 public:
 
-uiEventMarkerTieDialog( uiParent* p, uiProfileSetCreatorGrp::Data& data )
+uiEventMarkerTieDialog( uiParent* p, ProfModelCrData& data )
     : uiDialog(p,Setup(mJoinUiStrs(sHorizon(),sSelection().toLower()),
 		tr("You can use horizons to shape the model between the wells"),
 		mTODOHelpKey))
@@ -40,12 +42,12 @@ uiEventMarkerTieDialog( uiParent* p, uiProfileSetCreatorGrp::Data& data )
     evmarkertietbl_ = new uiTable( this, tblsu, "EventMarkerTie" );
 
     for ( int idx=data_.tiemarkernms_.size();idx<data_.zvalprovs_.size();idx++ )
-	data_.tiemarkernms_.add( uiProfileSetCreatorGrp::Data::dontUseStr() );
+	data_.tiemarkernms_.add( ProfModelCrData::dontUseStr() );
 
-    Well::MarkerSet wms( data_.profs_.get(0 )->markers_ );
-    for ( int idx=1; idx<data_.profs_.size(); idx++ )
+    Well::MarkerSet wms( data_.model_.get(0 )->markers_ );
+    for ( int idx=1; idx<data_.model_.size(); idx++ )
     {
-	const ProfileBase* prof = data_.profs_.get( idx );
+	const ProfileBase* prof = data_.model_.get( idx );
 	if ( prof->isWell() )
 	    wms.mergeOtherWell( prof->markers_ );
     }
@@ -58,7 +60,7 @@ uiEventMarkerTieDialog( uiParent* p, uiProfileSetCreatorGrp::Data& data )
 	evmarkertietbl_->setText( RowCol(idx,0),
 				  data_.zvalprovs_[idx]->getName() );
 	uiComboBox* mrksel = new uiComboBox( 0, "marker tie" );
-	mrksel->addItem( tr(uiProfileSetCreatorGrp::Data::dontUseStr()) );
+	mrksel->addItem( tr(ProfModelCrData::dontUseStr()) );
 	mrksel->addItems( markernms );
 	mrksel->setCurrentItem( data_.tiemarkernms_[idx]->buf() );
 	evmarkertietbl_->setCellObject( RowCol(idx,1), mrksel );
@@ -85,10 +87,10 @@ bool acceptOK( CallBacker* )
 }
 
     uiTable*					evmarkertietbl_;
-    uiProfileSetCreatorGrp::Data&		data_;
+    ProfModelCrData&		data_;
 };
 
-void uiProfileSetCreatorGrpFactory::addCreateFunc(
+void uiProfileModelFromEvCrGrpFactory::addCreateFunc(
 	CreateFunc crfn ,const char* key )
 {
     const int keyidx = keys_.indexOf( key );
@@ -103,9 +105,9 @@ void uiProfileSetCreatorGrpFactory::addCreateFunc(
 }
 
 
-uiProfileSetCreatorGrp* uiProfileSetCreatorGrpFactory::create(
+uiProfileModelFromEvCrGrp* uiProfileModelFromEvCrGrpFactory::create(
 	const char* key, uiParent* p,
-	const uiProfileSetCreatorGrp::Data& data )
+	const ProfModelCrData& data )
 {
     const int keyidx = keys_.indexOf( key );
     if ( keyidx < 0 )
@@ -115,18 +117,18 @@ uiProfileSetCreatorGrp* uiProfileSetCreatorGrpFactory::create(
 }
 
 
-uiProfileSetCreatorGrpFactory& uiProfSetCRFac()
+uiProfileModelFromEvCrGrpFactory& uiPMCrGrpFac()
 {
-    mDefineStaticLocalObject(uiProfileSetCreatorGrpFactory,pwmsfac_, );
-    return pwmsfac_;
+    mDefineStaticLocalObject(uiProfileModelFromEvCrGrpFactory,profmodcrfac_, );
+    return profmodcrfac_;
 }
 
 
 
-uiProfileSetCreatorGrp::uiProfileSetCreatorGrp(
-	uiParent* p, const uiProfileSetCreatorGrp::Data& sudata )
+uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
+	uiParent* p, const ProfModelCrData& sudata )
     : uiGroup(p)
-    , data_(* new uiProfileSetCreatorGrp::Data(sudata) )
+    , data_(* new ProfModelCrData(sudata) )
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
     nrprofsfld_ = new uiGenInput(paramgrp_,tr("Ctrl Profiles"),IntInpSpec(50));
@@ -134,19 +136,19 @@ uiProfileSetCreatorGrp::uiProfileSetCreatorGrp(
     evlistbox_->attach( leftAlignedBelow, nrprofsfld_ );
     addevbut_ =
 	new uiToolButton( paramgrp_, "plus", tr("Add event"),
-			  mCB(this,uiProfileSetCreatorGrp,addEventCB) );
+			  mCB(this,uiProfileModelFromEvCrGrp,addEventCB) );
     addevbut_->attach( alignedBelow, evlistbox_ );
     rmevbut_ =
 	new uiToolButton( paramgrp_, "remove", tr("Remove event"),
-			  mCB(this,uiProfileSetCreatorGrp,removeEventCB));
+			  mCB(this,uiProfileModelFromEvCrGrp,removeEventCB));
     rmevbut_->attach( rightTo, addevbut_ );
     tiemarkerbut_ =
 	new uiToolButton( paramgrp_, "", tr("Tie event to markers.."),
-			  mCB(this,uiProfileSetCreatorGrp,tieEventsCB) );
+			  mCB(this,uiProfileModelFromEvCrGrp,tieEventsCB) );
     tiemarkerbut_->attach( rightTo, rmevbut_ );
     applybut_ =
 	new uiToolButton( paramgrp_, "doall", tr("Apply.."),
-			  mCB(this,uiProfileSetCreatorGrp,createProfileSetCB) );
+			  mCB(this,uiProfileModelFromEvCrGrp,createModelCB) );
     applybut_->attach( rightTo, tiemarkerbut_ );
     uiGroup* dispgrp = new uiGroup( this, "Display Group" );
     viewer_ = new uiFlatViewer( dispgrp );
@@ -173,47 +175,71 @@ uiProfileSetCreatorGrp::uiProfileSetCreatorGrp(
     app.annot_.x2_.showgridlines_ = true;
     app.annot_.allowuserchangereversedaxis_ = false;
     viewer_->setPack( false, data_.seisfdpid_ );
+    modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
+    DataPackMgr& dpm = DPM(DataPackMgr::FlatID());
+    ConstDataPackRef<FlatDataPack> seisfdp = dpm.obtain( data_.seisfdpid_ );
+    const StepInterval<double> dxrg = seisfdp->posData().range( true );
+    Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
+    const StepInterval<double> dzrg = seisfdp->posData().range( false );
+    Interval<float> zrg( mCast(float,dzrg.start), mCast(float,dzrg.stop) );
+    modeladmgr_->view2Model().setXRange( xrg );
+    modeladmgr_->view2Model().setZRange( zrg );
+    modeladmgr_->view2Model().setNrSeq( 25 );
+    modeladmgr_->view2Model().setZInDepth( false );
+    modeladmgr_->reset();
 }
 
 
-uiProfileSetCreatorGrp::~uiProfileSetCreatorGrp()
+uiProfileModelFromEvCrGrp::~uiProfileModelFromEvCrGrp()
 {
     viewer_->removeAuxDatas( horauxdatas_ );
     deepErase( horauxdatas_ );
 }
 
 
-int uiProfileSetCreatorGrp::nrProfs() const
+int uiProfileModelFromEvCrGrp::nrProfs() const
 {
     return nrprofsfld_->getIntValue();
 }
 
 
-void uiProfileSetCreatorGrp::updateDisplay()
+void uiProfileModelFromEvCrGrp::updateDisplay()
 {
     viewer_->setViewToBoundingBox();
     viewer_->handleChange( FlatView::Viewer::Auxdata );
 }
 
 
-void uiProfileSetCreatorGrp::addEventCB( CallBacker* )
+void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
 {
     getEvents();
     drawEvents();
 }
 
+#define mErrRet( msg, retval ) \
+{ \
+    uiMSG().error( msg ); \
+    return retval; \
+}
 
-void uiProfileSetCreatorGrp::createProfileSetCB(CallBacker*)
+void uiProfileModelFromEvCrGrp::createModelCB(CallBacker*)
 {
-    ProfileSetFromMultiEventCreator prohoruser(
-	    data_.profs_, data_.zvalprovs_, data_.tiemarkernms_,
+    if ( data_.model_.isEmpty() )
+	mErrRet( tr("No well added to create a model from"), )
+    if ( data_.zvalprovs_.isEmpty() )
+	mErrRet( tr("No event added to create a model from"), )
+    ProfileModelFromMultiEventCreator prohoruser(
+	    data_.model_, data_.zvalprovs_, data_.tiemarkernms_,
 	    data_.linegeom_, nrProfs() );
     uiTaskRunner uitr( this );
-    prohoruser.go( &uitr );
+    if ( !prohoruser.go(&uitr) )
+	return;
+
+    modeladmgr_->reset();
 }
 
 
-void uiProfileSetCreatorGrp::removeEventCB( CallBacker* )
+void uiProfileModelFromEvCrGrp::removeEventCB( CallBacker* )
 {
     const int rmidx = evlistbox_->firstChosen();
     if ( rmidx<0 )
@@ -224,14 +250,14 @@ void uiProfileSetCreatorGrp::removeEventCB( CallBacker* )
 }
 
 
-void uiProfileSetCreatorGrp::tieEventsCB( CallBacker* )
+void uiProfileModelFromEvCrGrp::tieEventsCB( CallBacker* )
 {
     uiEventMarkerTieDialog tieevmrkrdlg( this, data_ );
     tieevmrkrdlg.go();
 }
 
 
-void uiProfileSetCreatorGrp::drawEvents()
+void uiProfileModelFromEvCrGrp::drawEvents()
 {
     viewer_->removeAuxDatas( horauxdatas_ );
     deepErase( horauxdatas_ );
@@ -290,4 +316,19 @@ void uiProfileSetCreatorGrp::drawEvents()
     }
 
     viewer_->handleChange( FlatView::Viewer::Auxdata );
+}
+
+
+uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
+	const ProfModelCrData& sudata, const char* typenm )
+    : uiDialog(p,uiDialog::Setup(tr(""),tr(""),mNoHelpKey))
+{
+    profscrgrp_ = uiPMCrGrpFac().create( typenm, this, sudata );
+    mAttachCB( afterPopup, uiProfileModelFromEvCrDlg::finaliseCB );
+}
+
+
+void uiProfileModelFromEvCrDlg::finaliseCB( CallBacker* )
+{
+    profscrgrp_->updateDisplay();
 }

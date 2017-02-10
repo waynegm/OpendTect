@@ -1,5 +1,5 @@
-#ifndef uiprofilesetcreator_h
-#define uiprofilesetcreator_h
+#ifndef uiprofilemodelfromevcr_h
+#define uiprofilemodelfromevcr_h
 
 /*+
 ________________________________________________________________________
@@ -12,8 +12,9 @@ ________________________________________________________________________
 
 -*/
 
-#include "uiodmainmod.h"
+#include "uiwellattribmod.h"
 #include "uigroup.h"
+#include "uidialog.h"
 #include "datapack.h"
 
 namespace FlatView { class AuxData; }
@@ -22,16 +23,17 @@ class uiToolButton;
 class uiListBox;
 class uiFlatViewer;
 
-class ProfileSet;
+class ProfileModelBase;
+class ProfileModelBaseAuxDataMgr;
 class ZValueProvider;
 
-mExpClass(uiODMain) uiProfileSetCreatorGrp : public uiGroup
-{ mODTextTranslationClass(uiProfileSetCreatorGrp);
+mExpClass(uiWellAttrib) uiProfileModelFromEvCrGrp : public uiGroup
+{ mODTextTranslationClass(uiProfileModelFromEvCrGrp);
 public:
-    mStruct(uiODMain) Data
+    mStruct(uiWellAttrib) Data
     {
-			Data( ProfileSet& p, const TypeSet<Coord>& linegeom )
-			    : profs_(p)
+			Data(ProfileModelBase& p,const TypeSet<Coord>& linegeom)
+			    : model_(p)
 			    , linegeom_(linegeom)
 			    , seisfdpid_(DataPack::cNoID())	{}
 
@@ -39,15 +41,17 @@ public:
 	Pos::GeomID			geomid_;
 	int				rdmlineid_;
 	DataPack::ID			seisfdpid_;
-	ProfileSet&			profs_;
+	ProfileModelBase&		model_;
 	BufferStringSet			tiemarkernms_;
 	ObjectSet<ZValueProvider>	zvalprovs_;
 	const TypeSet<Coord>&		linegeom_;
 	static const char*		dontUseStr()	{ return "<don't use>";}
     };
-			uiProfileSetCreatorGrp(
-			   uiParent*,const uiProfileSetCreatorGrp::Data&);
-			~uiProfileSetCreatorGrp();
+
+			uiProfileModelFromEvCrGrp(
+			   uiParent*,
+			   const uiProfileModelFromEvCrGrp::Data&);
+			~uiProfileModelFromEvCrGrp();
     int			nrProfs() const;
     virtual void	updateDisplay();
 protected:
@@ -59,27 +63,29 @@ protected:
     uiToolButton*			rmevbut_;
     uiToolButton*			tiemarkerbut_;
     uiToolButton*			applybut_;
-    uiProfileSetCreatorGrp::Data&	data_;
+    uiProfileModelFromEvCrGrp::Data& data_;
 
     ObjectSet<FlatView::AuxData>	horauxdatas_;
+    ProfileModelBaseAuxDataMgr*		modeladmgr_;;
 
     void				addEventCB(CallBacker*);
     void				removeEventCB(CallBacker*);
     void				tieEventsCB(CallBacker*);
-    void				createProfileSetCB(CallBacker*);
+    void				createModelCB(CallBacker*);
     virtual void			getEvents()			=0;
     void				drawEvents();
 };
 
+typedef uiProfileModelFromEvCrGrp::Data ProfModelCrData; 
 
-mExpClass(uiODMain) uiProfileSetCreatorGrpFactory
+mExpClass(uiWellAttrib) uiProfileModelFromEvCrGrpFactory
 {
 public:
-    typedef uiProfileSetCreatorGrp*
-	(*CreateFunc)(uiParent*,const uiProfileSetCreatorGrp::Data&);
-    void				addCreateFunc(CreateFunc,const char*);
-    uiProfileSetCreatorGrp*
-	create(const char*,uiParent*,const uiProfileSetCreatorGrp::Data&);
+    typedef uiProfileModelFromEvCrGrp*
+				(*CreateFunc)(uiParent*,const ProfModelCrData&);
+    void			addCreateFunc(CreateFunc,const char*);
+    uiProfileModelFromEvCrGrp*	create(const char*,uiParent*,
+				       const ProfModelCrData&);
     const BufferStringSet&	factoryNames() const	{ return keys_; }
 protected:
     TypeSet<CreateFunc>		createfuncs_;
@@ -87,6 +93,20 @@ protected:
 };
 
 
-mGlobal(uiODMain) uiProfileSetCreatorGrpFactory& uiProfSetCRFac();
+mGlobal(uiWellAttrib) uiProfileModelFromEvCrGrpFactory& uiPMCrGrpFac();
+
+
+mExpClass(uiWellAttrib) uiProfileModelFromEvCrDlg : public uiDialog
+{ mODTextTranslationClass(uiProfileModelFromEvCrDlg);
+public:
+				uiProfileModelFromEvCrDlg(uiParent*,
+					const ProfModelCrData&,
+					const char* typenm);
+protected:
+    void			finaliseCB(CallBacker*);
+
+    uiProfileModelFromEvCrGrp*	profscrgrp_;
+};
+
 
 #endif

@@ -15,8 +15,10 @@ ________________________________________________________________________
 #include "wellmod.h"
 #include "multiid.h"
 #include "bufstring.h"
+#include "profilemodelfromeventdata.h"
 
 class BufferStringSet;
+class ProfileBase;
 class ProfileModelBase;
 class ProfilePosDataSet;
 class TaskRunner;
@@ -35,32 +37,41 @@ public:
     enum MovePol	{ MoveNone, MoveAll, MoveAbove, MoveBelow };
 
 			ProfileModelFromEventCreator(ProfileModelBase&,
-						     int maxnrpts=0);
+						     int totalnrprofs=0);
     virtual		~ProfileModelFromEventCreator();
-    virtual void	reset();
 
+    void		preparePositions();
+    void		prepareZTransform(TaskRunner* tr=0);
+    void		setNewProfiles();
     bool		go(TaskRunner* tr=0);
     BufferString	errmsg_;
 
 			// settable with default
     IOPar&		t2dpar_;
-    int			maxnrprofs_;
+    int			totalnrprofs_;
     MovePol		movepol_; // only for Single, Multi ignores
 
 protected:
 
-    ProfileModelBase&		profs_;
+    ProfileModelBase&	profs_;
     ProfilePosDataSet&	ppds_;
     ZAxisTransform*	t2dtr_;
     bool		needt2d_;
 
+    float		getDepthVal(const Coord& pos,float z) const;
     void		addNewPositions();
-    void		getKnownDepths(const ZValueProvider&,const char*);
-    void		setMarkerDepths(const char*);
+    void		getKnownDepths(const ProfileModelFromEventData::Event&);
+    void		getEventZVals(const ProfileModelFromEventData::Event&);
+    void		getZOffsets(const ProfileModelFromEventData::Event&);
+    void		setMarkerDepths(
+				const ProfileModelFromEventData::Event&);
 
     virtual bool	doGo(TaskRunner*)		= 0;
+    virtual void	fillCoords()			= 0;
+    virtual void	setIntersectMarkers()		= 0;
 
-    int			addNewProfilesAfter(int,int,bool);
+    int			addNewPPDsAfter(int,int,bool);
+    void		addProfileToPPDs();
     void		interpolateZOffsets();
     bool		doPush(float,float) const;
     bool		doPull(float,float) const;
@@ -76,25 +87,22 @@ mExpClass(Well) ProfileModelFromSingleEventCreator
 {
 public:
 
-			ProfileModelFromSingleEventCreator(ProfileModelBase&);
-    virtual void	reset();
-    void		init();
+			ProfileModelFromSingleEventCreator(ProfileModelBase&,
+				const ProfileModelFromEventData::Event&);
 
     static bool		canDoWork(const ProfileModelBase&);
 
 			// settable
-    void		setZValProv( const ZValueProvider* zprov )
-			{ zvalprov_ = zprov;}
-    BufferString	marker_;
     float		sectionangle_;	// only used if model has exactly 1 well
     float		sectionlength_; // ditto
 
 protected:
 
-    const ZValueProvider* zvalprov_;
+    const ProfileModelFromEventData::Event& event_;
 
+    virtual void	setIntersectMarkers();
     virtual bool	doGo(TaskRunner*);
-    void		fillCoords();
+    virtual void	fillCoords();
 
 };
 
@@ -113,21 +121,25 @@ mExpClass(Well) ProfileModelFromMultiEventCreator
 public:
 
 				ProfileModelFromMultiEventCreator(
-					ProfileModelBase&,
-					const ObjectSet<ZValueProvider>&,
-					const BufferStringSet& lvlnms,
-					const TypeSet<Coord>& linegeom,
-					int totalnrprofs=0);
+					ProfileModelFromEventData&);
 				~ProfileModelFromMultiEventCreator();
 
 protected:
 
-    const ObjectSet<ZValueProvider>&	zvalprovs_;
-    const BufferStringSet&		lvlnms_;
-
+    float				getDepthValue(int evidx,
+						      const ProfileBase&);
+    float				getZOffset(int evidx,
+						   const ProfileBase&);
+    virtual void			setIntersectMarkers();
+    float				getIntersectMarkerDepth(
+						int evidx,const ProfileBase&);
+    float				getInterpolatedMarkerDepth(
+						int profidx,int evidx);
+    bool				interpolateIntersectMarkers();
     virtual bool			doGo(TaskRunner*);
-    void				fillCoords(const TypeSet<Coord>&);
+    virtual void			fillCoords();
 
+    ProfileModelFromEventData&		data_;
 };
 
 

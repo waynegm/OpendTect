@@ -24,37 +24,21 @@ class uiListBox;
 class uiFlatViewer;
 
 class ProfileModelBase;
+class ProfileModelFromEventData;
 class ProfileModelBaseAuxDataMgr;
 class ZValueProvider;
 
 mExpClass(uiWellAttrib) uiProfileModelFromEvCrGrp : public uiGroup
 { mODTextTranslationClass(uiProfileModelFromEvCrGrp);
 public:
-    mStruct(uiWellAttrib) Data
-    {
-			Data(ProfileModelBase& p,const TypeSet<Coord>& linegeom)
-			    : model_(p)
-			    , linegeom_(linegeom)
-			    , seisfdpid_(DataPack::cNoID())	{}
+				uiProfileModelFromEvCrGrp(
+					uiParent*, ProfileModelFromEventData&);
+				~uiProfileModelFromEvCrGrp();
+    int				nrProfs() const;
+    virtual void		updateDisplay();
 
-	bool				is2d_;
-	Pos::GeomID			geomid_;
-	int				rdmlineid_;
-	DataPack::ID			seisfdpid_;
-	ProfileModelBase&		model_;
-	BufferStringSet			tiemarkernms_;
-	ObjectSet<ZValueProvider>	zvalprovs_;
-	const TypeSet<Coord>&		linegeom_;
-	static const char*		dontUseStr()	{ return "<don't use>";}
-    };
-
-			uiProfileModelFromEvCrGrp(
-			   uiParent*,
-			   const uiProfileModelFromEvCrGrp::Data&);
-			~uiProfileModelFromEvCrGrp();
-    int			nrProfs() const;
-    virtual void	updateDisplay();
 protected:
+
     uiGroup*				paramgrp_;
     uiGenInput*				nrprofsfld_;
     uiFlatViewer*			viewer_;
@@ -63,8 +47,7 @@ protected:
     uiToolButton*			rmevbut_;
     uiToolButton*			tiemarkerbut_;
     uiToolButton*			applybut_;
-    uiProfileModelFromEvCrGrp::Data& data_;
-
+    ProfileModelFromEventData&		data_;
     ObjectSet<FlatView::AuxData>	horauxdatas_;
     ProfileModelBaseAuxDataMgr*		modeladmgr_;;
 
@@ -72,20 +55,24 @@ protected:
     void				removeEventCB(CallBacker*);
     void				tieEventsCB(CallBacker*);
     void				createModelCB(CallBacker*);
+    void				showCtrlProfilesCB(CallBacker*);
+
+    void				updateProfileModelDisplay();
     virtual void			getEvents()			=0;
     void				drawEvents();
+    void				checkAndRemoveEvents();
 };
 
-typedef uiProfileModelFromEvCrGrp::Data ProfModelCrData; 
 
 mExpClass(uiWellAttrib) uiProfileModelFromEvCrGrpFactory
 {
 public:
     typedef uiProfileModelFromEvCrGrp*
-				(*CreateFunc)(uiParent*,const ProfModelCrData&);
+				(*CreateFunc)(uiParent*,
+					      ProfileModelFromEventData&);
     void			addCreateFunc(CreateFunc,const char*);
     uiProfileModelFromEvCrGrp*	create(const char*,uiParent*,
-				       const ProfModelCrData&);
+				       ProfileModelFromEventData&);
     const BufferStringSet&	factoryNames() const	{ return keys_; }
 protected:
     TypeSet<CreateFunc>		createfuncs_;
@@ -100,7 +87,7 @@ mExpClass(uiWellAttrib) uiProfileModelFromEvCrDlg : public uiDialog
 { mODTextTranslationClass(uiProfileModelFromEvCrDlg);
 public:
 				uiProfileModelFromEvCrDlg(uiParent*,
-					const ProfModelCrData&,
+					ProfileModelFromEventData&,
 					const char* typenm);
 protected:
     void			finaliseCB(CallBacker*);

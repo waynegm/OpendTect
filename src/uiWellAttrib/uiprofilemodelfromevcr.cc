@@ -11,6 +11,7 @@ ________________________________________________________________________
 static const char* rcsID mUsedVar = "$Id$";
 
 #include "uiprofilemodelfromevcr.h"
+#include "uicolor.h"
 #include "uicombobox.h"
 #include "uidialog.h"
 #include "uiflatviewer.h"
@@ -25,24 +26,31 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "seisdatapack.h"
 #include "profilebase.h"
 #include "profilemodelcreator.h"
+#include "profilemodelfromeventdata.h"
 #include "profilemodelbaseauxdatamgr.h"
 #include "zvalueprovider.h"
+
+    static int sNewMarkerNameColIdx = 2;
+    static int sNewMarkerColorColIdx = 3;
 
 class uiEventMarkerTieDialog : public uiDialog
 { mODTextTranslationClass(uiEventMarkerTieDialog)
 public:
 
-uiEventMarkerTieDialog( uiParent* p, ProfModelCrData& data )
+
+uiEventMarkerTieDialog( uiParent* p, ProfileModelFromEventData& data )
     : uiDialog(p,Setup(mJoinUiStrs(sHorizon(),sSelection().toLower()),
-		tr("You can use horizons to shape the model between the wells"),
+		tr("You can use events to shape the model between the wells"),
 		mTODOHelpKey))
     , data_(data)
 {
-    uiTable::Setup tblsu( data_.zvalprovs_.size(), 2 );
+    uiTable::Setup tblsu( data_.nrEvents(), 4 );
+    tblsu.defrowlbl( false ).defcollbl( false );
     evmarkertietbl_ = new uiTable( this, tblsu, "EventMarkerTie" );
-
-    for ( int idx=data_.tiemarkernms_.size();idx<data_.zvalprovs_.size();idx++ )
-	data_.tiemarkernms_.add( ProfModelCrData::dontUseStr() );
+    BufferStringSet collabels;
+    collabels.add( "Event name" ).add( "Marker to tie" )
+	     .add( "New marker name" ).add( "Marker color" );
+    evmarkertietbl_->setColumnLabels( collabels );
 
     Well::MarkerSet wms( data_.model_.get(0 )->markers_ );
     for ( int idx=1; idx<data_.model_.size(); idx++ )
@@ -55,16 +63,63 @@ uiEventMarkerTieDialog( uiParent* p, ProfModelCrData& data )
     BufferStringSet markernms;
     wms.getNames( markernms );
 
-    for ( int idx=0; idx<data_.zvalprovs_.size(); idx++ )
+    for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
-	evmarkertietbl_->setText( RowCol(idx,0),
-				  data_.zvalprovs_[idx]->getName() );
+	const ProfileModelFromEventData::Event& ev = *data_.events_[evidx];
+	evmarkertietbl_->setText( RowCol(evidx,0),
+				  ev.zvalprov_->getName() );
+	evmarkertietbl_->setCellReadOnly( RowCol(evidx,0), true );
 	uiComboBox* mrksel = new uiComboBox( 0, "marker tie" );
-	mrksel->addItem( tr(ProfModelCrData::dontUseStr()) );
+	mrksel->addItem( tr(ProfileModelFromEventData::addMarkerStr()) );
+	mrksel->addItem( tr(ProfileModelFromEventData::dontUseStr()) );
 	mrksel->addItems( markernms );
-	mrksel->setCurrentItem( data_.tiemarkernms_[idx]->buf() );
-	evmarkertietbl_->setCellObject( RowCol(idx,1), mrksel );
+	evmarkertietbl_->setCellObject( RowCol(evidx,1), mrksel );
+	setMarkerInTable( evidx );
+
+	mAttachCB( mrksel->selectionChanged,
+		   uiEventMarkerTieDialog::markerSelChgCB );
+	mrksel->setCurrentItem( ev.tiemarkernm_ );
     }
+}
+
+void setMarkerInTable( int evidx )
+{
+    if ( evidx<0 || evidx>=data_.nrEvents() )
+    {
+	pErrMsg( "Event idx is not valid" );
+	return;
+    }
+
+    const Well::Marker* newmarker = data_.getIntersectMarker( evidx );
+    if ( !newmarker )
+	return;
+
+    RowCol newmarkerrc( evidx, sNewMarkerNameColIdx );
+    evmarkertietbl_->setText( newmarkerrc, newmarker->name() );
+    newmarkerrc.col() = sNewMarkerColorColIdx;
+    uiColorInput::Setup colselsu( newmarker->color() );
+    colselsu.dlgtitle( tr("Select marker color") );
+    uiColorInput* colsel  = new uiColorInput( 0, colselsu );
+    evmarkertietbl_->setCellGroup( newmarkerrc, colsel );
+}
+
+
+void markerSelChgCB( CallBacker* cb )
+{
+    mDynamicCastGet(uiComboBox*,uicb,cb);
+    if ( !uicb )
+	return;
+
+    RowCol selrc = evmarkertietbl_->getCell( uicb );
+    BufferString selmarkernm( uicb->text() );
+    const bool addmarker =
+	selmarkernm==ProfileModelFromEventData::addMarkerStr();
+    const int evidx = selrc.row();
+    RowCol newmarkerrc( evidx, sNewMarkerNameColIdx );
+    evmarkertietbl_->setCellReadOnly( newmarkerrc, !addmarker );
+    newmarkerrc.col() = sNewMarkerColorColIdx;
+    uiGroup* colsel = evmarkertietbl_->getCellGroup( newmarkerrc );
+    colsel->setSensitive( addmarker );
 }
 
 
@@ -73,25 +128,36 @@ bool acceptOK( CallBacker* )
     if ( !evmarkertietbl_->nrRows() )
 	return false;
 
-    for ( int idx=0; idx<data_.zvalprovs_.size(); idx++ )
+    for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
-	uiObject* uiobj = evmarkertietbl_->getCellObject( RowCol(idx,1) );
+	uiObject* uiobj = evmarkertietbl_->getCellObject( RowCol(evidx,1) );
 	mDynamicCastGet(uiComboBox*,mrkrsel,uiobj);
 	if ( !mrkrsel )
 	    continue;
 
-	data_.tiemarkernms_.get( idx ) = mrkrsel->text();
+	data_.setTieMarker( evidx, mrkrsel->text() );
+	if ( data_.isIntersectMarker(evidx) )
+	{
+	    RowCol newmarkerrc( evidx, sNewMarkerNameColIdx );
+	    Well::Marker* newmarker = data_.events_[evidx]->newintersectmarker_;
+	    newmarker->setName( evmarkertietbl_->text(newmarkerrc) );
+	    newmarkerrc.col() = sNewMarkerColorColIdx;
+	    uiGroup* cellgrp = evmarkertietbl_->getCellGroup( newmarkerrc );
+	    mDynamicCastGet(uiColorInput*,colsel,cellgrp);
+	    if ( colsel )
+		newmarker->setColor( colsel->color() );
+	}
     }
 
     return true;
 }
 
-    uiTable*					evmarkertietbl_;
-    ProfModelCrData&		data_;
+    uiTable*				evmarkertietbl_;
+    ProfileModelFromEventData&		data_;
 };
 
-void uiProfileModelFromEvCrGrpFactory::addCreateFunc(
-	CreateFunc crfn ,const char* key )
+void uiProfileModelFromEvCrGrpFactory::addCreateFunc( CreateFunc crfn ,
+						      const char* key )
 {
     const int keyidx = keys_.indexOf( key );
     if ( keyidx >= 0 )
@@ -106,8 +172,7 @@ void uiProfileModelFromEvCrGrpFactory::addCreateFunc(
 
 
 uiProfileModelFromEvCrGrp* uiProfileModelFromEvCrGrpFactory::create(
-	const char* key, uiParent* p,
-	const ProfModelCrData& data )
+	const char* key, uiParent* p, ProfileModelFromEventData& data )
 {
     const int keyidx = keys_.indexOf( key );
     if ( keyidx < 0 )
@@ -124,11 +189,10 @@ uiProfileModelFromEvCrGrpFactory& uiPMCrGrpFac()
 }
 
 
-
 uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
-	uiParent* p, const ProfModelCrData& sudata )
+	uiParent* p, ProfileModelFromEventData& sudata )
     : uiGroup(p)
-    , data_(* new ProfModelCrData(sudata) )
+    , data_(sudata)
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
     nrprofsfld_ = new uiGenInput(paramgrp_,tr("Ctrl Profiles"),IntInpSpec(50));
@@ -146,9 +210,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 	new uiToolButton( paramgrp_, "", tr("Tie event to markers.."),
 			  mCB(this,uiProfileModelFromEvCrGrp,tieEventsCB) );
     tiemarkerbut_->attach( rightTo, rmevbut_ );
-    applybut_ =
-	new uiToolButton( paramgrp_, "doall", tr("Apply.."),
-			  mCB(this,uiProfileModelFromEvCrGrp,createModelCB) );
+    applybut_ = uiToolButton::getStd( paramgrp_, OD::Apply,
+	    mCB(this,uiProfileModelFromEvCrGrp,createModelCB), tr("Apply") );
     applybut_->attach( rightTo, tiemarkerbut_ );
     uiGroup* dispgrp = new uiGroup( this, "Display Group" );
     viewer_ = new uiFlatViewer( dispgrp );
@@ -174,10 +237,11 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     app.annot_.x2_.showannot_ = true;
     app.annot_.x2_.showgridlines_ = true;
     app.annot_.allowuserchangereversedaxis_ = false;
-    viewer_->setPack( false, data_.seisfdpid_ );
+    viewer_->setPack( false, data_.section_.seisfdpid_ );
     modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
     DataPackMgr& dpm = DPM(DataPackMgr::FlatID());
-    ConstDataPackRef<FlatDataPack> seisfdp = dpm.obtain( data_.seisfdpid_ );
+    ConstDataPackRef<FlatDataPack> seisfdp =
+	dpm.obtain( data_.section_.seisfdpid_ );
     const StepInterval<double> dxrg = seisfdp->posData().range( true );
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
     const StepInterval<double> dzrg = seisfdp->posData().range( false );
@@ -206,7 +270,13 @@ int uiProfileModelFromEvCrGrp::nrProfs() const
 void uiProfileModelFromEvCrGrp::updateDisplay()
 {
     viewer_->setViewToBoundingBox();
-    viewer_->handleChange( FlatView::Viewer::Auxdata );
+    updateProfileModelDisplay();
+}
+
+
+void uiProfileModelFromEvCrGrp::updateProfileModelDisplay()
+{
+    modeladmgr_->reset();
 }
 
 
@@ -226,16 +296,17 @@ void uiProfileModelFromEvCrGrp::createModelCB(CallBacker*)
 {
     if ( data_.model_.isEmpty() )
 	mErrRet( tr("No well added to create a model from"), )
-    if ( data_.zvalprovs_.isEmpty() )
+
+    checkAndRemoveEvents();
+    if ( !data_.nrEvents() )
 	mErrRet( tr("No event added to create a model from"), )
-    ProfileModelFromMultiEventCreator prohoruser(
-	    data_.model_, data_.zvalprovs_, data_.tiemarkernms_,
-	    data_.linegeom_, nrProfs() );
+    data_.totalnrprofs_ = nrProfs();
+    ProfileModelFromMultiEventCreator prohoruser( data_ );
     uiTaskRunner uitr( this );
     if ( !prohoruser.go(&uitr) )
 	return;
 
-    modeladmgr_->reset();
+    updateProfileModelDisplay();
 }
 
 
@@ -245,7 +316,7 @@ void uiProfileModelFromEvCrGrp::removeEventCB( CallBacker* )
     if ( rmidx<0 )
 	return;
 
-    delete data_.zvalprovs_.removeSingle( rmidx );
+    data_.removeEvent( rmidx );
     evlistbox_->removeItem( rmidx );
 }
 
@@ -257,15 +328,53 @@ void uiProfileModelFromEvCrGrp::tieEventsCB( CallBacker* )
 }
 
 
+void uiProfileModelFromEvCrGrp::checkAndRemoveEvents()
+{
+    uiStringSet evnms;
+
+    for ( int iev=data_.events_.size()-1; iev>=0; iev-- )
+    {
+	if ( !data_.isIntersectMarker(iev) )
+	    continue;
+
+	const int firstwellidx = data_.model_.nearestIndex( 0.0f, true );
+	const int lastwellidx = data_.model_.nearestIndex( 1.0f, true );
+	if ( firstwellidx<0 || lastwellidx<0 )
+	{
+	    pErrMsg( "Cannot find well" );
+	    evnms += data_.events_[iev]->zvalprov_->getName();
+	    evlistbox_->removeItem( iev );
+	    data_.removeEvent( iev );
+	    continue;
+	}
+
+	const Coord firstwellpos = data_.model_.get( firstwellidx )->coord_;
+	const float firstwellintz = data_.getZValue( iev, firstwellpos );
+	const Coord lastwellpos = data_.model_.get( lastwellidx )->coord_;
+	const float lastwellintz = data_.getZValue( iev, lastwellpos );
+	if ( mIsUdf(firstwellintz) || mIsUdf(lastwellintz) )
+	{
+	    evnms += data_.events_[iev]->zvalprov_->getName();
+	    evlistbox_->removeItem( iev );
+	    data_.removeEvent( iev );
+	}
+    }
+
+    if ( !evnms.isEmpty() )
+	mErrRet( tr("Removing event '%1' as they do not intersect wells "
+		    "at extereme positions").arg(evnms.cat(",")), )
+}
+
+
 void uiProfileModelFromEvCrGrp::drawEvents()
 {
     viewer_->removeAuxDatas( horauxdatas_ );
     deepErase( horauxdatas_ );
     BufferStringSet hornms;
     evlistbox_->setEmpty();
-    for ( int idx=0; idx<data_.zvalprovs_.size(); idx++ )
+    for ( int idx=0; idx<data_.nrEvents(); idx++ )
     {
-	const ZValueProvider& zvalprov = *data_.zvalprovs_[idx];
+	const ZValueProvider& zvalprov = *data_.events_[idx]->zvalprov_;
 	const uiString evname = zvalprov.getName();
 	evlistbox_->addItem( evname, zvalprov.drawColor() );
 	FlatView::AuxData* horad =
@@ -278,7 +387,7 @@ void uiProfileModelFromEvCrGrp::drawEvents()
     }
 
     DataPackMgr& dpm = DPM(DataPackMgr::FlatID());
-    ConstDataPackRef<FlatDataPack> fdp = dpm.obtain( data_.seisfdpid_ );
+    ConstDataPackRef<FlatDataPack> fdp = dpm.obtain( data_.section_.seisfdpid_);
     mDynamicCastGet(const RegularFlatDataPack*,regfdp,fdp.ptr());
     mDynamicCastGet(const RandomFlatDataPack*,randfdp,fdp.ptr());
     if ( regfdp )
@@ -289,10 +398,11 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 	while ( seciter.next(itrtk) )
 	{
 	    od_int64 curidx = seciter.curIdx();
-	    for ( int iev=0; iev<data_.zvalprovs_.size(); iev++ )
+	    for ( int iev=0; iev<data_.nrEvents(); iev++ )
 	    {
 		FlatView::AuxData* horad = horauxdatas_[iev];
-		const float z = data_.zvalprovs_[iev]->getZValue( itrtk );
+		const float z =
+		    data_.events_[iev]->zvalprov_->getZValue( itrtk );
 		const float dist =
 		    regfdp->posData().position( true, mCast(int,curidx) );
 		horad->poly_ += FlatView::Point( dist, z );
@@ -305,10 +415,11 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 	for ( int itrc=0; itrc<rdlpath.size(); itrc++ )
 	{
 	    const TrcKey itrtk = rdlpath[itrc];
-	    for ( int iev=0; iev<data_.zvalprovs_.size(); iev++ )
+	    for ( int iev=0; iev<data_.nrEvents(); iev++ )
 	    {
 		FlatView::AuxData* horad = horauxdatas_[iev];
-		const float z = data_.zvalprovs_[iev]->getZValue( itrtk );
+		const float z =
+		    data_.events_[iev]->zvalprov_->getZValue( itrtk );
 		const float dist = randfdp->posData().position( true, itrc );
 		horad->poly_ += FlatView::Point( dist, z );
 	    }
@@ -320,7 +431,7 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 
 
 uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
-	const ProfModelCrData& sudata, const char* typenm )
+	ProfileModelFromEventData& sudata, const char* typenm )
     : uiDialog(p,uiDialog::Setup(tr(""),tr(""),mNoHelpKey))
 {
     profscrgrp_ = uiPMCrGrpFac().create( typenm, this, sudata );

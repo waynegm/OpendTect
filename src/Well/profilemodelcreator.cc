@@ -299,10 +299,10 @@ float ProfileModelFromEventCreator::getDepthVal( const Coord& pos,
 }
 
 
-void ProfileModelFromSingleEventCreator::setIntersectMarkers()
+bool ProfileModelFromSingleEventCreator::setIntersectMarkers()
 {
     if ( !event_.newintersectmarker_ )
-	return;
+	return true;
 
     for ( int iprof=0; iprof<profs_.size(); iprof++ )
     {
@@ -321,7 +321,101 @@ void ProfileModelFromSingleEventCreator::setIntersectMarkers()
 	}
     }
 
+    if ( !interpolateIntersectMarkersUsingEV(event_) )
+	return false;
+
+    sortMarkers();
+    return true;
 }
+
+
+float ProfileModelFromEventCreator::getInterpolatedDepth(
+	int ippd, const ProfileModelFromEventData::Event& event ) const
+{
+    const ZValueProvider* zvalprov = event.zvalprov_;
+
+    int prevppdidx = ippd;
+    float prevppdmdepth = mUdf(float);
+    float prevpos = mUdf(float);
+    while ( --prevppdidx && prevppdidx>=0 )
+    {
+	const ProfilePosData& curppd = ppds_[prevppdidx];
+	prevppdmdepth = zvalprov->getZValue( curppd.coord_ );
+	prevppdmdepth = getDepthVal( curppd.coord_, prevppdmdepth );
+	prevpos = curppd.pos_;
+	if ( !mIsUdf(prevppdmdepth) )
+	    break;
+    }
+
+    int nextppdidx = ippd;
+    float nextppdmdepth = mUdf(float);
+    float nextpos = mUdf(float);
+    while ( ++nextppdidx && nextppdidx<ppds_.size() )
+    {
+	const ProfilePosData& curppd = ppds_[nextppdidx];
+	nextppdmdepth = zvalprov->getZValue( curppd.coord_ );
+	nextppdmdepth = getDepthVal( curppd.coord_, nextppdmdepth );
+	nextpos = curppd.pos_;
+	if ( !mIsUdf(nextppdmdepth) )
+	    break;
+    }
+
+    if ( mIsUdf(prevppdmdepth) || mIsUdf(nextppdmdepth) )
+	return mUdf(float);
+
+    const float curpos = ppds_[ippd].pos_;
+    const float relpos = (curpos - prevpos) / (nextpos - prevpos);
+    return (prevppdmdepth*(1-relpos)) + (nextppdmdepth*relpos);
+}
+
+
+bool ProfileModelFromEventCreator::interpolateIntersectMarkersUsingEV(
+	const ProfileModelFromEventData::Event& ev )
+{
+    BufferString markernm = ev.getMarkerName();
+    for ( int ippd=0; ippd<ppds_.size(); ippd++ )
+    {
+	const ProfilePosData ppd = ppds_[ippd];
+	if ( !ppd.isWell() )
+	    continue;
+
+	ProfileBase* prof = ppd.prof_;
+	Well::Marker* marker = prof->markers_.getByName( markernm );
+	if ( !marker )
+	{
+	    pErrMsg( "Cannot find well marker intersections" );
+	    return false;
+	}
+
+	if ( mIsUdf(marker->dah()) )
+	{
+	    const float idah = getInterpolatedDepth( ippd, ev );
+	    if ( mIsUdf(idah) )
+	    {
+		pErrMsg("Cant extrapolate wellmarker intersection");
+		return false;
+	    }
+
+	    marker->setDah( idah );
+	}
+    }
+
+    return true;
+}
+
+
+void ProfileModelFromEventCreator::sortMarkers()
+{
+    for ( int ippd=0; ippd<ppds_.size(); ippd++ )
+    {
+	if ( !ppds_[ippd].prof_ )
+	    continue;
+
+	Well::MarkerSet& profmarkers = ppds_[ippd].prof_->markers_;
+	profmarkers.sortByDAH();
+    }
+}
+
 
 
 bool ProfileModelFromEventCreator::go( TaskRunner* tr )
@@ -749,7 +843,7 @@ float ProfileModelFromMultiEventCreator::getIntersectMarkerDepth(
 }
 
 
-void ProfileModelFromMultiEventCreator::setIntersectMarkers()
+bool ProfileModelFromMultiEventCreator::setIntersectMarkers()
 {
     for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
@@ -769,47 +863,11 @@ void ProfileModelFromMultiEventCreator::setIntersectMarkers()
 	}
     }
 
-    interpolateIntersectMarkers();
-}
+    if ( !interpolateIntersectMarkers() )
+	return false;
 
-
-float ProfileModelFromMultiEventCreator::getInterpolatedMarkerDepth(
-	int ippd, int evidx )
-{
-    const ZValueProvider* zvalprov = data_.events_[evidx]->zvalprov_;
-
-    int prevppdidx = ippd;
-    float prevppdmdepth = mUdf(float);
-    float prevpos = mUdf(float);
-    while ( --prevppdidx && prevppdidx>=0 )
-    {
-	const ProfilePosData& curppd = ppds_[prevppdidx];
-	prevppdmdepth = zvalprov->getZValue( curppd.coord_ );
-	prevppdmdepth = getDepthVal( curppd.coord_, prevppdmdepth );
-	prevpos = curppd.pos_;
-	if ( !mIsUdf(prevppdmdepth) )
-	    break;
-    }
-
-    int nextppdidx = ippd;
-    float nextppdmdepth = mUdf(float);
-    float nextpos = mUdf(float);
-    while ( ++nextppdidx && nextppdidx<ppds_.size() )
-    {
-	const ProfilePosData& curppd = ppds_[nextppdidx];
-	nextppdmdepth = zvalprov->getZValue( curppd.coord_ );
-	nextppdmdepth = getDepthVal( curppd.coord_, nextppdmdepth );
-	nextpos = curppd.pos_;
-	if ( !mIsUdf(nextppdmdepth) )
-	    break;
-    }
-
-    if ( mIsUdf(prevppdmdepth) || mIsUdf(nextppdmdepth) )
-	return mUdf(float);
-
-    const float curpos = ppds_[ippd].pos_;
-    const float relpos = (curpos - prevpos) / (nextpos - prevpos);
-    return (prevppdmdepth*(1-relpos)) + (nextppdmdepth*relpos);
+    sortMarkers();
+    return true;
 }
 
 
@@ -817,37 +875,12 @@ bool ProfileModelFromMultiEventCreator::interpolateIntersectMarkers()
 {
     for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
-	if ( data_.isIntersectMarker(evidx) )
-	{
-	    BufferString markernm = data_.getMarkerName( evidx );
-	    for ( int ippd=0; ippd<ppds_.size(); ippd++ )
-	    {
-		const ProfilePosData ppd = ppds_[ippd];
-		if ( ppd.isWell() )
-		{
-		    ProfileBase* prof = ppd.prof_;
-		    Well::Marker* marker = prof->markers_.getByName( markernm );
-		    if ( !marker )
-		    {
-			pErrMsg( "Cannot find well marker intersections" );
-			continue;
-		    }
+	const ProfileModelFromEventData::Event& ev = *data_.events_[evidx];
+	if ( !ev.newintersectmarker_ )
+	    continue;
 
-		    if ( mIsUdf(marker->dah()) )
-		    {
-			const float idah =
-			    getInterpolatedMarkerDepth( ippd, evidx );
-			if ( mIsUdf(idah) )
-			{
-			    pErrMsg("Cant extrapolate wellmarker intersection");
-			    return false;
-			}
-
-			marker->setDah( idah );
-		    }
-		}
-	    }
-	}
+	if ( !interpolateIntersectMarkersUsingEV(ev) )
+	    return false;
     }
 
     return true;

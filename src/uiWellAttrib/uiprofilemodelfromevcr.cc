@@ -432,7 +432,8 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 
 uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
 	ProfileModelFromEventData& sudata, const char* typenm )
-    : uiDialog(p,uiDialog::Setup(tr(""),tr(""),mNoHelpKey))
+    : uiDialog(p,uiDialog::Setup(tr("Use events to shape profiles"),tr(""),
+				 mNoHelpKey).applybutton(true))
 {
     profscrgrp_ = uiPMCrGrpFac().create( typenm, this, sudata );
     mAttachCB( afterPopup, uiProfileModelFromEvCrDlg::finaliseCB );

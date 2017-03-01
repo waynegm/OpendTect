@@ -89,6 +89,7 @@ public:
 
     bool		isPresent(const char* n) const	{ return getByName(n); }
     int			indexOf(const char*) const;
+    void		sortByDAH();
     bool		insertNew(Well::Marker*); //becomes mine
     void		addSameWell(const ObjectSet<Marker>&);
     void		mergeOtherWell(const ObjectSet<Marker>&);

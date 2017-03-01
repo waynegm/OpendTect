@@ -63,12 +63,17 @@ protected:
     void		getKnownDepths(const ProfileModelFromEventData::Event&);
     void		getEventZVals(const ProfileModelFromEventData::Event&);
     void		getZOffsets(const ProfileModelFromEventData::Event&);
+    float		getInterpolatedDepth(int ippd,
+				const ProfileModelFromEventData::Event&) const;
+    bool		interpolateIntersectMarkersUsingEV(
+				const ProfileModelFromEventData::Event&);
     void		setMarkerDepths(
 				const ProfileModelFromEventData::Event&);
+    void		sortMarkers();
 
     virtual bool	doGo(TaskRunner*)		= 0;
     virtual void	fillCoords()			= 0;
-    virtual void	setIntersectMarkers()		= 0;
+    virtual bool	setIntersectMarkers()		= 0;
 
     int			addNewPPDsAfter(int,int,bool);
     void		addProfileToPPDs();
@@ -100,7 +105,7 @@ protected:
 
     const ProfileModelFromEventData::Event& event_;
 
-    virtual void	setIntersectMarkers();
+    virtual bool	setIntersectMarkers();
     virtual bool	doGo(TaskRunner*);
     virtual void	fillCoords();
 
@@ -130,11 +135,9 @@ protected:
 						      const ProfileBase&);
     float				getZOffset(int evidx,
 						   const ProfileBase&);
-    virtual void			setIntersectMarkers();
+    virtual bool			setIntersectMarkers();
     float				getIntersectMarkerDepth(
 						int evidx,const ProfileBase&);
-    float				getInterpolatedMarkerDepth(
-						int profidx,int evidx);
     bool				interpolateIntersectMarkers();
     virtual bool			doGo(TaskRunner*);
     virtual void			fillCoords();

@@ -105,6 +105,27 @@ int Well::MarkerSet::indexOf( const char* mname ) const
 }
 
 
+void Well::MarkerSet::sortByDAH()
+{
+    TypeSet<float> dahs; dahs.setSize( size(), mUdf(float) );
+    TypeSet<int> idxs; idxs.setSize( size(), -1 );
+
+    for ( int imrkr=0; imrkr<size(); imrkr++ )
+    {
+	dahs[imrkr] = (*this)[imrkr]->dah();
+	idxs[imrkr] = imrkr;
+    }
+
+    sort_coupled( dahs.arr(), idxs.arr(), idxs.size() );
+    ObjectSet<Well::Marker> newidxmarkers;
+    for ( int idx=0; idx<idxs.size(); idx++ )
+	newidxmarkers.add( (*this)[ idxs[idx] ] );
+    this->::ObjectSet<Marker>::erase();
+    for ( int imrkr=0; imrkr<newidxmarkers.size(); imrkr++ )
+	add( newidxmarkers[imrkr] );
+}
+
+
 bool Well::MarkerSet::insertNew( Well::Marker* newmrk )
 {
     if ( !newmrk || isPresent(newmrk->name().buf()) )

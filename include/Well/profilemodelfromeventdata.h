@@ -37,7 +37,7 @@ mStruct(Well) ProfileModelFromEventData
 	Pos::GeomID			geomid_;
 	MultiID				rdmlinemid_;
 	DataPack::ID			seisfdpid_;
-	const TypeSet<Coord>&		linegeom_;
+	TypeSet<Coord>			linegeom_;
     };
 
     mStruct(Well) Event

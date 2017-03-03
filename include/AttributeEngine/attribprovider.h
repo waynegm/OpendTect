@@ -177,6 +177,7 @@ public:
     float			getApplicableCrlDist(bool) const;
     virtual float		getDistBetwTrcs(bool,
 	    					const char* linenm =0) const;
+    BinID			getElementStepout() const;
 
 protected:
 
@@ -388,6 +389,7 @@ protected:
     bool			isusedmulttimes_;
     bool			needinterp_;
     uiString			errmsg_;
+    bool			dataunavailableflag_;
 
 public:
     void			setDataUnavailableFlag(bool yn);

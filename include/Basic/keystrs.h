@@ -41,6 +41,7 @@ namespace sKey
     inline FixedString Azimuth()	{ return "Azimuth"; }
     inline FixedString Binary()		{ return "Binary"; }
     inline FixedString Body()		{ return "Body"; }
+    inline FixedString Chain()		{ return "Chain"; }
     inline FixedString Color()		{ return "Color"; }
     inline FixedString Component()	{ return "Component"; }
     inline FixedString Content()	{ return "Content"; }
@@ -83,6 +84,7 @@ namespace sKey
     inline FixedString NewLine()	{ return "\n"; }
     inline FixedString No()		{ return "No"; }
     inline FixedString None()		{ return "None"; }
+    inline FixedString NrFaults()	{ return "Nr Faults";}
     inline FixedString NrItems()	{ return "Nr Items";}
     inline FixedString Offset()		{ return "Offset"; }
     inline FixedString Output()		{ return "Output"; }

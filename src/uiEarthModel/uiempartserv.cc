@@ -481,13 +481,13 @@ void uiEMPartServer::displayEMObject( const MultiID& mid )
     if ( selemid_>=0 )
     {
 	mDynamicCastGet( EM::Horizon3D*,hor3d,em_.getObject( selemid_ ) )
-        if ( hor3d )
-        {
+	if ( hor3d )
+	{
 	    TrcKeySampling selrg;
 	    selrg.setInlRange( hor3d->geometry().rowRange( 0 ) );
 	    selrg.setCrlRange( hor3d->geometry().colRange( 0 ) );
 	    setHorizon3DDisplayRange( selrg );
-        }
+	}
 	sendEvent( evDisplayHorizon() );
     }
 }
@@ -714,13 +714,16 @@ bool uiEMPartServer::loadAuxData( const EM::ObjectID& id,
     if ( removeold )
 	hor3d->auxdata.removeAll();
 
-    ExecutorGroup exgrp( "Horizon Data loader" );
-    exgrp.setNrDoneText( Task::uiStdNrDoneText() );
+    bool retval = false;
     for ( int idx=0; idx<selattribs.size(); idx++ )
-	exgrp.add( hor3d->auxdata.auxDataLoader(selattribs[idx]) );
+    {
+	Executor* executor = hor3d->auxdata.auxDataLoader( selattribs[idx] );
+	uiTaskRunner runer( parent() );
+	if ( runer.execute( *executor) )
+	    retval = true;
+    }
 
-    uiTaskRunner exdlg( parent() );
-    return TaskRunner::execute( &exdlg, exgrp );
+    return retval;
 }
 
 
@@ -798,8 +801,8 @@ bool uiEMPartServer::storeFaultAuxData( const EM::ObjectID& id,
     if ( atrrnms.indexOf(auxdatanm.buf())>=0 )
     {
 	uiString msg = tr("The name '%1' already exists, "
-	                  "do you really want to overwrite it?")
-                     .arg(auxdatanm);
+			  "do you really want to overwrite it?")
+		     .arg(auxdatanm);
 	if ( !uiMSG().askGoOn( msg ) )
 	    return false;
     }
@@ -1464,8 +1467,9 @@ const char* uiEMPartServer::genRandLine( int opt )
 ZAxisTransform* uiEMPartServer::getHorizonZAxisTransform( bool is2d )
 {
     uiDialog dlg( parent(),
-		 uiDialog::Setup( uiStrings::phrSelect( uiStrings::sHorizon() ),
-                                  mNoDlgTitle,mTODOHelpKey) );
+		 uiDialog::Setup(uiStrings::phrSelect(uiStrings::sHorizon()),
+				 mNoDlgTitle,
+				 mODHelpKey(mgetHorizonZAxisTransformHelpID)) );
     const IOObjContext ctxt = is2d
 	? EMHorizon2DTranslatorGroup::ioContext()
 	: EMHorizon3DTranslatorGroup::ioContext();

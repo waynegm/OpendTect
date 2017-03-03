@@ -639,6 +639,8 @@ void uiMPEMan::seedClick( CallBacker* )
 
     const visBase::EventInfo* eventinfo = clickcatcher_->visInfo();
     const bool ctrlbut = OD::ctrlKeyboardButton( eventinfo->buttonstate_ ); 
+    const bool blockcallback = 
+	emobj->sectionGeometry(emobj->sectionID(0))->blocksCallBacks();
 
     if ( clickedonhorizon || !clickcatcher_->info().getPickedNode().isUdf() )
     {
@@ -669,7 +671,12 @@ void uiMPEMan::seedClick( CallBacker* )
 	{
 	    const bool dosowing = sowingmode_.getParam(this);
 	    if ( !dosowing && seedpicker->addSeed(seedpos,false) )
+	    {
 		engine.updateFlatCubesContainer( newvolume, trackerid, true );
+		if ( blockcallback )
+		    emobj->sectionGeometry(
+		    emobj->sectionID(0))->blockCallBacks( true, true );
+	    }
 	    else if ( dosowing  && !ctrlbut )
 	    {
 		seedpicker->addSeedToPatch( seedpos, false );
@@ -693,7 +700,12 @@ void uiMPEMan::seedClick( CallBacker* )
 	else if ( !ctrlbut && !dosowing )
 	{
 	    if ( seedpicker->addSeed(seedpos, shiftclicked) )
+	    {
 		engine.updateFlatCubesContainer( newvolume, trackerid, true );
+		if ( blockcallback )
+		    emobj->sectionGeometry(
+		    emobj->sectionID(0))->blockCallBacks( true, true );
+	    }
 	}
 	else if ( dosowing )
 	{
@@ -1030,24 +1042,25 @@ void uiMPEMan::lockAll()
 {
     EM::Horizon3D* hor3d = getSelectedHorizon3D();
     visSurvey::HorizonDisplay* hd = getSelectedDisplay();
+    const bool preshowlocked = hd->lockedShown();
+
     if ( hor3d && hd ) 
     {
 	hor3d->lockAll();
 	hd->showLocked( true );
+	if ( !preshowlocked )
+	{
+	    Timer* timer = timer_.getParam(this);
+	    if ( timer )
+		timer->tick.remove( mCB(this,uiMPEMan,timerHideLockedCB) );
 
-	Timer* timer = timer_.getParam(this);
-	if ( timer )
-	    timer->tick.remove( mCB(this,uiMPEMan,timerHideLockedCB) );
-
-	delete timer;
-	timer = new Timer("Lock all");
-	timer_.setParam( this, timer );
-	timer->tick.notify( mCB(this,uiMPEMan,timerHideLockedCB) );
-	timer->start( cLockWaitTime, true );
+	    delete timer;
+	    timer = new Timer("Lock all");
+	    timer_.setParam( this, timer );
+	    timer->tick.notify( mCB(this,uiMPEMan,timerHideLockedCB) );
+	    timer->start( cLockWaitTime, true );
+	}
     }
-
-    if ( hd && hd->lockedShown() )
-	hd->showLocked( true );
 }
 
 

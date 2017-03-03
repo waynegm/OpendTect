@@ -18,8 +18,11 @@ ________________________________________________________________________
 #include "multiid.h"
 #include "trckeyzsampling.h"
 #include "threadlock.h"
-class SeisDataPackWriter;
+
+class IOPar;
+class JobCommunic;
 class ProgressRecorder;
+class SeisDataPackWriter;
 
 
 namespace VolProc
@@ -53,12 +56,14 @@ public:
     virtual void		setProgressMeter(ProgressMeter*);
     virtual void		controlWork(Control);
     virtual void		enableWorkControl(bool yn=true);
+    void			setJobCommunicator(JobCommunic*);
 
 protected:
 
     MultiID			chainid_;
     MultiID			outid_;
     TrcKeyZSampling		cs_;
+    IOPar*			chainpar_;
 
     Chain*			chain_;
     ChainExecutor*		chainexec_;

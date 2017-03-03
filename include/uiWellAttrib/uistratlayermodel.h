@@ -77,8 +77,13 @@ public:
 
     bool			checkUnscaledWavelet();
 
-    static void			doBasicLayerModel();
+    static void			doBasicLayerModel(); //do not use this
     static void			doLayerModel(const char* modnm,int opt=0);
+				//do not use the above function
+
+    static void			doBasicLayerModel(uiParent*);
+    static void			doLayerModel(uiParent*,const char* modnm,
+								int opt=0);
     static uiStratLayerModel*	getUILayerModel();
 
     uiStratLayerModelDisp*      getLayModelDisp() const	{ return moddisp_; }
@@ -122,17 +127,17 @@ protected:
     bool			saveGenDescIfNecessary(
 					bool allowcancel=true) const;
     void			doGenModels(bool forceupdsynth,
-	    				    bool overridedispeach=false);
+					    bool overridedispeach=false);
     void			calcAndSetDisplayEach(bool overridepar);
     bool			closeOK();
-    
+
     void			fillDisplayPars(IOPar&) const;
     void			fillWorkBenchPars(IOPar&) const;
     void			fillSyntheticsPars(IOPar&) const;
     bool			useDisplayPars(const IOPar&);
     bool			useSyntheticsPars(const IOPar&);
 
-    
+
     void			openGenDescCB(CallBacker*) { openGenDesc(); }
     void			saveGenDescCB(CallBacker*) { saveGenDesc(); }
     void			manPropsCB(CallBacker*);
@@ -142,7 +147,7 @@ protected:
     void			selPropChgCB(CallBacker*);
     void			infoChanged(CallBacker*);
     void			selElasticPropsCB(CallBacker*);
- 
+
     void			initWin(CallBacker*);
     void			dispEachChg(CallBacker*);
     void			mkSynthChg(CallBacker*);

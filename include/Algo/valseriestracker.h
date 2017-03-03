@@ -35,7 +35,7 @@ public:
 			     possible to track.*/
     virtual void	setSource(const ValueSeries<float>*,int sz,float depth);
     virtual void	setTarget(const ValueSeries<float>*,int sz,
-	    			  float initialdepth);
+				  float initialdepth);
 
     virtual bool	track()				= 0;
 			/*!<Calculates a new value for targetdepth_. */
@@ -92,7 +92,7 @@ public:
 				//<!Is divided by rangestep to get nrof samples
     const Interval<float>&	permittedRange() const;
     void			setTrackEvent(VSEvent::Type ev);
-    				/*!<
+				/*!<
 				    - VSEvent::Max
 				       Will find max event within the permitted
 				       range where the amplitude is higher than
@@ -110,6 +110,11 @@ public:
 				       event within the permitted range. No
 				       amplitude threshold is used. */
     VSEvent::Type		trackEvent() const;
+    void			allowAmplitudeSignChange(bool);
+				/*! If true, a peak can have a negative
+				    amplitude value, and a trough can have a
+				    positive amplitude value.*/
+    bool			isAmplitudeSignChangeAllowed() const;
     bool			snap(const Interval<float>& amplrg);
     bool			snap(float threshold);
 				/*!Snaps at nearest event that is in permitted
@@ -133,7 +138,7 @@ public:
     bool			useAbsThreshold() const;
 
     void			setAmplitudeThreshold(float th);
-    				//!<Must be set if using absolute threshold.
+				//!<Must be set if using absolute threshold.
     float			amplitudeThreshold() const;
 
     void			setAmplitudeThresholds(const TypeSet<float>&);
@@ -173,6 +178,7 @@ protected:
     bool		findMaxSimilarity(int nrtests,int step,int nrgracetests,
 					 float& res,float& maxsim,
 					 bool& flatstart) const;
+    bool			isTargetValueAllowed() const;
 
     VSEvent::Type		evtype_;
     Interval<float>		permrange_;
@@ -188,7 +194,9 @@ protected:
     bool			usesimilarity_;
     bool			normalizesimi_;
     float			compareampl_;
+    bool			dosnap_;
     float			quality_;
+    bool			allowamplsignchg_;
 
     const ValueSeries<float>*	seedvs_;
     float			seeddepth_;
@@ -208,6 +216,7 @@ protected:
     static const char*		sKeyCompareMethod();
     static const char*		sKeyAttribID();
     static const char*		sKeySnapToEvent();
+    static const char*		sKeyAllowSignChg();
 
 };
 

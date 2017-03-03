@@ -8,10 +8,16 @@ static const char* rcsID mUsedVar = "$Id$";
 
 #include "volprocchainexec.h"
 
+#include "hiddenparam.h"
+#include "jobcommunic.h"
 #include "posinfo.h"
 #include "seisdatapack.h"
-#include "threadwork.h"
 #include "simpnumer.h" // for getCommonStepInterval
+#include "threadwork.h"
+
+
+HiddenParam<VolProc::ChainExecutor,JobCommunic*> jobcomm(0);
+
 
 uiString VolProc::ChainExecutor::sGetStepErrMsg()
 {
@@ -31,6 +37,8 @@ VolProc::ChainExecutor::ChainExecutor( Chain& vr )
     setName( vr.name().getFullString() );
     web_ = chain_.getWeb();
     //TODO Optimize connections, check for indentical steps using same inputs
+
+    jobcomm.setParam( this, 0 );
 }
 
 
@@ -39,6 +47,14 @@ VolProc::ChainExecutor::~ChainExecutor()
     deepErase( epochs_ );
     if ( curepoch_ )
 	delete curepoch_;
+
+    DataPackMgr& seismgr = DPM( DataPackMgr::SeisID() );
+    if ( !outputdp_ || !seismgr.haveID(outputdp_->id()) )
+	return;
+
+    seismgr.release( outputdp_->id() );
+
+    jobcomm.removeParam( this );
 }
 
 
@@ -215,9 +231,8 @@ static od_int64 getExtraMem( const VolProc::Step* step, int outidx,
 
     // OK, must be from plugin.
     // Hack: use output from deprecated virtual:
-    od_int64 fac = step->getProcTimeExtraMemory();
-    if ( fac < 1 || fac > 10 )
-	fac = 1;
+    const od_int64 fac = step->getProcTimeExtraMemory();
+
     return fac * VolProc::Step::getBaseMemoryUsage( hrg, zrg );
 }
 
@@ -241,7 +256,7 @@ struct VolumeMemory
 			: creator_(creator)
 			, outputslot_(outputslot)
 			, nrbytes_(nrbytes)
-			, epoch_(epoch)				{};
+			, epoch_(epoch)				{}
 
     bool		operator==( VolumeMemory vm ) const
 			{
@@ -532,6 +547,17 @@ const RegularSeisDataPack* VolProc::ChainExecutor::getOutput() const
 
 #define mCleanUpAndRet( ret ) \
 { \
+    uiStringSet errors; \
+    const ObjectSet<Step>& cursteps = curepoch_->getSteps(); \
+    for ( int istep=0; istep<cursteps.size(); istep++ ) \
+    { \
+	if ( !cursteps[istep] || cursteps[istep]->errMsg().isEmpty() ) \
+	    continue; \
+\
+	errors.add( cursteps[istep]->errMsg() ); \
+    } \
+    if ( !errors.isEmpty() ) \
+	errmsg_ = errors.cat(); \
     delete curepoch_; \
     curepoch_ = 0; \
     return ret; \
@@ -606,6 +632,10 @@ void VolProc::ChainExecutor::controlWork( Task::Control ctrl )
 }
 
 
+void VolProc::ChainExecutor::setJobCommunicator( JobCommunic* jc )
+{ jobcomm.setParam( this, jc ); }
+
+
 od_int64 VolProc::ChainExecutor::nrDone() const
 {
     if ( totalnrepochs_ < 1 )
@@ -627,6 +657,10 @@ od_int64 VolProc::ChainExecutor::nrDone() const
 	    percentagedone += curtaskpercentage;
 	}
     }
+
+    JobCommunic* comm = jobcomm.getParam(this);
+    if ( comm )
+	comm->updateProgress( mNINT32(percentagedone) );
 
     return mNINT64( percentagedone );
 }

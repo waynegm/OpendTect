@@ -635,6 +635,7 @@ bool uiODApplMgr::getNewData( int visid, int attrib )
 
 		res = dpid != DataPack::cNoID();
 		visserv_->setDataPackID( visid, attrib, dpid );
+		DPM( DataPackMgr::SeisID() ).release( dpid );
 		delete calc;
 		break;
 	    }
@@ -1852,8 +1853,6 @@ void uiODApplMgr::storeEMObject()
     PtrMan<IOObj> ioobj = IOM().get( mid );
     const bool saveas = mid.isEmpty() || !ioobj;
     emserv_->storeObject( emid, saveas );
-    BufferString auxdatanm;
-    emserv_->storeAuxData( emid, auxdatanm );
 
     TypeSet<int> ids;
     mid = emserv_->getStorageID( emid );
@@ -1882,7 +1881,7 @@ void uiODApplMgr::launchRockPhysics( CallBacker* )
 void uiODApplMgr::launch2DViewer( CallBacker* )
 { show2DViewer(); }
 void uiODApplMgr::doLayerModeling( CallBacker* )
-{ uiStratLayerModel::doBasicLayerModel(); }
+{ uiStratLayerModel::doBasicLayerModel(ODMainWin()); }
 
 void uiODApplMgr::doVolProcCB( CallBacker* )
 { volprocserv_->doVolProc( 0 ); }

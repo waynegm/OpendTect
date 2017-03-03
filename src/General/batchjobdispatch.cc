@@ -173,7 +173,7 @@ void Batch::JobDispatcher::setJobName( const char* inp )
     BufferString nm( inp );
     nm.clean( BufferString::AllowDots );
     FilePath parfp( GetProcFileName(nm) );
-    parfp.setExtension( ".par" );
+    parfp.setExtension( ".par", false );
     parfnm_.set( parfp.fullPath() );
 }
 
@@ -203,7 +203,7 @@ static const char* sKeyResumeProcessing = "Resume Processing";
 
 void Batch::JobDispatcher::setUserWantsResume( IOPar& iop, bool yn )
 {
-    iop.set( sKeyResumeProcessing, yn );
+    iop.setYN( sKeyResumeProcessing, yn );
 }
 
 

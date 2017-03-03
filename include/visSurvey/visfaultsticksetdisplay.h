@@ -90,6 +90,7 @@ public:
     void			updateEditPids();
     void			updateKnotMarkers();
     void			updateAll();
+    const visBase::Lines*	getStickSetLines() const { return sticks_; }
 
     Notifier<FaultStickSetDisplay> colorchange;
     Notifier<FaultStickSetDisplay> displaymodechange;
@@ -116,6 +117,9 @@ public:
     virtual void		setPixelDensity(float dpi);
     virtual void		fillPar(IOPar&) const;
     virtual bool		usePar(const IOPar&);
+
+    const MarkerStyle3D*	getPreferedMarkerStyle() const;
+    void			setPreferedMarkerStyle(const MarkerStyle3D&);
 
 protected:
     virtual			~FaultStickSetDisplay();

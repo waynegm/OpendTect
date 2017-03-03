@@ -51,7 +51,13 @@ public:
     static uiRetVal	executeGridding(HorizonGridder*,EM::Horizon3D*,
 					const EM::SectionID&, const BinID& step,
 					TaskRunner* tr=0);
+    static uiRetVal	executeGridding(HorizonGridder*,EM::Horizon3D*,
+				const EM::SectionID&,const BinID& step,
+				const Interval<int>* polyinlrg,
+				const Interval<int>* polycrlrg,
+				TaskRunner* tr = 0);
 
+    
 protected:
 
 			HorizonGridder();

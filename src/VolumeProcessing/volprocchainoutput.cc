@@ -11,7 +11,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "volprocchainexec.h"
 #include "volproctrans.h"
 #include "seisdatapackwriter.h"
+#include "hiddenparam.h"
 #include "ioman.h"
+#include "jobcommunic.h"
 #include "keystrs.h"
 #include "moddepmgr.h"
 #include "seisdatapack.h"
@@ -21,10 +23,13 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "threadwork.h"
 #include "progressmeterimpl.h"
 
+HiddenParam<VolProc::ChainOutput,JobCommunic*> jobcomms(0);
 
 VolProc::ChainOutput::ChainOutput()
     : Executor("")
     , cs_(true)
+    , chainid_(MultiID::udf())
+    , chainpar_(0)
     , chain_(0)
     , chainexec_(0)
     , wrr_(0)
@@ -35,6 +40,8 @@ VolProc::ChainOutput::ChainOutput()
     , progresskeeper_(*new ProgressRecorder)
 {
     progressmeter_ = &progresskeeper_;
+
+    jobcomms.setParam( this, 0 );
 }
 
 
@@ -42,15 +49,27 @@ VolProc::ChainOutput::~ChainOutput()
 {
     chain_->unRef();
     delete chainexec_;
+    delete chainpar_;
     delete wrr_;
     deepErase( storers_ );
     delete &progresskeeper_;
+
+    jobcomms.removeParam( this );
 }
 
 
 void VolProc::ChainOutput::usePar( const IOPar& iop )
 {
     iop.get( VolProcessingTranslatorGroup::sKeyChainID(), chainid_ );
+    unRefAndZeroPtr( chain_ );
+    if ( chainid_.isEmpty() || chainid_.isUdf() )
+    {
+	if ( chainpar_ )
+	    deleteAndZeroPtr( chainpar_ );
+
+	chainpar_ = iop.subselect( sKey::Chain() );
+	if ( !chainpar_ ) return;
+    }
 
     PtrMan<IOPar> subselpar = iop.subselect(
 	    IOPar::compKey(sKey::Output(),sKey::Subsel()) );
@@ -66,6 +85,10 @@ void VolProc::ChainOutput::setProgressMeter( ProgressMeter* pm )
     progresskeeper_.setForwardTo( pm );
     progresskeeper_.skipProgress( true );
 }
+
+
+void VolProc::ChainOutput::setJobCommunicator( JobCommunic* jc )
+{ jobcomms.setParam( this, jc ); }
 
 
 void VolProc::ChainOutput::enableWorkControl( bool yn )
@@ -107,6 +130,7 @@ void VolProc::ChainOutput::createNewChainExec()
     chainexec_ = new VolProc::ChainExecutor( *chain_ );
     chainexec_->enableWorkControl( workControlEnabled() );
     chainexec_->setProgressMeter( progresskeeper_.forwardTo() );
+    chainexec_->setJobCommunicator( jobcomms.getParam(this) );
 }
 
 
@@ -202,6 +226,13 @@ int VolProc::ChainOutput::nextStep()
 
 int VolProc::ChainOutput::getChain()
 {
+    if ( chainpar_ )
+    {
+	chain_ = new Chain; chain_->ref();
+	if ( chain_->usePar(*chainpar_) )
+	    return MoreToDo();
+    }
+
     if ( chainid_.isEmpty() )
 	return retError( tr("No Volume Processing ID specified") );
 
@@ -241,12 +272,9 @@ int VolProc::ChainOutput::setupChunking()
 			   mMAX(mNINT32(Math::Ceil(cs_.zsamp_.step/zstep)),1) );
 			   //real -> index, outputzrg_ is the index of z-samples
 
-    // We will be writing while a new chunk will be calculated
-    // Thus, we need to keep the output datapack alive while the next chunk
-    // is calculated. Therefore, lets double the computed mem need:
+    od_uint64 nrbytes = mCast( od_uint64, 1.01f *
+	      chainexec_->computeMaximumMemoryUsage( cs_.hsamp_, outputzrg_ ) );
 
-    od_uint64 nrbytes = 2 * chainexec_->computeMaximumMemoryUsage( cs_.hsamp_,
-								   outputzrg_ );
     od_int64 totmem, freemem; OD::getSystemMemory( totmem, freemem );
 
     /* handy for test:
@@ -261,7 +289,6 @@ int VolProc::ChainOutput::setupChunking()
     if ( needsplit && !cansplit )
     {
 	// duh. but ... it may still fit, fingers crossed:
-	nrbytes /= 2;
 	needsplit = nrbytes > freemem;
 	if ( needsplit )
 	    return retError(
@@ -269,7 +296,14 @@ int VolProc::ChainOutput::setupChunking()
     }
     if ( needsplit )
     {
-	nrexecs_ = (int)(nrbytes / freemem) + 1;
+	// We will be writing while a new chunk will be calculated
+	// Thus, we need to keep the output datapack alive while the next chunk
+	// is calculated. Therefore, lets add some more mem need:
+	nrbytes += (( cs_.hsamp_.totalNr() *
+		    ( outputzrg_.nrSteps() + 1 ) ) * sizeof(float) ) * 3;
+	const float fnrexecs = Math::Ceil( mCast(float,nrbytes)
+					 / mCast(float,freemem) );
+	nrexecs_ = mNINT32( fnrexecs );
 	if ( nrexecs_ > cs_.hsamp_.nrLines() )
 	    nrexecs_ = cs_.hsamp_.nrLines(); // and pray!
     }

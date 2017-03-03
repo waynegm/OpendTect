@@ -40,11 +40,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uistrings.h"
 #include "unitofmeasure.h"
 #include "zaxistransform.h"
-#include "hiddenparam.h"
 
 #include <math.h>
-
-static HiddenParam<EM::Horizon3D,char> haslockednodes_( false );
 
 namespace EM {
 
@@ -305,16 +302,16 @@ Horizon3D::Horizon3D( EMManager& man )
     , selectioncolor_(sDefaultSelectionColor())
     , lockcolor_(Color::Blue())
     , survgeomid_( Survey::GM().default3DSurvID() )
+    , haslockednodes_(false)
 {
     geometry_.addSection( "", false );
-    haslockednodes_.setParam( this, false );
 }
 
 
 Horizon3D::~Horizon3D()
 {
     delete &auxdata;
-    haslockednodes_.removeParam( this );
+    delete parents_; delete children_; delete lockednodes_;
 }
 
 
@@ -798,7 +795,7 @@ void Horizon3D::getParents( const TrcKey& node, TypeSet<TrcKey>& parents ) const
     while ( true )
     {
 	gidx = parents_->getData()[gidx];
-	if ( gidx==-1 )
+	if ( gidx==-1 || gidx>=parents_->info().getTotalSz() )
 	    break;
 
 	const TrcKey tk = trackingsamp_.atIndex( gidx );
@@ -948,16 +945,35 @@ void Horizon3D::deleteChildren()
 
 void Horizon3D::setNodeLocked( const TrcKey& node, bool locked )
 {
-    if ( !lockednodes_ ) return;
+    if ( !lockednodes_ || !trackingsamp_.includes(node) )
+	return;
 
-    lockednodes_->getData()[trackingsamp_.globalIdx(node)] = locked ? '1' : '0';
+    const od_int64 pos = trackingsamp_.globalIdx( node );
+#ifdef __debug__
+    if ( !lockednodes_->getData() ||
+	 pos < 0 || pos >= trackingsamp_.totalNr() ||
+		    pos >= lockednodes_->info().getTotalSz() )
+	pErrMsg("Invalid access");
+#endif
+
+    lockednodes_->getData()[pos] = locked ? '1' : '0';
 }
 
 
 bool Horizon3D::isNodeLocked( const TrcKey& node ) const
 {
-    return lockednodes_ ?
-	lockednodes_->getData()[trackingsamp_.globalIdx(node)] == '1' : false;
+    if ( !lockednodes_ || !trackingsamp_.includes(node) )
+	return false;
+
+    const od_int64 pos = trackingsamp_.globalIdx( node );
+#ifdef __debug__
+    if ( !lockednodes_->getData() ||
+	 pos < 0 || pos >= trackingsamp_.totalNr() ||
+		    pos >= lockednodes_->info().getTotalSz() )
+	pErrMsg("Invalid access");
+#endif
+
+    return lockednodes_->getData()[pos] == '1';
 }
 
 
@@ -981,7 +997,7 @@ void Horizon3D::lockAll()
 	setNodeLocked( tk, true );
     }
 
-    haslockednodes_.setParam( this, true );
+    haslockednodes_ = true;
     EMObjectCallbackData cbdata;
     cbdata.event = EMObjectCallbackData::LockChange;
     change.trigger( cbdata );
@@ -994,16 +1010,10 @@ void Horizon3D::unlockAll()
 
     lockednodes_->setAll( '0' );
 
-    haslockednodes_.setParam( this, false );
+    haslockednodes_ = false;
     EMObjectCallbackData cbdata;
     cbdata.event = EMObjectCallbackData::LockChange;
     change.trigger( cbdata );
-}
-
-
-bool Horizon3D::hasLockedNodes() const
-{
-    return haslockednodes_.getParam( this );
 }
 
 

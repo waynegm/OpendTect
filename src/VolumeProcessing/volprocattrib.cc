@@ -226,10 +226,10 @@ DataPack::ID ExternalAttribCalculator::createAttrib( const TrcKeyZSampling& cs,
 
     if ( !TaskRunner::execute(taskrunner,executor) )
     {
-	if ( !executor.errMsg().isEmpty() )
-	    errmsg_ = executor.errMsg();
-	else
+	if ( executor.errMsg().isEmpty() )
 	    errmsg_ = tr("Error while calculating.");
+
+	return DataPack::cNoID();
     }
 
     const RegularSeisDataPack* output = executor.getOutput();
@@ -239,7 +239,10 @@ DataPack::ID ExternalAttribCalculator::createAttrib( const TrcKeyZSampling& cs,
 	return DataPack::cNoID();
     }
 
-    // Datapack still reffed by the chain
+    //Ensure it survives the chain executor destruction
+    DPM( DataPackMgr::SeisID() ).addAndObtain(
+				 const_cast<RegularSeisDataPack*>( output ) );
+
     return output->id();
 }
 

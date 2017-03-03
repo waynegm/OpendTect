@@ -15,6 +15,7 @@ ________________________________________________________________________
 #include "uiwellattribmod.h"
 #include "uimainwin.h"
 #include "uistring.h"
+
 class CtxtIOObj;
 class Wavelet;
 class SeisTrcBuf;
@@ -78,6 +79,7 @@ public:
 
     static void			doBasicLayerModel();
     static void			doLayerModel(const char* modnm,int opt=0);
+    static uiStratLayerModel*	getUILayerModel();
 
     uiStratLayerModelDisp*      getLayModelDisp() const	{ return moddisp_; }
     void			displayFRResult(bool usefr,bool parschanged,
@@ -86,7 +88,6 @@ public:
     void			resetFluidRepl();
 
     //Utility
-    //SyntheticData*		getCurrentSyntheticData() const;
 
     void			setSynthView(const uiWorldRect& wr);
     const uiWorldRect&		curSynthView() const;
@@ -159,6 +160,8 @@ protected:
     void			xPlotReq(CallBacker*);
     void			helpCB(CallBacker*);
 
+public:
+    uiStratSynthDisp*		getSynthDisp() const	{ return synthdisp_; }
 };
 
 

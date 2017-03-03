@@ -121,6 +121,21 @@ const Strat::LayerModel& uiStratLayerModelDisp::layerModel() const
 }
 
 
+uiGroup* uiStratLayerModelDisp::getDisplayClone( uiParent* p )	const
+{
+    uiFlatViewer* vwr = new uiFlatViewer( p );
+    vwr->rgbCanvas().disableImageSave();
+    vwr->setInitialSize( uiSize(800,300) );
+    vwr->setStretch( 2, 2 );
+    vwr->appearance() = vwr_.appearance();
+    vwr->setPack( true, vwr_.packID(true), false );
+    vwr->setPack( false, vwr_.packID(false), false );
+    for ( int idx=0; idx<vwr_.nrAuxData(); idx++ )
+	vwr->addAuxData( vwr_.getAuxData(idx)->clone() );
+    return vwr;
+}
+
+
 void uiStratLayerModelDisp::selectSequence( int selidx )
 {
     selseqidx_ = selidx;
@@ -576,7 +591,6 @@ void uiStratSimpleLayerModelDisp::eraseAll()
     deepErase( levelads_ );
     delete vwr_.removeAuxData( selseqad_ );
 }
-
 
 
 void uiStratSimpleLayerModelDisp::selPropChgCB( CallBacker* )

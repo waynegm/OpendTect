@@ -22,6 +22,7 @@ class uiGenInput;
 class uiToolButton;
 class uiListBox;
 class uiFlatViewer;
+class uiStratMultiDisplayWin;
 
 class ProfileModelBase;
 class ProfileModelFromEventData;
@@ -46,7 +47,6 @@ protected:
     uiToolButton*			addevbut_;
     uiToolButton*			rmevbut_;
     uiToolButton*			tiemarkerbut_;
-    uiToolButton*			applybut_;
     ProfileModelFromEventData&		data_;
     ObjectSet<FlatView::AuxData>	horauxdatas_;
     ProfileModelBaseAuxDataMgr*		modeladmgr_;;
@@ -54,10 +54,10 @@ protected:
     void				addEventCB(CallBacker*);
     void				removeEventCB(CallBacker*);
     void				tieEventsCB(CallBacker*);
-    void				createModelCB(CallBacker*);
     void				showCtrlProfilesCB(CallBacker*);
 
     void				updateProfileModelDisplay();
+    void				updateProfileModel();
     virtual void			getEvents()			=0;
     void				drawEvents();
     void				checkAndRemoveEvents();
@@ -91,8 +91,13 @@ public:
 					const char* typenm);
 protected:
     void			finaliseCB(CallBacker*);
+    void			applyCB(CallBacker*);
+    void			showMultiDisplayCB(CallBacker*);
 
     uiProfileModelFromEvCrGrp*	profscrgrp_;
+    ProfileModelFromEventData&	data_;
+    uiToolButton*		viewbut_;
+    uiStratMultiDisplayWin*	multidispwin_;
 };
 
 

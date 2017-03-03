@@ -57,6 +57,7 @@ public:
     virtual uiWorldRect	zoomBox() const			= 0;
     virtual void	setZoomBox(const uiWorldRect&)	= 0;
     virtual float	getDisplayZSkip() const		= 0;
+    uiGroup*		getDisplayClone(uiParent*) const;
     virtual Interval<float> relDepthZoneOfInterest() const
 			{ return Interval<float>::udf(); }
     virtual void	reSetRelDepthZoneOfInterest()	{}

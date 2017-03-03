@@ -18,6 +18,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uigeninput.h"
 #include "uilistbox.h"
 #include "uimsg.h"
+#include "uistratmultidisplaywindow.h"
 #include "uitable.h"
 #include "uitoolbutton.h"
 #include "uitaskrunner.h"
@@ -207,12 +208,9 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 			  mCB(this,uiProfileModelFromEvCrGrp,removeEventCB));
     rmevbut_->attach( rightTo, addevbut_ );
     tiemarkerbut_ =
-	new uiToolButton( paramgrp_, "", tr("Tie event to markers.."),
+	new uiToolButton( paramgrp_, "tieevmarker",tr("Tie event to markers.."),
 			  mCB(this,uiProfileModelFromEvCrGrp,tieEventsCB) );
     tiemarkerbut_->attach( rightTo, rmevbut_ );
-    applybut_ = uiToolButton::getStd( paramgrp_, OD::Apply,
-	    mCB(this,uiProfileModelFromEvCrGrp,createModelCB), tr("Apply") );
-    applybut_->attach( rightTo, tiemarkerbut_ );
     uiGroup* dispgrp = new uiGroup( this, "Display Group" );
     viewer_ = new uiFlatViewer( dispgrp );
     viewer_->setInitialSize( uiSize(800,300) );
@@ -284,6 +282,7 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
 {
     getEvents();
     drawEvents();
+    updateProfileModel();
 }
 
 #define mErrRet( msg, retval ) \
@@ -292,7 +291,7 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
     return retval; \
 }
 
-void uiProfileModelFromEvCrGrp::createModelCB(CallBacker*)
+void uiProfileModelFromEvCrGrp::updateProfileModel()
 {
     if ( data_.model_.isEmpty() )
 	mErrRet( tr("No well added to create a model from"), )
@@ -318,13 +317,16 @@ void uiProfileModelFromEvCrGrp::removeEventCB( CallBacker* )
 
     data_.removeEvent( rmidx );
     evlistbox_->removeItem( rmidx );
+    drawEvents();
+    updateProfileModel();
 }
 
 
 void uiProfileModelFromEvCrGrp::tieEventsCB( CallBacker* )
 {
     uiEventMarkerTieDialog tieevmrkrdlg( this, data_ );
-    tieevmrkrdlg.go();
+    if ( tieevmrkrdlg.go() )
+	updateProfileModel();
 }
 
 
@@ -432,11 +434,35 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 
 uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
 	ProfileModelFromEventData& sudata, const char* typenm )
-    : uiDialog(p,uiDialog::Setup(tr("Use events to shape profiles"),tr(""),
-				 mNoHelpKey).applybutton(true))
+    : uiDialog(p,uiDialog::Setup(tr("Use events to shape profiles"),
+				 tr("Add events that you want to use"),
+				 mNoHelpKey).applybutton(true)
+					    .applytext(tr("Apply in model")))
+    , data_(sudata)
 {
     profscrgrp_ = uiPMCrGrpFac().create( typenm, this, sudata );
+    const CallBack showcb =
+	mCB(this,uiProfileModelFromEvCrDlg,showMultiDisplayCB);
+    viewbut_ = new uiToolButton( this, "stratmultidisp", tr("Show display"),
+				 showcb );
+    viewbut_->attach( rightTo, profscrgrp_ );
+    viewbut_->setSensitive( false );
+    mAttachCB( applyPushed, uiProfileModelFromEvCrDlg::applyCB );
     mAttachCB( afterPopup, uiProfileModelFromEvCrDlg::finaliseCB );
+}
+
+
+void uiProfileModelFromEvCrDlg::showMultiDisplayCB( CallBacker* )
+{
+    multidispwin_ =
+	new uiStratMultiDisplayWin( this, data_.section_.seisfdpid_ );
+    multidispwin_->show();
+}
+
+
+void uiProfileModelFromEvCrDlg::applyCB( CallBacker* )
+{
+    viewbut_->setSensitive( true );
 }
 
 

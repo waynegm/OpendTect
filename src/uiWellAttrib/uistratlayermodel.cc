@@ -178,6 +178,10 @@ void startCB( CallBacker* cb )
     doLayerModel( par, modnm, 0 );
 }
 
+uiStratLayerModel* getDlg()
+{ return dlg_; }
+
+
 bool haveExistingDlg()
 {
     if ( dlg_ )
@@ -243,6 +247,12 @@ void uiStratLayerModel::doLayerModel( const char* modnm, int opt )
 	uislm_manager().doLayerModel( &StratTreeWin(), modnm, opt );
 }
 
+
+
+uiStratLayerModel* uiStratLayerModel::getUILayerModel()
+{
+    return uislm_manager().getDlg();
+}
 
 
 class uiStratLayerModelLMProvider : public Strat::LayerModelProvider

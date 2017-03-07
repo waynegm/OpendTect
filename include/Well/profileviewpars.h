@@ -13,6 +13,7 @@ ________________________________________________________________________
 -*/
 
 #include "wellmod.h"
+#include "stratlevel.h"
 
 class IOPar;
 
@@ -26,7 +27,10 @@ public:
 			    , drawwellnames_(true)
 			    , drawctrls_(true)
 			    , drawmarkers_(true)
-			    , drawconnections_(true)	{}
+			    , drawmarkernames_(true)
+			    , drawctrlprofmrkrnms_(false)
+			    , drawconnections_(true)
+			{ Strat::LVLS().getNames( selmrkrnms_ ); }
     bool		operator ==(const ProfileViewPars&) const;
 
     void		usePar(const IOPar&);
@@ -39,6 +43,9 @@ public:
     bool		drawctrls_;
     bool		drawmarkers_;
     bool		drawconnections_;
+    bool		drawmarkernames_;
+    bool		drawctrlprofmrkrnms_;
+    BufferStringSet	selmrkrnms_;
 
 };
 

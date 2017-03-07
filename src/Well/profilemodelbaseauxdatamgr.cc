@@ -86,6 +86,7 @@ float ProfileView2Model::viewZ( float modelz ) const
 
 
 static const char* sKeyDrawWellNames = "Draw well names";
+static const char* sKeyDrawMarkerNames = "Draw marker names";
 
 #define mImplProfileViewParsIOP(fn) \
     iop.fn( "Depth skip", skipz_ ); \
@@ -94,7 +95,9 @@ static const char* sKeyDrawWellNames = "Draw well names";
     iop.fn##YN( sKeyDrawWellNames, drawwellnames_ ); \
     iop.fn##YN( "Draw control profiles", drawctrls_ ); \
     iop.fn##YN( "Draw markers", drawmarkers_ ); \
-    iop.fn##YN( "Draw marker connections", drawconnections_ )
+    iop.fn##YN( sKeyDrawMarkerNames, drawmarkernames_ ); \
+    iop.fn##YN( "Draw marker connections", drawconnections_ ); \
+    iop.fn##YN("Display marker names at control profile", drawctrlprofmrkrnms_);
 
 
 void ProfileViewPars::usePar( const IOPar& iop )
@@ -102,6 +105,11 @@ void ProfileViewPars::usePar( const IOPar& iop )
     mImplProfileViewParsIOP( get );
     if ( !drawwells_ )
 	drawwellnames_ = false;
+    if ( !drawmarkers_ )
+    {
+	drawmarkernames_ = false;
+	drawctrlprofmrkrnms_ = false;
+    }
 }
 
 
@@ -110,6 +118,8 @@ void ProfileViewPars::fillPar( IOPar& iop ) const
     mImplProfileViewParsIOP( set );
     if ( !drawwells_ )
 	iop.removeWithKey( sKeyDrawWellNames );
+    if ( !drawmarkers_ )
+	iop.removeWithKey( sKeyDrawMarkerNames );
 }
 
 
@@ -119,7 +129,10 @@ bool ProfileViewPars::operator ==( const ProfileViewPars& oth ) const
 	|| drawctrls_ != oth.drawctrls_
 	|| drawmarkers_ != oth.drawmarkers_
 	|| drawconnections_ != oth.drawconnections_
-	|| !mIsEqual(skipz_,oth.skipz_,1e-6) )
+	|| !mIsEqual(skipz_,oth.skipz_,1e-6)
+	|| drawmarkernames_ != oth.drawmarkernames_
+	|| drawctrlprofmrkrnms_ != oth.drawctrlprofmrkrnms_
+	|| !(selmrkrnms_ == oth.selmrkrnms_) )
 	return false;
     //TODO LayerModelPropDispPars?
     return drawwells_ ? drawwellnames_ == oth.drawwellnames_ : true;
@@ -219,7 +232,13 @@ void ProfileModelBaseAuxDataMgr::setVisibility()
 	if ( profaux.wellnm_ )
 	    profaux.wellnm_->enabled_ = ison && drawpars_.drawwellnames_;
 	for ( int idaux=0; idaux<profaux.markers_.size(); idaux++ )
+	{
 	    profaux.markers_[idaux]->enabled_ = drawpars_.drawmarkers_;
+	    const bool& drawmarkernms = drawpars_.drawmarkers_ &&
+		(profaux.iswell_ ? drawpars_.drawmarkernames_
+				 : drawpars_.drawctrlprofmrkrnms_);
+	    profaux.markers_[idaux]->namepos_ = !drawmarkernms ? mUdf(int) : 0;
+	}
     }
     for ( int idx=0; idx<markerconnections_.size(); idx++ )
 	markerconnections_[idx]->enabled_ = drawpars_.drawconnections_;
@@ -318,13 +337,19 @@ void ProfileModelBaseAuxDataMgr::addProfile( const ProfileBase& prof )
 	pfaux->wellnm_->zvalue_ = 4;
     }
 
-    for ( int idx=0; idx<prof.markers_.size(); idx++ )
+    for ( int idx=0; idx<drawpars_.selmrkrnms_.size(); idx++ )
     {
-	const Well::Marker& wm = *prof.markers_[idx];
-	FlatView::AuxData* mCrAuxData( ad, wm.name(), continue );
-	ad->poly_ += FlatView::Point( xpos, getViewZ(wm.dah(),prof,refmrk) );
-	ad->zvalue_ = 3;
-	ad->markerstyles_ += MarkerStyle2D(MarkerStyle2D::Plane,4,wm.color());
+	const Well::Marker* wm =
+	    prof.markers_.getByName( drawpars_.selmrkrnms_.get(idx) );
+	if ( !wm )
+	    continue;
+
+	FlatView::AuxData* mCrAuxData( ad, wm->name(), continue );
+	ad->poly_ += FlatView::Point( xpos, getViewZ(wm->dah(),prof,refmrk) );
+	ad->zvalue_ = 5;
+	ad->markerstyles_ += MarkerStyle2D(MarkerStyle2D::Plane,4,wm->color());
+	ad->namealignment_ = mAlignment(Left,Bottom);
+	ad->namepos_ = 0;
 	pfaux->markers_ += ad;
     }
 }

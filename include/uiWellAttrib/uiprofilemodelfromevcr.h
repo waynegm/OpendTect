@@ -22,6 +22,7 @@ class uiGenInput;
 class uiToolButton;
 class uiListBox;
 class uiFlatViewer;
+class uiProfileModelViewControl;
 class uiStratMultiDisplayWin;
 
 class ProfileModelBase;
@@ -47,6 +48,7 @@ protected:
     uiToolButton*			addevbut_;
     uiToolButton*			rmevbut_;
     uiToolButton*			tiemarkerbut_;
+    uiProfileModelViewControl*		viewcontrol_;
     ProfileModelFromEventData&		data_;
     ObjectSet<FlatView::AuxData>	horauxdatas_;
     ProfileModelBaseAuxDataMgr*		modeladmgr_;;

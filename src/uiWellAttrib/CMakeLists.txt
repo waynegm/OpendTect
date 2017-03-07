@@ -34,6 +34,7 @@ set( OD_MODULE_SOURCES
 	uisynthgendlg.cc
 	uisynthseis.cc
 	uiprofilemodelfromevcr.cc
+	uiprofileviewpars.cc
 	inituiwellattrib.cc
 )
 

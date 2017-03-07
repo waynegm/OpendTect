@@ -14,10 +14,14 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uicolor.h"
 #include "uicombobox.h"
 #include "uidialog.h"
+#include "uidlggroup.h"
 #include "uiflatviewer.h"
+#include "uiflatviewstdcontrol.h"
+#include "uiflatviewpropdlg.h"
 #include "uigeninput.h"
 #include "uilistbox.h"
 #include "uimsg.h"
+#include "uiprofileviewpars.h"
 #include "uistratmultidisplaywindow.h"
 #include "uitable.h"
 #include "uitoolbutton.h"
@@ -190,6 +194,68 @@ uiProfileModelFromEvCrGrpFactory& uiPMCrGrpFac()
 }
 
 
+class uiProfileModelViewPropDlg : public uiFlatViewPropDlg
+{ mODTextTranslationClass(uiProfileModelViewPropDlg);
+public:
+
+uiProfileModelViewPropDlg( uiParent*p, FlatView::Viewer& vwr,
+			   const CallBack& cb, ProfileViewPars& viewpars )
+    : uiFlatViewPropDlg(p,vwr,cb)
+{
+    profparsgrp_ = new uiProfileViewParsDlgGrp( tabParent(), viewpars );
+    addGroup( profparsgrp_ );
+}
+
+protected :
+
+bool acceptOK( CallBacker* cb )
+{
+    if ( !uiFlatViewPropDlg::acceptOK(cb) )
+	return false;
+
+    profparsgrp_->readFromScreen();
+    return true;
+}
+
+    uiProfileViewParsDlgGrp*	profparsgrp_;
+};
+
+
+class uiProfileModelViewControl : public uiFlatViewStdControl
+{
+public:
+
+uiProfileModelViewControl( uiFlatViewer& vwr,
+			   const uiFlatViewStdControl::Setup& su,
+			   ProfileModelBaseAuxDataMgr& auxmgr )
+    : uiFlatViewStdControl(vwr,su)
+    , auxdatamgr_(auxmgr)
+{
+}
+
+virtual void doPropertiesDialog( int vieweridx )
+{
+    const CallBack applycb =mCB(this,uiProfileModelViewControl,applyProperties);
+    if ( !propdlg_ )
+	propdlg_ = new uiProfileModelViewPropDlg( setup_.parent_, vwr_, applycb,
+						  auxdatamgr_.drawPars() );
+    propdlg_->go();
+}
+
+virtual void applyProperties( CallBacker* cb )
+{
+    uiFlatViewControl::applyProperties( cb );
+    auxdatamgr_.reset();
+}
+
+protected:
+
+    ProfileModelBaseAuxDataMgr& auxdatamgr_;
+    uiProfileModelViewPropDlg*	propdlg_;
+
+};
+
+
 uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 	uiParent* p, ProfileModelFromEventData& sudata )
     : uiGroup(p)
@@ -223,10 +289,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     app.annot_.title_.setEmpty();
     app.annot_.x1_.showAll( true );
     app.annot_.x2_.showAll( true );
-    app.annot_.x1_.name_ = "Model Nr";
-    app.annot_.x2_.name_ = "Depth";
     app.ddpars_.wva_.allowuserchange_ = false;
-    app.ddpars_.vd_.allowuserchange_ = false;
     app.ddpars_.wva_.allowuserchangedata_ = false;
     app.ddpars_.vd_.allowuserchangedata_ = false;
     app.annot_.x1_.showannot_ = true;
@@ -236,6 +299,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     app.annot_.x2_.showgridlines_ = true;
     app.annot_.allowuserchangereversedaxis_ = false;
     viewer_->setPack( false, data_.section_.seisfdpid_ );
+
     modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
     DataPackMgr& dpm = DPM(DataPackMgr::FlatID());
     ConstDataPackRef<FlatDataPack> seisfdp =
@@ -249,6 +313,10 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     modeladmgr_->view2Model().setNrSeq( 25 );
     modeladmgr_->view2Model().setZInDepth( false );
     modeladmgr_->reset();
+
+    uiFlatViewStdControl::Setup su( this );
+    su.withflip( false ).isvertical( true );
+    viewcontrol_ = new uiProfileModelViewControl( *viewer_, su, *modeladmgr_ );
 }
 
 
@@ -434,8 +502,7 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 
 uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
 	ProfileModelFromEventData& sudata, const char* typenm )
-    : uiDialog(p,uiDialog::Setup(tr("Use events to shape profiles"),
-				 tr("Add events that you want to use"),
+    : uiDialog(p,uiDialog::Setup(tr("Use events to shape profiles"),tr(""),
 				 mNoHelpKey).applybutton(true)
 					    .applytext(tr("Apply in model")))
     , data_(sudata)

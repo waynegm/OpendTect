@@ -106,8 +106,12 @@ ProfileModelFromEventData::Event::Event( ZValueProvider* zprov )
     : zvalprov_(zprov)
     , tiemarkernm_(ProfileModelFromEventData::addMarkerStr())
 {
-    BufferString defmrkrnm( "[", zprov->getName().getOriginalString(), "]" );
+    BufferString defmrkrnm( "[", zprov->getName().getFullString(), "]" );
     newintersectmarker_ = new Well::Marker( defmrkrnm );
+    Strat::Level* newlevel =
+	Strat::eLVLS().add( newintersectmarker_->name(),
+			    newintersectmarker_->color() );
+    levelid_ = newlevel->id();
 }
 
 
@@ -160,14 +164,19 @@ void ProfileModelFromEventData::setTieMarker( int evidx, const char* markernm )
     delete ev.newintersectmarker_;
     ev.newintersectmarker_ = 0;
     ev.tiemarkernm_ = markernm;
+    Strat::eLVLS().remove( ev.levelid_ );
 
     FixedString markernmstr( markernm );
     if ( !markernm || markernmstr==ProfileModelFromEventData::addMarkerStr() )
     {
 	ev.tiemarkernm_ = addMarkerStr();
 	BufferString defmrkrnm(
-		"[", ev.zvalprov_->getName().getOriginalString(), "]" );
+		"[", ev.zvalprov_->getName().getFullString(), "]" );
 	ev.newintersectmarker_ = new Well::Marker( defmrkrnm );
+	Strat::Level* newlevel =
+	    Strat::eLVLS().add( ev.newintersectmarker_->name(),
+				ev.newintersectmarker_->color() );
+	ev.levelid_ = newlevel->id();
     }
 }
 

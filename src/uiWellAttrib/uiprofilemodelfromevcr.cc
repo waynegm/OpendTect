@@ -350,6 +350,7 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
 {
     getEvents();
     drawEvents();
+    modeladmgr_->drawPars().resetMarkerNames();
     updateProfileModel();
 }
 
@@ -394,7 +395,10 @@ void uiProfileModelFromEvCrGrp::tieEventsCB( CallBacker* )
 {
     uiEventMarkerTieDialog tieevmrkrdlg( this, data_ );
     if ( tieevmrkrdlg.go() )
+    {
+	modeladmgr_->drawPars().resetMarkerNames();
 	updateProfileModel();
+    }
 }
 
 

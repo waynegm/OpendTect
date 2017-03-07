@@ -30,8 +30,10 @@ public:
 			    , drawmarkernames_(true)
 			    , drawctrlprofmrkrnms_(false)
 			    , drawconnections_(true)
-			{ Strat::LVLS().getNames( selmrkrnms_ ); }
+			{ resetMarkerNames(); }
     bool		operator ==(const ProfileViewPars&) const;
+    void		resetMarkerNames()
+			{ Strat::LVLS().getNames( selmrkrnms_ ); }
 
     void		usePar(const IOPar&);
     void		fillPar(IOPar&) const;

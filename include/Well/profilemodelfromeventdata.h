@@ -16,6 +16,7 @@ ________________________________________________________________________
 #include "bufstringset.h"
 #include "coord.h"
 #include "datapack.h"
+#include "stratlevel.h"
 
 class ProfileModelBase;
 class ZValueProvider;
@@ -48,6 +49,7 @@ mStruct(Well) ProfileModelFromEventData
 	ZValueProvider*			zvalprov_;
 	Well::Marker*			newintersectmarker_;
 	BufferString			getMarkerName() const;
+	Strat::Level::ID		levelid_;
     };
 
     int					totalnrprofs_;

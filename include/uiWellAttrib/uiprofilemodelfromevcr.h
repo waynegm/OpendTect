@@ -56,7 +56,7 @@ protected:
     void				addEventCB(CallBacker*);
     void				removeEventCB(CallBacker*);
     void				tieEventsCB(CallBacker*);
-    void				showCtrlProfilesCB(CallBacker*);
+    void				nrCtrlProfChangedCB(CallBacker*);
 
     void				updateProfileModelDisplay();
     void				updateProfileModel();

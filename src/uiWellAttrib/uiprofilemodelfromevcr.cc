@@ -263,6 +263,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
     nrprofsfld_ = new uiGenInput(paramgrp_,tr("Ctrl Profiles"),IntInpSpec(50));
+    mAttachCB( nrprofsfld_->valuechanged,
+	       uiProfileModelFromEvCrGrp::nrCtrlProfChangedCB );
     evlistbox_ = new uiListBox( paramgrp_, "Horizon List" );
     evlistbox_->attach( leftAlignedBelow, nrprofsfld_ );
     addevbut_ =
@@ -343,6 +345,12 @@ void uiProfileModelFromEvCrGrp::updateDisplay()
 void uiProfileModelFromEvCrGrp::updateProfileModelDisplay()
 {
     modeladmgr_->reset();
+}
+
+
+void uiProfileModelFromEvCrGrp::nrCtrlProfChangedCB( CallBacker* )
+{
+    updateProfileModel();
 }
 
 

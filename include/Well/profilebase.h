@@ -51,6 +51,7 @@ protected:
 mExpClass(Well) ProfileModelBase :  public CallBacker
 {
 public:
+			~ProfileModelBase();
     int			size() const	{ return profs_.size();}
     bool		isEmpty() const { return profs_.isEmpty();}
     int			nrWells(bool unique=false) const;
@@ -81,7 +82,7 @@ public:
     void		removeProfiles(bool wells=false);
     void		removeAtSamePos(int idxtokeep=-1);
 
-    ManagedObjectSet<ProfileBase> profs_;
+    ObjectSet<ProfileBase> profs_;
 };
 
 mExpClass(Well) ProfileFactory

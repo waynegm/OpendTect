@@ -230,7 +230,7 @@ void ProfileModelBase::removeProfiles( bool well )
     for ( int idx=0; idx<profs_.size(); idx++ )
     {
 	if ( profs_[idx]->isWell()==well )
-	    { profs_.removeSingle( idx ); idx--; }
+	    { delete profs_.removeSingle( idx ); idx--; }
     }
 }
 
@@ -260,6 +260,7 @@ void ProfileModelBase::removeAtSamePos( int idxtokeep )
 		prof2del = prof2del == p0 ? p1 : p0;
 
 	    profs_ -= prof2del;
+	    delete prof2del;
 	    idx--;
 	}
     }
@@ -306,6 +307,11 @@ ProfileBase* ProfileFactory::create( const char* keystr )
     return (*createfuncs_[keyidx])( 0.5 );
 }
 
+ProfileModelBase::~ProfileModelBase()
+{
+    deepErase( profs_ );
+}
+
 
 int ProfileModelBase::idxBefore( float pos, bool& isat ) const
 {
@@ -333,7 +339,7 @@ int ProfileModelBase::set( ProfileBase* prof, bool replacesamepos )
     if ( oldidx >= 0 )
     {
 	// pos_ may have changed, need to put it at the right spot
-	profs_.removeAndTake( oldidx );
+	profs_.removeSingle( oldidx );
 	return set( prof, replacesamepos );
     }
 
@@ -342,7 +348,7 @@ int ProfileModelBase::set( ProfileBase* prof, bool replacesamepos )
     if ( isat )
     {
 	if ( replacesamepos )
-	    profs_.removeSingle( profidx-- );
+	    delete profs_.removeSingle( profidx-- );
 	else
 	{
 	    while ( isat )

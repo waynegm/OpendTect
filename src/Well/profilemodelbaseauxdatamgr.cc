@@ -373,14 +373,16 @@ void ProfileModelBaseAuxDataMgr::addMarkerConnections()
 	if ( isflattened_ && (!refmrk1 || !refmrk2) )
 	    continue;
 
-	for ( int idmrk=0; idmrk<prof1.markers_.size(); idmrk++ )
+	for ( int idmrk=0; idmrk<drawpars_.selmrkrnms_.size(); idmrk++ )
 	{
-	    const Well::Marker* mrk1 = prof1.markers_[idmrk];
-	    const char* mrkname = mrk1->name();
-	    const Well::Marker* mrk2 = prof2.markers_.getByName(mrkname);
+	    FixedString markernm( drawpars_.selmrkrnms_.get(idmrk) );
+	    const Well::Marker* mrk1 = prof1.markers_.getByName( markernm );
+	    if ( !mrk1 ) continue;
+
+	    const Well::Marker* mrk2 = prof2.markers_.getByName( markernm );
 	    if ( !mrk2 ) continue;
 
-	    BufferString adnm( mrkname, " " );
+	    BufferString adnm( markernm, " " );
 	    adnm.add( idx ).add( "-" ).add( idx+1 );
 	    FlatView::AuxData* mCrAuxData( ad, adnm, continue );
 	    ad->poly_ +=

@@ -108,6 +108,7 @@ ProfileModelFromEventData::Event::Event( ZValueProvider* zprov )
 {
     BufferString defmrkrnm( "[", zprov->getName().getFullString(), "]" );
     newintersectmarker_ = new Well::Marker( defmrkrnm );
+    newintersectmarker_->setColor( zprov->drawColor() );
     Strat::Level* newlevel =
 	Strat::eLVLS().add( newintersectmarker_->name(),
 			    newintersectmarker_->color() );
@@ -173,6 +174,7 @@ void ProfileModelFromEventData::setTieMarker( int evidx, const char* markernm )
 	BufferString defmrkrnm(
 		"[", ev.zvalprov_->getName().getFullString(), "]" );
 	ev.newintersectmarker_ = new Well::Marker( defmrkrnm );
+	ev.newintersectmarker_->setColor( ev.zvalprov_->drawColor() );
 	Strat::Level* newlevel =
 	    Strat::eLVLS().add( ev.newintersectmarker_->name(),
 				ev.newintersectmarker_->color() );

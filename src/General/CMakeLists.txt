@@ -92,6 +92,7 @@ list ( APPEND OD_MODULE_SOURCES
 	ziparchiveinfo.cc
 	ziphandler.cc
 	ziputils.cc
+	zvalueprovider.cc
 )
 
 set (OD_USEQT Core) # for the ziphandler.cc only

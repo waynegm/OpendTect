@@ -22,7 +22,7 @@ class MultiID;
 mExpClass(General) ZValueProvider
 {
 public:
-    virtual			~ZValueProvider()		{}
+    virtual			~ZValueProvider();
     virtual uiString		getName() const			=0;
     virtual Color		drawColor() const		=0;
     virtual int			drawWidth() const		=0;

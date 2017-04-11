@@ -346,7 +346,6 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp, int opt )
     , lmp_(*new uiStratLayerModelLMProvider)
     , needtoretrievefrpars_(false)
     , automksynth_(true)
-    , nrmodels_(0)
     , moddisp_(0)
     , newModels(this)
     , waveletChanged(this)
@@ -440,6 +439,8 @@ uiStratLayerModel::uiStratLayerModel( uiParent* p, const char* edtyp, int opt )
     gentools_->saveReq.notify( mCB(this,uiStratLayerModel,saveGenDescCB) );
     gentools_->propEdReq.notify( mCB(this,uiStratLayerModel,manPropsCB) );
     gentools_->genReq.notify( mCB(this,uiStratLayerModel,genModels) );
+    gentools_->nrModelsChanged.notify(
+	    mCB(this,uiStratLayerModel,nrModelsChangedCB) );
     synthdisp_->wvltChanged.notify( mCB(this,uiStratLayerModel,wvltChg) );
     synthdisp_->viewChanged.notify( mCB(this,uiStratLayerModel,viewChgedCB) );
     synthdisp_->modSelChanged.notify( mCB(this,uiStratLayerModel,modSelChg) );
@@ -929,7 +930,7 @@ void uiStratLayerModel::synthDispParsChangedCB( CallBacker* )
 
 void uiStratLayerModel::modEd( CallBacker* )
 {
-    synthdisp_->setForceUpdate( nrmodels_!=lmp_.getCurrent().size() );
+    synthdisp_->setForceUpdate( nrModels()!=lmp_.getCurrent().size() );
     handleNewModel();
 }
 
@@ -941,11 +942,34 @@ void uiStratLayerModel::calcAndSetDisplayEach( bool overridedispeach )
 	 !overridedispeach )
 	return;
 
-    const int nrmods = gentools_->nrModels();
+    const int nrmods = nrModels();
     const int nrseq = desc_.size();
     decimation =
 	mCast(int,floor(mCast(float,nrmods*nrseq)/sMaxNrLayToBeDisplayed)) + 1;
     desc_.getWorkBenchParams().set( sKeyDecimation(), decimation );
+}
+
+
+void uiStratLayerModel::setNrModels( int nrmodels )
+{
+    gentools_->setNrModels( nrmodels );
+    gentools_->fillPar( desc_.getWorkBenchParams() );
+}
+
+
+int uiStratLayerModel::nrModels() const
+{
+    int nrmodels = gentools_->getNrModelsFromPar( desc_.getWorkBenchParams() );
+    if ( nrmodels<0 )
+	nrmodels = gentools_->nrModels();
+    return nrmodels;
+}
+
+
+void uiStratLayerModel::nrModelsChangedCB( CallBacker* )
+{
+    gentools_->fillPar( desc_.getWorkBenchParams() );
+    genModels( 0 );
 }
 
 
@@ -959,7 +983,7 @@ void uiStratLayerModel::genModels( CallBacker* cb )
 
 void uiStratLayerModel::doGenModels( bool forceupdsynth, bool overridedispeach )
 {
-    const int nrmods = gentools_->nrModels();
+    const int nrmods = nrModels();
     if ( nrmods < 1 )
 	{ uiMSG().error(tr("Enter a valid number of models")); return; }
 
@@ -1027,7 +1051,6 @@ void uiStratLayerModel::handleNewModel()
 	needtoretrievefrpars_ = false;
     }
 
-    nrmodels_ = layerModel().size();
     newModels.trigger();
 
     synthdisp_->setForceUpdate( false );

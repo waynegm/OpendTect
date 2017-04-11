@@ -84,6 +84,7 @@ public:
     FillPattern			fillpattern_;
     int				zvalue_; //!<overlay zvalue ( max=on top )
     MouseCursor			cursor_;
+    bool			cansetcursor_;
 
     bool			close_;
 

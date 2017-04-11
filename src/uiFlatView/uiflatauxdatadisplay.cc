@@ -159,7 +159,8 @@ void uiAuxDataDisplay::updateCB( CallBacker* cb )
 	}
 
 	item->setPenStyle( linestyle_, true );
-	item->setCursor( cursor_ );
+	if ( cansetcursor_ )
+	    item->setCursor( cursor_ );
     }
     else
     {
@@ -210,7 +211,8 @@ void uiAuxDataDisplay::updateCB( CallBacker* cb )
 	item->setFillColor( style.color_ );
 	item->setPos( poly_[idx] );
 	item->setVisible( true );
-	item->setCursor( cursor_ );
+	if ( cansetcursor_ )
+	    item->setCursor( cursor_ );
     }
 
     if ( !name_.isEmpty() && !mIsUdf(namepos_) )

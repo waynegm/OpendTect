@@ -279,6 +279,7 @@ FlatView::AuxData::AuxData( const char* nm )
     , x2rg_( 0 )
     , enabled_( true )
     , editpermissions_( 0 )
+    , cansetcursor_( true )
 {
     turnon_.setParam( this, true );
     updatelines_.setParam( this, true );

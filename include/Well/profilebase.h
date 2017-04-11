@@ -1,5 +1,5 @@
-#ifndef positionedwellmarkerset_h
-#define positionedwellmarkerset_h
+#ifndef profilebase_h
+#define profilebase_h
 
 /*+
 ________________________________________________________________________
@@ -81,8 +81,12 @@ public:
     void		removeAll();
     void		removeProfiles(bool wells=false);
     void		removeAtSamePos(int idxtokeep=-1);
+    float		getDepthVal(float t,float profpos) const;
+    float		getDepthVal(float t,const ProfileBase&) const;
 
     ObjectSet<ProfileBase> profs_;
+protected:
+    float		getInterpolatedDepthVal(float t,float profpos) const;
 };
 
 mExpClass(Well) ProfileFactory

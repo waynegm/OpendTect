@@ -37,12 +37,14 @@ public:
 					uiParent*, ProfileModelFromEventData&);
 				~uiProfileModelFromEvCrGrp();
     int				nrProfs() const;
+    int				nrModels() const;
     virtual void		updateDisplay();
 
 protected:
 
     uiGroup*				paramgrp_;
     uiGenInput*				nrprofsfld_;
+    uiGenInput*				nrmodelsfld_;
     uiFlatViewer*			viewer_;
     uiListBox*				evlistbox_;
     uiToolButton*			addevbut_;
@@ -91,6 +93,7 @@ public:
 				uiProfileModelFromEvCrDlg(uiParent*,
 					ProfileModelFromEventData&,
 					const char* typenm);
+
 protected:
     void			finaliseCB(CallBacker*);
     void			applyCB(CallBacker*);

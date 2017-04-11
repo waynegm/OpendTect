@@ -64,6 +64,7 @@ public:
     void		setZRange( const Interval<float>& rg )
     			{ zrange_ = rg; zrangeChanged.trigger(); }
     Interval<float>	zRange() const		{ return zrange_; }
+    void		getRange(TrcKeyZSampling&) const;
 
     void		setMultiID(const MultiID&);
     MultiID		getMultiID() const			{ return mid_; }

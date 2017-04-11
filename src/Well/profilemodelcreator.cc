@@ -17,7 +17,9 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "survinfo.h"
 #include "ioman.h"
 #include "ioobj.h"
+#include "uistrings.h"
 #include <math.h>
+#include <iostream>
 
 
 class ProfilePosData
@@ -51,15 +53,15 @@ class ProfilePosDataSet : public TypeSet<ProfilePosData>
 public:
 
 ProfilePosDataSet( ProfileModelBase& pms )
-    : profs_(pms)
+    : model_(pms)
 {
 }
 
 void addExistingProfiles()
 {
-    for ( int iprof=0; iprof<profs_.size(); iprof++ )
+    for ( int iprof=0; iprof<model_.size(); iprof++ )
     {
-	ProfileBase* prof = profs_.get( iprof );
+	ProfileBase* prof = model_.get( iprof );
 	if ( prof->isWell() )
 	    *this += ProfilePosData( prof, prof->pos_, prof->coord_ );
 	else
@@ -97,28 +99,50 @@ void setInterpCoord( int ippd, int ippd0, int ippd1 )
     ppd.coord_ = Coord( c0.x + delta.x * nrdists, c0.y + delta.y * nrdists );
 }
 
-    ProfileModelBase& profs_;
+    ProfileModelBase& model_;
 
 };
 
 
 ProfileModelFromEventData::Event::Event( ZValueProvider* zprov )
     : zvalprov_(zprov)
-    , tiemarkernm_(ProfileModelFromEventData::addMarkerStr())
+    , newintersectmarker_(0)
 {
-    BufferString defmrkrnm( "[", zprov->getName().getFullString(), "]" );
-    newintersectmarker_ = new Well::Marker( defmrkrnm );
-    newintersectmarker_->setColor( zprov->drawColor() );
-    Strat::Level* newlevel =
-	Strat::eLVLS().add( newintersectmarker_->name(),
-			    newintersectmarker_->color() );
-    levelid_ = newlevel->id();
+    setMarker( zprov->getName().getFullString() );
+}
+
+void ProfileModelFromEventData::Event::setMarker( const char* markernm )
+{
+    Strat::LevelSet& lvls = Strat::eLVLS();
+    if ( newintersectmarker_ )
+	lvls.remove( levelid_ );
+    delete newintersectmarker_;
+    newintersectmarker_ = 0;
+    FixedString markernmstr( markernm );
+    if ( !lvls.isPresent(markernm) || markernmstr.isEmpty() ||
+	 markernmstr==ProfileModelFromEventData::addMarkerStr() )
+    {
+	newintersectmarker_ = new Well::Marker( markernmstr );
+	newintersectmarker_->setColor( zvalprov_->drawColor() );
+	Strat::Level* newlevel =
+	    lvls.add( newintersectmarker_->name(),newintersectmarker_->color());
+	tiemarkernm_ = markernm;
+	levelid_ = newlevel->id();
+    }
+    else
+    {
+	const int lvlidx = lvls.indexOf( markernm );
+	tiemarkernm_ = markernmstr;
+	levelid_ = lvls.levelID( lvlidx );
+    }
 }
 
 
 ProfileModelFromEventData::Event::~Event()
 {
     delete zvalprov_;
+    if ( newintersectmarker_ )
+	Strat::eLVLS().remove( levelid_ );
     delete newintersectmarker_;
 }
 
@@ -147,6 +171,19 @@ BufferString ProfileModelFromEventData::getMarkerName( int evidx ) const
 }
 
 
+bool ProfileModelFromEventData::isIntersectMarker( const char* markernm ) const
+{
+    for ( int iev=0; iev<events_.size(); iev++ )
+    {
+	if ( events_[iev]->newintersectmarker_ &&
+	     events_[iev]->newintersectmarker_->name()==markernm )
+	    return true;
+    }
+
+    return false;
+}
+
+
 bool ProfileModelFromEventData::isIntersectMarker( int evidx ) const
 {
     if ( !events_.validIdx(evidx) )
@@ -162,24 +199,19 @@ void ProfileModelFromEventData::setTieMarker( int evidx, const char* markernm )
 	return;
 
     Event& ev = *events_[evidx];
-    delete ev.newintersectmarker_;
-    ev.newintersectmarker_ = 0;
-    ev.tiemarkernm_ = markernm;
-    Strat::eLVLS().remove( ev.levelid_ );
-
-    FixedString markernmstr( markernm );
-    if ( !markernm || markernmstr==ProfileModelFromEventData::addMarkerStr() )
+    if ( ev.newintersectmarker_ )
     {
-	ev.tiemarkernm_ = addMarkerStr();
-	BufferString defmrkrnm(
-		"[", ev.zvalprov_->getName().getFullString(), "]" );
-	ev.newintersectmarker_ = new Well::Marker( defmrkrnm );
-	ev.newintersectmarker_->setColor( ev.zvalprov_->drawColor() );
-	Strat::Level* newlevel =
-	    Strat::eLVLS().add( ev.newintersectmarker_->name(),
-				ev.newintersectmarker_->color() );
-	ev.levelid_ = newlevel->id();
+	for ( int im=0; im<model_.size(); im++ )
+	{
+	    ProfileBase* prof = model_.get( im );
+	    const int tiemarkeridx =
+		prof->markers_.indexOf( ev.newintersectmarker_->name() );
+	    if ( tiemarkeridx>=0 )
+		prof->markers_.removeSingle( tiemarkeridx );
+	}
     }
+
+    ev.setMarker( markernm );
 }
 
 
@@ -202,6 +234,19 @@ void ProfileModelFromEventData::removeEvent( int evidx )
 {
     if ( !events_.validIdx(evidx) )
 	return;
+
+    if ( isIntersectMarker(evidx) )
+    {
+	const char* markernm = events_[evidx]->newintersectmarker_->name();
+	for ( int iprof=0; iprof<model_.size(); iprof++ )
+	{
+	    const int markeridx =
+		model_.profs_[iprof]->markers_.indexOf( markernm );
+	    if ( markeridx>=0 )
+		model_.profs_[iprof]->markers_.removeSingle( markeridx );
+	}
+    }
+
 
     delete events_.removeSingle( evidx );
 }
@@ -226,7 +271,7 @@ ProfileModelFromEventData::~ProfileModelFromEventData()
 
 ProfileModelFromEventCreator::ProfileModelFromEventCreator( ProfileModelBase& p,
 							    int mxp )
-    : profs_(p)
+    : model_(p)
     , ppds_(*new ProfilePosDataSet(p))
     , t2dtr_(0)
     , t2dpar_(*new IOPar)
@@ -234,9 +279,9 @@ ProfileModelFromEventCreator::ProfileModelFromEventCreator( ProfileModelBase& p,
     , movepol_(MoveAll)
     , needt2d_(SI().zIsTime()) // just def
 {
-    for ( int idx=0; idx<profs_.size(); idx++ )
+    for ( int idx=0; idx<model_.size(); idx++ )
     {
-	ProfileBase* prof = profs_.get( idx );
+	ProfileBase* prof = model_.get( idx );
 	if ( prof->isWell() )
 	{
 	    t2dpar_.set( sKey::ID(), prof->wellid_ );
@@ -296,17 +341,17 @@ void ProfileModelFromEventCreator::prepareZTransform( TaskRunner* tr )
 }
 
 
-float ProfileModelFromEventCreator::getDepthVal( const Coord& pos,
-						 float zval ) const
+float ProfileModelFromEventCreator::getDepthVal( float pos, float zval ) const
 {
     if ( !needt2d_ || mIsUdf(zval) )
 	return zval;
 
-    if ( !t2dtr_ )
+    return model_.getDepthVal( zval, pos );
+    /* TODO if ( !t2dtr_ )
 	{ pErrMsg("No T2D"); zval *= 2000; }
     else
 	zval = t2dtr_->transform( Coord3(pos,zval) );
-    return zval;
+    return zval;*/
 }
 
 
@@ -315,9 +360,9 @@ bool ProfileModelFromSingleEventCreator::setIntersectMarkers()
     if ( !event_.newintersectmarker_ )
 	return true;
 
-    for ( int iprof=0; iprof<profs_.size(); iprof++ )
+    for ( int iprof=0; iprof<model_.size(); iprof++ )
     {
-	ProfileBase* prof = profs_.get( iprof );
+	ProfileBase* prof = model_.get( iprof );
 	if ( prof->isWell() )
 	{
 	    Well::Marker* newtiemarker = new Well::Marker(
@@ -326,7 +371,7 @@ bool ProfileModelFromSingleEventCreator::setIntersectMarkers()
 	    if ( mIsUdf(dah) )
 		continue;
 
-	    dah = getDepthVal( prof->coord_, dah );
+	    dah = getDepthVal( prof->pos_, dah );
 	    newtiemarker->setDah( dah );
 	    prof->markers_.insertNew( newtiemarker );
 	}
@@ -352,7 +397,7 @@ float ProfileModelFromEventCreator::getInterpolatedDepth(
     {
 	const ProfilePosData& curppd = ppds_[prevppdidx];
 	prevppdmdepth = zvalprov->getZValue( curppd.coord_ );
-	prevppdmdepth = getDepthVal( curppd.coord_, prevppdmdepth );
+	prevppdmdepth = getDepthVal( curppd.pos_, prevppdmdepth );
 	prevpos = curppd.pos_;
 	if ( !mIsUdf(prevppdmdepth) )
 	    break;
@@ -365,7 +410,7 @@ float ProfileModelFromEventCreator::getInterpolatedDepth(
     {
 	const ProfilePosData& curppd = ppds_[nextppdidx];
 	nextppdmdepth = zvalprov->getZValue( curppd.coord_ );
-	nextppdmdepth = getDepthVal( curppd.coord_, nextppdmdepth );
+	nextppdmdepth = getDepthVal( curppd.pos_, nextppdmdepth );
 	nextpos = curppd.pos_;
 	if ( !mIsUdf(nextppdmdepth) )
 	    break;
@@ -428,7 +473,6 @@ void ProfileModelFromEventCreator::sortMarkers()
 }
 
 
-
 bool ProfileModelFromEventCreator::go( TaskRunner* tr )
 {
     errmsg_.setEmpty();
@@ -439,7 +483,7 @@ bool ProfileModelFromEventCreator::go( TaskRunner* tr )
 
     if ( doGo( tr ) )
     {
-	profs_.removeAtSamePos();
+	model_.removeAtSamePos();
 	return true;
     }
 
@@ -546,7 +590,7 @@ void ProfileModelFromEventCreator::setNewProfiles()
 	ProfileBase* newprof = ProfFac().create( curppd.pos_ );
 	newprof->createMarkersFrom( prevprof, nextprof );
 	curppd.prof_ = newprof;
-	profs_.set( newprof, false );
+	model_.set( newprof, false );
     }
 }
 
@@ -570,7 +614,7 @@ void ProfileModelFromEventCreator::getEventZVals(
 	if ( !ppd.hasHorZ() )
 	    continue;
 
-	ppd.zhor_ = getDepthVal( ppd.coord_, ppd.zhor_ );
+	ppd.zhor_ = getDepthVal( ppd.pos_, ppd.zhor_ );
     }
 
     Array1DImpl<float> zvals( ppds_.size() );
@@ -659,6 +703,7 @@ void ProfileModelFromEventCreator::setMarkerDepths(
 	{
 	    const float orgz = ppd.prof_->markers_[midx]->dah();
 	    const float newz = ppd.zhor_ + ppd.zoffs_;
+
 	    ppd.prof_->moveMarker( midx, newz,
 				   doPush(orgz,newz), doPull(orgz,newz) );
 	}
@@ -756,10 +801,10 @@ bool ProfileModelFromSingleEventCreator::canDoWork(
 }
 
 
-bool ProfileModelFromSingleEventCreator::doGo( TaskRunner* tr )
+bool ProfileModelFromSingleEventCreator::doGo( TaskRunner* taskrunner )
 {
     if ( event_.tiemarkernm_.isEmpty() )
-	mErrRet("Please specify a marker")
+	mErrRet( tr("Please specify a marker") )
 
     getKnownDepths( event_ );
     setMarkerDepths( event_ );
@@ -774,11 +819,11 @@ ProfileModelFromMultiEventCreator::ProfileModelFromMultiEventCreator(
     : ProfileModelFromEventCreator(data.model_,data.totalnrprofs_)
     , data_(data)
 {
-    const int nrwlls = profs_.nrWells();
+    const int nrwlls = model_.nrWells();
     if ( totalnrprofs_ <= nrwlls )
 	return;
 
-    profs_.removeProfiles();
+    model_.removeProfiles();
 }
 
 
@@ -787,21 +832,21 @@ ProfileModelFromMultiEventCreator::~ProfileModelFromMultiEventCreator()
 }
 
 
-float ProfileModelFromMultiEventCreator::getDepthValue(
+float ProfileModelFromMultiEventCreator::getEventDepthVal(
 	int evidx, const ProfileBase& prof )
 {
     float evdepthval = data_.getZValue( evidx, prof.coord_ );
     if ( mIsUdf(evdepthval) )
 	return mUdf(float);
 
-    return getDepthVal( prof.coord_, evdepthval );
+    return getDepthVal( prof.pos_, evdepthval );
 }
 
 
 float ProfileModelFromMultiEventCreator::getZOffset(
 	int evidx, const ProfileBase& prof )
 {
-    const float evdepthval = getDepthValue( evidx, prof );
+    const float evdepthval = getEventDepthVal( evidx, prof );
     if ( mIsUdf(evdepthval) )
 	return mUdf(float);
 
@@ -821,7 +866,7 @@ float ProfileModelFromMultiEventCreator::getIntersectMarkerDepth(
     if ( topevidx >= 0 )
     {
 	topzoffs = getZOffset( topevidx, prof );
-	topz = getDepthValue( topevidx, prof );
+	topz = getEventDepthVal( topevidx, prof );
     }
 
     int bottomevidx = evidx;
@@ -832,12 +877,12 @@ float ProfileModelFromMultiEventCreator::getIntersectMarkerDepth(
 	if ( !data_.isIntersectMarker(bottomevidx) )
 	{
 	    bottomzoffs = getZOffset( bottomevidx, prof );
-	    bottomz = getDepthValue( bottomevidx, prof );
+	    bottomz = getEventDepthVal( bottomevidx, prof );
 	    break;
 	}
     }
 
-    const float actevz = getDepthValue( evidx, prof );
+    const float actevz = getEventDepthVal( evidx, prof );
     if ( mIsUdf(topzoffs) && mIsUdf(bottomzoffs) )
 	return actevz;
 
@@ -854,23 +899,101 @@ float ProfileModelFromMultiEventCreator::getIntersectMarkerDepth(
 }
 
 
+void ProfileModelFromMultiEventCreator::removeMarkersFromProfiles(
+	const char* markernm )
+{
+    for ( int iprof=0; iprof<model_.size(); iprof++ )
+    {
+	ProfileBase* prof = model_.get( iprof );
+	const int markeridx = prof->markers_.indexOf( markernm );
+	if ( markeridx>= 0 )
+	    prof->markers_.removeSingle( markeridx );
+    }
+}
+
+
+void ProfileModelFromMultiEventCreator::checkAndRemoveMarkers()
+{
+    const Strat::LevelSet& lvls = Strat::LVLS();
+
+    for ( int ilvl=lvls.size()-1; ilvl>0; ilvl-- )
+    {
+	const Strat::Level& lvl = lvls.getLevel( ilvl );
+	const BufferString markernm = lvl.name();
+	BufferString prevtopmarkernm, prevbotmarkernm;
+	for ( int iprof=0; iprof<model_.size(); iprof++ )
+	{
+	    ProfileBase* prof = model_.get( iprof );
+	    if ( !prof->isWell() )
+		continue;
+
+	    const int markeridx = prof->markers_.indexOf( markernm );
+	    BufferString topmarkernm =
+		prof->markers_.validIdx(markeridx-1) ?
+		prof->markers_[markeridx-1]->name() : BufferString::empty();
+	    BufferString botmarkernm =
+		prof->markers_.validIdx(markeridx+1) ?
+		prof->markers_[markeridx+1]->name() : BufferString::empty();
+	    const int tiedevidx = tiedToEventIdx( markernm );
+	    const bool hasdifftopmarker =
+		!prevtopmarkernm.isEmpty() && topmarkernm!=prevtopmarkernm;
+	    const bool hasdiffbotmarker =
+		!prevbotmarkernm.isEmpty() && botmarkernm!=prevbotmarkernm;
+	    if ( tiedevidx>=0 && (hasdifftopmarker || hasdiffbotmarker) )
+	    {
+		removeMarkersFromProfiles( markernm );
+		markersremoved_.add( markernm );
+		data_.removeEvent( tiedevidx );
+		break;
+	    }
+
+	    prevtopmarkernm = topmarkernm;
+	    prevbotmarkernm = botmarkernm;
+	}
+    }
+
+    if ( !markersremoved_.isEmpty() )
+    {
+	warnmsg_ = tr( "%1 '%2' are removed as the marker order position "
+		      "is not same in all the wells" )
+			.arg(uiStrings::sMarker(markersremoved_.size()))
+			.arg( markersremoved_.getDispString() );
+    }
+}
+
+
+
+
+int ProfileModelFromMultiEventCreator::tiedToEventIdx(
+	const char* markernm ) const
+{
+    for ( int iev=0; iev<data_.events_.size(); iev++ )
+    {
+	if ( data_.events_[iev]->getMarkerName()==markernm )
+	    return iev;
+    }
+
+    return -1;
+}
+
+
 bool ProfileModelFromMultiEventCreator::setIntersectMarkers()
 {
     for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
-	if ( data_.isIntersectMarker(evidx) )
+	if ( !data_.isIntersectMarker(evidx) )
+	    continue;
+
+	for ( int iprof=0; iprof<model_.size(); iprof++ )
 	{
-	    for ( int iprof=0; iprof<profs_.size(); iprof++ )
-	    {
-		ProfileBase* prof = profs_.get( iprof );
-		if ( prof->isWell() )
-		{
-		    Well::Marker* newtiemarker = new Well::Marker(
-			    *data_.getIntersectMarker(evidx) );
-		    newtiemarker->setDah(getIntersectMarkerDepth(evidx,*prof));
-		    prof->markers_.insertNew( newtiemarker );
-		}
-	    }
+	    ProfileBase* prof = model_.get( iprof );
+	    if ( !prof->isWell() )
+		continue;
+
+	    Well::Marker* newtiemarker = new Well::Marker(
+		    *data_.getIntersectMarker(evidx) );
+	    newtiemarker->setDah(getIntersectMarkerDepth(evidx,*prof));
+	    prof->markers_.insertNew( newtiemarker );
 	}
     }
 
@@ -926,4 +1049,173 @@ bool ProfileModelFromMultiEventCreator::doGo( TaskRunner* tr )
     }
 
     return true;
+}
+
+
+int ProfileModelFromMultiEventCreator::getTopBottomEventMarkerIdx(
+	const ProfileBase& prof, int imarker, bool findtop ) const
+{
+    const int incrmidx = findtop ? -1 : +1;
+    int resmidx = imarker;
+    while ( true )
+    {
+	resmidx+=incrmidx;
+	if ( resmidx<0 || resmidx>=prof.markers_.size()-1 )
+	    return -1;
+	const char* markernm = prof.markers_[resmidx]->name().buf();
+	const int tieevidx = tiedToEventIdx( markernm );
+	if ( tieevidx>=0 )
+	    break;
+    }
+
+    return resmidx;
+}
+
+bool ProfileModelFromMultiEventCreator::getTopBotEventValsWRTMarker(
+	const char* markernm, const ProfileBase& prof, float& mval,
+	float& topevmval, float& botevmval, float& relmpos ) const
+{
+    const int midx = prof.markers_.indexOf( markernm );
+    if ( midx<0 )
+	return false;
+
+    const int topmidx = getTopBottomEventMarkerIdx( prof, midx, true );
+    const int botmidx = getTopBottomEventMarkerIdx( prof, midx, false );
+
+    const Well::MarkerSet& mrkrs = prof.markers_;
+    mval = mrkrs[midx]->dah();
+    if ( mrkrs.validIdx(topmidx) )
+	topevmval = mrkrs[topmidx]->dah();
+    if ( mrkrs.validIdx(botmidx) )
+	botevmval = mrkrs[botmidx]->dah();
+    if ( !mIsUdf(topevmval) && !mIsUdf(botevmval) )
+	relmpos = (mval-topevmval) / (botevmval-topevmval);
+    return true;
+}
+
+#define mPrrContinue \
+{ \
+    pErrMsg( "Cant interpolate" ); \
+    continue; \
+}
+
+
+void ProfileModelFromMultiEventCreator::interpolateMarkersBetweenEvents()
+{
+    for ( int iprof=0; iprof<model_.size(); iprof++ )
+    {
+	ProfileBase* prof = model_.get( iprof );
+	if ( prof->isWell() )
+	    continue;
+	Well::MarkerSet& markers = prof->markers_;
+	const int leftwellidx = model_.indexBefore( prof->pos_, true );
+	const int rightwellidx = model_.indexAfter( prof->pos_, true );
+	const ProfileBase* leftprof =
+	    leftwellidx<0 ? 0 : model_.get( leftwellidx );
+	const ProfileBase* rightprof =
+	    rightwellidx<0 ? 0 : model_.get( rightwellidx );
+	if ( !leftprof && !rightprof )
+	{
+	    pErrMsg( "Huh.. No left & right well!" );
+	    continue;
+	}
+
+	const float disttoleftfac =
+	    leftprof && rightprof ? 1 - (prof->pos_ - leftprof->pos_)/
+					(rightprof->pos_-leftprof->pos_) : 0;
+	const float disttorightfac =
+	    rightprof && leftprof ? 1 - (rightprof->pos_ - prof->pos_)/
+					(rightprof->pos_-leftprof->pos_) : 0;
+	for ( int im=0; im<markers.size(); im++ )
+	{
+	    const char* markernm = markers[im]->name().buf();
+	    const int tiedevidx = tiedToEventIdx( markernm );
+	    if ( tiedevidx>= 0 )
+		continue;
+
+	    const int topmidx = getTopBottomEventMarkerIdx( *prof, im, true );
+	    const int botmidx = getTopBottomEventMarkerIdx( *prof, im, false );
+	    const float topevdah =
+		markers.validIdx(topmidx) ? markers[topmidx]->dah()
+					  : mUdf(float);
+	    const float botevdah =
+		markers.validIdx(botmidx) ? markers[botmidx]->dah()
+					  : mUdf(float);
+	    if ( mIsUdf(topevdah) && mIsUdf(botevdah) )
+	    {
+		pErrMsg( "Huh! cannot find top & bottom event to interpolate.");
+		continue;
+	    }
+
+	    float leftevdah, lefttopevdah, leftbotevdah, leftmrelpos;
+	    leftevdah =  lefttopevdah = leftbotevdah = leftmrelpos =mUdf(float);
+	    if ( leftprof )
+		getTopBotEventValsWRTMarker( markernm, *leftprof, leftevdah,
+					     lefttopevdah, leftbotevdah,
+					     leftmrelpos );
+
+	    float rightevdah, righttopevdah, rightbotevdah, rightmrelpos;
+	    rightevdah =righttopevdah=rightbotevdah=rightmrelpos = mUdf(float);
+	    if ( rightprof )
+		getTopBotEventValsWRTMarker( markernm, *rightprof, rightevdah,
+					     righttopevdah, rightbotevdah,
+					     rightmrelpos );
+	    float resultdah = mUdf(float);
+	    float ddahval = mUdf(float);
+	    if ( mIsUdf(topevdah) )
+	    {
+		if ( !leftprof )
+		{
+		    if ( mIsUdf(rightbotevdah) || mIsUdf(rightevdah) )
+			mPrrContinue;
+		    ddahval = rightevdah - rightbotevdah;
+		}
+		else if ( !rightprof )
+		{
+		    if ( mIsUdf(leftbotevdah) || mIsUdf(leftevdah) )
+			mPrrContinue;
+		    ddahval = leftevdah - leftbotevdah;
+		}
+		else
+		    ddahval = disttoleftfac*(leftevdah - leftbotevdah) +
+			      disttorightfac*(rightevdah - rightbotevdah);
+
+		resultdah = botevdah + ddahval;
+	    }
+	    else if ( mIsUdf(botevdah) )
+	    {
+		if ( !leftprof )
+		{
+		    if ( mIsUdf(righttopevdah) || mIsUdf(rightevdah) )
+			mPrrContinue;
+		    ddahval = rightevdah - righttopevdah;
+		}
+		else if ( !rightprof )
+		{
+		    if ( mIsUdf(leftbotevdah) || mIsUdf(leftevdah) )
+			mPrrContinue;
+		    ddahval = leftevdah - lefttopevdah;
+		}
+		else
+		    ddahval = disttoleftfac*(leftevdah - lefttopevdah) +
+			      disttorightfac*(rightevdah - righttopevdah);
+
+		resultdah = topevdah + ddahval;
+	    }
+	    else
+	    {
+		float resrelpos = mUdf(float);
+		if ( mIsUdf(leftmrelpos) )
+		    resrelpos = rightmrelpos;
+		else if ( mIsUdf(rightmrelpos) )
+		    resrelpos = leftmrelpos;
+		else
+		    resrelpos = ((disttoleftfac*leftmrelpos)+
+				 (disttorightfac*rightmrelpos)) / 2.f;
+		resultdah = topevdah + resrelpos*(botevdah-topevdah);
+	    }
+
+	    markers[im]->setDah( resultdah );
+	}
+    }
 }

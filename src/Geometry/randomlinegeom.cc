@@ -137,6 +137,15 @@ void RandomLine::allNodePositions( TrcKeyPath& tks ) const
 	tks[idx] = TrcKey( nodes_[idx] );
 }
 
+void RandomLine::getRange( TrcKeyZSampling& tkzs ) const
+{
+    tkzs.setEmpty();
+    for ( int inode=0; inode<nodes_.size(); inode++ )
+	tkzs.hsamp_.include( TrcKey(nodes_[inode]) );
+    tkzs.zsamp_ = zrange_;
+}
+
+
 void RandomLine::limitTo( const TrcKeyZSampling& cs )
 {
     const Pos::SurvID survid = Survey::GM().default3DSurvID();

@@ -16,6 +16,7 @@ ________________________________________________________________________
 
 #include "datapackbase.h"
 #include "trckeyzsampling.h"
+#include "randomlinegeom.h"
 #include "seisinfo.h"
 
 class BinIDValueSet;
@@ -93,10 +94,12 @@ public:
     const StepInterval<float>&	getZRange() const	{ return zsamp_; }
     void			setZRange( const StepInterval<float>& zrg )
 				{ zsamp_ = zrg; }
+    void			getRange(TrcKeyZSampling&) const;
 
     void			setPath( const TrcKeyPath& path )
 				{ path_ = path; }
     const TrcKeyPath&		getPath() const		{ return path_; }
+    virtual void		setRandomLineID(int rdlid);
 
     bool			addComponent(const char* nm);
 
@@ -106,8 +109,9 @@ public:
 
 protected:
 
-    TrcKeyPath			path_;
-    StepInterval<float>		zsamp_;
+    TrcKeyPath				path_;
+    StepInterval<float>			zsamp_;
+    ConstRefMan<Geometry::RandomLine>	rdmline_;
 
 public:
     static DataPack::ID		createDataPackFrom(const RegularSeisDataPack&,
@@ -232,6 +236,7 @@ public:
     bool			isVertical() const	{ return true; }
     const TrcKeyPath&		getPath() const		{ return path_; }
     Coord3			getCoord(int i0,int i1) const;
+    void			getRange(TrcKeyZSampling&) const;
 
     const char*			dimName( bool dim0 ) const
 				{ return dim0 ? "Distance" : "Z"; }

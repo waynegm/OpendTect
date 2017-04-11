@@ -23,6 +23,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uimsg.h"
 #include "uiprofileviewpars.h"
 #include "uistratmultidisplaywindow.h"
+#include "uistratlayermodel.h"
 #include "uitable.h"
 #include "uitoolbutton.h"
 #include "uitaskrunner.h"
@@ -67,6 +68,12 @@ uiEventMarkerTieDialog( uiParent* p, ProfileModelFromEventData& data )
 
     BufferStringSet markernms;
     wms.getNames( markernms );
+    for ( int iev=0; iev<data_.nrEvents(); iev++ )
+    {
+	const int tiemarkeridx = markernms.indexOf( data_.getMarkerName(iev) );
+	if ( tiemarkeridx>=0 )
+	    markernms.removeSingle( tiemarkeridx );
+    }
 
     for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
@@ -230,6 +237,7 @@ uiProfileModelViewControl( uiFlatViewer& vwr,
 			   ProfileModelBaseAuxDataMgr& auxmgr )
     : uiFlatViewStdControl(vwr,su)
     , auxdatamgr_(auxmgr)
+    , propdlg_(0)
 {
 }
 
@@ -265,8 +273,10 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     nrprofsfld_ = new uiGenInput(paramgrp_,tr("Ctrl Profiles"),IntInpSpec(50));
     mAttachCB( nrprofsfld_->valuechanged,
 	       uiProfileModelFromEvCrGrp::nrCtrlProfChangedCB );
+    nrmodelsfld_ = new uiGenInput(paramgrp_,tr("Nr Models"),IntInpSpec(25));
+    nrmodelsfld_->attach( leftAlignedBelow, nrprofsfld_ );
     evlistbox_ = new uiListBox( paramgrp_, "Horizon List" );
-    evlistbox_->attach( leftAlignedBelow, nrprofsfld_ );
+    evlistbox_->attach( leftAlignedBelow, nrmodelsfld_ );
     addevbut_ =
 	new uiToolButton( paramgrp_, "plus", tr("Add event"),
 			  mCB(this,uiProfileModelFromEvCrGrp,addEventCB) );
@@ -329,6 +339,12 @@ uiProfileModelFromEvCrGrp::~uiProfileModelFromEvCrGrp()
 }
 
 
+int uiProfileModelFromEvCrGrp::nrModels() const
+{
+    return nrmodelsfld_->getIntValue();
+}
+
+
 int uiProfileModelFromEvCrGrp::nrProfs() const
 {
     return nrprofsfld_->getIntValue();
@@ -370,6 +386,7 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
 
 void uiProfileModelFromEvCrGrp::updateProfileModel()
 {
+    MouseCursorChanger waitmcs( MouseCursor::Wait );
     if ( data_.model_.isEmpty() )
 	mErrRet( tr("No well added to create a model from"), )
 
@@ -381,6 +398,17 @@ void uiProfileModelFromEvCrGrp::updateProfileModel()
     uiTaskRunner uitr( this );
     if ( !prohoruser.go(&uitr) )
 	return;
+
+    if ( !prohoruser.warnMsg().isEmpty() )
+    {
+	uiMSG().warning( prohoruser.warnMsg() );
+	BufferStringSet removedmarkers = prohoruser.markersRemoved();
+	while ( removedmarkers.size() )
+	{
+	    BufferString removeevent( *removedmarkers.pop() );
+	    evlistbox_->removeItem( removeevent );
+	}
+    }
 
     updateProfileModelDisplay();
 }
@@ -461,6 +489,7 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 	evlistbox_->addItem( evname, zvalprov.drawColor() );
 	FlatView::AuxData* horad =
 	    viewer_->createAuxData( evname.getFullString() );
+	horad->cansetcursor_ = false;
 	viewer_->addAuxData( horad );
 	horad->linestyle_.type_ = LineStyle::Solid;
 	horad->linestyle_.color_ = zvalprov.drawColor();
@@ -541,6 +570,15 @@ void uiProfileModelFromEvCrDlg::showMultiDisplayCB( CallBacker* )
 
 void uiProfileModelFromEvCrDlg::applyCB( CallBacker* )
 {
+    uiStratLayerModel* uislm = uiStratLayerModel::getUILayerModel();
+    if ( !uislm )
+    {
+	pErrMsg( "No uiStraLayerModel found" );
+	return;
+    }
+
+    uislm->setNrModels( profscrgrp_->nrModels() );
+
     viewbut_->setSensitive( true );
 }
 

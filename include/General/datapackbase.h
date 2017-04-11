@@ -250,7 +250,7 @@ public:
 
     float			nrKBytes() const;
     void			dumpInfo(IOPar&) const;
-    void			setRandomLineID(int);
+    virtual void		setRandomLineID(int);
     int				getRandomLineID() const;
 
     int				getComponentIdx(const char* nm,

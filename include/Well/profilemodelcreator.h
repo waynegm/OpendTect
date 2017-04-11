@@ -44,7 +44,8 @@ public:
     void		prepareZTransform(TaskRunner* tr=0);
     void		setNewProfiles();
     bool		go(TaskRunner* tr=0);
-    BufferString	errmsg_;
+    uiString		warnMsg() const			{ return warnmsg_; }
+    uiString		errMsg() const			{ return errmsg_; }
 
 			// settable with default
     IOPar&		t2dpar_;
@@ -53,12 +54,15 @@ public:
 
 protected:
 
-    ProfileModelBase&	profs_;
+    ProfileModelBase&	model_;
     ProfilePosDataSet&	ppds_;
     ZAxisTransform*	t2dtr_;
     bool		needt2d_;
+    uiString		warnmsg_;
+    uiString		errmsg_;
 
-    float		getDepthVal(const Coord& pos,float z) const;
+    virtual bool	isSingleEvent() const		=0;
+    float		getDepthVal(float pos,float z) const;
     void		addNewPositions();
     void		getKnownDepths(const ProfileModelFromEventData::Event&);
     void		getEventZVals(const ProfileModelFromEventData::Event&);
@@ -89,7 +93,7 @@ protected:
 
 mExpClass(Well) ProfileModelFromSingleEventCreator
 				: public ProfileModelFromEventCreator
-{
+{ mODTextTranslationClass(ProfileModelFromSingleEventCreator);
 public:
 
 			ProfileModelFromSingleEventCreator(ProfileModelBase&,
@@ -105,6 +109,7 @@ protected:
 
     const ProfileModelFromEventData::Event& event_;
 
+    virtual bool	isSingleEvent() const		{ return true; }
     virtual bool	setIntersectMarkers();
     virtual bool	doGo(TaskRunner*);
     virtual void	fillCoords();
@@ -122,16 +127,18 @@ protected:
 
 mExpClass(Well) ProfileModelFromMultiEventCreator
 				: public ProfileModelFromEventCreator
-{
+{ mODTextTranslationClass(ProfileModelFromMultiEventCreator);
 public:
 
 				ProfileModelFromMultiEventCreator(
 					ProfileModelFromEventData&);
 				~ProfileModelFromMultiEventCreator();
+    BufferStringSet		markersRemoved() const
+				{ return markersremoved_; }
 
 protected:
 
-    float				getDepthValue(int evidx,
+    float				getEventDepthVal(int evidx,
 						      const ProfileBase&);
     float				getZOffset(int evidx,
 						   const ProfileBase&);
@@ -139,10 +146,23 @@ protected:
     float				getIntersectMarkerDepth(
 						int evidx,const ProfileBase&);
     bool				interpolateIntersectMarkers();
+    void				checkAndRemoveMarkers();
+    void				interpolateMarkersBetweenEvents();
+    int					tiedToEventIdx( const char* mnm) const;
+    void				removeMarkersFromProfiles(const char*);
     virtual bool			doGo(TaskRunner*);
     virtual void			fillCoords();
+    virtual bool			isSingleEvent() const	{ return false;}
+    int					getTopBottomEventMarkerIdx(
+					     const ProfileBase&,int imarker,
+					     bool findtop) const;
+    bool				getTopBotEventValsWRTMarker(
+					    const char* mnm,const ProfileBase&,
+					    float& mdah,float& topevdah,
+					    float& botevdah,float& relpos)const;
 
     ProfileModelFromEventData&		data_;
+    BufferStringSet			markersremoved_;
 };
 
 

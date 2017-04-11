@@ -162,6 +162,7 @@ ProfileModelBaseAuxDataMgr::ProfileAux::~ProfileAux()
     varnm = viewer_.createAuxData( txt ); \
     if ( !varnm ) act; \
     varnm->zvalue_ = 2; \
+    varnm->cansetcursor_ = false; \
     varnm->linestyle_.type_ = LineStyle::Solid; \
     viewer_.addAuxData( varnm )
 

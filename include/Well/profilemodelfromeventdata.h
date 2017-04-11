@@ -49,6 +49,7 @@ mStruct(Well) ProfileModelFromEventData
 	ZValueProvider*			zvalprov_;
 	Well::Marker*			newintersectmarker_;
 	BufferString			getMarkerName() const;
+	void				setMarker(const char*);
 	Strat::Level::ID		levelid_;
     };
 
@@ -59,6 +60,7 @@ mStruct(Well) ProfileModelFromEventData
 
     int					nrEvents() const
 					{ return events_.size(); }
+    bool				isIntersectMarker(const char*) const;
     bool				isIntersectMarker(int evidx) const;
     float				getZValue(int evidx,const Coord&) const;
     void				setTieMarker(int evidx,

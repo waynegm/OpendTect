@@ -19,7 +19,6 @@ static const char* rcsID mUsedVar = "$Id: seisdatapack.cc 38551 2015-03-18 05:38
 #include "flatposdata.h"
 #include "paralleltask.h"
 #include "posinfo.h"
-#include "randomlinegeom.h"
 #include "seistrc.h"
 #include "survinfo.h"
 
@@ -355,6 +354,22 @@ RandomSeisDataPack::RandomSeisDataPack( const char* cat,
 					const BinDataDesc* bdd )
     : SeisDataPack(cat,bdd)
 {
+}
+
+
+void RandomSeisDataPack::setRandomLineID( int rdlid )
+{
+    SeisDataPack::setRandomLineID( rdlid );
+    rdmline_ = Geometry::RLM().get( rdlid );
+}
+
+
+void RandomSeisDataPack::getRange( TrcKeyZSampling& tkzs ) const
+{
+    if ( !rdmline_ )
+	return;
+
+    rdmline_->getRange( tkzs );
 }
 
 
@@ -771,6 +786,19 @@ RandomFlatDataPack::RandomFlatDataPack(
 {
     rdlids.setParam( this, source_.getRandomLineID() );
     setSourceData();
+}
+
+
+void RandomFlatDataPack::getRange( TrcKeyZSampling& tkzs ) const
+{
+    mDynamicCastGet(const RandomSeisDataPack*,rdmsource,&source_);
+    if ( !rdmsource )
+    {
+	pErrMsg( "Source SeisDataPack not of type Randome!" );
+	return;
+    }
+
+    rdmsource->getRange( tkzs );
 }
 
 

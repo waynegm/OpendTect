@@ -70,6 +70,9 @@ uiEventMarkerTieDialog( uiParent* p, ProfileModelFromEventData& data )
     wms.getNames( markernms );
     for ( int iev=0; iev<data_.nrEvents(); iev++ )
     {
+	if ( !data_.isIntersectMarker(iev) )
+	    continue;
+
 	const int tiemarkeridx = markernms.indexOf( data_.getMarkerName(iev) );
 	if ( tiemarkeridx>=0 )
 	    markernms.removeSingle( tiemarkeridx );
@@ -83,7 +86,6 @@ uiEventMarkerTieDialog( uiParent* p, ProfileModelFromEventData& data )
 	evmarkertietbl_->setCellReadOnly( RowCol(evidx,0), true );
 	uiComboBox* mrksel = new uiComboBox( 0, "marker tie" );
 	mrksel->addItem( tr(ProfileModelFromEventData::addMarkerStr()) );
-	mrksel->addItem( tr(ProfileModelFromEventData::dontUseStr()) );
 	mrksel->addItems( markernms );
 	evmarkertietbl_->setCellObject( RowCol(evidx,1), mrksel );
 	setMarkerInTable( evidx );
@@ -104,14 +106,22 @@ void setMarkerInTable( int evidx )
 
     const Well::Marker* newmarker = data_.getIntersectMarker( evidx );
     if ( !newmarker )
-	return;
+    {
+	uiObject* cellobj = evmarkertietbl_->getCellObject( RowCol(evidx,1) );
+	mDynamicCastGet(uiComboBox*,cb,cellobj)
+	if ( cb )
+	    cb->setCurrentItem( data_.getMarkerName(evidx) );
+    }
 
     RowCol newmarkerrc( evidx, sNewMarkerNameColIdx );
-    evmarkertietbl_->setText( newmarkerrc, newmarker->name() );
+    if ( newmarker )
+	evmarkertietbl_->setText( newmarkerrc, newmarker->name() );
     newmarkerrc.col() = sNewMarkerColorColIdx;
-    uiColorInput::Setup colselsu( newmarker->color() );
+    uiColorInput::Setup colselsu( newmarker ? newmarker->color()
+	    				    : Color::NoColor() );
     colselsu.dlgtitle( tr("Select marker color") );
     uiColorInput* colsel  = new uiColorInput( 0, colselsu );
+    colsel->setSensitive( newmarker );
     evmarkertietbl_->setCellGroup( newmarkerrc, colsel );
 }
 
@@ -334,6 +344,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 
 uiProfileModelFromEvCrGrp::~uiProfileModelFromEvCrGrp()
 {
+    data_.removeAllEvents();
     viewer_->removeAuxDatas( horauxdatas_ );
     deepErase( horauxdatas_ );
 }

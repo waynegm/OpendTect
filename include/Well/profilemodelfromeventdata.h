@@ -68,9 +68,9 @@ mStruct(Well) ProfileModelFromEventData
     BufferString			getMarkerName(int evidx) const;
     Well::Marker*			getIntersectMarker(int evidx) const;
     void				addEvent(ZValueProvider*);
+    void				removeAllEvents();
     void				removeEvent(int evidx);
 
-    static const char*			dontUseStr()	{ return "<don't use>";}
     static const char*			addMarkerStr()
 					{return "<add marker at intersection>";}
 };

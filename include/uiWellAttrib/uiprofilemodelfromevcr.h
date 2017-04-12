@@ -35,7 +35,7 @@ mExpClass(uiWellAttrib) uiProfileModelFromEvCrGrp : public uiGroup
 public:
 				uiProfileModelFromEvCrGrp(
 					uiParent*, ProfileModelFromEventData&);
-				~uiProfileModelFromEvCrGrp();
+    virtual			~uiProfileModelFromEvCrGrp();
     int				nrProfs() const;
     int				nrModels() const;
     virtual void		updateDisplay();

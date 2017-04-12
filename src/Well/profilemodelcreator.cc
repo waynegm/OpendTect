@@ -230,6 +230,13 @@ void ProfileModelFromEventData::addEvent( ZValueProvider* zprov )
 }
 
 
+void ProfileModelFromEventData::removeAllEvents()
+{
+    while( events_.size() )
+	removeEvent( events_.size()-1 );
+}
+
+
 void ProfileModelFromEventData::removeEvent( int evidx )
 {
     if ( !events_.validIdx(evidx) )
@@ -262,7 +269,7 @@ ProfileModelFromEventData::ProfileModelFromEventData(
 
 ProfileModelFromEventData::~ProfileModelFromEventData()
 {
-    deepErase( events_ );
+    removeAllEvents();
 }
 
 

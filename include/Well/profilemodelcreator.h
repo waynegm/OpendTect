@@ -21,6 +21,7 @@ class BufferStringSet;
 class ProfileBase;
 class ProfileModelBase;
 class ProfilePosDataSet;
+class ProfilePosProvider;
 class TaskRunner;
 class ZAxisTransform;
 class ZValueProvider;
@@ -37,6 +38,7 @@ public:
     enum MovePol	{ MoveNone, MoveAll, MoveAbove, MoveBelow };
 
 			ProfileModelFromEventCreator(ProfileModelBase&,
+						     ProfilePosProvider*,
 						     int totalnrprofs=0);
     virtual		~ProfileModelFromEventCreator();
 
@@ -44,7 +46,6 @@ public:
     void		prepareZTransform(TaskRunner* tr=0);
     void		setNewProfiles();
     bool		go(TaskRunner* tr=0);
-    uiString		warnMsg() const			{ return warnmsg_; }
     uiString		errMsg() const			{ return errmsg_; }
 
 			// settable with default
@@ -55,29 +56,24 @@ public:
 protected:
 
     ProfileModelBase&	model_;
+    ProfilePosProvider* profposprov_;
     ProfilePosDataSet&	ppds_;
     ZAxisTransform*	t2dtr_;
     bool		needt2d_;
-    uiString		warnmsg_;
     uiString		errmsg_;
 
     virtual bool	isSingleEvent() const		=0;
     float		getDepthVal(float pos,float z) const;
     void		addNewPositions();
     void		getKnownDepths(const ProfileModelFromEventData::Event&);
-    void		getEventZVals(const ProfileModelFromEventData::Event&);
-    void		getZOffsets(const ProfileModelFromEventData::Event&);
-    float		getInterpolatedDepth(int ippd,
-				const ProfileModelFromEventData::Event&) const;
-    bool		interpolateIntersectMarkersUsingEV(
-				const ProfileModelFromEventData::Event&);
+    void		setEventZVals(const ProfileModelFromEventData::Event&);
+    virtual void	setZOffsets(const ProfileModelFromEventData::Event&)=0;
     void		setMarkerDepths(
 				const ProfileModelFromEventData::Event&);
     void		sortMarkers();
 
     virtual bool	doGo(TaskRunner*)		= 0;
-    virtual void	fillCoords()			= 0;
-    virtual bool	setIntersectMarkers()		= 0;
+    void		fillCoords();
 
     int			addNewPPDsAfter(int,int,bool);
     void		addProfileToPPDs();
@@ -97,22 +93,16 @@ mExpClass(Well) ProfileModelFromSingleEventCreator
 public:
 
 			ProfileModelFromSingleEventCreator(ProfileModelBase&,
-				const ProfileModelFromEventData::Event&);
-
-    static bool		canDoWork(const ProfileModelBase&);
-
-			// settable
-    float		sectionangle_;	// only used if model has exactly 1 well
-    float		sectionlength_; // ditto
+				const ProfileModelFromEventData::Event&,
+				ProfilePosProvider*);
 
 protected:
 
     const ProfileModelFromEventData::Event& event_;
 
     virtual bool	isSingleEvent() const		{ return true; }
-    virtual bool	setIntersectMarkers();
+    virtual void	setZOffsets(const ProfileModelFromEventData::Event&);
     virtual bool	doGo(TaskRunner*);
-    virtual void	fillCoords();
 
 };
 
@@ -131,38 +121,27 @@ mExpClass(Well) ProfileModelFromMultiEventCreator
 public:
 
 				ProfileModelFromMultiEventCreator(
-					ProfileModelFromEventData&);
+					ProfileModelFromEventData&,
+					ProfilePosProvider*);
 				~ProfileModelFromMultiEventCreator();
-    BufferStringSet		markersRemoved() const
-				{ return markersremoved_; }
 
 protected:
 
-    float				getEventDepthVal(int evidx,
-						      const ProfileBase&);
-    float				getZOffset(int evidx,
-						   const ProfileBase&);
-    virtual bool			setIntersectMarkers();
-    float				getIntersectMarkerDepth(
-						int evidx,const ProfileBase&);
-    bool				interpolateIntersectMarkers();
-    void				checkAndRemoveMarkers();
-    void				interpolateMarkersBetweenEvents();
-    int					tiedToEventIdx( const char* mnm) const;
-    void				removeMarkersFromProfiles(const char*);
-    virtual bool			doGo(TaskRunner*);
-    virtual void			fillCoords();
-    virtual bool			isSingleEvent() const	{ return false;}
-    int					getTopBottomEventMarkerIdx(
+    void			reArrangeMarkers();
+    void			interpolateMarkersBetweenEvents();
+    virtual bool		doGo(TaskRunner*);
+    virtual bool		isSingleEvent() const	{ return false;}
+    virtual void		setZOffsets(
+				    const ProfileModelFromEventData::Event&);
+    int				getTopBottomEventMarkerIdx(
 					     const ProfileBase&,int imarker,
 					     bool findtop) const;
-    bool				getTopBotEventValsWRTMarker(
+    bool			getTopBotEventValsWRTMarker(
 					    const char* mnm,const ProfileBase&,
 					    float& mdah,float& topevdah,
 					    float& botevdah,float& relpos)const;
 
-    ProfileModelFromEventData&		data_;
-    BufferStringSet			markersremoved_;
+    ProfileModelFromEventData&	data_;
 };
 
 

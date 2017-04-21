@@ -32,6 +32,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "seisdatapack.h"
 #include "profilebase.h"
 #include "profilemodelcreator.h"
+#include "profileposprovider.h"
 #include "profilemodelfromeventdata.h"
 #include "profilemodelbaseauxdatamgr.h"
 #include "zvalueprovider.h"
@@ -281,8 +282,6 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
     nrprofsfld_ = new uiGenInput(paramgrp_,tr("Ctrl Profiles"),IntInpSpec(50));
-    mAttachCB( nrprofsfld_->valuechanged,
-	       uiProfileModelFromEvCrGrp::nrCtrlProfChangedCB );
     nrmodelsfld_ = new uiGenInput(paramgrp_,tr("Nr Models"),IntInpSpec(25));
     nrmodelsfld_->attach( leftAlignedBelow, nrprofsfld_ );
     evlistbox_ = new uiListBox( paramgrp_, "Horizon List" );
@@ -299,6 +298,11 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 	new uiToolButton( paramgrp_, "tieevmarker",tr("Tie event to markers.."),
 			  mCB(this,uiProfileModelFromEvCrGrp,tieEventsCB) );
     tiemarkerbut_->attach( rightTo, rmevbut_ );
+    uiToolButton* profupdbut =
+	uiToolButton::getStd( paramgrp_, OD::Apply,
+			      mCB(this,uiProfileModelFromEvCrGrp,updateProfileCB),
+			      tr("Update profile") );
+    profupdbut->attach( rightTo, tiemarkerbut_ );
     uiGroup* dispgrp = new uiGroup( this, "Display Group" );
     viewer_ = new uiFlatViewer( dispgrp );
     viewer_->setInitialSize( uiSize(800,300) );
@@ -330,6 +334,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
     const StepInterval<double> dzrg = seisfdp->posData().range( false );
     Interval<float> zrg( mCast(float,dzrg.start), mCast(float,dzrg.stop) );
+    modeladmgr_->drawPars().drawctrls_ = false;
+    modeladmgr_->drawPars().drawconnections_ = false;
     modeladmgr_->view2Model().setXRange( xrg );
     modeladmgr_->view2Model().setZRange( zrg );
     modeladmgr_->view2Model().setNrSeq( 25 );
@@ -375,7 +381,7 @@ void uiProfileModelFromEvCrGrp::updateProfileModelDisplay()
 }
 
 
-void uiProfileModelFromEvCrGrp::nrCtrlProfChangedCB( CallBacker* )
+void uiProfileModelFromEvCrGrp::updateProfileCB( CallBacker* )
 {
     updateProfileModel();
 }
@@ -386,7 +392,6 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
     getEvents();
     drawEvents();
     modeladmgr_->drawPars().resetMarkerNames();
-    updateProfileModel();
 }
 
 #define mErrRet( msg, retval ) \
@@ -401,25 +406,16 @@ void uiProfileModelFromEvCrGrp::updateProfileModel()
     if ( data_.model_.isEmpty() )
 	mErrRet( tr("No well added to create a model from"), )
 
-    checkAndRemoveEvents();
     if ( !data_.nrEvents() )
 	mErrRet( tr("No event added to create a model from"), )
     data_.totalnrprofs_ = nrProfs();
-    ProfileModelFromMultiEventCreator prohoruser( data_ );
+    ProfilePosProviderFromLine* posprov =
+	new ProfilePosProviderFromLine( data_.section_.linegeom_ );
+    data_.prepareIntersectionMarkers();
+    ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
     uiTaskRunner uitr( this );
     if ( !prohoruser.go(&uitr) )
 	return;
-
-    if ( !prohoruser.warnMsg().isEmpty() )
-    {
-	uiMSG().warning( prohoruser.warnMsg() );
-	BufferStringSet removedmarkers = prohoruser.markersRemoved();
-	while ( removedmarkers.size() )
-	{
-	    BufferString removeevent( *removedmarkers.pop() );
-	    evlistbox_->removeItem( removeevent );
-	}
-    }
 
     updateProfileModelDisplay();
 }
@@ -434,7 +430,6 @@ void uiProfileModelFromEvCrGrp::removeEventCB( CallBacker* )
     data_.removeEvent( rmidx );
     evlistbox_->removeItem( rmidx );
     drawEvents();
-    updateProfileModel();
 }
 
 
@@ -442,48 +437,7 @@ void uiProfileModelFromEvCrGrp::tieEventsCB( CallBacker* )
 {
     uiEventMarkerTieDialog tieevmrkrdlg( this, data_ );
     if ( tieevmrkrdlg.go() )
-    {
 	modeladmgr_->drawPars().resetMarkerNames();
-	updateProfileModel();
-    }
-}
-
-
-void uiProfileModelFromEvCrGrp::checkAndRemoveEvents()
-{
-    uiStringSet evnms;
-
-    for ( int iev=data_.events_.size()-1; iev>=0; iev-- )
-    {
-	if ( !data_.isIntersectMarker(iev) )
-	    continue;
-
-	const int firstwellidx = data_.model_.nearestIndex( 0.0f, true );
-	const int lastwellidx = data_.model_.nearestIndex( 1.0f, true );
-	if ( firstwellidx<0 || lastwellidx<0 )
-	{
-	    pErrMsg( "Cannot find well" );
-	    evnms += data_.events_[iev]->zvalprov_->getName();
-	    evlistbox_->removeItem( iev );
-	    data_.removeEvent( iev );
-	    continue;
-	}
-
-	const Coord firstwellpos = data_.model_.get( firstwellidx )->coord_;
-	const float firstwellintz = data_.getZValue( iev, firstwellpos );
-	const Coord lastwellpos = data_.model_.get( lastwellidx )->coord_;
-	const float lastwellintz = data_.getZValue( iev, lastwellpos );
-	if ( mIsUdf(firstwellintz) || mIsUdf(lastwellintz) )
-	{
-	    evnms += data_.events_[iev]->zvalprov_->getName();
-	    evlistbox_->removeItem( iev );
-	    data_.removeEvent( iev );
-	}
-    }
-
-    if ( !evnms.isEmpty() )
-	mErrRet( tr("Removing event '%1' as they do not intersect wells "
-		    "at extereme positions").arg(evnms.cat(",")), )
 }
 
 
@@ -579,6 +533,21 @@ void uiProfileModelFromEvCrDlg::showMultiDisplayCB( CallBacker* )
 }
 
 
+bool uiProfileModelFromEvCrDlg::acceptOK( CallBacker* )
+{
+    uiStratLayerModel* uislm = uiStratLayerModel::getUILayerModel();
+    if ( !uislm )
+    {
+	pErrMsg( "No uiStraLayerModel found" );
+	return false;
+    }
+
+    profscrgrp_->updateProfileModel();
+    uislm->setNrModels( profscrgrp_->nrModels() );
+    return true;
+}
+
+
 void uiProfileModelFromEvCrDlg::applyCB( CallBacker* )
 {
     uiStratLayerModel* uislm = uiStratLayerModel::getUILayerModel();
@@ -587,8 +556,7 @@ void uiProfileModelFromEvCrDlg::applyCB( CallBacker* )
 	pErrMsg( "No uiStraLayerModel found" );
 	return;
     }
-
-    uislm->setNrModels( profscrgrp_->nrModels() );
+    profscrgrp_->updateProfileModel();
 
     viewbut_->setSensitive( true );
 }

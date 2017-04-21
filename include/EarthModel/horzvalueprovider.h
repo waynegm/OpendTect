@@ -28,6 +28,8 @@ mExpClass(EarthModel) HorZValueProvider : public ZValueProvider
 public:
 				HorZValueProvider(const EM::Horizon*);
     virtual uiString		getName() const;
+    virtual int			depthID() const		{ return depthid_; }
+    void			setDepthID( int id )	{ depthid_ = id; }
     void			setHorizon(const EM::Horizon*);
     const EM::Horizon*		horizon() const { return hor_.ptr(); }
 
@@ -38,5 +40,6 @@ public:
     virtual float		getZValue(const Coord&) const;
 protected:
     ConstRefMan<EM::Horizon>	hor_;
+    int				depthid_;
 };
 #endif

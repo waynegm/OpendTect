@@ -270,6 +270,18 @@ void ProfileModelBase::removeAtSamePos( int idxtokeep )
 }
 
 
+void ProfileModelBase::removeMarker( const char* markernm )
+{
+    for ( int iprof=0; iprof<profs_.size(); iprof++ )
+    {
+	ProfileBase* prof = profs_[iprof];
+	const int markeridx = prof->markers_.indexOf( markernm );
+	if ( markeridx>= 0 )
+	    prof->markers_.removeSingle( markeridx );
+    }
+}
+
+
 ProfileFactory& ProfFac()
 {
     mDefineStaticLocalObject(ProfileFactory,proffac_,);
@@ -528,8 +540,8 @@ float ProfileModelBase::getInterpolatedDepthVal( float timeval,
 	(profpos - prof1.pos_) / (prof2.pos_-prof1.pos_);
     mGetWellData( wd1, well1d2t, prof1.wellid_ );
     mGetWellData( wd2, well2d2t, prof2.wellid_ );
-    const float well1z = well1d2t->getDah( timeval, wd1->track() );
-    const float well2z = well2d2t->getDah( timeval, wd2->track() );
+    const float well1z = well1d2t->getDepth( timeval, wd1->track() );
+    const float well2z = well2d2t->getDepth( timeval, wd2->track() );
     return well1z*(1-profrelpos) + well2z * profrelpos;
 
 }
@@ -550,7 +562,7 @@ float ProfileModelBase::getDepthVal( float timeval,
     if ( !prof.wellid_.isUdf() )
     {
 	mGetWellData( wd, welld2t, prof.wellid_ );
-	return welld2t->getDah( timeval, wd->track() );
+	return welld2t->getDepth( timeval, wd->track() );
     }
 
     return getInterpolatedDepthVal( timeval, prof.pos_ );

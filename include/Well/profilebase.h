@@ -81,6 +81,7 @@ public:
     void		removeAll();
     void		removeProfiles(bool wells=false);
     void		removeAtSamePos(int idxtokeep=-1);
+    void		removeMarker( const char* mrkrnm);
     float		getDepthVal(float t,float profpos) const;
     float		getDepthVal(float t,const ProfileBase&) const;
 

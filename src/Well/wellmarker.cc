@@ -94,6 +94,22 @@ int Well::MarkerSet::getIdxAbove( float reqz, const Well::Track* trck ) const
 }
 
 
+int Well::MarkerSet::getIdxBelow( float reqz, const Well::Track* trck ) const
+{
+    for ( int idx=size()-1; idx>=0; idx-- )
+    {
+	const Marker& mrk = *(*this)[idx];
+	float mrkz = mrk.dah();
+	if ( trck )
+	    mrkz = mCast(float,trck->getPos(mrkz).z);
+	if ( mrkz < reqz )
+	    return idx+1;
+    }
+    return 0;
+}
+
+
+
 int Well::MarkerSet::indexOf( const char* mname ) const
 {
     for ( int idx=0; idx<size(); idx++ )

@@ -24,6 +24,7 @@ mExpClass(General) ZValueProvider
 public:
     virtual			~ZValueProvider();
     virtual uiString		getName() const			=0;
+    virtual int			depthID() const			=0;
     virtual Color		drawColor() const		=0;
     virtual int			drawWidth() const		=0;
     virtual bool		isOK() const			=0;

@@ -15,6 +15,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "welldata.h"
 #include "welld2tmodel.h"
 #include "wellextractdata.h"
+#include "welltrack.h"
 #include "flatposdata.h"
 #include "polygon.h"
 #include "ptrman.h"
@@ -234,13 +235,14 @@ void ProfileModelBaseAuxDataMgr::setVisibility()
 	    profaux.wellnm_->enabled_ = ison && drawpars_.drawwellnames_;
 	for ( int idaux=0; idaux<profaux.markers_.size(); idaux++ )
 	{
-	    profaux.markers_[idaux]->enabled_ = drawpars_.drawmarkers_;
+	    profaux.markers_[idaux]->enabled_ = ison && drawpars_.drawmarkers_;
 	    const bool& drawmarkernms = drawpars_.drawmarkers_ &&
 		(profaux.iswell_ ? drawpars_.drawmarkernames_
 				 : drawpars_.drawctrlprofmrkrnms_);
 	    profaux.markers_[idaux]->namepos_ = !drawmarkernms ? mUdf(int) : 0;
 	}
     }
+
     for ( int idx=0; idx<markerconnections_.size(); idx++ )
 	markerconnections_[idx]->enabled_ = drawpars_.drawconnections_;
 }
@@ -259,6 +261,9 @@ const Well::D2TModel* welld2t = wd->d2TModel();
 float ProfileModelBaseAuxDataMgr::getViewZ( float z, const ProfileBase& prof,
 					    const Well::Marker* refmrk ) const
 {
+    if ( mIsUdf(z) )
+	return mUdf(float);
+
     if ( refmrk )
        z -= refmrk->dah();
     if ( !vw2mdl_.zInDepth() )
@@ -286,8 +291,14 @@ float ProfileModelBaseAuxDataMgr::getViewZ( float z, const ProfileBase& prof,
 		    (prof.pos_ - prof1.pos_) / (prof2.pos_-prof1.pos_);
 		mGetWellData( wd1, well1d2t, prof1.wellid_ );
 		mGetWellData( wd2, well2d2t, prof2.wellid_ );
-		const float well1z = well1d2t->getTime( z, wd1->track() );
-		const float well2z = well2d2t->getTime( z, wd2->track() );
+		const float w1dah = wd1->track().getDahForTVD( z );
+		const float w2dah = wd2->track().getDahForTVD( z );
+		//because wellmarker dah in profiles are actually tvds
+		if ( mIsUdf(w1dah) || mIsUdf(w2dah) )
+		    return mUdf(float);
+
+		const float well1z = well1d2t->getTime( w1dah, wd1->track() );
+		const float well2z = well2d2t->getTime( w2dah, wd2->track() );
 		return well1z*(1-profrelpos) + well2z * profrelpos;
 	    }
 	}
@@ -295,7 +306,8 @@ float ProfileModelBaseAuxDataMgr::getViewZ( float z, const ProfileBase& prof,
 	    wellid = prof.wellid_;
 
 	mGetWellData( wd, welld2t, wellid );
-	z = welld2t->getTime( z, wd->track() );
+	const float wdah = wd->track().getDahForTVD( z );
+	z = welld2t->getTime( wdah, wd->track() );
     }
 
     return vw2mdl_.viewZ( z );	  

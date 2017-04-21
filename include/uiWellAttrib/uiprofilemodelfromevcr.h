@@ -39,6 +39,7 @@ public:
     int				nrProfs() const;
     int				nrModels() const;
     virtual void		updateDisplay();
+    void			updateProfileModel();
 
 protected:
 
@@ -58,13 +59,11 @@ protected:
     void				addEventCB(CallBacker*);
     void				removeEventCB(CallBacker*);
     void				tieEventsCB(CallBacker*);
-    void				nrCtrlProfChangedCB(CallBacker*);
+    void				updateProfileCB(CallBacker*);
 
     void				updateProfileModelDisplay();
-    void				updateProfileModel();
     virtual void			getEvents()			=0;
     void				drawEvents();
-    void				checkAndRemoveEvents();
 };
 
 
@@ -97,6 +96,7 @@ public:
 protected:
     void			finaliseCB(CallBacker*);
     void			applyCB(CallBacker*);
+    bool			acceptOK(CallBacker*);
     void			showMultiDisplayCB(CallBacker*);
 
     uiProfileModelFromEvCrGrp*	profscrgrp_;

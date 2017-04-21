@@ -18,7 +18,9 @@ ________________________________________________________________________
 #include "datapack.h"
 #include "stratlevel.h"
 
+class ProfileBase;
 class ProfileModelBase;
+class ProfilePosProvider;
 class ZValueProvider;
 namespace Well { class Marker; }
 
@@ -63,13 +65,39 @@ mStruct(Well) ProfileModelFromEventData
     bool				isIntersectMarker(const char*) const;
     bool				isIntersectMarker(int evidx) const;
     float				getZValue(int evidx,const Coord&) const;
+    int					tiedToEventIdx(const char* mnm) const;
+    void				sortEventsonDepthIDs();
+    void				sortIntersectionMarkers();
     void				setTieMarker(int evidx,
 						const char* mnm=0 );
+    bool				findTieMarker(int evidx,
+						      BufferString& mnm) const;
+    void				setNearestTieEvent(
+						int ev1idx,int ev2idx,
+						const BufferString&);
+    float				getAvgDZval(int evidx,
+						    const BufferString&) const;
     BufferString			getMarkerName(int evidx) const;
     Well::Marker*			getIntersectMarker(int evidx) const;
     void				addEvent(ZValueProvider*);
     void				removeAllEvents();
     void				removeEvent(int evidx);
+    float				getEventDepthVal(int evidx,
+						      const ProfileBase&) const;
+    float				getZOffset(int evidx,
+						   const ProfileBase&) const;
+    void				prepareIntersectionMarkers();
+    void				setIntersectMarkers();
+    static void				setIntersectMarkersForEV(
+						ProfileModelBase&,Event&);
+    void				interpolateIntersectMarkers();
+    static void				interpolateIntersectMarkersForEV(
+						ProfileModelBase&,Event&,
+						const ProfilePosProvider&);
+    static float			getInterpolatedDepthAtPosFromEV(
+					    float pos, const Event&,
+					    const ProfileModelBase&,
+					    const ProfilePosProvider&);
 
     static const char*			addMarkerStr()
 					{return "<add marker at intersection>";}

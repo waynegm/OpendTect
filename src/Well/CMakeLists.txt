@@ -30,6 +30,7 @@ SET(OD_MODULE_SOURCES
 	wellwriter.cc
 	profilebase.cc
 	profilemodelcreator.cc
+	profilemodelfromeventdata.cc
 	profilemodelbaseauxdatamgr.cc
 )
 OD_INIT_MODULE()

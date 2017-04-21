@@ -139,6 +139,7 @@ void ProfileModelFromEventData::Event::setMarker( const char* markernm )
 	    lvls.add( newintersectmarker_->name(),newintersectmarker_->color());
 	tiemarkernm_ = markernm;
 	levelid_ = newlevel->id();
+	newintersectmarker_->setLevelID( levelid_ );
     }
     else
     {
@@ -598,13 +599,22 @@ void ProfileModelFromEventData::setIntersectMarkersForEV(
 	if ( !prof->isWell() )
 	    continue;
 
-	Well::Marker* newtiemarker =
-	    new Well::Marker(*event.newintersectmarker_ );
 	float dah = event.zvalprov_->getZValue( prof->coord_ );
+	dah = getDepthVal( model, prof->pos_, dah );
 	if ( mIsUdf(dah) )
 	    continue;
 
-	dah = getDepthVal( model, prof->pos_, dah );
+	const int newtiemarkeridx =
+	    prof->markers_.indexOf( event.newintersectmarker_->name() );
+	if ( newtiemarkeridx>=0 )
+	{
+	    prof->markers_[newtiemarkeridx]->setDah( dah );
+	    continue;
+	}
+
+	Well::Marker* newtiemarker =
+	    new Well::Marker( event.newintersectmarker_->name() );
+	*newtiemarker = *event.newintersectmarker_;
 	newtiemarker->setDah( dah );
 	prof->markers_.insertNew( newtiemarker );
     }

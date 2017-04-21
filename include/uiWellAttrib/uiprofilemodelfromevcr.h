@@ -39,7 +39,7 @@ public:
     int				nrProfs() const;
     int				nrModels() const;
     virtual void		updateDisplay();
-    void			updateProfileModel();
+    bool			updateProfileModel();
 
 protected:
 
@@ -95,6 +95,7 @@ public:
 
 protected:
     void			finaliseCB(CallBacker*);
+    bool			doApply();
     void			applyCB(CallBacker*);
     bool			acceptOK(CallBacker*);
     void			showMultiDisplayCB(CallBacker*);

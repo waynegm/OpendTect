@@ -400,14 +400,14 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
     return retval; \
 }
 
-void uiProfileModelFromEvCrGrp::updateProfileModel()
+bool uiProfileModelFromEvCrGrp::updateProfileModel()
 {
     MouseCursorChanger waitmcs( MouseCursor::Wait );
     if ( data_.model_.isEmpty() )
-	mErrRet( tr("No well added to create a model from"), )
+	mErrRet( tr("No well added to create a model from"), false )
 
     if ( !data_.nrEvents() )
-	mErrRet( tr("No event added to create a model from"), )
+	mErrRet( tr("No event added to create a model from"), false )
     data_.totalnrprofs_ = nrProfs();
     ProfilePosProviderFromLine* posprov =
 	new ProfilePosProviderFromLine( data_.section_.linegeom_ );
@@ -415,9 +415,10 @@ void uiProfileModelFromEvCrGrp::updateProfileModel()
     ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
     uiTaskRunner uitr( this );
     if ( !prohoruser.go(&uitr) )
-	return;
+	return false;
 
     updateProfileModelDisplay();
+    return true;
 }
 
 
@@ -533,31 +534,25 @@ void uiProfileModelFromEvCrDlg::showMultiDisplayCB( CallBacker* )
 }
 
 
-bool uiProfileModelFromEvCrDlg::acceptOK( CallBacker* )
+bool uiProfileModelFromEvCrDlg::doApply()
 {
     uiStratLayerModel* uislm = uiStratLayerModel::getUILayerModel();
-    if ( !uislm )
-    {
-	pErrMsg( "No uiStraLayerModel found" );
-	return false;
-    }
+    if ( uislm )
+	uislm->setNrModels( profscrgrp_->nrModels() );
 
-    profscrgrp_->updateProfileModel();
-    uislm->setNrModels( profscrgrp_->nrModels() );
-    return true;
+    return profscrgrp_->updateProfileModel();
+}
+
+
+bool uiProfileModelFromEvCrDlg::acceptOK( CallBacker* )
+{
+    return doApply();
 }
 
 
 void uiProfileModelFromEvCrDlg::applyCB( CallBacker* )
 {
-    uiStratLayerModel* uislm = uiStratLayerModel::getUILayerModel();
-    if ( !uislm )
-    {
-	pErrMsg( "No uiStraLayerModel found" );
-	return;
-    }
-    profscrgrp_->updateProfileModel();
-
+    doApply();
     viewbut_->setSensitive( true );
 }
 

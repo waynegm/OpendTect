@@ -17,7 +17,7 @@ ________________________________________________________________________
 #include "coord.h"
 #include "color.h"
 #include "ptrman.h"
-#include "uistring.h"
+#include "uistrings.h"
 
 class TrcKey;
 class MultiID;
@@ -27,6 +27,13 @@ mExpClass(EarthModel) HorZValueProvider : public ZValueProvider
 {
 public:
 				HorZValueProvider(const EM::Horizon*);
+    mDefaultFactoryInstanciationBase( sKey::Horizon(), uiStrings::sHorizon() )
+    mDefaultFactoryInitClassImpl( ZValueProvider, createFrom );
+    static ZValueProvider*	createFrom(const IOPar&,const TrcKeySampling&,
+					   TaskRunner*);
+
+    virtual void		fillPar(IOPar&) const;
+
     virtual uiString		getName() const;
     virtual int			depthID() const		{ return depthid_; }
     void			setDepthID( int id )	{ depthid_ = id; }

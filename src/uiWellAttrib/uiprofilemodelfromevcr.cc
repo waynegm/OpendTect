@@ -299,8 +299,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 			  mCB(this,uiProfileModelFromEvCrGrp,tieEventsCB) );
     tiemarkerbut_->attach( rightTo, rmevbut_ );
     uiToolButton* profupdbut =
-	uiToolButton::getStd( paramgrp_, OD::Apply,
-			      mCB(this,uiProfileModelFromEvCrGrp,updateProfileCB),
+	uiToolButton::getStd( paramgrp_, OD::Apply, mCB(this,
+			      uiProfileModelFromEvCrGrp,updateProfileCB),
 			      tr("Update profile") );
     profupdbut->attach( rightTo, tiemarkerbut_ );
     uiGroup* dispgrp = new uiGroup( this, "Display Group" );
@@ -324,15 +324,13 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     app.annot_.x2_.showannot_ = true;
     app.annot_.x2_.showgridlines_ = true;
     app.annot_.allowuserchangereversedaxis_ = false;
-    viewer_->setPack( false, data_.section_.seisfdpid_ );
+    const FlatDataPack& seisfdp = *data_.section_.seisfdp_;
+    viewer_->setPack( false, seisfdp.id() );
 
     modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
-    DataPackMgr& dpm = DPM(DataPackMgr::FlatID());
-    ConstDataPackRef<FlatDataPack> seisfdp =
-	dpm.obtain( data_.section_.seisfdpid_ );
-    const StepInterval<double> dxrg = seisfdp->posData().range( true );
+    const StepInterval<double> dxrg = seisfdp.posData().range( true );
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
-    const StepInterval<double> dzrg = seisfdp->posData().range( false );
+    const StepInterval<double> dzrg = seisfdp.posData().range( false );
     Interval<float> zrg( mCast(float,dzrg.start), mCast(float,dzrg.stop) );
     modeladmgr_->drawPars().drawctrls_ = false;
     modeladmgr_->drawPars().drawconnections_ = false;
@@ -345,12 +343,12 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     uiFlatViewStdControl::Setup su( this );
     su.withflip( false ).isvertical( true );
     viewcontrol_ = new uiProfileModelViewControl( *viewer_, su, *modeladmgr_ );
+    drawEvents();
 }
 
 
 uiProfileModelFromEvCrGrp::~uiProfileModelFromEvCrGrp()
 {
-    data_.removeAllEvents();
     viewer_->removeAuxDatas( horauxdatas_ );
     deepErase( horauxdatas_ );
 }
@@ -411,7 +409,9 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
     data_.totalnrprofs_ = nrProfs();
     ProfilePosProviderFromLine* posprov =
 	new ProfilePosProviderFromLine( data_.section_.linegeom_ );
+    data_.sortEventsonDepthIDs();
     data_.prepareIntersectionMarkers();
+    data_.model_.regenerateWells();
     ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
     uiTaskRunner uitr( this );
     if ( !prohoruser.go(&uitr) )
@@ -463,10 +463,10 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 	horauxdatas_ += horad;
     }
 
-    DataPackMgr& dpm = DPM(DataPackMgr::FlatID());
-    ConstDataPackRef<FlatDataPack> fdp = dpm.obtain( data_.section_.seisfdpid_);
-    mDynamicCastGet(const RegularFlatDataPack*,regfdp,fdp.ptr());
-    mDynamicCastGet(const RandomFlatDataPack*,randfdp,fdp.ptr());
+    mDynamicCastGet(const RegularFlatDataPack*,regfdp,
+		    data_.section_.seisfdp_.ptr());
+    mDynamicCastGet(const RandomFlatDataPack*,randfdp,
+		    data_.section_.seisfdp_.ptr());
     if ( regfdp )
     {
 	const TrcKeySampling& sectiontks = regfdp->sampling().hsamp_;
@@ -508,13 +508,13 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 
 
 uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
-	ProfileModelFromEventData& sudata, const char* typenm )
+	ProfileModelFromEventData& sudata )
     : uiDialog(p,uiDialog::Setup(tr("Use events to shape profiles"),tr(""),
 				 mNoHelpKey).applybutton(true)
 					    .applytext(tr("Apply in model")))
     , data_(sudata)
 {
-    profscrgrp_ = uiPMCrGrpFac().create( typenm, this, sudata );
+    profscrgrp_ = uiPMCrGrpFac().create( sudata.eventtypestr_, this, sudata );
     const CallBack showcb =
 	mCB(this,uiProfileModelFromEvCrDlg,showMultiDisplayCB);
     viewbut_ = new uiToolButton( this, "stratmultidisp", tr("Show display"),
@@ -529,7 +529,7 @@ uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
 void uiProfileModelFromEvCrDlg::showMultiDisplayCB( CallBacker* )
 {
     multidispwin_ =
-	new uiStratMultiDisplayWin( this, data_.section_.seisfdpid_ );
+	new uiStratMultiDisplayWin( this, data_.section_.seisfdp_->id() );
     multidispwin_->show();
 }
 

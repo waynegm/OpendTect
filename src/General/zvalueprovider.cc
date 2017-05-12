@@ -10,7 +10,8 @@ ________________________________________________________________________
 -*/
 
 #include "zvalueprovider.h"
+#include "iopar.h"
+#include "trckeysampling.h"
 
-ZValueProvider::~ZValueProvider()
-{
-}
+mImplFactory3Param( ZValueProvider,const IOPar&,const TrcKeySampling&,
+		    TaskRunner*,ZValueProvider::factory );

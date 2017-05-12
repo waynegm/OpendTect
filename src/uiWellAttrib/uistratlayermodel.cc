@@ -818,6 +818,7 @@ bool uiStratLayerModel::openGenDesc()
 	return false;
 
     moddisp_->clearDispPars();
+    moddisp_->retrievePars();
     seqdisp_->setNeedSave( false );
     lmp_.setEmpty();
 
@@ -1217,6 +1218,7 @@ void uiStratLayerModel::fillWorkBenchPars( IOPar& par ) const
     gentools_->fillPar( par );
     if ( elpropsel_ )
 	elpropsel_->fillPar( par );
+    moddisp_->savePars();
     fillDisplayPars( par );
     fillSyntheticsPars( par );
 }

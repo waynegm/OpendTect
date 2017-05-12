@@ -78,16 +78,20 @@ public:
     int			idxBefore(float pos,bool& isatequalpos) const;
     float		getMaxZ() const;
 
+    virtual void	regenerateWells()		{}
     void		removeAll();
     void		removeProfiles(bool wells=false);
     void		removeAtSamePos(int idxtokeep=-1);
     void		removeMarker( const char* mrkrnm);
-    float		getDepthVal(float t,float profpos) const;
-    float		getDepthVal(float t,const ProfileBase&) const;
+    float		getDepthVal(float t,float profpos,
+				    bool depthintvdss=true) const;
+    float		getDepthVal(float t,const ProfileBase&,
+				    bool depthintvdss=true) const;
 
     ObjectSet<ProfileBase> profs_;
 protected:
-    float		getInterpolatedDepthVal(float t,float profpos) const;
+    float		getInterpolatedDepthVal(float t,float profpos,
+						bool depthintvdss) const;
 };
 
 mExpClass(Well) ProfileFactory

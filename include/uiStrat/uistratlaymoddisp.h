@@ -62,6 +62,8 @@ public:
 			{ return Interval<float>::udf(); }
     virtual void	reSetRelDepthZoneOfInterest()	{}
     virtual bool	canSetDisplayProperties() const	{ return false; }
+    virtual void	savePars()			{}
+    virtual void	retrievePars()			{}
 
     const Strat::LayerModel& layerModel() const;
     const TypeSet<float>& levelDepths() const		{ return lvldpths_; }

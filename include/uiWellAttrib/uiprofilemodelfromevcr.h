@@ -90,8 +90,7 @@ mExpClass(uiWellAttrib) uiProfileModelFromEvCrDlg : public uiDialog
 { mODTextTranslationClass(uiProfileModelFromEvCrDlg);
 public:
 				uiProfileModelFromEvCrDlg(uiParent*,
-					ProfileModelFromEventData&,
-					const char* typenm);
+					ProfileModelFromEventData&);
 
 protected:
     void			finaliseCB(CallBacker*);

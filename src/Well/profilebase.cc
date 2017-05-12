@@ -512,8 +512,8 @@ if ( !wd ) \
 const Well::D2TModel* welld2t = wd->d2TModel();
 
 
-float ProfileModelBase::getInterpolatedDepthVal( float timeval,
-						  float profpos ) const
+float ProfileModelBase::getInterpolatedDepthVal(
+	float timeval, float profpos, bool depthintvdss ) const
 {
     const int wellprof1idx = indexBefore( profpos, true );
     const int wellprof2idx = indexAfter( profpos, true );
@@ -526,12 +526,14 @@ float ProfileModelBase::getInterpolatedDepthVal( float timeval,
     if ( wellprof2idx< 0 )
     {
 	mGetWellData( wd, welld2t, profs_[wellprof1idx]->wellid_ );
-	return welld2t->getDepth( timeval, wd->track() );
+	return depthintvdss ? welld2t->getDepth( timeval, wd->track() )
+			    : welld2t->getDah( timeval, wd->track() );
     }
     else if ( wellprof1idx < 0 )
     {
 	mGetWellData( wd, welld2t, profs_[wellprof2idx]->wellid_ );
-	return welld2t->getDepth( timeval, wd->track() );
+	return depthintvdss ? welld2t->getDepth( timeval, wd->track() )
+			    : welld2t->getDah( timeval, wd->track() );
     }
 
     const ProfileBase& prof1 = *profs_[wellprof1idx];
@@ -540,30 +542,37 @@ float ProfileModelBase::getInterpolatedDepthVal( float timeval,
 	(profpos - prof1.pos_) / (prof2.pos_-prof1.pos_);
     mGetWellData( wd1, well1d2t, prof1.wellid_ );
     mGetWellData( wd2, well2d2t, prof2.wellid_ );
-    const float well1z = well1d2t->getDepth( timeval, wd1->track() );
-    const float well2z = well2d2t->getDepth( timeval, wd2->track() );
-    return well1z*(1-profrelpos) + well2z * profrelpos;
+    const float well1z = depthintvdss ? well1d2t->getDepth(timeval,wd1->track())
+				      : well1d2t->getDah(timeval,wd1->track());
+    const float well2z = depthintvdss ? well2d2t->getDepth(timeval,wd2->track())
+				      : well2d2t->getDah(timeval,wd2->track());
+    const float res = well1z*(1-profrelpos) + well2z * profrelpos;
+    return res;
 
 }
 
 
-float ProfileModelBase::getDepthVal( float timeval, float profpos ) const
+float ProfileModelBase::getDepthVal( float timeval, float profpos,
+				     bool depthintvdss ) const
 {
     bool isatpos = false;
     const int profidx = idxBefore( profpos, isatpos );
-    return isatpos ? getDepthVal( timeval, *profs_[profidx] )
-		   : getInterpolatedDepthVal( timeval, profpos );
+    return isatpos ? getDepthVal( timeval, *profs_[profidx], depthintvdss )
+		   : getInterpolatedDepthVal( timeval, profpos, depthintvdss );
 }
 
 
 float ProfileModelBase::getDepthVal( float timeval,
-				     const ProfileBase& prof ) const
+				     const ProfileBase& prof,
+				     bool depthintvdss ) const
 {
     if ( !prof.wellid_.isUdf() )
     {
 	mGetWellData( wd, welld2t, prof.wellid_ );
-	return welld2t->getDepth( timeval, wd->track() );
+	float res = depthintvdss ? welld2t->getDepth( timeval, wd->track() )
+			    : welld2t->getDah( timeval, wd->track() );
+	return res;
     }
 
-    return getInterpolatedDepthVal( timeval, prof.pos_ );
+    return getInterpolatedDepthVal( timeval, prof.pos_, depthintvdss );
 }

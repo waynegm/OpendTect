@@ -538,8 +538,8 @@ bool ProfileModelFromMultiEventCreator::doGo( TaskRunner* tr )
 	setMarkerDepths( *data_.events_[evidx] );
     }
 
-    reArrangeMarkers();
     interpolateMarkersBetweenEvents();
+    reArrangeMarkers();
     return true;
 }
 

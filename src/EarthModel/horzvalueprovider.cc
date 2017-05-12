@@ -7,11 +7,35 @@
 
 #include "horzvalueprovider.h"
 #include "emhorizon.h"
+#include "emmanager.h"
+
+
+ZValueProvider* HorZValueProvider::createFrom(
+	const IOPar& par, const TrcKeySampling& , TaskRunner* tr )
+{
+    MultiID horid;
+    if ( !par.get(sKey::ID(),horid) )
+	return 0;
+
+    const EM::EMObject* emobj = EM::EMM().loadIfNotFullyLoaded( horid, tr );
+    mDynamicCastGet(const EM::Horizon*,hor,emobj);
+    if ( !hor )
+	return 0;
+
+    return new HorZValueProvider( hor );
+}
 
 
 HorZValueProvider::HorZValueProvider( const EM::Horizon* hor )
     : hor_(hor)
 {
+}
+
+
+void HorZValueProvider::fillPar( IOPar& par ) const
+{
+    par.set( ZValueProvider::sType(), HorZValueProvider::sFactoryKeyword() );
+    par.set( sKey::ID(), hor_->multiID() );
 }
 
 

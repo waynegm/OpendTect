@@ -8,7 +8,7 @@
 
 add_definitions( -DmNoAutoUiString )
 
-SET(OD_MODULE_DEPS General)
+SET(OD_MODULE_DEPS Geometry)
 SET(OD_MODULE_SOURCES
 	initwell.cc
 	wellascio.cc

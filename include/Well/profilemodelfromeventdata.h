@@ -28,9 +28,9 @@ class ZValueProvider;
 namespace Well { class Marker; }
 
 
-mClass(Well) ProfileModelFromEventData
-{ mODTextTranslationClass(ProfileModelFromEventData);
-    mRefCountImpl(ProfileModelFromEventData);
+mExpClass(Well) ProfileModelFromEventData
+{ mRefCountImpl(ProfileModelFromEventData);
+mODTextTranslationClass(ProfileModelFromEventData);
 public:
 				ProfileModelFromEventData(
 				    ProfileModelBase&,const TypeSet<Coord>&);

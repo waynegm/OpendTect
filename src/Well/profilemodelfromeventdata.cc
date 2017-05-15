@@ -511,7 +511,7 @@ float ProfileModelFromEventData::getAvgDZval(
 	statrc.addValue( prof->markers_[markeridx]->dah()-evdah );
     }
 
-    return fabs( statrc.average() );
+    return fabs( mCast(float,statrc.average()) );
 }
 
 
@@ -592,7 +592,7 @@ bool ProfileModelFromEventData::findTieMarker( int evidx,
 	    statrc.addValue( prof->markers_[nearestmarkeridx]->dah()-evdah );
 	}
 
-	nearestavgddahs[idx] = fabs(statrc.average());
+	nearestavgddahs[idx] = fabs( mCast(double,statrc.average()) );
     }
 
     int nearestmidx = -1;

@@ -474,14 +474,14 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 	TrcKeySamplingIterator seciter( sectiontks );
 	while ( seciter.next(itrtk) )
 	{
-	    od_int64 curidx = seciter.curIdx();
+	    const int curidx = mCast( int, seciter.curIdx() );
 	    for ( int iev=0; iev<data_.nrEvents(); iev++ )
 	    {
 		FlatView::AuxData* horad = horauxdatas_[iev];
 		const float z =
 		    data_.events_[iev]->zvalprov_->getZValue( itrtk );
 		const float dist =
-		    regfdp->posData().position( true, mCast(int,curidx) );
+		    mCast(float,regfdp->posData().position(true,curidx));
 		horad->poly_ += FlatView::Point( dist, z );
 	    }
 	}
@@ -497,7 +497,8 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 		FlatView::AuxData* horad = horauxdatas_[iev];
 		const float z =
 		    data_.events_[iev]->zvalprov_->getZValue( itrtk );
-		const float dist = randfdp->posData().position( true, itrc );
+		const float dist =
+		    mCast(float,randfdp->posData().position(true,itrc));
 		horad->poly_ += FlatView::Point( dist, z );
 	    }
 	}

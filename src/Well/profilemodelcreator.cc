@@ -484,12 +484,14 @@ ProfileModelFromMultiEventCreator::~ProfileModelFromMultiEventCreator()
 void ProfileModelFromMultiEventCreator::setZOffsets(
 	const ProfileModelFromEventData::Event& ev )
 {
-    const int evidx = data_.events_.indexOf( &ev );
     for ( int ippd=0; ippd<ppds_.size(); ippd++ )
     {
 	ProfilePosData& ppd = ppds_[ippd];
+	const Well::Marker* mrkr =
+	    ppd.prof_->markers_.getByName( ev.getMarkerName() );
 	if ( ppd.isWell() )
-	    ppd.zoffs_ = data_.getZOffset( evidx, *ppd.prof_ );
+	    ppd.zoffs_ = mrkr && !mIsUdf(mrkr->dah()) ? mrkr->dah() - ppd.zhor_
+						      : mUdf(float);
     }
 }
 
@@ -552,7 +554,7 @@ int ProfileModelFromMultiEventCreator::getTopBottomEventMarkerIdx(
     while ( true )
     {
 	resmidx+=incrmidx;
-	if ( resmidx<0 || resmidx>=prof.markers_.size()-1 )
+	if ( resmidx<0 || resmidx>=prof.markers_.size() )
 	    return -1;
 	const char* markernm = prof.markers_[resmidx]->name().buf();
 	const int tieevidx = data_.tiedToEventIdx( markernm );

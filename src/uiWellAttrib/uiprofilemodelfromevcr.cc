@@ -140,9 +140,17 @@ void markerSelChgCB( CallBacker* cb )
     const int evidx = selrc.row();
     RowCol newmarkerrc( evidx, sNewMarkerNameColIdx );
     evmarkertietbl_->setCellReadOnly( newmarkerrc, !addmarker );
+    if ( addmarker )
+	evmarkertietbl_->setText( newmarkerrc,
+				  data_.events_[evidx]->zvalprov_->getName() );
     newmarkerrc.col() = sNewMarkerColorColIdx;
-    uiGroup* colsel = evmarkertietbl_->getCellGroup( newmarkerrc );
-    colsel->setSensitive( addmarker );
+    uiGroup* colgrp = evmarkertietbl_->getCellGroup( newmarkerrc );
+    colgrp->setSensitive( addmarker );
+    if ( addmarker )
+    {
+	mDynamicCastGet(uiColorInput*,colsel,colgrp);
+	colsel->setColor( data_.events_[evidx]->zvalprov_->drawColor() );
+    }
 }
 
 
@@ -168,7 +176,15 @@ bool acceptOK( CallBacker* )
 	    uiGroup* cellgrp = evmarkertietbl_->getCellGroup( newmarkerrc );
 	    mDynamicCastGet(uiColorInput*,colsel,cellgrp);
 	    if ( colsel )
-		newmarker->setColor( colsel->color() );
+	    {
+		Strat::Level* newmarkerlvl =
+		    Strat::eLVLS().get( data_.events_[evidx]->levelid_ );
+		if ( newmarkerlvl )
+		{
+		    newmarkerlvl->setColor( colsel->color() );
+		    newmarker->setColor( colsel->color() );
+		}
+	    }
 	}
     }
 
@@ -411,6 +427,13 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
 	new ProfilePosProviderFromLine( data_.section_.linegeom_ );
     data_.sortEventsonDepthIDs();
     data_.prepareIntersectionMarkers();
+    if ( !data_.warnmsg_.isEmpty() )
+    {
+	uiMSG().warning( data_.warnmsg_ );
+	data_.warnmsg_.setEmpty();
+	drawEvents();
+    }
+
     data_.model_.regenerateWells();
     ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
     uiTaskRunner uitr( this );

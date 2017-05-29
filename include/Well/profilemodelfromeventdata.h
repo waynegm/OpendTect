@@ -83,6 +83,7 @@ public:
 
     int					totalnrprofs_;
     BufferString			eventtypestr_;
+    uiString				warnmsg_;
     ProfileModelBase&			model_;
     Section				section_;
     ObjectSet<Event>			events_;
@@ -99,7 +100,8 @@ public:
     float				getZValue(int evidx,const Coord&) const;
     int					tiedToEventIdx(const char* mnm) const;
     void				sortEventsonDepthIDs();
-    void				sortIntersectionMarkers();
+    bool				isEventCrossing(const Event&) const;
+    void				removeCrossingEvents();
     void				setTieMarker(int evidx,
 						const char* mnm=0 );
     bool				findTieMarker(int evidx,
@@ -107,9 +109,13 @@ public:
     void				setNearestTieEvent(
 						int ev1idx,int ev2idx,
 						const BufferString&);
+    bool				getTopBottomMarker(
+					    const Event&,const ProfileBase&,
+					    BufferString&,bool istop) const;
     float				getAvgDZval(int evidx,
 						    const BufferString&) const;
     BufferString			getMarkerName(int evidx) const;
+    void				removeMarkers(const char*);
     Well::Marker*			getIntersectMarker(int evidx) const;
     void				addEvent(ZValueProvider*);
     void				removeAllEvents();
@@ -123,8 +129,7 @@ public:
 					    int evidx,const ProfileBase&) const;
     void				prepareIntersectionMarkers();
     void				setIntersectMarkers();
-    void				setIntersectMarkersForEV(
-						ProfileModelBase&,int evidx);
+    void				setIntersectMarkersForEV(int evidx);
     static float			getInterpolatedDepthAtPosFromEV(
 					    float pos, const Event&,
 					    const ProfileModelBase&,

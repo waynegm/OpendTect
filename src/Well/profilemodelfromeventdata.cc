@@ -532,8 +532,8 @@ bool ProfileModelFromEventData::findTieMarker( int evidx,
 	if ( mIsUdf(evdah) )
 	    continue;
 
-	const int topmarkeridx = prof->markers_.getIdxAbove( evdah );
-	const int botmarkeridx = prof->markers_.getIdxBelow( evdah );
+	const int topmarkeridx = prof->markers_.getIdxAbove( evdah - 0.1 );
+	const int botmarkeridx = prof->markers_.getIdxBelow( evdah + 0.1 );
 	if ( !prof->markers_.validIdx(topmarkeridx) &&
 	     !prof->markers_.validIdx(botmarkeridx) )
 	{
@@ -653,53 +653,108 @@ bool ProfileModelFromEventData::hasIntersectMarker() const
 
 void ProfileModelFromEventData::prepareIntersectionMarkers()
 {
+    model_.removeProfiles();
+    for ( int iev=0; iev<events_.size(); iev++ )
+    {
+	if ( isIntersectMarker(iev) )
+	    removeMarkers( events_[iev]->getMarkerName() );
+    }
     if ( !hasIntersectMarker() )
 	return;
 
     setIntersectMarkers();
-    sortIntersectionMarkers();
+    removeCrossingEvents();
 }
 
 
-void ProfileModelFromEventData::sortIntersectionMarkers()
+bool ProfileModelFromEventData::getTopBottomMarker(
+	const Event& event, const ProfileBase& prof, BufferString& markernm,
+	bool istop ) const
 {
-    for ( int iev=0; iev<events_.size(); iev++ )
+    const BufferString evmarkernm = event.getMarkerName();
+    const int evmarkeridx = prof.markers_.indexOf( evmarkernm );
+    if ( evmarkeridx<0 )
+	return false;
+
+    const int incr = istop ? -1 : +1;
+    const int topbotmarkeridx =
+	prof.markers_.validIdx(evmarkeridx+incr) ? evmarkeridx+incr : -1;
+    if ( !prof.markers_.validIdx(topbotmarkeridx) )
+	return false;
+
+    markernm = prof.markers_[topbotmarkeridx]->name();
+    return true;
+}
+
+
+bool ProfileModelFromEventData::isEventCrossing( const Event& event ) const
+{
+    for ( int iprof=0; iprof<model_.size()-1; iprof++ )
     {
-	if ( !isIntersectMarker(iev) )
+	const ProfileBase* curprof = model_.get( iprof );
+	const ProfileBase* nextprof = model_.get( iprof+1 );
+	BufferString curtopmarker, curbotmarker;
+	getTopBottomMarker( event, *curprof, curtopmarker, true );
+	getTopBottomMarker( event, *curprof, curbotmarker, false );
+	const Well::Marker* evmarkerinnext =
+	    nextprof->markers_.getByName( event.getMarkerName() );
+	if ( !evmarkerinnext )
 	    continue;
 
-	const BufferString topevmarkernm =
-	    events_.validIdx(iev-1) ? events_[iev-1]->getMarkerName()
-				    : BufferString::empty();
-	const BufferString evmarkernm = events_[iev]->getMarkerName();
-	const BufferString botevmarkernm =
-	    events_.validIdx(iev+1) ? events_[iev+1]->getMarkerName()
-				    : BufferString::empty();
-	for ( int iprof=0; iprof<model_.size(); iprof++ )
+	const Well::Marker* curproftopmarkerinnext =
+	    nextprof->markers_.getByName( curtopmarker );
+	int curprotopmarkeridx = curprof->markers_.indexOf( curtopmarker );
+	while ( !curproftopmarkerinnext )
 	{
-	    ProfileBase* prof = model_.get( iprof );
-	    if ( !prof->isWell() )
-		continue;
+	    curprotopmarkeridx--;
+	    if ( curprotopmarkeridx<0 )
+		break;
 
-	    const int evmarkeridx = prof->markers_.indexOf( evmarkernm );
-	    if ( evmarkeridx<0 )
-		continue;
+	    curtopmarker = curprof->markers_[curprotopmarkeridx]->name();
+	    curproftopmarkerinnext = nextprof->markers_.getByName(curtopmarker);
+	}
 
-	    const float evmarkerdah = prof->markers_[evmarkeridx]->dah();
-	    const int topevmarkeridx = prof->markers_.indexOf( topevmarkernm );
-	    const int botevmarkeridx = prof->markers_.indexOf( botevmarkernm );
-	    const float topevmarkerdah =
-		topevmarkeridx<0 ? -mUdf(float)
-				 : prof->markers_[topevmarkeridx]->dah();
-	    const float botevmarkerdah =
-		botevmarkeridx<0 ? mUdf(float)
-				 : prof->markers_[botevmarkeridx]->dah();
-	    if ( topevmarkerdah>evmarkerdah )
-		prof->markers_[evmarkeridx]->setDah( topevmarkerdah );
-	    else if ( botevmarkerdah<evmarkerdah )
-		prof->markers_[evmarkeridx]->setDah( botevmarkerdah );
+	if ( curproftopmarkerinnext &&
+	     curproftopmarkerinnext->dah()>evmarkerinnext->dah() )
+	    return true;
+
+	const Well::Marker* curprofbotmarkerinnext =
+	    nextprof->markers_.getByName( curbotmarker );
+	int curprobotmarkeridx = curprof->markers_.indexOf( curbotmarker );
+	while ( !curprofbotmarkerinnext )
+	{
+	    curprobotmarkeridx++;
+	    if ( curprobotmarkeridx>=curprof->markers_.size() )
+		break;
+
+	    curbotmarker = curprof->markers_[curprobotmarkeridx]->name();
+	    curprofbotmarkerinnext = nextprof->markers_.getByName(curbotmarker);
+	}
+	if ( curprofbotmarkerinnext &&
+	     curprofbotmarkerinnext->dah()<evmarkerinnext->dah() )
+	    return true;
+    }
+
+    return false;
+}
+
+
+void ProfileModelFromEventData::removeCrossingEvents()
+{
+    uiStringSet removedevents;
+    for ( int iev=events_.size()-1; iev>=0; iev-- )
+    {
+	if ( isEventCrossing(*events_[iev]) )
+	{
+	    removedevents += events_[iev]->zvalprov_->getName();
+	    removeEvent( iev );
 	}
     }
+
+    if ( !removedevents.isEmpty() )
+	warnmsg_ = tr( "Following events are removed as they were crossing "
+			"other events : %1" )
+			.arg(removedevents.createOptionString());
 }
 
 
@@ -729,27 +784,30 @@ void ProfileModelFromEventData::removeAllEvents()
 }
 
 
+void ProfileModelFromEventData::removeMarkers( const char* markernm )
+{
+    model_.removeMarker( markernm );
+    for ( int idx=0; idx<model_.size(); idx++ )
+    {
+	const ProfileBase* prof = model_.get( idx );
+	if ( !prof->isWell() )
+	    continue;
+
+	Well::Data* wd = Well::MGR().get( prof->wellid_ );
+	const int markeridx = wd->markers().indexOf( markernm );
+	if ( markeridx>=0 )
+	    wd->markers().removeSingle( markeridx );
+    }
+}
+
+
 void ProfileModelFromEventData::removeEvent( int evidx )
 {
     if ( !events_.validIdx(evidx) )
 	return;
 
     if ( isIntersectMarker(evidx) )
-    {
-	BufferString markernm = events_[evidx]->newintersectmarker_->name();
-	model_.removeMarker( markernm );
-	for ( int idx=0; idx<model_.size(); idx++ )
-	{
-	    const ProfileBase* prof = model_.get( idx );
-	    if ( !prof->isWell() )
-		continue;
-
-	    Well::Data* wd = Well::MGR().get( prof->wellid_ );
-	    const int markeridx = wd->markers().indexOf( markernm );
-	    if ( markeridx>=0 )
-		wd->markers().removeSingle( markeridx );
-	}
-    }
+	removeMarkers( events_[evidx]->newintersectmarker_->name() );
 
     delete events_.removeSingle( evidx );
 }
@@ -770,17 +828,13 @@ float ProfileModelFromEventData::getEventDepthVal(
 {
     float evdepthval = getZValue( evidx, prof.coord_ );
     if ( mIsUdf(evdepthval) )
-	return mUdf(float);
-
-    float depthval = getDepthVal( model_, prof.pos_, evdepthval, depthintvdss );
-    if ( mIsUdf(depthval) )
     {
 	ProfilePosProviderFromLine posprov( section_.linegeom_ );
-	depthval = getInterpolatedDepthAtPosFromEV( prof.pos_, *events_[evidx],
-						    model_, posprov,
-						    depthintvdss );
+	return getInterpolatedDepthAtPosFromEV( prof.pos_,*events_[evidx],
+						model_, posprov, depthintvdss );
     }
 
+    float depthval = getDepthVal( model_, prof.pos_, evdepthval, depthintvdss );
     return depthval;
 }
 
@@ -844,7 +898,7 @@ float ProfileModelFromEventData::getZOffset( int evidx,
 void ProfileModelFromEventData::setIntersectMarkers()
 {
     for ( int evidx=0; evidx<nrEvents(); evidx++ )
-	setIntersectMarkersForEV( model_, evidx );
+	setIntersectMarkersForEV( evidx );
 }
 
 
@@ -866,25 +920,23 @@ void setMarker( const Well::Marker& marker, float depth, ProfileBase* prof,
 }
 
 
-void ProfileModelFromEventData::setIntersectMarkersForEV(
-	ProfileModelBase& model, int evidx )
+void ProfileModelFromEventData::setIntersectMarkersForEV( int evidx )
 {
     Event& event = *events_[evidx];
     if ( !event.newintersectmarker_ )
 	return;
 
-    for ( int iprof=0; iprof<model.size(); iprof++ )
+    for ( int iprof=0; iprof<model_.size(); iprof++ )
     {
-	ProfileBase* prof = model.get( iprof );
+	ProfileBase* prof = model_.get( iprof );
 	if ( !prof->isWell() )
 	    continue;
 
-	float zval = event.zvalprov_->getZValue( prof->coord_ );
-	float tvdss = getDepthVal( model, prof->pos_, zval, true );
+	float tvdss = getEventDepthVal( evidx, *prof, true );
 	if ( mIsUdf(tvdss) )
 	    continue;
 	setMarker( *event.newintersectmarker_, tvdss, prof, false);
-	float dah = getDepthVal( model, prof->pos_, zval, false );
+	float dah = getEventDepthVal( evidx, *prof, false );
 	setMarker( *event.newintersectmarker_, dah, prof, true );
     }
 }
@@ -899,8 +951,9 @@ float ProfileModelFromEventData::getInterpolatedDepthAtPosFromEV(
 
     float prevppdmdepth = mUdf(float);
     float prevpos = pos;
-    while ( prevpos -= dpos && prevpos>=0 )
+    while ( prevpos>=0 )
     {
+	prevpos -= dpos;
 	const Coord prevcoord = posprov.getCoord( prevpos );
 	prevppdmdepth = zvalprov->getZValue( prevcoord );
 	prevppdmdepth = getDepthVal( model, prevpos, prevppdmdepth,
@@ -911,8 +964,9 @@ float ProfileModelFromEventData::getInterpolatedDepthAtPosFromEV(
 
     float nextppdmdepth = mUdf(float);
     float nextpos = pos;
-    while ( nextpos += dpos && nextpos<=1.0f )
+    while ( nextpos<=1.0f )
     {
+	nextpos += dpos;
 	const Coord nextcoord = posprov.getCoord( nextpos );
 	nextppdmdepth = zvalprov->getZValue( nextcoord );
 	nextppdmdepth = getDepthVal( model, nextpos, nextppdmdepth,

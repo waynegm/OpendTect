@@ -465,7 +465,7 @@ void ProfileModelFromSingleEventCreator::setZOffsets(
 
 ProfileModelFromMultiEventCreator::ProfileModelFromMultiEventCreator(
 	ProfileModelFromEventData& data, ProfilePosProvider* posprov )
-    : ProfileModelFromEventCreator(data.model_,posprov,data.totalnrprofs_)
+    : ProfileModelFromEventCreator(*data.model_,posprov,data.totalnrprofs_)
     , data_(data)
 {
     const int nrwlls = model_.nrWells();

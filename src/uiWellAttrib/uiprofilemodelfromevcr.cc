@@ -59,10 +59,10 @@ uiEventMarkerTieDialog( uiParent* p, ProfileModelFromEventData& data )
 	     .add( "New marker name" ).add( "Marker color" );
     evmarkertietbl_->setColumnLabels( collabels );
 
-    Well::MarkerSet wms( data_.model_.get(0 )->markers_ );
-    for ( int idx=1; idx<data_.model_.size(); idx++ )
+    Well::MarkerSet wms( data_.model_->get(0 )->markers_ );
+    for ( int idx=1; idx<data_.model_->size(); idx++ )
     {
-	const ProfileBase* prof = data_.model_.get( idx );
+	const ProfileBase* prof = data_.model_->get( idx );
 	if ( prof->isWell() )
 	    wms.mergeOtherWell( prof->markers_ );
     }
@@ -343,7 +343,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     const FlatDataPack& seisfdp = *data_.section_.seisfdp_;
     viewer_->setPack( false, seisfdp.id() );
 
-    modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
+    modeladmgr_ = new ProfileModelBaseAuxDataMgr( *data_.model_, *viewer_ );
     const StepInterval<double> dxrg = seisfdp.posData().range( true );
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
     const StepInterval<double> dzrg = seisfdp.posData().range( false );
@@ -417,7 +417,7 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
 bool uiProfileModelFromEvCrGrp::updateProfileModel()
 {
     MouseCursorChanger waitmcs( MouseCursor::Wait );
-    if ( data_.model_.isEmpty() )
+    if ( data_.model_->isEmpty() )
 	mErrRet( tr("No well added to create a model from"), false )
 
     if ( !data_.nrEvents() )
@@ -434,7 +434,7 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
 	drawEvents();
     }
 
-    data_.model_.regenerateWells();
+    data_.model_->regenerateWells();
     ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
     uiTaskRunner uitr( this );
     if ( !prohoruser.go(&uitr) )

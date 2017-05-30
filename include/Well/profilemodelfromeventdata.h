@@ -33,9 +33,9 @@ mExpClass(Well) ProfileModelFromEventData
 mODTextTranslationClass(ProfileModelFromEventData);
 public:
 				ProfileModelFromEventData(
-				    ProfileModelBase&,const TypeSet<Coord>&);
+				    ProfileModelBase*,const TypeSet<Coord>&);
 				ProfileModelFromEventData(
-				    ProfileModelBase&);
+				    ProfileModelBase*);
     mStruct(Well) Section
     {
 					Section( const TypeSet<Coord>& g )
@@ -49,6 +49,7 @@ public:
 	MultiID				seismid_;
 	ConstDataPackRef<FlatDataPack>	seisfdp_;
 	TypeSet<Coord>			linegeom_;
+
 	bool				getSectionTKS(TrcKeySampling&) const;
 	void				fillPar(IOPar&) const;
 	void				usePar(const IOPar&);
@@ -84,10 +85,12 @@ public:
     int					totalnrprofs_;
     BufferString			eventtypestr_;
     uiString				warnmsg_;
-    ProfileModelBase&			model_;
+    ProfileModelBase*			model_;
     Section				section_;
     ObjectSet<Event>			events_;
 
+    void				setModel( ProfileModelBase* model )
+					{ model_ = model; }
     void				fillPar(IOPar&) const;
     static bool				hasPar(const IOPar&);
     static ProfileModelFromEventData*	createFrom(ProfileModelBase&,

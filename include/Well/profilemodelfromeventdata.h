@@ -139,6 +139,8 @@ public:
 					    const ProfilePosProvider&,
 					    bool depthintvdss=true);
 
+    static const char*			sKeyNrProfs()
+					{ return "Nr of Profiles"; }
     static const char*			sKeySection()	{ return "Section"; }
     static const char*			sKeyEvent()	{ return "Event"; }
     static const char*			sKeyEventType() { return "Event Type"; }

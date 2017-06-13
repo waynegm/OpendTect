@@ -311,11 +311,13 @@ BufferString ProfileModelFromEventData::Event::getMarkerName() const
     return newintersectmarker_ ? newintersectmarker_->name() : tiemarkernm_;
 }
 
+static int sDefNrCtrlProfiles = 50;
 
 ProfileModelFromEventData::ProfileModelFromEventData(
 	ProfileModelBase* model, const TypeSet<Coord>& linegeom )
     : model_(model)
     , section_(linegeom)
+    , totalnrprofs_(sDefNrCtrlProfiles)
 {
 }
 
@@ -323,6 +325,7 @@ ProfileModelFromEventData::ProfileModelFromEventData(
 ProfileModelFromEventData::ProfileModelFromEventData(
 	ProfileModelBase* model )
     : model_(model)
+    , totalnrprofs_(sDefNrCtrlProfiles)
 {
 }
 
@@ -344,6 +347,7 @@ void ProfileModelFromEventData::fillPar( IOPar& par ) const
 {
     IOPar proffromevpar;
     IOPar sectionpar;
+    proffromevpar.set( sKeyNrProfs(), totalnrprofs_ );
     proffromevpar.set( sKeyEventType(), eventtypestr_ );
     section_.fillPar( sectionpar );
     proffromevpar.mergeComp( sectionpar, sKeySection() );
@@ -372,6 +376,7 @@ ProfileModelFromEventData* ProfileModelFromEventData::createFrom(
     ProfileModelFromEventData* profmodelfromdata =
 	new ProfileModelFromEventData( &model );
     profmodelfromdata->eventtypestr_ = eventtypestr;
+    proffromevpar->get( sKeyNrProfs(), profmodelfromdata->totalnrprofs_ );
     PtrMan<IOPar> sectionpar = proffromevpar->subselect( sKeySection() );
     profmodelfromdata->section_.usePar( *sectionpar );
     TrcKeySampling sectiontks;
@@ -391,6 +396,7 @@ ProfileModelFromEventData* ProfileModelFromEventData::createFrom(
     }
 
     profmodelfromdata->prepareIntersectionMarkers();
+    model.regenerateWells();
     return profmodelfromdata;
 }
 

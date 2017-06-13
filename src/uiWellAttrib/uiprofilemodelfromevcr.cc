@@ -297,8 +297,15 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     , data_(sudata)
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
-    nrprofsfld_ = new uiGenInput(paramgrp_,tr("Ctrl Profiles"),IntInpSpec(50));
-    nrmodelsfld_ = new uiGenInput(paramgrp_,tr("Nr Models"),IntInpSpec(25));
+    nrprofsfld_ =
+	new uiGenInput( paramgrp_, tr("Ctrl Profiles"),
+			IntInpSpec(sudata.totalnrprofs_) );
+    int nrmodels = 25;
+    uiStratLayerModel* uislm = uiStratLayerModel::getUILayerModel();
+    if ( uislm )
+	nrmodels = uislm->nrModels();
+    nrmodelsfld_ =
+	new uiGenInput( paramgrp_, tr("Nr Models"), IntInpSpec(nrmodels) );
     nrmodelsfld_->attach( leftAlignedBelow, nrprofsfld_ );
     evlistbox_ = new uiListBox( paramgrp_, "Horizon List" );
     evlistbox_->attach( leftAlignedBelow, nrmodelsfld_ );
@@ -422,9 +429,9 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
 
     if ( !data_.nrEvents() )
 	mErrRet( tr("No event added to create a model from"), false )
+
+    ProfilePosProviderFromLine posprov( data_.section_.linegeom_ );
     data_.totalnrprofs_ = nrProfs();
-    ProfilePosProviderFromLine* posprov =
-	new ProfilePosProviderFromLine( data_.section_.linegeom_ );
     data_.sortEventsonDepthIDs();
     data_.prepareIntersectionMarkers();
     if ( !data_.warnmsg_.isEmpty() )
@@ -436,8 +443,7 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
 
     data_.model_->regenerateWells();
     ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
-    uiTaskRunner uitr( this );
-    if ( !prohoruser.go(&uitr) )
+    if ( !prohoruser.calculate() )
 	return false;
 
     updateProfileModelDisplay();
@@ -583,5 +589,5 @@ void uiProfileModelFromEvCrDlg::applyCB( CallBacker* )
 
 void uiProfileModelFromEvCrDlg::finaliseCB( CallBacker* )
 {
-    profscrgrp_->updateDisplay();
+    profscrgrp_->onFinalise();
 }

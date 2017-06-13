@@ -17,10 +17,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "sorting.h"
 #include "survinfo.h"
 #include "uistrings.h"
-#include "zaxistransform.h"
 #include "zvalueprovider.h"
 #include <math.h>
-#include <iostream>
 
 
 class ProfilePosData
@@ -85,37 +83,19 @@ int nrProfiles() const
 
 
 ProfileModelFromEventCreator::ProfileModelFromEventCreator(
-	ProfileModelBase& p, ProfilePosProvider* posprov, int mxp )
+	ProfileModelBase& p, const ProfilePosProvider& posprov, int mxp )
     : model_(p)
     , profposprov_(posprov)
     , ppds_(*new ProfilePosDataSet(p))
-    , t2dtr_(0)
-    , t2dpar_(*new IOPar)
     , totalnrprofs_(mxp>0 ? mxp : 50)
     , movepol_(MoveAll)
-    , needt2d_(SI().zIsTime()) // just def
 {
-    for ( int idx=0; idx<model_.size(); idx++ )
-    {
-	ProfileBase* prof = model_.get( idx );
-	if ( prof->isWell() )
-	{
-	    t2dpar_.set( sKey::ID(), prof->wellid_ );
-	    t2dpar_.set( sKey::Name(), "WellT2D" );
-	    break;
-	}
-    }
 }
 
 
 ProfileModelFromEventCreator::~ProfileModelFromEventCreator()
 {
-    delete profposprov_;
-    if ( t2dtr_ )
-	{ t2dtr_->unRef(); t2dtr_ = 0; }
-    t2dpar_.setEmpty();
     delete &ppds_;
-    delete &t2dpar_;
 }
 
 
@@ -124,37 +104,6 @@ void ProfileModelFromEventCreator::preparePositions()
     ppds_.addExistingProfiles();
     addNewPositions();
     fillCoords();
-}
-
-void ProfileModelFromEventCreator::prepareZTransform( TaskRunner* tr )
-{
-    if ( !needt2d_ )
-    {
-	if ( t2dtr_ )
-	    t2dtr_->unRef();
-	t2dtr_ = 0;
-	return;
-    }
-
-
-    t2dtr_ = ZAxisTransform::create( t2dpar_ );
-    if ( t2dtr_ && t2dtr_->needsVolumeOfInterest() )
-    {
-	TrcKeyZSampling cs;
-	for ( int ippd=0; ippd<ppds_.size(); ippd++ )
-	{
-	    const BinID bid( SI().transform(ppds_[ippd].coord_) );
-	    if ( ippd )
-		cs.hsamp_.include( bid );
-	    else
-	    {
-		cs.hsamp_.start_.inl() = cs.hsamp_.stop_.inl() = bid.inl();
-		cs.hsamp_.start_.crl() = cs.hsamp_.stop_.crl() = bid.crl();
-	    }
-	}
-	const int voiidx = t2dtr_->addVolumeOfInterest( cs, true );
-	t2dtr_->loadDataIfMissing( voiidx, tr );
-    }
 }
 
 
@@ -171,15 +120,14 @@ void ProfileModelFromEventCreator::sortMarkers()
 }
 
 
-bool ProfileModelFromEventCreator::go( TaskRunner* tr )
+bool ProfileModelFromEventCreator::calculate()
 {
     errmsg_.setEmpty();
     preparePositions();
-    prepareZTransform( tr );
     sortMarkers();
     setNewProfiles();
 
-    if ( doGo( tr ) )
+    if ( doCalculate() )
     {
 	model_.removeAtSamePos();
 	return true;
@@ -419,20 +367,20 @@ bool ProfileModelFromEventCreator::doPull( float orgz, float newz ) const
 void ProfileModelFromEventCreator::fillCoords()
 {
     for ( int ippd=0; ippd<ppds_.size(); ippd++ )
-	ppds_[ippd].coord_ = profposprov_->getCoord( ppds_[ippd].pos_ );
+	ppds_[ippd].coord_ = profposprov_.getCoord( ppds_[ippd].pos_ );
 }
 
 
 ProfileModelFromSingleEventCreator::ProfileModelFromSingleEventCreator(
 	ProfileModelBase& m, const ProfileModelFromEventData::Event& ev,
-	ProfilePosProvider* posprov )
+	const ProfilePosProvider& posprov )
     : ProfileModelFromEventCreator(m,posprov)
     , event_(ev)
 {
 }
 
 
-bool ProfileModelFromSingleEventCreator::doGo( TaskRunner* taskrunner )
+bool ProfileModelFromSingleEventCreator::doCalculate()
 {
     if ( event_.tiemarkernm_.isEmpty() )
 	mErrRet( tr("Please specify a marker") )
@@ -464,7 +412,7 @@ void ProfileModelFromSingleEventCreator::setZOffsets(
 
 
 ProfileModelFromMultiEventCreator::ProfileModelFromMultiEventCreator(
-	ProfileModelFromEventData& data, ProfilePosProvider* posprov )
+	ProfileModelFromEventData& data, const ProfilePosProvider& posprov )
     : ProfileModelFromEventCreator(*data.model_,posprov,data.totalnrprofs_)
     , data_(data)
 {
@@ -525,7 +473,7 @@ void ProfileModelFromMultiEventCreator::reArrangeMarkers()
 }
 
 
-bool ProfileModelFromMultiEventCreator::doGo( TaskRunner* tr )
+bool ProfileModelFromMultiEventCreator::doCalculate()
 {
     for ( int evidx=0; evidx<data_.nrEvents(); evidx++ )
     {
@@ -564,6 +512,7 @@ int ProfileModelFromMultiEventCreator::getTopBottomEventMarkerIdx(
 
     return resmidx;
 }
+
 
 bool ProfileModelFromMultiEventCreator::getTopBotEventValsWRTMarker(
 	const char* markernm, const ProfileBase& prof, float& mval,

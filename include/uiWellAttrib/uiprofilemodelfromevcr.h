@@ -39,6 +39,7 @@ public:
     int				nrProfs() const;
     int				nrModels() const;
     virtual void		updateDisplay();
+    virtual void		onFinalise()			=0;
     bool			updateProfileModel();
 
 protected:

@@ -970,7 +970,6 @@ int uiStratLayerModel::nrModels() const
 void uiStratLayerModel::nrModelsChangedCB( CallBacker* )
 {
     gentools_->fillPar( desc_.getWorkBenchParams() );
-    genModels( 0 );
 }
 
 

@@ -38,28 +38,25 @@ public:
     enum MovePol	{ MoveNone, MoveAll, MoveAbove, MoveBelow };
 
 			ProfileModelFromEventCreator(ProfileModelBase&,
-						     ProfilePosProvider*,
+						     const ProfilePosProvider&,
 						     int totalnrprofs=0);
     virtual		~ProfileModelFromEventCreator();
 
     void		preparePositions();
     void		prepareZTransform(TaskRunner* tr=0);
     void		setNewProfiles();
-    bool		go(TaskRunner* tr=0);
+    bool		calculate();
     uiString		errMsg() const			{ return errmsg_; }
 
 			// settable with default
-    IOPar&		t2dpar_;
     int			totalnrprofs_;
     MovePol		movepol_; // only for Single, Multi ignores
 
 protected:
 
     ProfileModelBase&	model_;
-    ProfilePosProvider* profposprov_;
+    const ProfilePosProvider& profposprov_;
     ProfilePosDataSet&	ppds_;
-    ZAxisTransform*	t2dtr_;
-    bool		needt2d_;
     uiString		errmsg_;
 
     virtual bool	isSingleEvent() const		=0;
@@ -72,7 +69,7 @@ protected:
 				const ProfileModelFromEventData::Event&);
     void		sortMarkers();
 
-    virtual bool	doGo(TaskRunner*)		= 0;
+    virtual bool	doCalculate()			= 0;
     void		fillCoords();
 
     int			addNewPPDsAfter(int,int,bool);
@@ -94,7 +91,7 @@ public:
 
 			ProfileModelFromSingleEventCreator(ProfileModelBase&,
 				const ProfileModelFromEventData::Event&,
-				ProfilePosProvider*);
+				const ProfilePosProvider&);
 
 protected:
 
@@ -102,7 +99,7 @@ protected:
 
     virtual bool	isSingleEvent() const		{ return true; }
     virtual void	setZOffsets(const ProfileModelFromEventData::Event&);
-    virtual bool	doGo(TaskRunner*);
+    virtual bool	doCalculate();
 
 };
 
@@ -122,14 +119,14 @@ public:
 
 				ProfileModelFromMultiEventCreator(
 					ProfileModelFromEventData&,
-					ProfilePosProvider*);
+					const ProfilePosProvider&);
 				~ProfileModelFromMultiEventCreator();
 
 protected:
 
     void			reArrangeMarkers();
     void			interpolateMarkersBetweenEvents();
-    virtual bool		doGo(TaskRunner*);
+    virtual bool		doCalculate();
     virtual bool		isSingleEvent() const	{ return false;}
     virtual void		setZOffsets(
 				    const ProfileModelFromEventData::Event&);

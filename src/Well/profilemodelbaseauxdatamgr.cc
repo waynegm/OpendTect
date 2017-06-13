@@ -321,6 +321,10 @@ void ProfileModelBaseAuxDataMgr::addProfile( const ProfileBase& prof )
     if ( isflattened_ && !refmrk )
 	return;
 
+    if ( (prof.isWell() && !drawpars_.drawwells_) ||
+	 (!prof.isWell() && !drawpars_.drawctrls_)  )
+	return;
+
     ProfileAux* pfaux = new ProfileAux( prof, viewer_ );
     profiles_ += pfaux;
 
@@ -370,7 +374,7 @@ void ProfileModelBaseAuxDataMgr::addProfile( const ProfileBase& prof )
 
 void ProfileModelBaseAuxDataMgr::addMarkerConnections()
 {
-    if ( profiles_.size() < 2 )	
+    if ( profiles_.size() < 2 || !drawpars_.drawconnections_ )
 	return;
 
     for ( int idx=0; idx<model_->size()-1; idx ++ )

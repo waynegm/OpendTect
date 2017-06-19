@@ -28,7 +28,7 @@ mExpClass(Well) ProfileModelBaseAuxDataMgr : public CallBacker
 {
 public:
 				ProfileModelBaseAuxDataMgr(
-					const ProfileModelBase&,
+					const ProfileModelBase*,
 					FlatView::Viewer&);
     virtual			~ProfileModelBaseAuxDataMgr();
 

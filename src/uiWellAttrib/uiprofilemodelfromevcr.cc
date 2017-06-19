@@ -22,7 +22,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uilistbox.h"
 #include "uimsg.h"
 #include "uiprofileviewpars.h"
-#include "uistratmultidisplaywindow.h"
+#include "uiprofilesynthseiscorrwin.h"
 #include "uistratlayermodel.h"
 #include "uitable.h"
 #include "uitoolbutton.h"
@@ -350,7 +350,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     const FlatDataPack& seisfdp = *data_.section_.seisfdp_;
     viewer_->setPack( false, seisfdp.id() );
 
-    modeladmgr_ = new ProfileModelBaseAuxDataMgr( *data_.model_, *viewer_ );
+    modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
     const StepInterval<double> dxrg = seisfdp.posData().range( true );
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
     const StepInterval<double> dzrg = seisfdp.posData().range( false );
@@ -544,6 +544,7 @@ uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
 					    .applytext(tr("Apply in model")))
     , data_(sudata)
 {
+    setCtrlStyle( uiDialog::CloseOnly );
     profscrgrp_ = uiPMCrGrpFac().create( sudata.eventtypestr_, this, sudata );
     const CallBack showcb =
 	mCB(this,uiProfileModelFromEvCrDlg,showMultiDisplayCB);
@@ -558,9 +559,9 @@ uiProfileModelFromEvCrDlg::uiProfileModelFromEvCrDlg( uiParent* p,
 
 void uiProfileModelFromEvCrDlg::showMultiDisplayCB( CallBacker* )
 {
-    multidispwin_ =
-	new uiStratMultiDisplayWin( this, data_.section_.seisfdp_->id() );
-    multidispwin_->show();
+    uiProfileSynthSeisCorrWin* corrwin =
+	new uiProfileSynthSeisCorrWin( this, data_, profscrgrp_->nrModels() );
+    corrwin->show();
 }
 
 
@@ -571,12 +572,6 @@ bool uiProfileModelFromEvCrDlg::doApply()
 	uislm->setNrModels( profscrgrp_->nrModels() );
 
     return profscrgrp_->updateProfileModel();
-}
-
-
-bool uiProfileModelFromEvCrDlg::acceptOK( CallBacker* )
-{
-    return doApply();
 }
 
 

@@ -1747,8 +1747,6 @@ uiGroup* uiStratSynthDisp::getDisplayClone( uiParent* p ) const
     vwr->appearance() = vwr_->appearance();
     vwr->setPack( true, vwr_->packID(true), false );
     vwr->setPack( false, vwr_->packID(false), false );
-    for ( int idx=0; idx<vwr_->nrAuxData(); idx++ )
-	vwr->addAuxData( vwr_->getAuxData(idx)->clone() );
     return vwr;
 }
 

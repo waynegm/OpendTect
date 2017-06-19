@@ -29,7 +29,7 @@ set( OD_MODULE_SOURCES
 	uistratsynthcrossplot.cc
 	uistratsynthdisp.cc
 	uistratsynthexport.cc
-	uistratmultidisplaywindow.cc
+	uiprofilesynthseiscorrwin.cc
 	uisynthtorealscale.cc
 	uisynthgendlg.cc
 	uisynthseis.cc

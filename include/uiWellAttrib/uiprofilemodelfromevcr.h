@@ -97,13 +97,11 @@ protected:
     void			finaliseCB(CallBacker*);
     bool			doApply();
     void			applyCB(CallBacker*);
-    bool			acceptOK(CallBacker*);
     void			showMultiDisplayCB(CallBacker*);
 
     uiProfileModelFromEvCrGrp*	profscrgrp_;
     ProfileModelFromEventData&	data_;
     uiToolButton*		viewbut_;
-    uiStratMultiDisplayWin*	multidispwin_;
 };
 
 

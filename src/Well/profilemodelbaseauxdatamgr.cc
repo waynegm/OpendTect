@@ -169,8 +169,8 @@ ProfileModelBaseAuxDataMgr::ProfileAux::~ProfileAux()
 
 
 ProfileModelBaseAuxDataMgr::ProfileModelBaseAuxDataMgr(
-		const ProfileModelBase& pfm, FlatView::Viewer& vwr  )
-    : model_(&pfm)
+		const ProfileModelBase* pfm, FlatView::Viewer& vwr  )
+    : model_(pfm)
     , viewer_(vwr)
     , isflattened_(false)
     , refmarkername_("____") // make sure it's 'dirty' the first time

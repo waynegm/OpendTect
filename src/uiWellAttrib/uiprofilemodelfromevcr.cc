@@ -27,14 +27,18 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uitable.h"
 #include "uitoolbutton.h"
 #include "uitaskrunner.h"
+#include "uizaxistransform.h"
 
 #include "flatposdata.h"
-#include "seisdatapack.h"
+#include "mouseevent.h"
 #include "profilebase.h"
 #include "profilemodelcreator.h"
 #include "profileposprovider.h"
 #include "profilemodelfromeventdata.h"
 #include "profilemodelbaseauxdatamgr.h"
+#include "seisdatapack.h"
+#include "survinfo.h"
+#include "zdomain.h"
 #include "zvalueprovider.h"
 
     static int sNewMarkerNameColIdx = 2;
@@ -295,6 +299,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 	uiParent* p, ProfileModelFromEventData& sudata )
     : uiGroup(p)
     , data_(sudata)
+    , profileToBeAdded(this)
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
     nrprofsfld_ =
@@ -325,6 +330,10 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 	uiToolButton::getStd( paramgrp_, OD::Apply, mCB(this,
 			      uiProfileModelFromEvCrGrp,updateProfileCB),
 			      tr("Update profile") );
+    uiToolButton* zaxisbut =
+	new uiToolButton( paramgrp_, "", tr("Select Z Transform"),
+			  mCB(this,uiProfileModelFromEvCrGrp,selTransformCB));
+    zaxisbut->attach( alignedBelow, addevbut_ );
     profupdbut->attach( rightTo, tiemarkerbut_ );
     uiGroup* dispgrp = new uiGroup( this, "Display Group" );
     viewer_ = new uiFlatViewer( dispgrp );
@@ -349,7 +358,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     app.annot_.allowuserchangereversedaxis_ = false;
     const FlatDataPack& seisfdp = *data_.section_.seisfdp_;
     viewer_->setPack( false, seisfdp.id() );
-
+    mAttachCB( viewer_->getMouseEventHandler().doubleClick,
+	       uiProfileModelFromEvCrGrp::profileToBeAddedCB );
     modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
     const StepInterval<double> dxrg = seisfdp.posData().range( true );
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
@@ -363,6 +373,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     modeladmgr_->view2Model().setZInDepth( false );
     modeladmgr_->reset();
 
+    if ( !data_.ztransform_ && !data_.model_->nrWells() )
+	selTransformCB( 0 );
     uiFlatViewStdControl::Setup su( this );
     su.withflip( false ).isvertical( true );
     viewcontrol_ = new uiProfileModelViewControl( *viewer_, su, *modeladmgr_ );
@@ -374,6 +386,45 @@ uiProfileModelFromEvCrGrp::~uiProfileModelFromEvCrGrp()
 {
     viewer_->removeAuxDatas( horauxdatas_ );
     deepErase( horauxdatas_ );
+}
+
+
+void uiProfileModelFromEvCrGrp::selTransformCB( CallBacker* )
+{
+    if ( !SI().zIsTime() )
+	return;
+
+    uiDialog::Setup setup(tr("Velocity model"),
+		tr("Select velocity model to base scene on"),
+		mODHelpKey(mODApplMgraddTimeDepthSceneHelpID) );
+
+    uiSingleGroupDlg dlg( this, setup );
+
+    uiZAxisTransformSel* uitrans =
+	new uiZAxisTransformSel( &dlg, false, ZDomain::sKeyTime(),
+				 ZDomain::sKeyDepth(), true );
+
+    if ( !uitrans->isOK() )
+    {
+	uiMSG().error(tr("No suitable transforms found"));
+	return;
+    }
+
+    dlg.setGroup( uitrans );
+    if ( !dlg.go() ) return;
+
+    RefMan<ZAxisTransform> ztrans = uitrans->getSelection();
+    if ( !ztrans )
+	return;
+
+    StepInterval<float> zsampling;
+    if ( !uitrans->getTargetSampling(zsampling) )
+    {
+	pErrMsg( "Cannot get sampling." );
+	return;
+    }
+
+    data_.setTransform( ztrans );
 }
 
 
@@ -402,6 +453,16 @@ void uiProfileModelFromEvCrGrp::updateProfileModelDisplay()
 }
 
 
+void uiProfileModelFromEvCrGrp::profileToBeAddedCB( CallBacker* )
+{
+    const MouseEvent& ev = viewer_->getMouseEventHandler().event();
+    const uiWorldPoint wp = viewer_->getWorld2Ui().transform( ev.pos() );
+    const Interval<float>& vwxrg = modeladmgr_->view2Model().viewXRange();
+    const float profilepos = (wp.x - vwxrg.start)/vwxrg.width();
+    profileToBeAdded.trigger( profilepos );
+}
+
+
 void uiProfileModelFromEvCrGrp::updateProfileCB( CallBacker* )
 {
     updateProfileModel();
@@ -412,6 +473,7 @@ void uiProfileModelFromEvCrGrp::addEventCB( CallBacker* )
 {
     getEvents();
     drawEvents();
+    data_.sortEventsonDepthIDs();
     modeladmgr_->drawPars().resetMarkerNames();
 }
 
@@ -432,7 +494,6 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
 
     ProfilePosProviderFromLine posprov( data_.section_.linegeom_ );
     data_.totalnrprofs_ = nrProfs();
-    data_.sortEventsonDepthIDs();
     data_.prepareIntersectionMarkers();
     if ( !data_.warnmsg_.isEmpty() )
     {
@@ -441,7 +502,6 @@ bool uiProfileModelFromEvCrGrp::updateProfileModel()
 	drawEvents();
     }
 
-    data_.model_->regenerateWells();
     ProfileModelFromMultiEventCreator prohoruser( data_, posprov );
     if ( !prohoruser.calculate() )
 	return false;

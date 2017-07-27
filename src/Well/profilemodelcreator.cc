@@ -34,6 +34,7 @@ public:
     bool	operator ==( const ProfilePosData& oth ) const
 					{ return prof_ == oth.prof_; }
     bool	isWell() const		{ return prof_ && prof_->isWell(); }
+    bool	isPrimary() const	{ return prof_ && prof_->isPrimary(); }
     bool	hasCoord() const	{ return !mIsUdf(coord_.x); }
     bool	hasHorZ() const		{ return !mIsUdf(zhor_); }
     bool	hasZOffset() const	{ return !mIsUdf(zoffs_); }
@@ -60,7 +61,7 @@ void addExistingProfiles()
     for ( int iprof=0; iprof<model_.size(); iprof++ )
     {
 	ProfileBase* prof = model_.get( iprof );
-	if ( prof->isWell() )
+	if ( prof->isPrimary() )
 	    *this += ProfilePosData( prof, prof->pos_, prof->coord_ );
 	else
 	    *this += ProfilePosData( prof, prof->pos_ );
@@ -260,7 +261,7 @@ void ProfileModelFromEventCreator::setEventZVals(
 	if ( !ppd.hasHorZ() || !SI().zIsTime() )
 	    continue;
 
-	ppd.zhor_ = model_.getDepthVal( ppd.zhor_, ppd.pos_ );
+	ppd.zhor_ = model_.getDepthVal( ppd.zhor_, ppd.pos_, &profposprov_ );
     }
 
     Array1DImpl<float> zvals( ppds_.size() );
@@ -327,7 +328,7 @@ void ProfileModelFromEventCreator::setMarkerDepths(
     for ( int ippd=0; ippd<ppds_.size(); ippd++ )
     {
 	ProfilePosData& ppd = ppds_[ippd];
-	if ( !ppd.prof_ || ppd.isWell() )
+	if ( !ppd.prof_ || ppd.isPrimary() )
 	    continue;
 
 	const int midx = ppd.prof_->markers_.indexOf( ev.getMarkerName() );
@@ -398,7 +399,7 @@ void ProfileModelFromSingleEventCreator::setZOffsets(
     for ( int ippd=0; ippd<ppds_.size(); ippd++ )
     {
 	ProfilePosData& ppd = ppds_[ippd];
-	if ( ppd.isWell() )
+	if ( ppd.isPrimary() )
 	{
 	    const Well::Marker* mrkr =
 		ppd.prof_->markers_.getByName( ev.getMarkerName() );
@@ -420,7 +421,7 @@ ProfileModelFromMultiEventCreator::ProfileModelFromMultiEventCreator(
     if ( totalnrprofs_ <= nrwlls )
 	return;
 
-    model_.removeProfiles();
+    model_.removeCtrlProfiles();
 }
 
 
@@ -437,7 +438,7 @@ void ProfileModelFromMultiEventCreator::setZOffsets(
 	ProfilePosData& ppd = ppds_[ippd];
 	const Well::Marker* mrkr =
 	    ppd.prof_->markers_.getByName( ev.getMarkerName() );
-	if ( ppd.isWell() )
+	if ( ppd.isPrimary() )
 	    ppd.zoffs_ = mrkr && !mIsUdf(mrkr->dah()) ? mrkr->dah() - ppd.zhor_
 						      : mUdf(float);
     }
@@ -455,7 +456,7 @@ void ProfileModelFromMultiEventCreator::reArrangeMarkers()
 	for ( int iprof=0; iprof<model_.size(); iprof++ )
 	{
 	    ProfileBase* prof = model_.get( iprof );
-	    if ( prof->isWell() )
+	    if ( prof->isPrimary() )
 		continue;
 
 	    const int evmarkeridx = prof->markers_.indexOf( evmarkernm );
@@ -548,15 +549,15 @@ void ProfileModelFromMultiEventCreator::interpolateMarkersBetweenEvents()
     for ( int iprof=0; iprof<model_.size(); iprof++ )
     {
 	ProfileBase* prof = model_.get( iprof );
-	if ( prof->isWell() )
+	if ( prof->isPrimary() )
 	    continue;
 	Well::MarkerSet& markers = prof->markers_;
-	const int leftwellidx = model_.indexBefore( prof->pos_, true );
-	const int rightwellidx = model_.indexAfter( prof->pos_, true );
+	const int leftprofidx = model_.primaryIndexBefore( prof->pos_ );
+	const int rightprofidx = model_.primaryIndexAfter( prof->pos_ );
 	const ProfileBase* leftprof =
-	    leftwellidx<0 ? 0 : model_.get( leftwellidx );
+	    leftprofidx<0 ? 0 : model_.get( leftprofidx );
 	const ProfileBase* rightprof =
-	    rightwellidx<0 ? 0 : model_.get( rightwellidx );
+	    rightprofidx<0 ? 0 : model_.get( rightprofidx );
 	if ( !leftprof && !rightprof )
 	{
 	    pErrMsg( "Huh.. No left & right well!" );
@@ -635,7 +636,7 @@ void ProfileModelFromMultiEventCreator::interpolateMarkersBetweenEvents()
 		}
 		else if ( !rightprof )
 		{
-		    if ( mIsUdf(leftbotevdah) || mIsUdf(leftevdah) )
+		    if ( mIsUdf(lefttopevdah) || mIsUdf(leftevdah) )
 			mPrrContinue;
 		    ddahval = leftevdah - lefttopevdah;
 		}

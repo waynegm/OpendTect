@@ -17,6 +17,9 @@ ________________________________________________________________________
 #include "multiid.h"
 #include "coord.h"
 #include "bufstringset.h"
+#include "zaxistransform.h"
+
+class ProfilePosProvider;
 
 mExpClass(Well) ProfileBase
 {
@@ -24,6 +27,9 @@ public:
 
     virtual		~ProfileBase()				{}
     bool		isWell() const	{ return !wellid_.isUdf(); }
+    virtual bool	isCtrl() const				= 0;
+    virtual bool	isPrimary() const			= 0;
+    virtual const char* typeStr() const				= 0;
     virtual void	fillPar(IOPar&) const;
     virtual void	usePar(const IOPar&);
     bool		moveMarker(int,float newz,bool pushothers=false,
@@ -66,32 +72,41 @@ public:
 				//!< will reposition profile if necessary
 				//!< returns -1 only if you pass null
     inline int		add( ProfileBase* p )	{ return set( p, true ); }
-    int			nearestIndex(float pos,bool onlywell) const;
+    int			nearestIndex(float pos) const;
 				//!< returns -1 only if empty
     Interval<int>	getIndexes(float pos,bool noinvalid=false) const;
 				//!< -1 ->  none before, size() -> none after
 				//!< if start == stop then exact match
     int			indexOf(const MultiID&) const;
     int			indexOf(const ProfileBase&) const;
-    int			indexBefore(float pos,bool onlywell) const;
-    int			indexAfter(float pos,bool onlywell) const;
+    int			ctrlIndexBefore(float pos) const;
+    int			ctrlIndexAfter(float pos) const;
+    int			wellIndexBefore(float pos) const;
+    int			wellIndexAfter(float pos) const;
+    int			primaryIndexBefore(float pos) const;
+    int			primaryIndexAfter(float pos) const;
     int			idxBefore(float pos,bool& isatequalpos) const;
     float		getMaxZ() const;
 
-    virtual void	regenerateWells()		{}
     void		removeAll();
-    void		removeProfiles(bool wells=false);
+    void		removeCtrlProfiles();
+    void		removeProfiles(const char* typestr=0);
     void		removeAtSamePos(int idxtokeep=-1);
     void		removeMarker( const char* mrkrnm);
-    float		getDepthVal(float t,float profpos,
-				    bool depthintvdss=true) const;
-    float		getDepthVal(float t,const ProfileBase&,
+    void		setZTransform( const ZAxisTransform* trans )
+			{ ztransform_ = trans; }
+    const ZAxisTransform* zTransfrom() const	{ return ztransform_; }
+    float		getDepthVal(float timeval,float profpos,
+				    const ProfilePosProvider*,
 				    bool depthintvdss=true) const;
 
     ObjectSet<ProfileBase> profs_;
 protected:
-    float		getInterpolatedDepthVal(float t,float profpos,
+    float		getDepthValBetweenWellPos(float t,float profpos,
 						bool depthintvdss) const;
+    float		getDepthValAtWellPos(float t,const ProfileBase&,
+				    bool depthintvdss=true) const;
+    ConstRefMan<ZAxisTransform> ztransform_;
 };
 
 mExpClass(Well) ProfileFactory

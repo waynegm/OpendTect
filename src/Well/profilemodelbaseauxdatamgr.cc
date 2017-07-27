@@ -146,7 +146,7 @@ ProfileModelBaseAuxDataMgr::ProfileAux::ProfileAux( const ProfileBase& p,
     , vert_(0)
     , wellnm_(0)
     , pos_(p.pos_)
-    , iswell_(p.isWell())
+    , iswell_(p.isPrimary())
 {
 }
 
@@ -162,7 +162,7 @@ ProfileModelBaseAuxDataMgr::ProfileAux::~ProfileAux()
 #define mCrAuxData(varnm,txt,act) \
     varnm = viewer_.createAuxData( txt ); \
     if ( !varnm ) act; \
-    varnm->zvalue_ = 2; \
+    varnm->zvalue_ = 1000; \
     varnm->cansetcursor_ = false; \
     varnm->linestyle_.type_ = LineStyle::Solid; \
     viewer_.addAuxData( varnm )
@@ -268,11 +268,18 @@ float ProfileModelBaseAuxDataMgr::getViewZ( float z, const ProfileBase& prof,
        z -= refmrk->dah();
     if ( !vw2mdl_.zInDepth() )
     {
+	if ( model_->zTransfrom() && !prof.coord_.isUdf() )
+	{
+	    TrcKey proftk;
+	    proftk.setFrom( prof.coord_ );
+	    return model_->zTransfrom()->transformTrcBack( proftk, z );
+	}
+
 	MultiID wellid;
 	if ( prof.wellid_.isUdf() )
 	{
-	    const int wellprof1idx = model_->indexBefore( prof.pos_, true );
-	    const int wellprof2idx = model_->indexAfter( prof.pos_, true );
+	    const int wellprof1idx = model_->wellIndexBefore( prof.pos_ );
+	    const int wellprof2idx = model_->wellIndexAfter( prof.pos_ );
 	    if ( wellprof1idx<0 && wellprof2idx<0 )
 	    {
 		pErrMsg( "Huh! No wellprofile in model." );
@@ -321,8 +328,8 @@ void ProfileModelBaseAuxDataMgr::addProfile( const ProfileBase& prof )
     if ( isflattened_ && !refmrk )
 	return;
 
-    if ( (prof.isWell() && !drawpars_.drawwells_) ||
-	 (!prof.isWell() && !drawpars_.drawctrls_)  )
+    if ( (prof.isPrimary() && !drawpars_.drawwells_) ||
+	 (prof.isCtrl() && !drawpars_.drawctrls_)  )
 	return;
 
     ProfileAux* pfaux = new ProfileAux( prof, viewer_ );
@@ -351,7 +358,7 @@ void ProfileModelBaseAuxDataMgr::addProfile( const ProfileBase& prof )
 						Color(0,0,100) );
 	pfaux->wellnm_->namealignment_ = mAlignment(HCenter,Bottom);
 	pfaux->wellnm_->namepos_ = 1; // after last
-	pfaux->wellnm_->zvalue_ = 4;
+	pfaux->wellnm_->zvalue_ = 1000;
     }
 
     for ( int idx=0; idx<drawpars_.selmrkrnms_.size(); idx++ )
@@ -363,7 +370,7 @@ void ProfileModelBaseAuxDataMgr::addProfile( const ProfileBase& prof )
 
 	FlatView::AuxData* mCrAuxData( ad, wm->name(), continue );
 	ad->poly_ += FlatView::Point( xpos, getViewZ(wm->dah(),prof,refmrk) );
-	ad->zvalue_ = 5;
+	ad->zvalue_ = 1000;
 	ad->markerstyles_ += MarkerStyle2D(MarkerStyle2D::Plane,4,wm->color());
 	ad->namealignment_ = mAlignment(Left,Bottom);
 	ad->namepos_ = 0;

@@ -21,6 +21,7 @@ ________________________________________________________________________
 class TrcKey;
 class TrcKeySampling;
 class TaskRunner;
+class DepthIDSetter;
 
 mExpClass(General) ZValueProvider
 {
@@ -29,15 +30,28 @@ public:
 				const TrcKeySampling&,TaskRunner*,factory);
     virtual			~ZValueProvider()		{}
     static const char*		sType() { return "ZVal Provider Type"; }
-    virtual uiString		getName() const			=0;
-    virtual int			depthID() const			=0;
+    virtual uiString		getName() const				=0;
+    virtual int			depthID() const				=0;
 				//ID to denote the depth of event
-    virtual Color		drawColor() const		=0;
-    virtual int			drawWidth() const		=0;
-    virtual bool		isOK() const			=0;
-    virtual float		getZValue(const TrcKey&) const	=0;
-    virtual float		getZValue(const Coord&) const	=0;
-    virtual void		fillPar(IOPar&) const		=0;
+    virtual Color		drawColor() const			=0;
+    virtual int			drawWidth() const			=0;
+    virtual bool		isOK() const				=0;
+    virtual float		getZValue(const TrcKey&) const		=0;
+    virtual float		getZValue(const Coord&) const		=0;
+    virtual void		fillPar(IOPar&) const			=0;
+    virtual DepthIDSetter*	getDepthIDSetter(ObjectSet<ZValueProvider>&)
+				{ return 0; }
 };
+
+mExpClass(General) DepthIDSetter
+{
+public:
+			DepthIDSetter( ObjectSet<ZValueProvider>& zprovs )
+			    : zvalprovs_(zprovs)	{}
+    virtual void	go()				{}
+protected:
+    ObjectSet<ZValueProvider>&	zvalprovs_;
+};
+
 
 #endif

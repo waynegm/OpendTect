@@ -9,6 +9,8 @@
 #include "iopar.h"
 #include "ioman.h"
 #include "keystrs.h"
+#include "profileposprovider.h"
+#include "survinfo.h"
 #include "wellman.h"
 #include "welldata.h"
 #include "welld2tmodel.h"
@@ -35,6 +37,7 @@ void ProfileBase::copyFrom( const ProfileBase& oth )
 
 void ProfileBase::fillPar( IOPar& iop ) const
 {
+    iop.set( sKey::Type(), typeStr() );
     iop.setYN( sKey::Well(), isWell() );
     iop.set( sKey::Position(), pos_ );
     markers_.fillPar( iop );
@@ -228,11 +231,22 @@ void ProfileModelBase::removeAll()
 }
 
 
-void ProfileModelBase::removeProfiles( bool well )
+void ProfileModelBase::removeCtrlProfiles()
 {
+    for ( int idx=profs_.size()-1; idx>=0; idx-- )
+    {
+	if ( profs_[idx]->isCtrl() )
+	    delete profs_.removeSingle( idx );
+    }
+}
+
+
+void ProfileModelBase::removeProfiles( const char* typestr )
+{
+    BufferString proftype( typestr );
     for ( int idx=0; idx<profs_.size(); idx++ )
     {
-	if ( profs_[idx]->isWell()==well )
+	if ( !typestr || proftype==profs_[idx]->typeStr() )
 	    { delete profs_.removeSingle( idx ); idx--; }
     }
 }
@@ -381,35 +395,24 @@ int ProfileModelBase::set( ProfileBase* prof, bool replacesamepos )
 }
 
 
-int ProfileModelBase::nearestIndex( float pos, bool onlywll ) const
+int ProfileModelBase::nearestIndex( float pos ) const
 {
-    int prevwellidx = -1; float prevwellpos = mUdf(float);
-
     for ( int idx=0; idx<profs_.size(); idx++ )
     {
 	const ProfileBase& prof = *profs_[idx];
-	if ( onlywll && !prof.isWell() )
-	    continue;
 	if ( posEqual(prof.pos_,pos) )
 	    return idx;
 
 	if ( prof.pos_ > pos )
 	{
-	    const float prevpos = onlywll ? prevwellpos
-				: (idx>0 ? profs_[idx-1]->pos_ : mUdf(float));
-	    if ( mIsUdf(prevpos) )
+	    if ( !profs_.validIdx(idx-1) )
 		return idx;
-	    const bool takeprev = pos - prevpos < prof.pos_ - pos;
-	    if ( !takeprev )
-		return idx;
-	    return onlywll ? prevwellidx : idx - 1;
-	}
 
-	if ( onlywll )
-	    { prevwellidx = idx; prevwellpos = prof.pos_; }
+	    return pos - profs_[idx-1]->pos_ < prof.pos_ - pos ? idx-1 : idx;
+	}
     }
 
-    return onlywll ? prevwellidx : profs_.size() - 1;
+    return -1;
 }
 
 
@@ -455,7 +458,7 @@ int ProfileModelBase::indexOf( const MultiID& wid ) const
 }
 
 
-int ProfileModelBase::indexBefore( float pos, bool onlywell ) const
+int ProfileModelBase::ctrlIndexBefore( float pos ) const
 {
     int idxbfore = -1;
     for ( int idx=0; idx<size(); idx++ )
@@ -463,7 +466,7 @@ int ProfileModelBase::indexBefore( float pos, bool onlywell ) const
 	if ( profs_[idx]->pos_ > pos )
 	    return idxbfore;
 
-	if ( !onlywell || profs_[idx]->isWell() )
+	if ( profs_[idx]->isCtrl() )
 	    idxbfore =	idx;
     }
 
@@ -471,7 +474,39 @@ int ProfileModelBase::indexBefore( float pos, bool onlywell ) const
 }
 
 
-int ProfileModelBase::indexAfter( float pos, bool onlywell ) const
+int ProfileModelBase::wellIndexBefore( float pos ) const
+{
+    int idxbfore = -1;
+    for ( int idx=0; idx<size(); idx++ )
+    {
+	if ( profs_[idx]->pos_ > pos )
+	    return idxbfore;
+
+	if ( profs_[idx]->isWell() )
+	    idxbfore =	idx;
+    }
+
+    return idxbfore;
+}
+
+
+int ProfileModelBase::primaryIndexBefore( float pos ) const
+{
+    int idxbfore = -1;
+    for ( int idx=0; idx<size(); idx++ )
+    {
+	if ( profs_[idx]->pos_ > pos )
+	    return idxbfore;
+
+	if ( profs_[idx]->isPrimary() )
+	    idxbfore =	idx;
+    }
+
+    return idxbfore;
+}
+
+
+int ProfileModelBase::ctrlIndexAfter( float pos ) const
 {
     int idxafter = -1;
     for ( int idx=size()-1; idx>0; idx-- )
@@ -479,7 +514,39 @@ int ProfileModelBase::indexAfter( float pos, bool onlywell ) const
 	if ( profs_[idx]->pos_ < pos )
 	    return idxafter;
 
-	if ( !onlywell || profs_[idx]->isWell() )
+	if ( profs_[idx]->isCtrl() )
+	    idxafter =	idx;
+    }
+
+    return idxafter;
+}
+
+
+int ProfileModelBase::wellIndexAfter( float pos ) const
+{
+    int idxafter = -1;
+    for ( int idx=size()-1; idx>0; idx-- )
+    {
+	if ( profs_[idx]->pos_ < pos )
+	    return idxafter;
+
+	if ( profs_[idx]->isWell() )
+	    idxafter =	idx;
+    }
+
+    return idxafter;
+}
+
+
+int ProfileModelBase::primaryIndexAfter( float pos ) const
+{
+    int idxafter = -1;
+    for ( int idx=size()-1; idx>0; idx-- )
+    {
+	if ( profs_[idx]->pos_ < pos )
+	    return idxafter;
+
+	if ( profs_[idx]->isPrimary() )
 	    idxafter =	idx;
     }
 
@@ -512,11 +579,11 @@ if ( !wd ) \
 const Well::D2TModel* welld2t = wd->d2TModel();
 
 
-float ProfileModelBase::getInterpolatedDepthVal(
+float ProfileModelBase::getDepthValBetweenWellPos(
 	float timeval, float profpos, bool depthintvdss ) const
 {
-    const int wellprof1idx = indexBefore( profpos, true );
-    const int wellprof2idx = indexAfter( profpos, true );
+    const int wellprof1idx = wellIndexBefore( profpos );
+    const int wellprof2idx = wellIndexAfter( profpos );
     if ( wellprof1idx<0 && wellprof2idx<0 )
     {
 	pErrMsg( "Huh! No wellprofile in model." );
@@ -553,26 +620,43 @@ float ProfileModelBase::getInterpolatedDepthVal(
 
 
 float ProfileModelBase::getDepthVal( float timeval, float profpos,
+				     const ProfilePosProvider* posprov,
 				     bool depthintvdss ) const
 {
+    if ( !SI().zIsTime() || mIsUdf(timeval) )
+	return timeval;
+
+    if ( !posprov && !nrWells() )
+    {
+	pErrMsg( "Cannot transform zvals without ProfilePosProvider or Wells" );
+	return mUdf(float);
+    }
+
+    if ( ztransform_ )
+    {
+	const Coord poscrd = posprov->getCoord( profpos );
+	TrcKey tk;
+	tk.setFrom( poscrd );
+	return ztransform_->transformTrc( tk, timeval );
+    }
+
     bool isatpos = false;
     const int profidx = idxBefore( profpos, isatpos );
-    return isatpos ? getDepthVal( timeval, *profs_[profidx], depthintvdss )
-		   : getInterpolatedDepthVal( timeval, profpos, depthintvdss );
+    return isatpos && profs_[profidx]->isWell()
+	? getDepthValAtWellPos( timeval, *profs_[profidx], depthintvdss )
+	: getDepthValBetweenWellPos( timeval, profpos, depthintvdss );
 }
 
 
-float ProfileModelBase::getDepthVal( float timeval,
+float ProfileModelBase::getDepthValAtWellPos( float timeval,
 				     const ProfileBase& prof,
 				     bool depthintvdss ) const
 {
-    if ( !prof.wellid_.isUdf() )
-    {
-	mGetWellData( wd, welld2t, prof.wellid_ );
-	float res = depthintvdss ? welld2t->getDepth( timeval, wd->track() )
-			    : welld2t->getDah( timeval, wd->track() );
-	return res;
-    }
+    if ( prof.wellid_.isUdf() )
+	return mUdf(float);
 
-    return getInterpolatedDepthVal( timeval, prof.pos_, depthintvdss );
+    mGetWellData( wd, welld2t, prof.wellid_ );
+    float res = depthintvdss ? welld2t->getDepth( timeval, wd->track() )
+			: welld2t->getDah( timeval, wd->track() );
+    return res;
 }

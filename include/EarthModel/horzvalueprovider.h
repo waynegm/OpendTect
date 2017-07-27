@@ -45,8 +45,19 @@ public:
     virtual bool		isOK() const		{ return hor_; }
     virtual float		getZValue(const TrcKey&) const;
     virtual float		getZValue(const Coord&) const;
+    virtual DepthIDSetter*	getDepthIDSetter(ObjectSet<ZValueProvider>&);
 protected:
     ConstRefMan<EM::Horizon>	hor_;
     int				depthid_;
 };
+
+
+mExpClass(EarthModel) HorDepthIDSetter : public DepthIDSetter
+{
+public:
+			HorDepthIDSetter(ObjectSet<ZValueProvider>& zprvs)
+			    : DepthIDSetter(zprvs)	{}
+    virtual void	go();
+};
+
 #endif

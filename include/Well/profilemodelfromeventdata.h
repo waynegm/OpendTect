@@ -18,10 +18,11 @@ ________________________________________________________________________
 #include "datapackbase.h"
 #include "refcount.h"
 #include "stratlevel.h"
+#include "zaxistransform.h"
 
 class ProfileBase;
 class ProfileModelBase;
-class ProfilePosProvider;
+class ProfilePosProviderFromLine;
 class TaskRunner;
 class TrcKeySampling;
 class ZValueProvider;
@@ -40,15 +41,18 @@ public:
     {
 					Section( const TypeSet<Coord>& g )
 					    : linegeom_(g)
+					    , profposprov_(0)
 					    , seisfdp_(0)	{}
 					Section()
-					    : seisfdp_(0)	{}
+					    : seisfdp_(0)
+					    , profposprov_(0)	{}
 	bool				is2d_;
 	Pos::GeomID			geomid_;
 	MultiID				rdmlinemid_;
 	MultiID				seismid_;
 	ConstDataPackRef<FlatDataPack>	seisfdp_;
 	TypeSet<Coord>			linegeom_;
+	ProfilePosProviderFromLine*	profposprov_;
 
 	bool				getSectionTKS(TrcKeySampling&) const;
 	void				fillPar(IOPar&) const;
@@ -77,6 +81,7 @@ public:
 						       const TrcKeySampling&,
 						       TaskRunner*);
 	BufferString			getMarkerName() const;
+	Color				getMarkerColor() const;
 	void				setMarker(const char*);
 	Strat::Level::ID		levelid_;
 	static const char*		sKeyMarkerName() {return "Marker Name";}
@@ -88,9 +93,14 @@ public:
     ProfileModelBase*			model_;
     Section				section_;
     ObjectSet<Event>			events_;
+    RefMan<ZAxisTransform>		ztransform_;
+    int					voiidx_;
 
     void				setModel( ProfileModelBase* model )
 					{ model_ = model; }
+    void				setTransform(ZAxisTransform*);
+    bool				prepareSectionGeom();
+    bool				prepareTransform();
     void				fillPar(IOPar&) const;
     static bool				hasPar(const IOPar&);
     static ProfileModelFromEventData*	createFrom(ProfileModelBase&,
@@ -107,6 +117,7 @@ public:
     void				removeCrossingEvents();
     void				setTieMarker(int evidx,
 						const char* mnm=0 );
+    void				findAndSetTieMarkers();
     bool				findTieMarker(int evidx,
 						      BufferString& mnm) const;
     void				setNearestTieEvent(
@@ -123,9 +134,6 @@ public:
     void				addEvent(ZValueProvider*);
     void				removeAllEvents();
     void				removeEvent(int evidx);
-    float				getEventDepthVal(
-						int evidx,const ProfileBase&,
-						bool depthintvdss=true) const;
     float				getZOffset(int evidx,
 						   const ProfileBase&) const;
     float				calcZOffsetForIntersection(
@@ -133,11 +141,14 @@ public:
     void				prepareIntersectionMarkers();
     void				setIntersectMarkers();
     void				setIntersectMarkersForEV(int evidx);
-    static float			getInterpolatedDepthAtPosFromEV(
+    float				getEventDepthVal(
+						int evidx,const ProfileBase&,
+						bool depthintvdss=true) const;
+    float				getDepthVal(float pos,float zval,
+						    bool depthintvdss) const;
+    float				getInterpolatedDepthAtPosFromEV(
 					    float pos, const Event&,
-					    const ProfileModelBase&,
-					    const ProfilePosProvider&,
-					    bool depthintvdss=true);
+					    bool depthintvdss=true) const;
 
     static const char*			sKeyNrProfs()
 					{ return "Nr of Profiles"; }

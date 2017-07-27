@@ -41,6 +41,9 @@ public:
     virtual void		updateDisplay();
     virtual void		onFinalise()			=0;
     bool			updateProfileModel();
+    void			updateProfileModelDisplay();
+
+    CNotifier<uiProfileModelFromEvCrGrp,float>	profileToBeAdded;
 
 protected:
 
@@ -61,8 +64,9 @@ protected:
     void				removeEventCB(CallBacker*);
     void				tieEventsCB(CallBacker*);
     void				updateProfileCB(CallBacker*);
+    void				profileToBeAddedCB(CallBacker*);
+    void				selTransformCB(CallBacker*);
 
-    void				updateProfileModelDisplay();
     virtual void			getEvents()			=0;
     void				drawEvents();
 };
@@ -92,6 +96,10 @@ mExpClass(uiWellAttrib) uiProfileModelFromEvCrDlg : public uiDialog
 public:
 				uiProfileModelFromEvCrDlg(uiParent*,
 					ProfileModelFromEventData&);
+    CNotifier<uiProfileModelFromEvCrGrp,float>& profileToBeAdded()
+				{ return profscrgrp_->profileToBeAdded; }
+    void			updateProfileModelDisplay()
+				{ profscrgrp_->updateProfileModelDisplay(); }
 
 protected:
     void			finaliseCB(CallBacker*);

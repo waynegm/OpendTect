@@ -254,7 +254,7 @@ void ProfileModelBase::removeProfiles( const char* typestr )
 
 bool posEqual( float p1, float p2 )
 {
-    return mIsEqual(p1,p2,1e-6);
+    return mIsEqual(p1,p2,1e-2);
 }
 
 

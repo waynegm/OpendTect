@@ -24,6 +24,7 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "uiprofileviewpars.h"
 #include "uiprofilesynthseiscorrwin.h"
 #include "uistratlayermodel.h"
+#include "uimenu.h"
 #include "uitable.h"
 #include "uitoolbutton.h"
 #include "uitaskrunner.h"
@@ -299,7 +300,7 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
 	uiParent* p, ProfileModelFromEventData& sudata )
     : uiGroup(p)
     , data_(sudata)
-    , profileToBeAdded(this)
+    , profileToBeEdited(this)
 {
     paramgrp_ = new uiGroup( this, "Param Group" );
     nrprofsfld_ =
@@ -360,6 +361,8 @@ uiProfileModelFromEvCrGrp::uiProfileModelFromEvCrGrp(
     viewer_->setPack( false, seisfdp.id() );
     mAttachCB( viewer_->getMouseEventHandler().doubleClick,
 	       uiProfileModelFromEvCrGrp::profileToBeAddedCB );
+    mAttachCB( viewer_->getMouseEventHandler().buttonPressed,
+	       uiProfileModelFromEvCrGrp::profileToBeEditedCB );
     modeladmgr_ = new ProfileModelBaseAuxDataMgr( data_.model_, *viewer_ );
     const StepInterval<double> dxrg = seisfdp.posData().range( true );
     Interval<float> xrg( mCast(float,dxrg.start), mCast(float,dxrg.stop) );
@@ -453,13 +456,42 @@ void uiProfileModelFromEvCrGrp::updateProfileModelDisplay()
 }
 
 
-void uiProfileModelFromEvCrGrp::profileToBeAddedCB( CallBacker* )
+float uiProfileModelFromEvCrGrp::getProfilePos( const MouseEvent& ev ) const
 {
-    const MouseEvent& ev = viewer_->getMouseEventHandler().event();
     const uiWorldPoint wp = viewer_->getWorld2Ui().transform( ev.pos() );
     const Interval<float>& vwxrg = modeladmgr_->view2Model().viewXRange();
-    const float profilepos = (wp.x - vwxrg.start)/vwxrg.width();
-    profileToBeAdded.trigger( profilepos );
+    return (wp.x - vwxrg.start)/vwxrg.width();
+}
+
+
+void uiProfileModelFromEvCrGrp::profileToBeAddedCB( CallBacker* )
+{
+    const float profilepos =
+	getProfilePos( viewer_->getMouseEventHandler().event() );
+    profileToBeEdited.trigger( profilepos );
+}
+
+
+void uiProfileModelFromEvCrGrp::profileToBeEditedCB( CallBacker* )
+{
+    const MouseEvent& mev = viewer_->getMouseEventHandler().event();
+    if ( !mev.rightButton() )
+	return;
+
+    const float profilepos = getProfilePos( mev );
+    bool isatpos = false;
+    data_.model_->idxBefore( profilepos, isatpos );
+    if ( isatpos )
+    {
+	uiMenu* editmenu = new uiMenu( this );
+	editmenu->insertItem(
+		new uiAction(uiStrings::phrEdit(tr("Eventbased profile"))), 0 );
+	const int menuid = editmenu->exec();
+	if ( menuid<0 )
+	    return;
+
+	profileToBeEdited.trigger( profilepos );
+    }
 }
 
 
@@ -563,6 +595,7 @@ void uiProfileModelFromEvCrGrp::drawEvents()
 	TrcKeySamplingIterator seciter( sectiontks );
 	while ( seciter.next(itrtk) )
 	{
+	    itrtk.setGeomID( sectiontks.getGeomID() );
 	    const int curidx = mCast( int, seciter.curIdx() );
 	    for ( int iev=0; iev<data_.nrEvents(); iev++ )
 	    {

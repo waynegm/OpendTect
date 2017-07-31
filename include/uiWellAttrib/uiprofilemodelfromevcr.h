@@ -25,6 +25,7 @@ class uiFlatViewer;
 class uiProfileModelViewControl;
 class uiStratMultiDisplayWin;
 
+class MouseEvent;
 class ProfileModelBase;
 class ProfileModelFromEventData;
 class ProfileModelBaseAuxDataMgr;
@@ -43,7 +44,7 @@ public:
     bool			updateProfileModel();
     void			updateProfileModelDisplay();
 
-    CNotifier<uiProfileModelFromEvCrGrp,float>	profileToBeAdded;
+    CNotifier<uiProfileModelFromEvCrGrp,float>	profileToBeEdited;
 
 protected:
 
@@ -65,8 +66,10 @@ protected:
     void				tieEventsCB(CallBacker*);
     void				updateProfileCB(CallBacker*);
     void				profileToBeAddedCB(CallBacker*);
+    void				profileToBeEditedCB(CallBacker*);
     void				selTransformCB(CallBacker*);
 
+    float				getProfilePos(const MouseEvent&) const;
     virtual void			getEvents()			=0;
     void				drawEvents();
 };
@@ -96,8 +99,8 @@ mExpClass(uiWellAttrib) uiProfileModelFromEvCrDlg : public uiDialog
 public:
 				uiProfileModelFromEvCrDlg(uiParent*,
 					ProfileModelFromEventData&);
-    CNotifier<uiProfileModelFromEvCrGrp,float>& profileToBeAdded()
-				{ return profscrgrp_->profileToBeAdded; }
+    CNotifier<uiProfileModelFromEvCrGrp,float>& profileToBeEdited()
+				{ return profscrgrp_->profileToBeEdited; }
     void			updateProfileModelDisplay()
 				{ profscrgrp_->updateProfileModelDisplay(); }
 

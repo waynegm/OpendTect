@@ -480,7 +480,7 @@ void uiProfileModelFromEvCrGrp::profileToBeEditedCB( CallBacker* )
 
     const float profilepos = getProfilePos( mev );
     bool isatpos = false;
-    data_.model_->idxBefore( profilepos, isatpos );
+    data_.model_->idxBefore( profilepos, isatpos, 1e-2 );
     if ( isatpos )
     {
 	uiMenu* editmenu = new uiMenu( this );

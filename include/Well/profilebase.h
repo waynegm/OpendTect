@@ -85,7 +85,8 @@ public:
     int			wellIndexAfter(float pos) const;
     int			primaryIndexBefore(float pos) const;
     int			primaryIndexAfter(float pos) const;
-    int			idxBefore(float pos,bool& isatequalpos) const;
+    int			idxBefore(float pos,bool& isatequalpos,
+				  float eps=1e-6) const;
     float		getMaxZ() const;
 
     void		removeAll();

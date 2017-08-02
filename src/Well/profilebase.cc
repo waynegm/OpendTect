@@ -252,9 +252,9 @@ void ProfileModelBase::removeProfiles( const char* typestr )
 }
 
 
-bool posEqual( float p1, float p2 )
+bool posEqual( float p1, float p2, float eps=1e-6 )
 {
-    return mIsEqual(p1,p2,1e-2);
+    return mIsEqual(p1,p2,eps);
 }
 
 
@@ -342,14 +342,14 @@ ProfileModelBase::~ProfileModelBase()
 }
 
 
-int ProfileModelBase::idxBefore( float pos, bool& isat ) const
+int ProfileModelBase::idxBefore( float pos, bool& isat, float eps ) const
 {
     isat = false;
 
     for ( int idx=0; idx<profs_.size(); idx++ )
     {
 	const float profpos = profs_[idx]->pos_;
-	if ( posEqual(profpos,pos) )
+	if ( posEqual(profpos,pos,eps) )
 	    { isat = true; return idx; }
 	else if ( profpos > pos )
 	    return idx - 1;

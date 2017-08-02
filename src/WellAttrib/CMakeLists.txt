@@ -16,6 +16,8 @@ SET(OD_MODULE_SOURCES
 		stratseisevent.cc
 		stratsynth.cc
 		stratsynthexp.cc
+		profilemodelfromeventdata.cc
+		profilemodelcreator.cc
 		wellhorpos.cc
 		welllogattrib.cc
 		welltiecshot.cc

@@ -58,6 +58,11 @@ public:
     			//!< keep contents and lithologies
     const LeavedUnitRef* getLevelSetUnit(const char* lvlnm) const;
 
+    void		addLevelUnit(const Level&);
+    void		removeLevelUnit(const Level&);
+			// adds & removes units from levels on RefTree created 
+			// using createFromLevelSet()
+
     Notifier<RefTree>	deleteNotif;
 
 protected:

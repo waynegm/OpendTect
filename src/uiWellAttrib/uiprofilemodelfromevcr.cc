@@ -460,7 +460,7 @@ float uiProfileModelFromEvCrGrp::getProfilePos( const MouseEvent& ev ) const
 {
     const uiWorldPoint wp = viewer_->getWorld2Ui().transform( ev.pos() );
     const Interval<float>& vwxrg = modeladmgr_->view2Model().viewXRange();
-    return (wp.x - vwxrg.start)/vwxrg.width();
+    return mCast(float,(wp.x - vwxrg.start)/vwxrg.width());
 }
 
 

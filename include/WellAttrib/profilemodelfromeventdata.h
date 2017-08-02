@@ -12,7 +12,7 @@ ________________________________________________________________________
 
 -*/
 
-#include "wellmod.h"
+#include "wellattribmod.h"
 #include "bufstringset.h"
 #include "coord.h"
 #include "datapackbase.h"
@@ -29,7 +29,7 @@ class ZValueProvider;
 namespace Well { class Marker; }
 
 
-mExpClass(Well) ProfileModelFromEventData
+mExpClass(WellAttrib) ProfileModelFromEventData
 { mRefCountImpl(ProfileModelFromEventData);
 mODTextTranslationClass(ProfileModelFromEventData);
 public:
@@ -37,7 +37,7 @@ public:
 				    ProfileModelBase*,const TypeSet<Coord>&);
 				ProfileModelFromEventData(
 				    ProfileModelBase*);
-    mStruct(Well) Section
+    mStruct(WellAttrib) Section
     {
 					Section( const TypeSet<Coord>& g )
 					    : linegeom_(g)
@@ -69,7 +69,7 @@ public:
 
     };
 
-    mStruct(Well) Event
+    mStruct(WellAttrib) Event
     {
 					Event(ZValueProvider*);
 					~Event();

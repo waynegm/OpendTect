@@ -12,7 +12,7 @@ ________________________________________________________________________
 
 -*/
 
-#include "wellmod.h"
+#include "wellattribmod.h"
 #include "multiid.h"
 #include "bufstring.h"
 #include "profilemodelfromeventdata.h"
@@ -31,7 +31,7 @@ template <class T> class PolyLineND;
 
 /*!\brief Base class for horizon users in profile mode */
 
-mExpClass(Well) ProfileModelFromEventCreator
+mExpClass(WellAttrib) ProfileModelFromEventCreator
 {
 public:
 
@@ -84,7 +84,7 @@ protected:
 /*!\brief uses horizon to set depths of control profiles. By default uses
   first well profile for T2D conversion. */
 
-mExpClass(Well) ProfileModelFromSingleEventCreator
+mExpClass(WellAttrib) ProfileModelFromSingleEventCreator
 				: public ProfileModelFromEventCreator
 { mODTextTranslationClass(ProfileModelFromSingleEventCreator);
 public:
@@ -112,7 +112,7 @@ protected:
  */
 
 
-mExpClass(Well) ProfileModelFromMultiEventCreator
+mExpClass(WellAttrib) ProfileModelFromMultiEventCreator
 				: public ProfileModelFromEventCreator
 { mODTextTranslationClass(ProfileModelFromMultiEventCreator);
 public:

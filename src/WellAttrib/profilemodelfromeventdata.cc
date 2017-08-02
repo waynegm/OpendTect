@@ -14,6 +14,8 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "polylinend.h"
 #include "randomlinegeom.h"
 #include "statruncalc.h"
+#include "stratreftree.h"
+#include "stratunitrefiter.h"
 #include "survinfo.h"
 #include "survgeom2d.h"
 #include "uistrings.h"
@@ -246,7 +248,13 @@ ProfileModelFromEventData::Event::~Event()
 {
     delete zvalprov_;
     if ( newintersectmarker_ )
+    {
+	const Strat::Level* eventlvl = Strat::LVLS().get( levelid_ );
+	if ( eventlvl )
+	    Strat::eRT().removeLevelUnit( *eventlvl );
 	Strat::eLVLS().remove( levelid_ );
+    }
+
     delete newintersectmarker_;
 }
 
@@ -282,8 +290,15 @@ ProfileModelFromEventData::Event* ProfileModelFromEventData::Event::
 void ProfileModelFromEventData::Event::setMarker( const char* markernm )
 {
     Strat::LevelSet& lvls = Strat::eLVLS();
+    Strat::RefTree& strattree = Strat::eRT();
     if ( newintersectmarker_ )
+    {
 	lvls.remove( levelid_ );
+	const Strat::Level* eventlvl = Strat::LVLS().get( levelid_ );
+	if ( eventlvl )
+	    strattree.removeLevelUnit( *eventlvl );
+    }
+
     delete newintersectmarker_;
     newintersectmarker_ = 0;
     FixedString markernmstr( markernm );
@@ -301,6 +316,8 @@ void ProfileModelFromEventData::Event::setMarker( const char* markernm )
 	tiemarkernm_ = markernm;
 	levelid_ = newlevel->id();
 	newintersectmarker_->setLevelID( levelid_ );
+	const Strat::Level* eventlvl = Strat::LVLS().get( levelid_ );
+	strattree.addLevelUnit( *eventlvl );
     }
     else
     {

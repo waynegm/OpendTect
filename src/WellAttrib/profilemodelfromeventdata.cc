@@ -480,6 +480,9 @@ void ProfileModelFromEventData::findAndSetTieMarkers()
     for ( int iev=0; iev<nrEvents(); iev++ )
     {
 	BufferString tiemarkernm;
+	if ( !isIntersectMarker(iev) )
+	    continue;
+
 	if ( findTieMarker(iev,tiemarkernm) )
 	{
 	    const int tiedtoevidx = tiedToEventIdx( tiemarkernm );

@@ -290,7 +290,9 @@ void Strat::RefTree::removeLevelUnit( const Strat::Level& lvl )
     {
 	if ( itr.unit()->code()==lvl.name() )
 	{
-	    remove( itr.unit() );
+	    Strat::NodeUnitRef* parentnode = itr.unit()->upNode();
+	    if ( parentnode )
+		parentnode->remove( itr.unit() );
 	    break;
 	}
     }

@@ -164,9 +164,13 @@ public:
     virtual UnitRef*	replace(int uridx,UnitRef*);
     void		swapChildren(int,int);
     void		remove( int uridx )
-			{ delete refs_.removeSingle(uridx); }
+			{
+			    if ( refs_.validIdx(uridx) )
+				delete refs_.removeSingle(uridx);
+			}
+
     void		remove( const UnitRef* ur )
-			{ remove( indexOf( ur ) ); }
+			{ remove( indexOf(ur) ); }
     void		removeAllChildren()
 			{ deepErase( refs_ ); }
 

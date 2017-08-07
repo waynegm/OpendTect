@@ -808,11 +808,11 @@ void ProfileModelFromEventData::removeEvent( int evidx )
 }
 
 
-void ProfileModelFromEventData::setTransform( ZAxisTransform* tr )
+void ProfileModelFromEventData::setTransform( ZAxisTransform* zat )
 {
-    ztransform_ = tr;
+    ztransform_ = zat;
     if ( model_ )
-	model_->setZTransform( tr );
+	model_->setZTransform( zat );
     prepareTransform();
 }
 

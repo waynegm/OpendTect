@@ -557,6 +557,9 @@ void uiProfileModelFromEvCrGrp::removeEventCB( CallBacker* )
 
 void uiProfileModelFromEvCrGrp::tieEventsCB( CallBacker* )
 {
+    if ( data_.model_->isEmpty() )
+	mErrRet( tr("No profile added to which markers could be tied to."), )
+
     uiEventMarkerTieDialog tieevmrkrdlg( this, data_ );
     if ( tieevmrkrdlg.go() )
 	modeladmgr_->drawPars().resetMarkerNames();

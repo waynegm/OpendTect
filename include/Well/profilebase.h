@@ -13,6 +13,7 @@ ________________________________________________________________________
 -*/
 
 #include "wellmod.h"
+#include "callback.h"
 #include "wellmarker.h"
 #include "multiid.h"
 #include "coord.h"
@@ -21,7 +22,7 @@ ________________________________________________________________________
 
 class ProfilePosProvider;
 
-mExpClass(Well) ProfileBase
+mExpClass(Well) ProfileBase : public CallBacker
 {
 public:
 
@@ -32,6 +33,7 @@ public:
     virtual const char* typeStr() const				= 0;
     virtual void	fillPar(IOPar&) const;
     virtual void	usePar(const IOPar&);
+    virtual void	removeMarker(const char* mrkrnm);
     bool		moveMarker(int,float newz,bool pushothers=false,
 				   bool pullothers=false);
     void		createMarkersFrom( const ProfileBase* p0,

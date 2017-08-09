@@ -55,6 +55,14 @@ void ProfileBase::usePar( const IOPar& iop )
 }
 
 
+void ProfileBase::removeMarker( const char* markernm )
+{
+    const int markeridx = markers_.indexOf( markernm );
+    if ( markeridx>= 0 )
+	markers_.removeSingle( markeridx );
+}
+
+
 void ProfileBase::createMarkersFrom( const ProfileBase* p0,
 				     const ProfileBase* p1 )
 {
@@ -287,12 +295,7 @@ void ProfileModelBase::removeAtSamePos( int idxtokeep )
 void ProfileModelBase::removeMarker( const char* markernm )
 {
     for ( int iprof=0; iprof<profs_.size(); iprof++ )
-    {
-	ProfileBase* prof = profs_[iprof];
-	const int markeridx = prof->markers_.indexOf( markernm );
-	if ( markeridx>= 0 )
-	    prof->markers_.removeSingle( markeridx );
-    }
+	profs_[iprof]->removeMarker( markernm );
 }
 
 

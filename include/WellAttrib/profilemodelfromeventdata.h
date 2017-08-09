@@ -29,7 +29,7 @@ class ZValueProvider;
 namespace Well { class Marker; }
 
 
-mExpClass(WellAttrib) ProfileModelFromEventData
+mExpClass(WellAttrib) ProfileModelFromEventData : public CallBacker
 { mRefCountImpl(ProfileModelFromEventData);
 mODTextTranslationClass(ProfileModelFromEventData);
 public:
@@ -129,7 +129,6 @@ public:
     float				getAvgDZval(int evidx,
 						    const BufferString&) const;
     BufferString			getMarkerName(int evidx) const;
-    void				removeMarkers(const char*);
     Well::Marker*			getIntersectMarker(int evidx) const;
     void				addEvent(ZValueProvider*);
     void				removeAllEvents();
@@ -149,6 +148,7 @@ public:
     float				getInterpolatedDepthAtPosFromEV(
 					    float pos, const Event&,
 					    bool depthintvdss=true) const;
+    CNotifier<ProfileModelFromEventData,BufferString> eventToBeRemoved;
 
     static const char*			sKeyNrProfs()
 					{ return "Nr of Profiles"; }

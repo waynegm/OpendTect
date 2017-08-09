@@ -256,6 +256,7 @@ ProfileModelFromEventData::ProfileModelFromEventData(
     , section_(linegeom)
     , totalnrprofs_(sDefNrCtrlProfiles)
     , voiidx_(-1)
+    , eventToBeRemoved(this)
 {
 }
 
@@ -265,6 +266,7 @@ ProfileModelFromEventData::ProfileModelFromEventData(
     : model_(model)
     , totalnrprofs_(sDefNrCtrlProfiles)
     , voiidx_(-1)
+    , eventToBeRemoved(this)
 {
 }
 
@@ -409,7 +411,7 @@ int ProfileModelFromEventData::tiedToEventIdx( const char* markernm ) const
 
 void ProfileModelFromEventData::setTieMarker( int evidx, const char* markernm )
 {
-    if ( !events_.validIdx(evidx) )
+    if ( !events_.validIdx(evidx) || events_[evidx]->getMarkerName()==markernm )
 	return;
 
     Event& ev = *events_[evidx];
@@ -486,6 +488,9 @@ void ProfileModelFromEventData::findAndSetTieMarkers()
 	if ( findTieMarker(iev,tiemarkernm) )
 	{
 	    const int tiedtoevidx = tiedToEventIdx( tiemarkernm );
+	    if ( tiedtoevidx==iev )
+		continue;
+
 	    if ( tiedtoevidx<0 )
 		setTieMarker( iev, tiemarkernm );
 	    else
@@ -779,31 +784,15 @@ void ProfileModelFromEventData::removeAllEvents()
 }
 
 
-void ProfileModelFromEventData::removeMarkers( const char* markernm )
-{
-    model_->removeMarker( markernm );
-    for ( int idx=0; idx<model_->size(); idx++ )
-    {
-	const ProfileBase* prof = model_->get( idx );
-	if ( !prof->isWell() )
-	    continue;
-
-	Well::Data* wd = Well::MGR().get( prof->wellid_ );
-	const int markeridx = wd->markers().indexOf( markernm );
-	if ( markeridx>=0 )
-	    wd->markers().removeSingle( markeridx );
-    }
-}
-
-
 void ProfileModelFromEventData::removeEvent( int evidx )
 {
     if ( !events_.validIdx(evidx) )
 	return;
 
     if ( isIntersectMarker(evidx) )
-	removeMarkers( events_[evidx]->newintersectmarker_->name() );
+	model_->removeMarker( events_[evidx]->newintersectmarker_->name() );
 
+    eventToBeRemoved.trigger( events_[evidx]->getMarkerName() );
     delete events_.removeSingle( evidx );
 }
 

@@ -28,8 +28,5 @@ SET(OD_MODULE_SOURCES
 	welltrack.cc
 	welltransl.cc
 	wellwriter.cc
-	profilebase.cc
-	profileposprovider.cc
-	profilemodelbaseauxdatamgr.cc
 )
 OD_INIT_MODULE()

@@ -25,7 +25,6 @@ static const char* rcsID mUsedVar = "$Id$";
 #include "emsurfaceposprov.h"
 #include "emsurfacetr.h"
 #include "horizongridder.h"
-#include "horzvalueprovider.h"
 #include "lmkemfaulttransl.h"
 #include "uistrings.h"
 #include "zdomain.h"
@@ -73,5 +72,4 @@ mDefModInitFn(EarthModel)
 					"ms",1000) );
     ZDomain::Def::add( new ZDomain::Def("Depth-Flattened",uiStrings::sDepth(),
 					"",1) );
-    HorZValueProvider::initClass();
 }

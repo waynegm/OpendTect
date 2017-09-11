@@ -29,12 +29,9 @@ set( OD_MODULE_SOURCES
 	uistratsynthcrossplot.cc
 	uistratsynthdisp.cc
 	uistratsynthexport.cc
-	uiprofilesynthseiscorrwin.cc
 	uisynthtorealscale.cc
 	uisynthgendlg.cc
 	uisynthseis.cc
-	uiprofilemodelfromevcr.cc
-	uiprofileviewpars.cc
 	inituiwellattrib.cc
 )
 

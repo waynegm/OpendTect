@@ -59,7 +59,9 @@ public:
     bool		isValidID(const ObjID&) const;
     bool		isLoaded(const char*) const;
     bool		isLoaded(const ObjID&) const;
-    void		getAllLoaded(DBKeySet&) const;
+    void		getAll(DBKeySet&,bool onlyloaded=false) const;
+    inline void		getAllLoaded( DBKeySet& kys ) const
+			{ getAll(kys,true); } // 6.5 only
     ObjID		getIDByName(const char*) const;
     IOPar		getIOObjPars(const ObjID&) const;
     void		setIOObjPars(const ObjID&,const IOPar&) const;

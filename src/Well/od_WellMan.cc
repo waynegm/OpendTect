@@ -11,7 +11,6 @@
 #include "welllog.h"
 #include "commandlineparser.h"
 #include "keystrs.h"
-#include "odjson.h"
 #include "prog.h"
 #include "scaler.h"
 #include "unitofmeasure.h"

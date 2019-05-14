@@ -10,6 +10,7 @@
 #include "separstr.h"
 #include "typeset.h"
 #include "arraynd.h"
+#include "stringbuilder.h"
 #include "uistrings.h"
 #include "gason.h"
 #include <string.h>
@@ -203,8 +204,16 @@ OD::JSON::ValArr::ValArr( const ValArr& oth )
 
 void OD::JSON::ValArr::dumpJSon( BufferString& bs ) const
 {
+    StringBuilder sb;
+    dumpJSon( sb );
+    bs = sb.result();
+}
+
+
+void OD::JSON::ValArr::dumpJSon( StringBuilder& sb ) const
+{
     const int sz = (size_type)set_->nrItems();
-    bs.add( "[" );
+    sb.add( '[' );
     for ( int idx=0; idx<sz; idx++ )
     {
 	switch ( type_ )
@@ -212,23 +221,23 @@ void OD::JSON::ValArr::dumpJSon( BufferString& bs ) const
 	    case Boolean:
 	    {
 		const bool val = bools()[idx];
-		bs.add( val ? "true" : "false" );
+		sb.add( val ? "true" : "false" );
 	    } break;
 	    case Number:
 	    {
 		const NumberType val = vals()[idx];
-		bs.add( val );
+		sb.add( val );
 	    } break;
 	    case String:
 	    {
 		const BufferString toadd( "\"", strings().get(idx), "\"" );
-		bs.add( toadd );
+		sb.add( toadd );
 	    } break;
 	}
 	if ( idx != sz-1 )
-	    bs.add( "," );
+	    sb.add( "," );
     }
-    bs.add( "]" );
+    sb.add( ']' );
 }
 
 
@@ -554,48 +563,55 @@ uiRetVal OD::JSON::ValueSet::parseJSon( char* buf, int bufsz )
 }
 
 
-void OD::JSON::ValueSet::dumpJSon( BufferString& str ) const
+void OD::JSON::ValueSet::dumpJSon( BufferString& bs ) const
+{
+    StringBuilder sb;
+    dumpJSon( sb );
+    bs = sb.result();
+}
+
+
+void OD::JSON::ValueSet::dumpJSon( StringBuilder& sb ) const
 {
     const bool isarr = isArray();
-    str.add( isarr ? "[" : "{" );
+    sb.add( isarr ? '[' : '{' );
+
     for ( int idx=0; idx<values_.size(); idx++ )
     {
 	const Value& val = *values_[idx];
-	BufferString toadd;
 	if ( val.isKeyed() )
 	{
 	    const KeyedValue& keyedval = static_cast<const KeyedValue&>( val );
-	    toadd.set( "\"" ).add( keyedval.key_ ).add( "\":" );
+	    sb.add( "\"" ).add( keyedval.key_ ).add( "\":" );
 	}
 
 	if ( val.isValSet() )
 	{
 	    const ValueSet& vset = *val.vSet();
 	    if ( !vset.isArray() || vset.asArray().valType() != Data )
-		vset.dumpJSon( toadd );
+		vset.dumpJSon( sb );
 	    else
-		vset.asArray().valArr().dumpJSon( toadd );
+		vset.asArray().valArr().dumpJSon( sb );
 	}
 	else
 	{
 	    switch ( (DataType)val.type_ )
 	    {
 		case Boolean:
-		    toadd.add( val.boolVal() ? "true" : "false" );
+		    sb.add( val.boolVal() ? "true" : "false" );
 		break;
 		case Number:
-		    toadd.add( val.val() );
+		    sb.add( val.val() );
 		break;
 		case String:
-		    toadd.add( "\"" ).add( val.str() ).add( "\"" );
+		    sb.add( "\"" ).add( val.str() ).add( "\"" );
 		break;
 	    }
 	}
 	if ( &val != values_.last() )
-	    toadd.add( "," );
-	str.add( toadd );
+	    sb.add( "," );
     }
-    str.add( isarr ? "]" : "}" );
+    sb.add( isarr ? "]" : "}" );
 }
 
 
@@ -624,10 +640,10 @@ OD::JSON::ValueSet* OD::JSON::ValueSet::read( od_istream& strm, uiRetVal& uirv )
 
 uiRetVal OD::JSON::ValueSet::write( od_ostream& strm )
 {
-    BufferString buf;
-    dumpJSon( buf );
+    StringBuilder sb;
+    dumpJSon( sb );
     uiRetVal uirv;
-    if ( !strm.add(buf).isOK() )
+    if ( !strm.add(sb.result()).isOK() )
     {
 	uirv.set( uiStrings::phrCannotWrite( toUiString(strm.fileName()) ) );
 	strm.addErrMsgTo( uirv );

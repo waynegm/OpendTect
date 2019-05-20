@@ -12,9 +12,9 @@
 #endif
 
 
-StringBuilder::StringBuilder( const char* str )
+StringBuilder::StringBuilder( const char* inpstr )
 {
-    add( str );
+    add( inpstr );
 }
 
 
@@ -31,7 +31,7 @@ StringBuilder& StringBuilder::operator =( const StringBuilder& oth )
 	bufsz_ = curpos_ = 0;
     else
     {
-	OD::memCopy( buf_, oth.buf_, oth.curpos_ );
+	OD::memCopy( buf_, oth.buf_, oth.curpos_+1 );
 	bufsz_ = oth.bufsz_;
 	curpos_ = oth.curpos_;
     }
@@ -60,12 +60,12 @@ StringBuilder& StringBuilder::setEmpty()
 }
 
 
-StringBuilder& StringBuilder::set( const char* str )
+StringBuilder& StringBuilder::set( const char* inpstr )
 {
-    if ( str != buf_ )
+    if ( inpstr != buf_ )
     {
 	setEmpty();
-	add( str );
+	add( inpstr );
     }
     return *this;
 }
@@ -73,43 +73,50 @@ StringBuilder& StringBuilder::set( const char* str )
 
 StringBuilder& StringBuilder::add( char ch, size_type nr )
 {
-    const char str[] = { ch, '\0' };
+    const char chstr[] = { ch, '\0' };
     for ( int idx=0; idx<nr; idx++ )
-	add( str );
+	add( chstr );
     return *this;
 }
 
 
-StringBuilder& StringBuilder::add( const char* str )
+bool StringBuilder::setBufSz( size_type newsz, bool cp_old )
 {
-    if ( !str || !*str )
-	return *this;
+    char* newbuf;
+    mTryAlloc( newbuf, char [newsz] );
+    if ( !newbuf )
+	return false;
 
-    if ( !buf_ )
+    if ( buf_ )
     {
-	mTryAlloc( buf_, char [256] );
-	if ( !buf_ )
-	    return *this;
-	bufsz_ = 256;
+	if ( cp_old )
+	    OD::memCopy( newbuf, buf_, curpos_+1 );
+	delete [] buf_;
     }
 
+    buf_ = newbuf;
+    bufsz_ = newsz;
+    return true;
+}
+
+
+StringBuilder& StringBuilder::add( const char* addstr )
+{
+    if ( !addstr || !*addstr )
+	return *this;
+
+    if ( !buf_ && !setBufSz(256,false) )
+	return *this;
+
     char* myptr = buf_ + curpos_;
-    while ( *str )
+    while ( *addstr )
     {
-	*myptr++ = *str++;
+	*myptr++ = *addstr++;
 	curpos_++;
 	if ( curpos_ >= bufsz_ )
 	{
-	    char* newbuf;
-	    const auto newbufsz = bufsz_ * 2;
-	    mTryAlloc( newbuf, char [newbufsz] );
-	    if ( !newbuf )
+	    if ( !setBufSz(bufsz_*2,true) )
 		return *this;
-	    char* oldbuf = buf_;
-	    buf_ = newbuf;
-	    bufsz_ = newbufsz;
-	    OD::memCopy( buf_, oldbuf, curpos_ );
-	    delete oldbuf;
 	    myptr = buf_ + curpos_;
 	}
     }
@@ -127,4 +134,14 @@ StringBuilder& StringBuilder::add( const mQtclass(QString)& qstr )
     const QByteArray qba = qstr.toUtf8();
     return add( qba.constData() );
 #endif
+}
+
+
+char* StringBuilder::getCStr( int minlen )
+{
+    if ( bufsz_ < minlen )
+	setBufSz( minlen, true );
+    if ( !buf_ )
+	setBufSz( 256, false );
+    return buf_;
 }

@@ -687,6 +687,42 @@ mExtern(Basic) void SetEnvVarDirList( const char* env,
 }
 
 
+mExtern(Basic) const char* GetEnvVarDirListWoOD( const char* ky,
+						 const char* filter )
+{
+    mDeclStaticString( ret );
+    ret.setEmpty();
+
+    BufferStringSet pathdirs;
+    if ( !GetEnvVarDirList(ky,pathdirs,true) )
+        return ret;
+
+    BufferString instdir( GetSoftwareDir(false) );
+    if ( instdir.isEmpty() )
+        ret.set( GetEnvVar(ky) );
+    else
+    {
+	File::Path odinstfp( instdir );
+	odinstfp.makeCanonical();
+        BufferStringSet accepteddirs;
+        for ( const auto pathdir : pathdirs )
+        {
+	    File::Path pathdirfp( pathdir->buf() );
+	    pathdirfp.makeCanonical();
+            if ( pathdirfp == odinstfp || pathdirfp.isSubDirOf(odinstfp) ||
+		 pathdir->contains(instdir) )
+		continue;
+	    if ( filter && pathdir->contains(filter) )
+		continue;
+	    accepteddirs.add( pathdir->buf() );
+        }
+	ret.set( accepteddirs.cat( BufferString(mEnvVarDirSep) ) );
+    }
+
+    return ret;
+}
+
+
 static bool writeEntries( const char* fnm, const IOPar& iop )
 {
     od_ostream strm( fnm );

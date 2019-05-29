@@ -77,6 +77,7 @@ endmacro()
 
 macro(OD_SETUP_OSG)
 
+    set( OD_INSTALL_DEPENDENT_LIBS ON )
     if ( (NOT DEFINED OSG_FOUND) )
 	OD_ADD_OSG()
     endif()

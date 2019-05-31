@@ -375,7 +375,7 @@ OS::CommandLauncher* OD::PythonAccess::getLauncher(
 void OD::PythonAccess::handleFilesCB( CallBacker* )
 {
     filedeltimer_.stop();
-    for ( int idx=fptodelset_.size(); idx>=0; idx-- )
+    for ( int idx=fptodelset_.size()-1; idx>=0; idx-- )
     {
 	const File::Path& fp = *fptodelset_.get( idx );
 	if ( !fp.exists() )

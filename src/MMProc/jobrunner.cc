@@ -21,6 +21,7 @@ ________________________________________________________________________
 #include "jobinfo.h"
 #include "jobiomgr.h"
 #include "msgh.h"
+#include "netreqconnection.h"
 #include "oddirs.h"
 #include "od_ostream.h"
 #include "queue.h"
@@ -79,7 +80,7 @@ JobRunner::JobRunner( JobDescProv* p, const char* cmd, od_ostream* logstrm )
 	, descprov_(p)
 	, rshcomm_("rsh")
 	, prioritylevel_(-1.f)
-	, firstport_(19636)
+	, firstport_(Network::RequestConnection::getUsablePort(19636))
 	, prog_(cmd)
 	, starttimeout_( 1000 * GetEnvVarIVal("DTECT_MM_START_TO",   45 ) )
 	, failtimeout_(  1000 * GetEnvVarIVal("DTECT_MM_FAIL_TO",    450 ) )
@@ -154,8 +155,7 @@ bool JobRunner::addHost( const HostData& hd )
 {
     if ( !iomgr().isReady() )
     {
-	delete iomgr_;
-	iomgr_ = 0;
+	deleteAndZeroPtr( iomgr_ );
 	errmsg_ = tr("Failed to listen to Port %1 on %2")
 	        .arg(firstport_).arg(HostData::localHostName());
 	mLogMsg( toString(errmsg_) )
@@ -610,6 +610,21 @@ int JobRunner::doCycle()
 }
 
 
+int JobRunner::getLastReceivedTime( JobInfo& ji )
+{
+
+    File::Path logfp = getBaseFilePath( ji, *ji.hostdata_ );
+    logfp.setExtension( ".log", false );
+
+    if ( !File::exists(logfp.fullPath()) )
+	return ji.recvtime_ ? ji.recvtime_ : ji.starttime_;
+
+    int logfiletime = mCast( int,
+				File::getTimeInMilliSeconds(logfp.fullPath()) );
+    return logfiletime > ji.recvtime_ ? logfiletime : ji.recvtime_;
+}
+
+
 void JobRunner::updateJobInfo()
 {
     ObjQueue<StatusInfo>& queue = iomgr().statusQueue();
@@ -629,18 +644,26 @@ void JobRunner::updateJobInfo()
 	    int since_lst_chk = Time::passedSince( ji.starttime_ );
 	    if ( since_lst_chk > starttimeout_ )
 	    {
-		const int since_lst_recv = ji.recvtime_ ?
-					Time::passedSince(ji.recvtime_) : -1;
-		const int to = ji.state_ == JobInfo::WrappingUp
-		    ? wrapuptimeout_ : failtimeout_;
+		const int lastrecvdtime = getLastReceivedTime( ji );
+		int since_lst_recv = Time::passedSince( lastrecvdtime );
+		if ( since_lst_recv < 0 )
+		    since_lst_recv = 0;
+		// Negative value means difference in Time Settings on machines
+		const bool iswrappingup = ji.state_ == JobInfo::WrappingUp;
+		const int to = iswrappingup ? wrapuptimeout_ : failtimeout_;
 
-		if ( since_lst_recv < 0 || since_lst_recv > to )
+		if ( since_lst_recv > to )
 		{
+		    if ( iswrappingup )
+			handleExitStatus( ji );
+		    else
+		    {
 		    ji.statusmsg_ = "Timed out.";
 		    failedJob( ji, JobInfo::HostFailed );
 		    if ( ji.hostdata_ )
 			iomgr().removeJob( ji.hostdata_->getHostName(),
 					   ji.descnr_ );
+		    }
 		}
 	    }
 	}
@@ -728,17 +751,7 @@ void JobRunner::handleStatusInfo( StatusInfo& si )
         switch( si.status )
 	{
 	case mSTAT_ALLDONE:
-	{
-	    ji->state_ = JobInfo::Completed;
-	    ji->statusmsg_ = " all done";
-	    HostNFailInfo* hfi = hostNFailInfoFor( ji->hostdata_ );
-	    if ( hfi )
-	    {
-		hfi->nrsucces_++;
-		hfi->lastsuccess_ = Time::getMilliSeconds();
-		hfi->inuse_ = false;
-	    }
-	}
+	    handleExitStatus( *ji );
 	break;
 
 	case mSTAT_JOBERROR:
@@ -771,6 +784,20 @@ void JobRunner::handleStatusInfo( StatusInfo& si )
 	}
 
 	msgAvail.trigger();
+    }
+}
+
+
+void JobRunner::handleExitStatus( JobInfo& ji )
+{
+    ji.state_ = JobInfo::Completed;
+    ji.statusmsg_ = " all done";
+    HostNFailInfo* hfi = hostNFailInfoFor( ji.hostdata_ );
+    if ( hfi )
+    {
+	hfi->nrsucces_++;
+	hfi->lastsuccess_ = Time::getMilliSeconds();
+	hfi->inuse_ = false;
     }
 }
 

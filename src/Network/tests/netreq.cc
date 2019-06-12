@@ -258,17 +258,20 @@ int mTestMainFnName(int argc, char** argv)
 {
     mInitTestProg();
     ApplicationData app;
+    const char* portkey = Network::Server::sKeyPort();
+    clParser().setKeyHasValue( portkey );
+    clParser().setKeyHasValue( "serverapp" );
 
     PtrMan<Tester> runner = new Tester;
     runner->port_ = 1025;
-    clParser().getVal( "port", runner->port_, true );
-    runner->hostname_ = "localhost";
+    clParser().getVal( portkey, runner->port_, true );
+    runner->hostname_ = Network::RequestConnection::sKeyLocalHost();
     runner->prefix_ = "[singlethreaded] ";
 
     BufferString echoapp = "test_netreqechoserver";
     clParser().getVal( "serverapp", echoapp );
     OS::MachineCommand echocmd( echoapp );
-    echocmd.addKeyedArg( "port", runner->port_ );
+    echocmd.addKeyedArg( portkey, runner->port_ );
     echocmd.addFlag( "quiet" );
 
     OS::CommandExecPars execpars( OS::RunInBG );

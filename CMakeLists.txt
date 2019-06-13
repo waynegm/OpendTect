@@ -25,8 +25,11 @@ if ( CMAKE_VERSION VERSION_LESS 3.0.0 )
 else()
     cmake_policy( SET CMP0042 OLD )
     cmake_policy( SET CMP0048 NEW )
-    cmake_policy( SET CMP0053 OLD )
     project( "OpendTect" VERSION ${OpendTect_VERSION_MAJOR}.${OpendTect_VERSION_MINOR}.${OpendTect_VERSION_PATCH} )
+endif()
+
+if( POLICY CMP0074 )
+    cmake_policy(SET CMP0074 NEW)
 endif()
 
 include( CTest )
@@ -42,10 +45,13 @@ list( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules" )
 
 set( OD_SUBSYSTEM "od" )
 
+option ( OD_NO_OSG "Do not build anything with 3D visualisation" OFF )
+
 include( OD_SetupOD )
 
-#Add osgGeo
-OD_ADD_OSGGEO()
+if ( NOT OD_NO_OSG )
+    OD_ADD_OSGGEO()
+endif()
 
 # Note: the order of these modules *IS* important!
 # Make sure dependent modules are *after* the ones that they depend upon.
@@ -60,9 +66,14 @@ set( OD_MODULES
 	uiNLA uiSeis uiStrat uiEarthModel uiWell
 	uiVelocity uiPreStackProcessing uiAttributes
 	uiVolumeProcessing uiEMAttrib uiMPE uiViewer2D uiWellAttrib
-	visBase visSurvey uiOSG uiVis
-	uiODMain
 )
+
+if ( NOT OD_NO_OSG )
+    set( OD_MODULES ${OD_MODULES}
+	    visBase visSurvey uiOSG uiVis
+	    uiODMain
+    )
+endif()
 
 set( OD_PLUGINS
 	CEEMDAttrib
@@ -92,7 +103,6 @@ set( OD_PLUGINS
 	uiMATLABLink
 	uiMMPTest
 	uiPresentationMaker
-	uiPreStackViewer
 	uiQtApp
 	uiSEGY
 	uiTut
@@ -100,6 +110,10 @@ set( OD_PLUGINS
 	uiVoxelConnectivityFilter
 	CmdDriver
 )
+
+if ( NOT OD_NO_OSG )
+    set( OD_PLUGINS ${OD_PLUGINS} uiPreStackViewer )
+endif()
 
 set( OD_SPECPROGS ODSeis visBase )
 OD_CREATE_DEVEL_PACKAGE_DEFINITION()

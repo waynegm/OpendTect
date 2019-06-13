@@ -44,11 +44,13 @@ namespace sKey
     inline FixedString Chain()		{ return "Chain"; }
     inline FixedString Color()		{ return "Color"; }
     inline FixedString ColTab()		{ return "Color Table"; }
+    inline FixedString Coord()		{ return "Coordinate"; }
     inline FixedString CoordSys()	{ return "Coordinate System"; }
     inline FixedString Component(int n=1) {return n<2?"Component":"Components";}
     inline FixedString Content()	{ return "Content"; }
-    inline FixedString Crossline()	{ return "Cross-line"; }
-    inline FixedString Cube()		{ return "Cube"; }
+    inline FixedString Crossline(int n=1) { return n<2 ? "Cross-line"
+						       : "Cross-lines"; }
+    inline FixedString Cube(int n=1)	{ return n<2 ? "Cube" : "Cubes"; }
     inline FixedString Data()		{ return "Data"; }
     inline FixedString DataRoot()	{ return "Data Root"; }
     inline FixedString DefDataRoot()	{ return "Default DATA directory"; }
@@ -75,7 +77,7 @@ namespace sKey
     inline FixedString Horizon()	{ return "Horizon"; }
     inline FixedString ID(int n=1)	{ return n<2 ? "ID" : "IDs"; }
     inline FixedString Input()		{ return "Input"; }
-    inline FixedString Inline()		{ return "In-line"; }
+    inline FixedString Inline(int n=1)	{ return n<2 ? "In-line" : "In-lines"; }
     inline FixedString IOSelection()	{ return "I/O Selection"; }
     inline FixedString Is2D()		{ return "Is2D"; }
     inline FixedString Isochore()	{ return "Isochore"; }
@@ -145,12 +147,14 @@ namespace sKey
     inline FixedString SurveyID()	{ return "Survey ID"; }
     inline FixedString Table()		{ return "Table"; }
     inline FixedString Target(int n=1)	{ return n<2 ? "Target" : "Targets"; }
+    inline FixedString TermEm()		{ return "Terminal Emulator"; }
     inline FixedString Time()		{ return "Time"; }
     inline FixedString TimeSort()	{ return "Time Sort"; }
     inline FixedString Title()		{ return "Title"; }
     inline FixedString TmpStor()	{ return "Temporary storage location"; }
+    inline FixedString TODO()		{ return "TODO"; }
     inline FixedString TotalNr()	{ return "Total Nr"; }
-    inline FixedString Trace()		{ return "Trace"; }
+    inline FixedString Trace(int n=1)	{ return n<2 ? "Trace" : "Traces"; }
     inline FixedString TraceNr()	{ return "Trace number"; }
     inline FixedString TraceKey()	{ return "Trace key"; }
     inline FixedString TVD(int n=1)	{ return n<2 ? "TVD" : "TVDs"; }
@@ -171,16 +175,17 @@ namespace sKey
     inline FixedString Weight()		{ return "Weight"; }
     inline FixedString Well()		{ return "Well"; }
     inline FixedString X()		{ return "X"; }
-    inline FixedString XCoord()		{ return "X-Coord"; }
+    inline FixedString XCoord(int n=1)	{ return n<2 ? "X-Coord" : "X-Coords"; }
     inline FixedString XOffset()	{ return "X Offset"; }
     inline FixedString XRange()		{ return "X range"; }
     inline FixedString Y()		{ return "Y"; }
     inline FixedString Y2()		{ return "Y2"; }
-    inline FixedString YCoord()		{ return "Y-Coord"; }
+    inline FixedString YCoord(int n=1)	{ return n<2 ? "Y-Coord" : "Y-Coords"; }
     inline FixedString YOffset()	{ return "Y Offset"; }
     inline FixedString YRange()		{ return "Y range"; }
     inline FixedString Yes()		{ return "Yes"; }
     inline FixedString Z()		{ return "Z"; }
+    inline FixedString ZDomain()	{ return "Z Domain"; }
     inline FixedString ZCoord()		{ return "Z-Coord"; }
     inline FixedString ZRange()		{ return "Z range"; }
     inline FixedString ZSlice()		{ return "Z-slice"; }

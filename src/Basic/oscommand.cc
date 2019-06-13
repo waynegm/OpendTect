@@ -221,8 +221,8 @@ OS::MachineCommand& OS::MachineCommand::addKeyedArg( const char* ky,
 
 void OS::MachineCommand::setIsolated( const char* prognm )
 {
-	BufferString scriptcmd( GetODExternalScript() );
-	CommandLauncher::addQuotesIfNeeded( scriptcmd );
+    BufferString scriptcmd( GetODExternalScript() );
+    CommandLauncher::addQuotesIfNeeded( scriptcmd );
     prognm_.set( scriptcmd );
     addArg( prognm );
     const BufferString pathed( GetEnvVarDirListWoOD("PATH") );
@@ -581,6 +581,15 @@ bool OS::MachineCommand::execute( BufferString& out, BufferString* err )
 }
 
 
+BufferString OS::MachineCommand::runAndCollectOutput( BufferString* errmsg )
+{
+    BufferString ret;
+    if ( !CommandLauncher(*this).execute(ret,errmsg) )
+	ret.setEmpty();
+    return ret;
+}
+
+
 // OS::CommandLauncher
 
 OS::CommandLauncher::CommandLauncher( const OS::MachineCommand& mc )
@@ -675,6 +684,14 @@ bool OS::CommandLauncher::execute( const OS::CommandExecPars& pars )
     reset();
     if ( machcmd_.isBad() )
 	{ errmsg_ = toUiString("Command is invalid"); return false; }
+
+    if ( FixedString(machcmd_.program()).contains("python") )
+    {
+	const File::Path pythfp( machcmd_.program() );
+	if ( pythfp.nrLevels() < 2 ||
+	    (pythfp.exists() && pythfp.fileName().contains("python") ) )
+	    pErrMsg("Python commands should be run using OD::PythA().execute");
+    }
 
     MachineCommand mcmd( machcmd_ );
     BufferString toexec = machcmd_.getExecCommand();

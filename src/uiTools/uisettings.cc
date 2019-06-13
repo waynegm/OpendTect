@@ -296,10 +296,12 @@ uiPythonSettings(uiParent* p, const char* nm)
 
     uiButton* testbut = new uiPushButton( this, tr("Test"),
 			mCB(this,uiPythonSettings,testCB), true);
+    testbut->setIcon( "test" );
     testbut->attach( ensureBelow, customenvnmfld_ );
-	
+
     uiButton* cmdwinbut = new uiPushButton( this, tr("Launch Prompt"),
 			mCB(this,uiPythonSettings,promptCB), true );
+    cmdwinbut->setIcon( "launch" );
     cmdwinbut->attach( rightOf, testbut );
 
     mAttachCB( postFinalise(), uiPythonSettings::initDlg );
@@ -505,14 +507,14 @@ void testCB(CallBacker*)
 
 void promptCB( CallBacker* )
 {
+    const BufferString termem = Settings::common().find( sKey::TermEm() );
 #ifdef __win__
-	OS::MachineCommand cmd( "start" );
-	cmd.addArg( "cmd.exe" );
-	OD::PythA().execute( cmd );
+    OS::MachineCommand cmd( "start" );
+    cmd.addArg( termem );
 #else
-	//TODO: implement
-	gUiMsg(this).message( tr("Not implemented yet") );
+    OS::MachineCommand cmd( termem );
 #endif
+    OD::PythA().execute( cmd );
 }
 
 bool useScreen()

@@ -89,8 +89,7 @@ Settings* Settings::doFetch( const char* key, const char* dtectusr,
     Settings* ret = new Settings( fname );
     ret->setName( mGetKey(key) );
     if ( !ret->doRead(ext) )
-	{ delete ret; ret = 0; }
-
+	{ delete ret; ret = nullptr; }
     return ret;
 }
 
@@ -120,7 +119,8 @@ bool Settings::doRead( bool ext )
     SafeFileIO sfio( fname_, false );
     if ( empty_initially || !sfio.open(true) )
     {
-	if ( ext ) return false;
+	if ( ext )
+	    return false;
 
 	BufferString tmplfname( iscommon ? "od" : name().buf() );
 	tmplfname += "Settings";

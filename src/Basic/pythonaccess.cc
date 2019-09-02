@@ -458,9 +458,9 @@ void OD::PythonAccess::handleFilesCB( CallBacker* )
 	}
 
 	const BufferString scriptfnm( fp.fullPath() );
-	const od_int64 creationtym = File::getTimeInMilliSeconds( scriptfnm );
-	const od_int64 currtym = Time::getMilliSeconds();
-	const double timediff = creationtym - currtym;
+	const od_int64 creationtime = File::getTimeInMilliSeconds( scriptfnm );
+	const od_int64 currtime = Time::getMilliSeconds();
+	const double timediff = creationtime - currtime;
 	if ( timediff < mFileRetentionTimeInMilliSec )
 	    continue;
 

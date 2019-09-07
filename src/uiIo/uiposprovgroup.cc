@@ -45,6 +45,7 @@ uiRangePosProvGroup::uiRangePosProvGroup( uiParent* p,
     , hrgfld_(nullptr)
     , zrgfld_(nullptr)
     , nrrgfld_(nullptr)
+    , samplingfld_(nullptr)
     , setup_(su)
 {
     uiObject* attobj = nullptr;
@@ -70,7 +71,15 @@ uiRangePosProvGroup::uiRangePosProvGroup( uiParent* p,
 	attobj = zrgfld_->attachObj();
     }
 
+    samplingfld_ = new uiGenInput( this, tr("Sampling Mode"), BoolInpSpec(false,tr("Random"),tr("Regular")) );
+    samplingfld_->valuechanged.notify( mCB(this,uiRangePosProvGroup,samplingCB) );
+    if ( attobj )
+	samplingfld_->attach( alignedBelow, attobj );
+    attobj = samplingfld_->attachObj();
+    
     if ( attobj ) setHAlignObj( attobj );
+    
+    samplingCB( nullptr );
 }
 
 
@@ -95,12 +104,20 @@ void uiRangePosProvGroup::usePar( const IOPar& iop )
 	    zrgfld_->setRange( zrg );
 	}
     }
+    if  ( samplingfld_ )
+    {
+	bool random = false;
+	iop.getYN( sKey::Random(), random );
+	samplingfld_->setValue( random );
+	samplingCB( nullptr );
+    }
 }
 
 
 bool uiRangePosProvGroup::fillPar( IOPar& iop ) const
 {
     iop.set( sKey::Type(), sKey::Range() );
+    iop.setYN( sKey::Random(), samplingfld_->getBoolValue() );
     TrcKeyZSampling cs; getTrcKeyZSampling( cs );
 
     if ( setup_.is2d_ )
@@ -172,6 +189,21 @@ void uiRangePosProvGroup::getTrcKeyZSampling( TrcKeyZSampling& cs ) const
 void uiRangePosProvGroup::initClass()
 {
     uiPosProvGroup::factory().addCreator( create, sKey::Range() );
+}
+
+
+void uiRangePosProvGroup::samplingCB( CallBacker* )
+{
+    if ( samplingfld_ )
+    {
+	bool showStep = !samplingfld_->getBoolValue();
+	if ( hrgfld_ )
+	    hrgfld_->setStepSensitive( showStep );
+	if ( zrgfld_ )
+	    zrgfld_->setStepSensitive( showStep );
+	if ( nrrgfld_ )
+	    nrrgfld_->setStepSensitive( showStep );
+    }
 }
 
 

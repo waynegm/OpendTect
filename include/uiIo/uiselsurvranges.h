@@ -36,6 +36,7 @@ public:
     StepInterval<float>	getRange() const;
     void		setRange(const StepInterval<float>&);
     void		setRangeLimits(const StepInterval<float>&);
+    void		setStepSensitive( bool yn );
 
     Notifier<uiSelZRange>	rangeChanged;
 
@@ -72,7 +73,8 @@ public:
     StepInterval<int>	getRange() const;
     void		setRange(const StepInterval<int>&);
     void		setLimitRange(const StepInterval<int>&);
-
+    void		setStepSensitive( bool yn );
+    
     bool		isChecked();
     void		setChecked(bool);
     bool		isCheckable()		{ return cbox_; }
@@ -138,7 +140,8 @@ public:
     TrcKeySampling		getSampling() const;
     void		setSampling(const TrcKeySampling&);
     void		setLimits(const TrcKeySampling&);
-
+    void		setStepSensitive( bool yn );
+    
     uiSelNrRange*	inlfld_;
     uiSelNrRange*	crlfld_;
 

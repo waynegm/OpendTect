@@ -59,6 +59,12 @@ uiSelZRange::uiSelZRange( uiParent* p, StepInterval<float> limitrg, bool wstep,
 }
 
 
+void uiSelZRange::setStepSensitive( bool yn )
+{
+    stepfld_->setSensitive( yn );
+}
+
+
 void uiSelZRange::makeInpFields( const uiString& lbltxt, bool wstep,
 				 const StepInterval<float>* inplimitrg )
 {
@@ -280,6 +286,12 @@ uiSelNrRange::uiSelNrRange( uiParent* p, StepInterval<int> limitrg, bool wstep,
     makeInpFields( limitrg, wstep, false );
     setRange( limitrg );
     preFinalise().notify( mCB(this,uiSelNrRange,doFinalise) );
+}
+
+
+void uiSelNrRange::setStepSensitive( bool yn )
+{
+    stepfld_->setSensitive( yn );
 }
 
 
@@ -512,6 +524,13 @@ uiSelHRange::uiSelHRange( uiParent* p, const TrcKeySampling& hslimit,
 {
     crlfld_->attach( alignedBelow, inlfld_ );
     setHAlignObj( inlfld_ );
+}
+
+
+void uiSelHRange::setStepSensitive( bool yn )
+{
+    inlfld_->setStepSensitive( yn );
+    crlfld_->setStepSensitive( yn );
 }
 
 

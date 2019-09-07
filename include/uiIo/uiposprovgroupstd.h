@@ -28,7 +28,7 @@ class uiIOFileSelect;
 /*! \brief UI for RangePosProvider */
 
 mExpClass(uiIo) uiRangePosProvGroup : public uiPosProvGroup
-{
+{ mODTextTranslationClass(uiRangePosProvGroup)
 public:
 
 			uiRangePosProvGroup(uiParent*,
@@ -51,8 +51,11 @@ protected:
     uiSelHRange*	hrgfld_;
     uiSelZRange*	zrgfld_;
     uiSelNrRange*	nrrgfld_;
+    uiGenInput*		samplingfld_;
 
     uiPosProvGroup::Setup setup_;
+    
+    void		samplingCB( CallBacker* );
 
 };
 

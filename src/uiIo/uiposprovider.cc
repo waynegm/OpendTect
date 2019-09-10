@@ -34,6 +34,7 @@ uiPosProvider::uiPosProvider( uiParent* p, const uiPosProvider::Setup& su )
 	, setup_(su)
 	, selfld_(0)
 	, fullsurvbut_(0)
+	, posProvGroupChanged(this)
 {
     const BufferStringSet& factnms( setup_.is2d_
 	    ? Pos::Provider2D::factory().getNames()
@@ -78,6 +79,8 @@ uiPosProvider::uiPosProvider( uiParent* p, const uiPosProvider::Setup& su )
 	nms.add( factusrnms[idx] );
 	grp->setName( nm );
 	grps_ += grp;
+	
+	grp->posProvGroupChg.notify( mCB(this,uiPosProvider,selChg) );
     }
     if ( setup_.allownone_ )
 	nms.add( uiStrings::sAll() );
@@ -143,6 +146,8 @@ void uiPosProvider::selChg( CallBacker* )
 	fullsurvbut_->display( BufferString(selfld_->text()) == sKey::Range() );
 
     savebut_->setSensitive( grps_.validIdx(selidx) );
+    
+    posProvGroupChanged.trigger();
 }
 
 
@@ -260,6 +265,17 @@ void uiPosProvider::getSampling( TrcKeyZSampling& tkzs,
 	prov->getTrcKeyZSampling( tkzs );
 }
 
+
+bool uiPosProvider::hasRandomSampling() const
+{
+    if ( !isAll() )
+    {
+	const uiPosProvGroup* curgrp = curGrp();
+	if ( curgrp )
+	    return curgrp->hasRandomSampling();
+    }
+    return false;
+}
 
 void uiPosProvider::usePar( const IOPar& iop )
 {

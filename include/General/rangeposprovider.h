@@ -16,6 +16,7 @@ ________________________________________________________________________
 #include "generalmod.h"
 #include "posprovider.h"
 #include "transl.h"
+#include "sortedlist.h"
 
 namespace PosInfo { class Line2DData; }
 
@@ -70,6 +71,9 @@ protected:
     BinID		curbid_;
     int			curzidx_;
     int			zsampsz_;
+    int			nrsamples_;
+    bool		dorandom_;
+    SortedList<od_int64> posindexlst_;
 
 public:
 

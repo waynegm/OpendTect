@@ -149,6 +149,7 @@ uiGenPosPicks::uiGenPosPicks( uiParent* p )
 	.choicetype( uiPosProvider::Setup::All );
     posprovfld_ = new uiPosProvider( this, psu );
     posprovfld_->setExtractionDefaults();
+    posprovfld_->posProvGroupChanged.notify( mCB(this,uiGenPosPicks,posProvChgCB) );
 
     maxnrpickfld_ = new uiGenInput( this, tr("Maximum number of Points"),
 				    IntInpSpec(100) );
@@ -160,12 +161,21 @@ uiGenPosPicks::uiGenPosPicks( uiParent* p )
     posfiltfld_->attach( alignedBelow, maxnrpickfld_ );
 
     addStdFields( posfiltfld_->attachObj() );
+    posProvChgCB(0);
 }
 
 
 uiGenPosPicks::~uiGenPosPicks()
 {
     delete dps_;
+}
+
+
+void uiGenPosPicks::posProvChgCB( CallBacker* )
+{
+    bool israndom = posprovfld_->hasRandomSampling();
+    if ( maxnrpickfld_ )
+	maxnrpickfld_->setSensitive( !israndom );
 }
 
 
@@ -178,7 +188,9 @@ bool uiGenPosPicks::acceptOK( CallBacker* c )
 
     if ( !uiCreatePicks::acceptOK(c) )
 	return false;
-
+    
+    bool randomSampling = posprovfld_->hasRandomSampling();
+    
     PtrMan<Pos::Provider> prov = posprovfld_->createProvider();
     if ( !prov )
 	mErrRet(::toUiString("Internal: no Pos::Provider"))
@@ -189,6 +201,7 @@ bool uiGenPosPicks::acceptOK( CallBacker* c )
 
     mSetCursor();
     IOPar iop; posfiltfld_->fillPar( iop );
+    
     PtrMan<Pos::Filter> filt = Pos::Filter::make( iop, prov->is2D() );
     if ( filt && !filt->initialize(&taskrunner) )
 	{ mRestorCursor(); return false; }
@@ -205,9 +218,15 @@ bool uiGenPosPicks::acceptOK( CallBacker* c )
     mRestorCursor();
 
     const int dpssize = dps_->size();
-    int size = maxnrpickfld_->getIntValue();
-    if ( dpssize < size )
+    int size;
+    if ( randomSampling )
 	size = dpssize;
+    else
+    {
+	size = maxnrpickfld_->getIntValue();
+	if ( dpssize < size )
+	    size = dpssize;
+    }
 
     if ( size>50000 )
     {
@@ -234,10 +253,11 @@ Pick::Set* uiGenPosPicks::getPickSet() const
 {
     if ( dps_->isEmpty() ) return 0;
 
+    bool randomSampling = posprovfld_->hasRandomSampling();
     Pick::Set* ps = uiCreatePicks::getPickSet();
     const int dpssize = dps_->size();
     int size = maxnrpickfld_->getIntValue();
-    const bool usemaxnrpicks = dpssize > size;
+    const bool usemaxnrpicks = dpssize > size && !randomSampling;
     if ( !usemaxnrpicks )
 	size = dpssize;
 

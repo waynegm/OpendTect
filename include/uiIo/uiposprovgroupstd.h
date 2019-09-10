@@ -37,6 +37,7 @@ public:
     virtual void	usePar(const IOPar&);
     virtual bool	fillPar(IOPar&) const;
     void		getSummary(BufferString&) const;
+    virtual bool	hasRandomSampling() const;
 
     void		setExtractionDefaults();
 
@@ -52,6 +53,7 @@ protected:
     uiSelZRange*	zrgfld_;
     uiSelNrRange*	nrrgfld_;
     uiGenInput*		samplingfld_;
+    uiGenInput*		nrsamplesfld_;
 
     uiPosProvGroup::Setup setup_;
     

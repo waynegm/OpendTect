@@ -17,7 +17,6 @@ ________________________________________________________________________
 #include "trckeyzsampling.h"
 #include "factory.h"
 
-
 /*! \brief group for providing positions, usually for 2D or 3D seismics */
 
 mExpClass(uiIo) uiPosProvGroup : public uiPosFiltGroup
@@ -47,9 +46,11 @@ public:
 			uiPosProvGroup(uiParent*,const Setup&);
 
     virtual void	setExtractionDefaults()		{}
+    virtual bool	hasRandomSampling() const	{ return false; }
+    Notifier<uiPosProvGroup>	posProvGroupChg;
 
     mDefineFactory2ParamInClass(uiPosProvGroup,uiParent*,const Setup&,factory);
-
+    
 };
 
 #endif

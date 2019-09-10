@@ -35,6 +35,7 @@ mImplFactory2Param(uiPosProvGroup,uiParent*,const uiPosProvGroup::Setup&,
 
 uiPosProvGroup::uiPosProvGroup( uiParent* p, const uiPosProvGroup::Setup& su )
     : uiPosFiltGroup(p,su)
+    , posProvGroupChg(0)
 {
 }
 
@@ -46,6 +47,7 @@ uiRangePosProvGroup::uiRangePosProvGroup( uiParent* p,
     , zrgfld_(nullptr)
     , nrrgfld_(nullptr)
     , samplingfld_(nullptr)
+    , nrsamplesfld_(nullptr)
     , setup_(su)
 {
     uiObject* attobj = nullptr;
@@ -71,15 +73,26 @@ uiRangePosProvGroup::uiRangePosProvGroup( uiParent* p,
 	attobj = zrgfld_->attachObj();
     }
 
-    samplingfld_ = new uiGenInput( this, tr("Sampling Mode"), BoolInpSpec(false,tr("Random"),tr("Regular")) );
-    samplingfld_->valuechanged.notify( mCB(this,uiRangePosProvGroup,samplingCB) );
-    if ( attobj )
-	samplingfld_->attach( alignedBelow, attobj );
-    attobj = samplingfld_->attachObj();
+    if ( !su.is2d_ )
+    {
+	samplingfld_ = new uiGenInput( this, tr("Sampling Mode"), BoolInpSpec(false,tr("Random"),tr("Regular")) );
+	samplingfld_->valuechanged.notify( mCB(this,uiRangePosProvGroup,samplingCB) );
+	if ( attobj )
+	    samplingfld_->attach( alignedBelow, attobj );
+	
+	nrsamplesfld_ = new uiGenInput( this, sKey::NrValues(), IntInpSpec(1000) );
+	nrsamplesfld_->attach( alignedBelow, samplingfld_ );
+	attobj = nrsamplesfld_->attachObj();
+    }
     
     if ( attobj ) setHAlignObj( attobj );
     
     samplingCB( nullptr );
+}
+
+bool uiRangePosProvGroup::hasRandomSampling() const
+{
+    return samplingfld_->getBoolValue();
 }
 
 
@@ -109,6 +122,12 @@ void uiRangePosProvGroup::usePar( const IOPar& iop )
 	bool random = false;
 	iop.getYN( sKey::Random(), random );
 	samplingfld_->setValue( random );
+	
+	int nrsamples = 1000;
+	if ( random )
+	    iop.get( sKey::NrValues(), nrsamples );
+	nrsamplesfld_->setValue( nrsamples );
+	    
 	samplingCB( nullptr );
     }
 }
@@ -117,7 +136,11 @@ void uiRangePosProvGroup::usePar( const IOPar& iop )
 bool uiRangePosProvGroup::fillPar( IOPar& iop ) const
 {
     iop.set( sKey::Type(), sKey::Range() );
+
     iop.setYN( sKey::Random(), samplingfld_->getBoolValue() );
+    if ( samplingfld_->getBoolValue() )
+	iop.set( sKey::NrValues(), nrsamplesfld_->getIntValue() );
+
     TrcKeyZSampling cs; getTrcKeyZSampling( cs );
 
     if ( setup_.is2d_ )
@@ -196,13 +219,16 @@ void uiRangePosProvGroup::samplingCB( CallBacker* )
 {
     if ( samplingfld_ )
     {
-	bool showStep = !samplingfld_->getBoolValue();
+	bool showstep = !samplingfld_->getBoolValue();
 	if ( hrgfld_ )
-	    hrgfld_->setStepSensitive( showStep );
+	    hrgfld_->setStepSensitive( showstep );
 	if ( zrgfld_ )
-	    zrgfld_->setStepSensitive( showStep );
+	    zrgfld_->setStepSensitive( showstep );
 	if ( nrrgfld_ )
-	    nrrgfld_->setStepSensitive( showStep );
+	    nrrgfld_->setStepSensitive( showstep );
+	if ( nrsamplesfld_ )
+	    nrsamplesfld_->setSensitive( !showstep );
+	posProvGroupChg.trigger();
     }
 }
 
